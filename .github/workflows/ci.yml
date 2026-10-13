@@ -1,4 +1,3 @@
-
 name: CI Trama
 
 on:
@@ -12,6 +11,26 @@ jobs:
     name: Backend Tests
     runs-on: ubuntu-latest
 
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_DATABASE: trama_test
+          MYSQL_USER: trama
+          MYSQL_PASSWORD: test
+          MYSQL_ROOT_PASSWORD: root
+        ports:
+          - 3307:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h localhost"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=10
+
+    env:
+      MYSQL_PASSWORD: test
+      JWT_SECRET: clave-solo-para-tests-de-al-menos-32-caracteres
+
     steps:
       - name: Descargar repositorio
         uses: actions/checkout@v4
@@ -20,14 +39,10 @@ jobs:
         id: backend
         shell: bash
         run: |
-          if [ -f demo/mvnw ] && [ -f demo/pom.xml ]; then
+          if [ -f backend/mvnw ] && [ -f backend/pom.xml ]; then
             echo "exists=true" >> "$GITHUB_OUTPUT"
-            echo "directory=demo" >> "$GITHUB_OUTPUT"
-          elif [ -f backend/mvnw ] && [ -f backend/pom.xml ]; then
-            echo "exists=true" >> "$GITHUB_OUTPUT"
-            echo "directory=backend" >> "$GITHUB_OUTPUT"
           else
-            echo "::notice::Backend pendiente de integracion"
+            echo "::notice::Backend pendiente de integracion (se espera en backend/)"
             echo "exists=false" >> "$GITHUB_OUTPUT"
           fi
 
@@ -37,10 +52,11 @@ jobs:
         with:
           distribution: temurin
           java-version: '21'
+          cache: maven
 
       - name: Ejecutar tests del backend
         if: steps.backend.outputs.exists == 'true'
-        working-directory: ${{ steps.backend.outputs.directory }}
+        working-directory: ./backend
         run: |
           chmod +x mvnw
           ./mvnw -B test
