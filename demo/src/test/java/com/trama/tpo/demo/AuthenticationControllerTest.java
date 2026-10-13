@@ -289,4 +289,14 @@ class AuthenticationControllerTest {
                 .andExpect(jsonPath("$.mensaje")
                         .value("Debés iniciar sesión"));
     }
+
+    // TEST 9: RUTA DE PROYECTO SIN TOKEN
+    @Test
+    void rutaDeProyectoSinTokenDevuelve401() throws Exception {
+
+        mockMvc.perform(get("/api/proyectos/" + UUID.randomUUID()))
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.codigo")
+                        .value("NO_AUTENTICADO"));
+    }
 }
