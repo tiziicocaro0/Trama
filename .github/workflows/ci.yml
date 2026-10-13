@@ -1,0 +1,70 @@
+name: CI Trama
+
+on:
+  pull_request:
+    branches:
+      - develop
+      - main
+
+jobs:
+  backend-tests:
+    name: Backend Tests
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Descargar repositorio
+        uses: actions/checkout@v4
+
+      - name: Aviso si todavía no hay proyecto backend
+        if: hashFiles('backend/mvnw') == ''
+        run: echo "::notice::No existe backend/mvnw todavía. Se omiten los tests del backend."
+
+      - name: Configurar Java 21
+        if: hashFiles('backend/mvnw') != ''
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: maven
+
+      - name: Ejecutar tests del backend
+        if: hashFiles('backend/mvnw') != ''
+        working-directory: ./backend
+        run: |
+          chmod +x mvnw
+          ./mvnw -B test
+
+  frontend-tests:
+    name: Frontend Tests
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Descargar repositorio
+        uses: actions/checkout@v4
+
+      - name: Aviso si todavía no hay proyecto frontend
+        if: hashFiles('frontend/package-lock.json') == ''
+        run: echo "::notice::No existe frontend/package-lock.json todavía. Se omiten los pasos del frontend."
+
+      - name: Configurar Node.js
+        if: hashFiles('frontend/package-lock.json') != ''
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Instalar dependencias
+        if: hashFiles('frontend/package-lock.json') != ''
+        working-directory: ./frontend
+        run: npm ci
+
+      - name: Ejecutar lint
+        if: hashFiles('frontend/package-lock.json') != ''
+        working-directory: ./frontend
+        run: npm run lint
+
+      - name: Ejecutar tests
+        if: hashFiles('frontend/package-lock.json') != ''
+        working-directory: ./frontend
+        run: npm test -- --run

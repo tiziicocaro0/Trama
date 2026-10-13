@@ -1,0 +1,17 @@
+# Normaliza los saltos de línea de todos los archivos de texto
+* text=auto
+
+# Scripts de Linux: siempre LF (si no, falla el CI)
+*.sh   text eol=lf
+mvnw   text eol=lf
+
+# Scripts de Windows: siempre CRLF
+*.cmd  text eol=crlf
+*.bat  text eol=crlf
+
+# Archivos binarios: no tocarlos
+*.png  binary
+*.jpg  binary
+*.jpeg binary
+*.pdf  binary
+*.jar  binary
