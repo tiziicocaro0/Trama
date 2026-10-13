@@ -11,6 +11,7 @@ import org.springframework.stereotype.Repository;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.Collection;
 
 @Repository
 public interface MembresiaRepository extends JpaRepository<Membresia, UUID> {
@@ -22,4 +23,13 @@ public interface MembresiaRepository extends JpaRepository<Membresia, UUID> {
     boolean existsByUsuarioIdAndProyectoId(UUID usuarioId, UUID proyectoId);
 
     List<Membresia> findByProyectoId(UUID proyectoId);
+
+    Optional<Membresia> findByUsuarioIdAndProyectoId(
+            UUID usuarioId,
+            UUID proyectoId
+    );
+    List<Membresia> findByUsuarioIdAndRolInOrderByFechaAltaAscIdAsc(
+            UUID usuarioId,
+            Collection<Rol> roles
+    );
 }

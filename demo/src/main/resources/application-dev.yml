@@ -1,0 +1,8 @@
+spring:
+  datasource:
+    url: jdbc:mysql://localhost:${MYSQL_PORT:3306}/trama
+    username: trama_user
+    password: ${MYSQL_PASSWORD}
+
+  jpa:
+    show-sql: false
