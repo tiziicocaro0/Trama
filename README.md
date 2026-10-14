@@ -214,6 +214,34 @@ La integración continua está configurada inicialmente, pero los tests todavía
 
 Una vez incorporados, se validarán las ejecuciones y se configurarán los checks obligatorios para impedir merges cuando fallen los tests.
 
+### Configuración de Git Hooks
+
+Trama utiliza un hook local pre-push para verificar los tests del backend antes de subir modificaciones a GitHub.
+
+Activación
+
+Cada integrante debe activar los hooks una vez por cada copia local del repositorio.
+
+Desde la carpeta raíz de Trama, ejecutar:
+
+git config core.hooksPath .githooks
+
+Funcionamiento
+
+El hook comprueba si existen cambios en la carpeta backend/ entre los commits que se intentan subir.
+
+Si detecta modificaciones en el backend, ejecuta automáticamente ./mvnw -B test.
+
+Si los tests pasan, permite realizar el push.
+
+Si los tests fallan, cancela el push para evitar subir código con errores.
+
+Si no se detectan modificaciones en el backend, permite continuar sin ejecutar Maven.
+
+El hook se encuentra en .githooks/pre-push.
+
+Nota: los Git Hooks se ejecutan localmente y complementan las verificaciones de GitHub Actions. No reemplazan los checks obligatorios configurados para los Pull Requests.
+
 ## Ejecución local
 
 ### Backend

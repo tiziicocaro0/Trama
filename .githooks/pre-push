@@ -1,0 +1,56 @@
+
+#!/bin/sh
+
+set -eu
+
+cd "$(git rev-parse --show-toplevel)"
+
+zero=0000000000000000000000000000000000000000
+changed=0
+
+# Revisar todas las referencias que se intentan subir.
+while read -r local_ref local_sha remote_ref remote_sha
+do
+    # Ignorar eliminaciones de ramas.
+    if [ "$local_sha" = "$zero" ]; then
+        continue
+    fi
+
+    # Determinar los commits que se van a subir.
+    if [ "$remote_sha" = "$zero" ]; then
+        base=$(git merge-base "$local_sha" origin/develop 2>/dev/null || true)
+    else
+        base="$remote_sha"
+    fi
+
+    # Si no se puede determinar la base, ejecutar tests por seguridad.
+    if [ -z "$base" ]; then
+        changed=1
+    elif git diff --name-only "$base" "$local_sha" -- backend/ | grep -q .; then
+        changed=1
+    fi
+done
+
+# Si no hubo cambios del backend, permitir el push.
+if [ "$changed" -eq 0 ]; then
+    echo "No hay cambios de backend pendientes de push."
+    exit 0
+fi
+
+echo "Cambios detectados en backend. Ejecutando tests..."
+
+if [ ! -f backend/mvnw ]; then
+    echo "ERROR: No se encontro backend/mvnw."
+    exit 1
+fi
+
+(
+    cd backend
+    ./mvnw -B test
+) || {
+    echo "ERROR: Los tests del backend fallaron. Push cancelado."
+    exit 1
+}
+
+echo "Tests del backend correctos. Push permitido."
+exit 0
