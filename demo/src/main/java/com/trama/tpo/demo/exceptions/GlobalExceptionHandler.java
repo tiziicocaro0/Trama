@@ -7,6 +7,8 @@ import org.springframework.security.core.AuthenticationException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
+
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
@@ -72,6 +74,19 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ErrorResponse> handleValidation(
             MethodArgumentNotValidException e) {
+
+        return ResponseEntity
+                .status(HttpStatus.BAD_REQUEST)
+                .body(new ErrorResponse(
+                        "DATOS_INVALIDOS",
+                        "Los datos enviados no son válidos"
+                ));
+    }
+    
+    // PARÁMETROS CON FORMATO INVÁLIDO (ej. un id que no es UUID)
+    @ExceptionHandler(MethodArgumentTypeMismatchException.class)
+    public ResponseEntity<ErrorResponse> handleTypeMismatch(
+            MethodArgumentTypeMismatchException e) {
 
         return ResponseEntity
                 .status(HttpStatus.BAD_REQUEST)
