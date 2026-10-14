@@ -3,6 +3,7 @@
 
 # Scripts de Linux: siempre LF (si no, falla el CI)
 *.sh   text eol=lf
+.githooks/* text eol=lf
 mvnw   text eol=lf
 
 # Scripts de Windows: siempre CRLF
