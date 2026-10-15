@@ -1,2 +1,327 @@
 # Trama
-Plataforma colaborativa para mejorar la comunicación y el seguimiento interdisciplinario de niños con TEA entre familias, profesionales y educadores.
+
+![CI Trama](https://github.com/tiziicocaro0/Trama/actions/workflows/ci.yml/badge.svg?branch=develop)
+
+Trama es una plataforma colaborativa diseñada para mejorar la comunicación y el seguimiento interdisciplinario de niños con Trastorno del Espectro Autista (TEA).
+
+Su objetivo es centralizar la información relevante de cada niño y facilitar el intercambio de observaciones, avances y orientaciones entre familias, profesionales de la salud y educadores, promoviendo un acompañamiento integral y coordinado.
+
+## Tecnologías utilizadas
+
+### Backend
+- Java 21
+- Spring Boot
+- Maven
+
+### Frontend
+- Node.js y npm
+- Framework pendiente de configuración
+
+### Herramientas e infraestructura
+- Git y GitHub
+- GitHub Actions (CI)
+- Docker y Docker Compose
+- Visual Studio Code
+
+## Requisitos previos
+
+Para trabajar con el proyecto se necesita:
+
+- Git instalado
+- Java JDK 21
+- Node.js y npm
+- Docker Desktop
+- Visual Studio Code u otro IDE compatible
+
+## Estructura del proyecto
+
+```text
+Trama/
+├── .github/
+│   └── workflows/
+│       └── ci.yml
+├── backend/
+├── frontend/
+└── README.md
+```
+
+- `backend/`: aplicación desarrollada con Spring Boot y Maven.
+- `frontend/`: interfaz de usuario.
+- `.github/workflows/`: configuración de integración continua.
+- `README.md`: documentación del proyecto.
+
+**Nota:** el proyecto base del frontend todavía está en preparación.
+
+## Clonar el repositorio
+
+Para descargar el proyecto por primera vez:
+
+1. Abrir una terminal en la carpeta donde se desea guardar el proyecto.
+2. Ejecutar:
+
+```bash
+git clone https://github.com/tiziicocaro0/Trama.git
+```
+
+3. Ingresar a la carpeta del proyecto:
+
+```bash
+cd Trama
+```
+
+4. Cambiar a la rama principal de desarrollo:
+
+```bash
+git switch develop
+```
+
+5. Abrir el proyecto en Visual Studio Code:
+
+```bash
+code .
+```
+
+## Flujo de trabajo con Git y GitHub
+
+Para mantener el código organizado y evitar modificaciones accidentales en las ramas principales, el equipo utiliza un flujo de trabajo basado en ramas y Pull Requests.
+
+### Ramas principales
+
+- `main`: contiene la versión estable del proyecto.
+- `develop`: rama predeterminada donde se integran los desarrollos.
+- `feature/*`: ramas destinadas a nuevas funcionalidades.
+- `fix/*`: ramas para corrección de errores.
+- `chore/*`: ramas para tareas técnicas, mantenimiento y configuración.
+
+### Reglas de trabajo
+
+1. No realizar commits ni pushes directamente sobre `main` o `develop`.
+2. Crear una rama de trabajo a partir de `develop` para cada tarea.
+3. Realizar los cambios y commits en la rama correspondiente.
+4. Subir la rama al repositorio remoto.
+5. Crear un Pull Request hacia `develop`.
+6. Solicitar la revisión de otro integrante del equipo.
+7. Verificar que los tests automáticos se ejecuten correctamente.
+8. Fusionar el Pull Request únicamente cuando esté aprobado y las verificaciones hayan pasado.
+9. Integrar los cambios de `develop` a `main` mediante un Pull Request cuando se prepare una versión estable.
+
+### Ejemplo: crear una rama de trabajo
+
+Primero, actualizar `develop`:
+
+```bash
+git switch develop
+git pull origin develop
+```
+
+Crear una rama para una nueva funcionalidad:
+
+```bash
+git switch -c feature/login
+```
+
+Realizar los cambios correspondientes y guardarlos:
+
+```bash
+git add .
+git commit -m "feat: implementar login"
+```
+
+Subir la rama a GitHub:
+
+```bash
+git push -u origin feature/login
+```
+
+Finalmente, ingresar a GitHub y crear un Pull Request desde `feature/login` hacia `develop`.
+
+### Flujo de integración
+
+```text
+develop
+   |
+   | Crear rama de trabajo
+   v
+feature/nombre-tarea
+   |
+   | Desarrollo y commits
+   v
+Pull Request hacia develop
+   |
+   | Revisión + tests
+   v
+develop
+   |
+   | Validación de versión estable
+   v
+Pull Request hacia main
+   |
+   | Revisión + tests
+   v
+main
+```
+
+## Protección de ramas
+
+Las ramas `main` y `develop` tienen configuradas reglas de protección en GitHub.
+
+Estas reglas establecen:
+
+- Los cambios deben incorporarse mediante Pull Requests.
+- Se requiere al menos una aprobación para fusionar cambios.
+- Se bloquean los force pushes.
+- Se restringe la eliminación de las ramas protegidas.
+
+Las reglas deben respetarse incluso cuando un integrante tenga permisos de administración.
+
+## Integración continua (CI)
+
+Trama utiliza GitHub Actions para ejecutar verificaciones automáticas sobre los Pull Requests dirigidos a `develop` y `main`.
+
+El workflow se encuentra en:
+
+`.github/workflows/ci.yml`
+
+### Backend
+
+Se utiliza Maven para ejecutar los tests:
+
+```bash
+./mvnw test
+```
+
+En Windows, el comando equivalente es:
+
+```powershell
+.\mvnw.cmd test
+```
+
+### Frontend
+
+El workflow está preparado para ejecutar:
+
+```bash
+npm ci
+npm run lint
+npm test
+```
+
+Los comandos definitivos se verificarán cuando esté disponible el proyecto frontend.
+
+### Estado de la CI
+
+- **Backend:** el CI levanta un MySQL de prueba y corre todos los tests en cada Pull Request.
+- **Frontend:** el job se activa automáticamente cuando exista `frontend/package.json`.
+
+### Configuración de Git Hooks
+
+Trama utiliza un hook local `pre-push` para verificar los tests del backend antes de subir modificaciones a GitHub.
+
+#### Activación
+
+Cada integrante debe activarlo **una vez** por cada copia local del repositorio. Desde la carpeta raíz de Trama:
+
+```bash
+git config core.hooksPath .githooks
+```
+
+#### Requisitos para pushear cambios del backend
+
+- MySQL levantado: `docker compose up -d`
+- Archivo `.env` en la raíz (copiado de `.env.example` y completado). El hook lo lee solo.
+
+#### Funcionamiento
+
+- Si entre los commits que se suben hay cambios en `backend/`, corre `./mvnw -B clean test`.
+- Si los tests pasan, el push sigue. Si fallan, el push se cancela.
+- Si no hay cambios en `backend/`, el push sigue sin correr Maven.
+
+El hook está en `.githooks/pre-push`.
+
+**Nota:** los hooks se ejecutan localmente y complementan las verificaciones de GitHub Actions. No reemplazan los checks obligatorios de los Pull Requests.
+
+## Ejecución local
+
+### Backend
+
+Cuando esté disponible el proyecto Spring Boot, se podrá iniciar desde la carpeta `backend` utilizando Maven Wrapper.
+
+En Windows:
+
+```powershell
+cd backend
+.\mvnw.cmd spring-boot:run
+```
+
+#### 1. Variables de entorno
+
+Copiar `.env.example` como `.env` en la raíz del repo y completar los valores:
+
+```
+MYSQL_PASSWORD=...
+MYSQL_ROOT_PASSWORD=...
+JWT_SECRET=...
+```
+
+`JWT_SECRET` tiene que tener al menos 32 caracteres. Se puede generar con `openssl rand -base64 48`. El `.env` nunca se sube al repo.
+
+#### 2. Levantar MySQL
+
+Con Docker Desktop abierto, desde la raíz:
+
+```bash
+docker compose up -d
+```
+
+Conexión: `jdbc:mysql://localhost:3307/trama`, usuario `trama`, contraseña la de `MYSQL_PASSWORD`.
+
+Para apagarlo: `docker compose stop`. Ojo: `docker compose down -v` borra los datos.
+
+#### 3. Levantar el backend
+
+```bash
+cd backend
+./mvnw spring-boot:run      # macOS / Linux
+.\mvnw.cmd spring-boot:run  # Windows
+```
+
+### Datos mock (DataSeeder)
+
+Con el perfil `dev` (el que viene por defecto), la clase `DataSeeder` carga datos ficticios la primera vez que arranca la app. Si ya existen, no hace nada.
+
+Usuarios de prueba, todos con la contraseña `Trama1234!`:
+
+| Email | Rol |
+|---|---|
+| `tutor@trama.test` | Tutora admin de Tomi |
+| `cotutor@trama.test` | Co-tutor de Tomi |
+| `familiar@trama.test` | Familiar en los 3 proyectos |
+| `docente@trama.test` | Docente en los 3 proyectos |
+| `psico@trama.test` | Psicólogo en los 3 proyectos (en el 3.º, solo lectura por plan gratuito) |
+| `tutora.valen@trama.test` | Tutora admin de Valen |
+| `tutor.juli@trama.test` | Tutor admin de Juli |
+
+**Regla:** cada historia que crea una tabla nueva agrega sus datos mock al `DataSeeder`.
+
+Para volver a cargar los datos desde cero, vaciar las tablas y levantar la app de nuevo.
+
+
+### Frontend
+
+Los comandos de instalación y ejecución se documentarán cuando se incorpore la estructura base del frontend.
+
+## Estado del proyecto
+
+Trama se encuentra en etapa inicial de desarrollo.
+
+Actualmente se trabaja en:
+
+- Configuración del repositorio y permisos.
+- Desarrollo de la estructura base del backend.
+- Desarrollo de la estructura base del frontend.
+- Integración continua con GitHub Actions.
+- Preparación del entorno de desarrollo.
+
+## Equipo
+
+Proyecto académico desarrollado por el equipo de Trama.

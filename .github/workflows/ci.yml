@@ -1,0 +1,104 @@
+name: CI Trama
+
+on:
+  pull_request:
+    branches:
+      - develop
+      - main
+
+jobs:
+  backend-tests:
+    name: Backend Tests
+    runs-on: ubuntu-latest
+
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_DATABASE: trama_test
+          MYSQL_USER: trama
+          MYSQL_PASSWORD: test
+          MYSQL_ROOT_PASSWORD: root
+        ports:
+          - 3307:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h localhost"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=10
+
+    env:
+      MYSQL_PASSWORD: test
+      JWT_SECRET: clave-solo-para-tests-de-al-menos-32-caracteres
+
+    steps:
+      - name: Descargar repositorio
+        uses: actions/checkout@v4
+
+      - name: Comprobar proyecto backend
+        id: backend
+        shell: bash
+        run: |
+          if [ -f backend/mvnw ] && [ -f backend/pom.xml ]; then
+            echo "exists=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "::notice::Backend pendiente de integracion (se espera en backend/)"
+            echo "exists=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Configurar Java 21
+        if: steps.backend.outputs.exists == 'true'
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: maven
+
+      - name: Ejecutar tests del backend
+        if: steps.backend.outputs.exists == 'true'
+        working-directory: ./backend
+        run: |
+          chmod +x mvnw
+          ./mvnw -B test
+
+  frontend-tests:
+    name: Frontend Tests
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Descargar repositorio
+        uses: actions/checkout@v4
+
+      - name: Comprobar proyecto frontend
+        id: frontend
+        shell: bash
+        run: |
+          if [ -f frontend/package.json ] && [ -f frontend/package-lock.json ]; then
+            echo "exists=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "::notice::Frontend pendiente de integracion"
+            echo "exists=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Configurar Node.js
+        if: steps.frontend.outputs.exists == 'true'
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Instalar dependencias
+        if: steps.frontend.outputs.exists == 'true'
+        working-directory: ./frontend
+        run: npm ci
+
+      - name: Ejecutar lint
+        if: steps.frontend.outputs.exists == 'true'
+        working-directory: ./frontend
+        run: npm run lint
+
+      - name: Ejecutar tests
+        if: steps.frontend.outputs.exists == 'true'
+        working-directory: ./frontend
+        run: npm test -- --run
