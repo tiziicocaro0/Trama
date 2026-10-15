@@ -54,7 +54,7 @@ No se agregan librerías nuevas sin avisar en el grupo y que Ana (back) o Zoe (f
 
 ```
 trama/
-├── demo/                   # backend Spring Boot (nombre actual)
+├── backend/                # backend Spring Boot
 ├── frontend/
 ├── compose.yml     # MySQL local
 ├── .githooks/             # hooks del backend
@@ -219,7 +219,7 @@ Los valores los completa Zoe con los tokens de Sofía. Tailwind genera las clase
 
 ## Base de datos
 
-- El esquema se cambia **solo con migraciones Flyway** en `demo/src/main/resources/db/migration/`.
+- El esquema se cambia **solo con migraciones Flyway** en `backend/src/main/resources/db/migration/`.
 - Nombre del archivo: `V<AAAAMMDDHHMM>__descripcion.sql` (ej. `V202610071530__crear_tabla_aporte.sql`). La fecha evita choques entre 7 personas.
 - **Una migración que ya está en `develop` no se modifica nunca.** Si hay que corregir algo, se crea una nueva.
 - `spring.jpa.hibernate.ddl-auto=validate`. Hibernate no crea tablas.
@@ -252,9 +252,9 @@ Los valores los completa Zoe con los tokens de Sofía. Tailwind genera las clase
 
 ## Configuración de entornos
 
-- `demo/src/main/resources/application.properties`: configuración común, `ddl-auto=validate`, Flyway y perfil `dev` por defecto.
-- `demo/src/main/resources/application-dev.yml`: MySQL local (`localhost:${MYSQL_PORT:3306}/trama`), usuario `trama_user`, contraseña `${MYSQL_PASSWORD}`. El puerto puede configurarse mediante `MYSQL_PORT`.
-- `demo/src/main/resources/application-prod.yml`: conexión mediante `${DB_URL}`, `${DB_USERNAME}` y `${DB_PASSWORD}`; puerto `${SERVER_PORT:8080}`.
+- `backend/src/main/resources/application.properties`: configuración común, `ddl-auto=validate`, Flyway y perfil `dev` por defecto.
+- `backend/src/main/resources/application-dev.yml`: MySQL local (`localhost:${MYSQL_PORT:3307}/trama`), usuario `trama`, contraseña `${MYSQL_PASSWORD}`. El puerto puede configurarse mediante `MYSQL_PORT`.
+- `backend/src/main/resources/application-prod.yml`: conexión mediante `${DB_URL}`, `${DB_USERNAME}` y `${DB_PASSWORD}`; puerto `${SERVER_PORT:8080}`.
 - En desarrollo, `application.properties` importa opcionalmente `../.env` **respecto del directorio de ejecución**. El archivo `.env` no debe subirse a Git.
 - `JWT_SECRET` debe configurarse como variable de entorno o mediante el `.env` local, sin incorporarlo al repositorio.
 
@@ -262,8 +262,8 @@ Los valores los completa Zoe con los tokens de Sofía. Tailwind genera las clase
 
 ```bash
 docker compose up -d                 # levanta MySQL
-cd demo && ./mvnw spring-boot:run # backend en http://localhost:4002 (si SERVER_PORT no está definido)
-cd demo && ./mvnw test            # tests del backend
+cd backend && ./mvnw spring-boot:run # backend en http://localhost:4002 (si SERVER_PORT no está definido)
+cd backend && ./mvnw test            # tests del backend
 cd frontend && npm install           # instala dependencias y los hooks de Husky
 cd frontend && npm run dev           # frontend en http://localhost:5173
 cd frontend && npm test              # tests del frontend

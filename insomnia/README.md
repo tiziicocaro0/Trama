@@ -13,7 +13,7 @@ Son 35 pedidos en 6 carpetas. Cada uno trae una descripción de qué prueba y qu
 - **El backend corriendo con el perfil `dev`**, que es el que viene por defecto:
 
   ```bash
-  cd demo
+  cd backend
   ./mvnw spring-boot:run
   ```
 
@@ -180,7 +180,7 @@ docker exec trama-mysql sh -c 'mysql -uroot -p"$MYSQL_ROOT_PASSWORD" trama -e "D
 | Todo responde `401` | Los tokens están vacíos o vencidos | Correr la carpeta 1 |
 | Los pedidos de proyectos responden `400` | `proyecto_tomi` todavía dice `PEGAR-UUID-DE-TOMI` | Hacer el paso 2 |
 | Los pedidos de proyectos responden `403` con Marta | Los ids cambiaron porque se recargó el DataSeeder | Repetir el paso 2 |
-| `Error: Couldn't connect to server` | El backend no está corriendo | `cd demo && ./mvnw spring-boot:run` |
+| `Error: Couldn't connect to server` | El backend no está corriendo | `cd backend && ./mvnw spring-boot:run` |
 | Login de un usuario mock responde `429` | Quedó bloqueado por intentos fallidos | Esperar 15 minutos |
 | Los scripts no hacen nada | Insomnia es anterior a la versión 9 | Actualizar Insomnia |
 

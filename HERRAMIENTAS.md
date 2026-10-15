@@ -3,13 +3,13 @@
 Qué herramientas usamos, para qué sirve cada una en el proyecto y dónde se ven en el código.
 Para las reglas de negocio y la estructura, ver `CONTEXTO.md`.
 
-## Backend (`demo/`)
+## Backend (`backend/`)
 
 ### Java 21 + Spring Boot 3
 
 - **Qué es:** Spring Boot es el framework que arma la aplicación web en Java. Levanta el servidor, conecta las piezas entre sí (inyección de dependencias) y trae configuraciones listas.
 - **Para qué lo usamos:** es la base de todo el backend. Cada clase marcada con `@Service`, `@RestController`, `@Repository` o `@Component` la crea y la conecta Spring.
-- **Dónde está:** `demo/pom.xml` (padre `spring-boot-starter-parent`) y `DemoApplication.java`.
+- **Dónde está:** `backend/pom.xml` (padre `spring-boot-starter-parent`) y `DemoApplication.java`.
 
 ### Maven (`./mvnw`)
 
@@ -43,7 +43,7 @@ Para las reglas de negocio y la estructura, ver `CONTEXTO.md`.
 - **Para qué lo usamos:**
   - Al arrancar la app, Flyway mira qué migraciones ya se aplicaron (lo anota en la tabla `flyway_schema_history`) y corre solo las nuevas.
   - Así las 7 personas del equipo, el CI y producción tienen **exactamente la misma base**, sin pasarse scripts a mano.
-- **Dónde está:** `demo/src/main/resources/db/migration/` (hoy, de `V1` a `V6`).
+- **Dónde está:** `backend/src/main/resources/db/migration/` (hoy, de `V1` a `V6`).
 - **Reglas:**
   - Archivo nuevo con el formato `V<AAAAMMDDHHMM>__descripcion.sql` (ej. `V202610071530__crear_tabla_aporte.sql`).
   - **Nunca se edita una migración que ya está en `develop`.** Flyway guarda un checksum de cada archivo y, si cambia, la app no arranca. Para corregir algo se crea una migración nueva.

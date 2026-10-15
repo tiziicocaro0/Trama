@@ -16,6 +16,7 @@ services:
       - "3307:3306"
     volumes:
       - trama-mysql-data:/var/lib/mysql
+      - ./bd/init:/docker-entrypoint-initdb.d
 
 volumes:
   trama-mysql-data:
