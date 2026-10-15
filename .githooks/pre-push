@@ -36,6 +36,13 @@ if [ "$changed" -eq 0 ]; then
     exit 0
 fi
 
+# Cargar las variables del .env (MYSQL_PASSWORD, JWT_SECRET) que necesitan los tests.
+if [ -f .env ]; then
+    set -a
+    eval "$(tr -d '\r' < .env)"
+    set +a
+fi
+
 echo "Cambios detectados en backend. Ejecutando tests..."
 
 if [ ! -f backend/mvnw ]; then
