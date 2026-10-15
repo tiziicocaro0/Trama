@@ -14,6 +14,10 @@ export interface Proyecto {
   edad: string;
   actualizado: string;
   tieneActualizacionPendiente: boolean;
+  /** Campos opcionales del detalle: sólo se muestran si el backend los envía. */
+  diagnostico?: string | null;
+  escuela?: string | null;
+  intereses?: string | null;
 }
 
 export interface Usuario {
