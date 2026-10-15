@@ -1,5 +1,6 @@
 package com.trama.tpo.demo.service;
 
+import java.util.List;
 import java.util.UUID;
 
 import org.springframework.http.HttpStatus;
@@ -7,6 +8,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.trama.tpo.demo.entity.dto.ConfiguracionProyectoRequest;
+import com.trama.tpo.demo.entity.dto.MiProyectoDTO;
 import com.trama.tpo.demo.entity.dto.ProyectoResponse;
 import com.trama.tpo.demo.entity.proyecto.Proyecto;
 import com.trama.tpo.demo.exceptions.ApiException;
@@ -17,13 +19,23 @@ public class ProyectoService {
 
     private final ProyectoRepository proyectoRepository;
     private final PermisoService permisoService;
+    private final UsuarioActual usuarioActual;
 
     public ProyectoService(
             ProyectoRepository proyectoRepository,
-            PermisoService permisoService) {
+            PermisoService permisoService,
+            UsuarioActual usuarioActual) {
 
         this.proyectoRepository = proyectoRepository;
         this.permisoService = permisoService;
+        this.usuarioActual = usuarioActual;
+    }
+
+    // 1.10 Mis proyectos: solo los niños donde el usuario logueado es miembro
+    @Transactional(readOnly = true)
+    public List<MiProyectoDTO> listarMisProyectos() {
+
+        return proyectoRepository.findMisProyectos(usuarioActual.obtenerId());
     }
 
     // Ver los datos de un niño: solo sus miembros
