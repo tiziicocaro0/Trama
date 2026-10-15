@@ -232,7 +232,7 @@ git config core.hooksPath .githooks
 
 #### Funcionamiento
 
-- Si entre los commits que se suben hay cambios en `backend/`, corre `./mvnw -B test`.
+- Si entre los commits que se suben hay cambios en `backend/`, corre `./mvnw -B clean test`.
 - Si los tests pasan, el push sigue. Si fallan, el push se cancela.
 - Si no hay cambios en `backend/`, el push sigue sin correr Maven.
 
