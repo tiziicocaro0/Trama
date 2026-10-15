@@ -88,6 +88,30 @@ class ProyectoControllerTest {
         usuarioRepository.deleteAll(List.of(tutorAdmin, familiar, ajeno));
     }
 
+    // 1.10: cada miembro ve el niño en "Mis proyectos" con su rol
+    @Test
+    void miembroVeSuProyectoConSuRol() throws Exception {
+
+        mockMvc.perform(get("/api/proyectos")
+                .header("Authorization", token(familiar)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.length()").value(1))
+                .andExpect(jsonPath("$[0].id").value(proyecto.getId().toString()))
+                .andExpect(jsonPath("$[0].nombre").value("Niño"))
+                .andExpect(jsonPath("$[0].rol").value("FAMILIAR"))
+                .andExpect(jsonPath("$[0].esAdmin").value(false));
+    }
+
+    // 1.10: alguien que no es miembro no ve el niño en su lista
+    @Test
+    void ajenoNoVeProyectosQueNoSonSuyos() throws Exception {
+
+        mockMvc.perform(get("/api/proyectos")
+                .header("Authorization", token(ajeno)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.length()").value(0));
+    }
+
     // CRITERIO 3: un miembro ve al niño
     @Test
     void miembroVeElProyecto() throws Exception {

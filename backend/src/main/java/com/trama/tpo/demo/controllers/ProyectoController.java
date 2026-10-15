@@ -1,5 +1,6 @@
 package com.trama.tpo.demo.controllers;
 
+import java.util.List;
 import java.util.UUID;
 
 import org.springframework.http.ResponseEntity;
@@ -11,6 +12,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.trama.tpo.demo.entity.dto.ConfiguracionProyectoRequest;
+import com.trama.tpo.demo.entity.dto.MiProyectoDTO;
 import com.trama.tpo.demo.entity.dto.ProyectoResponse;
 import com.trama.tpo.demo.service.ProyectoService;
 
@@ -24,6 +26,13 @@ public class ProyectoController {
 
     public ProyectoController(ProyectoService proyectoService) {
         this.proyectoService = proyectoService;
+    }
+
+    // MIS PROYECTOS (1.10)
+    @GetMapping
+    public ResponseEntity<List<MiProyectoDTO>> listarMisProyectos() {
+
+        return ResponseEntity.ok(proyectoService.listarMisProyectos());
     }
 
     // DATOS DE UN NIÑO
