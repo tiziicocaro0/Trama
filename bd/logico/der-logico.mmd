@@ -1,0 +1,237 @@
+erDiagram
+    USUARIO {
+        uuid id PK
+        texto nombre
+        texto apellido
+        texto email UK
+        texto password_hash
+        entero intentos_fallidos "propuesta"
+        fechahora bloqueado_hasta "propuesta, nulo"
+        entero token_version "propuesta"
+        fechahora fecha_alta
+    }
+    TOKEN_RECUPERACION {
+        uuid id PK "propuesta"
+        uuid usuario_id FK
+        texto token_hash UK
+        fechahora vence_en
+        fechahora usado_en "nulo"
+    }
+    PROYECTO {
+        uuid id PK
+        texto nombre
+        texto apellido
+        texto apodo "nulo"
+        fecha fecha_nacimiento
+        texto escuela
+        texto grado
+        uuid foto_archivo_id FK "propuesta, nulo"
+        fechahora consentimiento_fecha
+        bool familiar_puede_cargar
+        bool familiar_ve_notas
+        fechahora eliminacion_programada "propuesta, nulo"
+        uuid eliminacion_pedida_por FK "propuesta, nulo"
+        fechahora creado_en
+    }
+    MEMBRESIA {
+        uuid id PK
+        uuid usuario_id FK "UK con proyecto_id"
+        uuid proyecto_id FK
+        texto rol "TUTOR FAMILIAR EDUCACION SALUD"
+        bool es_admin
+        texto especialidad "nulo"
+        texto matricula "nulo"
+        fechahora fecha_alta
+    }
+    INVITACION {
+        uuid id PK
+        uuid proyecto_id FK
+        uuid invitado_por FK
+        texto email
+        texto rol
+        texto token_hash UK
+        fechahora vence_en
+        texto estado
+    }
+    APORTE {
+        uuid id PK
+        uuid proyecto_id FK
+        uuid autor_id FK
+        texto tipo
+        texto titulo
+        cifrado contenido
+        cifrado datos "JSON"
+        texto visibilidad
+        bool archivado
+        fechahora creado_en
+        fechahora actualizado_en
+    }
+    APORTE_VERSION {
+        uuid id PK
+        uuid aporte_id FK
+        uuid autor_id FK
+        texto titulo
+        cifrado contenido
+        cifrado datos
+        fechahora creado_en
+    }
+    CONFIRMACION_APORTE {
+        uuid aporte_id PK,FK
+        uuid usuario_id PK,FK
+        fechahora fecha
+    }
+    COMENTARIO {
+        uuid id PK
+        uuid aporte_id FK
+        uuid autor_id FK
+        cifrado texto
+        fechahora fecha
+    }
+    SOLICITUD_REVISION {
+        uuid id PK
+        uuid aporte_id FK
+        uuid solicitante_id FK
+        cifrado motivo
+        texto estado
+        fechahora fecha
+    }
+    ARCHIVO {
+        uuid id PK
+        uuid proyecto_id FK
+        uuid autor_id FK
+        texto nombre_original
+        texto tipo_mime
+        entero tamano_bytes "max 5 MB"
+        texto ruta "nombre UUID"
+        fechahora fecha
+    }
+    APORTE_ARCHIVO {
+        uuid aporte_id PK,FK "propuesta"
+        uuid archivo_id PK,FK
+    }
+    EVENTO {
+        uuid id PK
+        uuid proyecto_id FK
+        uuid autor_id FK
+        uuid imagen_id FK "nulo"
+        texto tipo "COMUN o REUNION"
+        texto titulo
+        cifrado descripcion
+        fecha fecha
+        hora hora_inicio
+        hora hora_fin
+        bool recurrente
+        entero dia_semana "nulo"
+        fecha fecha_fin_recurrencia "nulo"
+        bool es_cambio
+        cifrado acta "solo REUNION"
+    }
+    EVENTO_EXCEPCION {
+        uuid id PK
+        uuid evento_id FK "UK con fecha_ocurrencia"
+        fecha fecha_ocurrencia
+        bool cancelado
+        texto titulo "nulo"
+        hora hora_inicio "nulo"
+        hora hora_fin "nulo"
+    }
+    EVENTO_PARTICIPANTE {
+        uuid evento_id PK,FK "propuesta"
+        uuid usuario_id PK,FK
+    }
+    ACUERDO {
+        uuid id PK
+        uuid reunion_id FK "evento tipo REUNION"
+        uuid responsable_id FK
+        texto descripcion
+        fecha fecha_revision
+        bool cumplido
+    }
+    REGISTRO_ACCION {
+        uuid id PK
+        uuid usuario_id FK
+        uuid proyecto_id FK
+        texto accion
+        texto seccion
+        fechahora fecha
+    }
+    NOTIFICACION {
+        uuid id PK
+        uuid usuario_id FK
+        uuid proyecto_id FK "nulo"
+        texto tipo
+        texto texto
+        texto link
+        bool leida
+        fechahora fecha
+    }
+    PREFERENCIA_NOTIFICACION {
+        uuid usuario_id PK,FK
+        texto tipo PK
+        bool por_email
+    }
+    SUSCRIPCION {
+        uuid usuario_id PK,FK
+        bool activa
+        fecha desde
+        fecha hasta "nulo"
+    }
+    PAQUETE {
+        uuid id PK
+        texto nombre
+        entero cupo_ninos
+        entero cupo_profesionales
+        decimal precio
+    }
+    INSTITUCION {
+        uuid id PK
+        uuid paquete_id FK
+        uuid responsable_id FK
+        texto nombre
+    }
+    LICENCIA_PROFESIONAL {
+        uuid id PK
+        uuid institucion_id FK "UK con usuario_id"
+        uuid usuario_id FK
+        fecha desde
+        fecha hasta "nulo"
+    }
+
+    USUARIO ||--o{ MEMBRESIA : "participa"
+    PROYECTO ||--|{ MEMBRESIA : "tiene miembros"
+    USUARIO ||--o{ TOKEN_RECUPERACION : "solicita"
+    USUARIO ||--o{ INVITACION : "envia"
+    PROYECTO ||--o{ INVITACION : "recibe"
+    PROYECTO ||--o{ APORTE : "contiene"
+    USUARIO ||--o{ APORTE : "escribe"
+    APORTE ||--o{ APORTE_VERSION : "versiones"
+    USUARIO ||--o{ APORTE_VERSION : "edita"
+    APORTE ||--o{ CONFIRMACION_APORTE : "confirmado"
+    USUARIO ||--o{ CONFIRMACION_APORTE : "confirma"
+    APORTE ||--o{ COMENTARIO : "tiene"
+    USUARIO ||--o{ COMENTARIO : "comenta"
+    APORTE ||--o{ SOLICITUD_REVISION : "tiene"
+    USUARIO ||--o{ SOLICITUD_REVISION : "pide"
+    PROYECTO ||--o{ ARCHIVO : "almacena"
+    USUARIO ||--o{ ARCHIVO : "sube"
+    APORTE ||--o{ APORTE_ARCHIVO : "adjunta"
+    ARCHIVO ||--o{ APORTE_ARCHIVO : "adjuntado"
+    ARCHIVO |o--o| PROYECTO : "es foto de"
+    PROYECTO ||--o{ EVENTO : "agenda"
+    USUARIO ||--o{ EVENTO : "crea"
+    ARCHIVO |o--o{ EVENTO : "imagen"
+    EVENTO ||--o{ EVENTO_EXCEPCION : "excepciones"
+    EVENTO ||--o{ EVENTO_PARTICIPANTE : "participantes"
+    USUARIO ||--o{ EVENTO_PARTICIPANTE : "asiste"
+    EVENTO ||--o{ ACUERDO : "genera"
+    USUARIO ||--o{ ACUERDO : "responsable"
+    USUARIO ||--o{ REGISTRO_ACCION : "realiza"
+    PROYECTO ||--o{ REGISTRO_ACCION : "sobre"
+    USUARIO ||--o{ NOTIFICACION : "recibe"
+    PROYECTO |o--o{ NOTIFICACION : "sobre"
+    USUARIO ||--o{ PREFERENCIA_NOTIFICACION : "configura"
+    USUARIO ||--o| SUSCRIPCION : "tiene"
+    PAQUETE ||--o{ INSTITUCION : "contratado"
+    USUARIO ||--o{ INSTITUCION : "administra"
+    INSTITUCION ||--o{ LICENCIA_PROFESIONAL : "otorga"
+    USUARIO ||--o{ LICENCIA_PROFESIONAL : "usa"

@@ -1,0 +1,838 @@
+{
+  "_type": "export",
+  "__export_format": 4,
+  "__export_date": "2026-10-14T00:00:00.000Z",
+  "__export_source": "trama",
+  "resources": [
+    {
+      "_id": "wrk_trama",
+      "_type": "workspace",
+      "parentId": null,
+      "name": "TRAMA API (local)",
+      "scope": "collection",
+      "description": "Pruebas manuales del backend de TRAMA. Ver insomnia/README.md."
+    },
+    {
+      "_id": "env_trama_base",
+      "_type": "environment",
+      "parentId": "wrk_trama",
+      "name": "Base Environment",
+      "data": {
+        "base_url": "http://localhost:4002/api",
+        "password_mock": "Trama1234!",
+        "proyecto_tomi": "PEGAR-UUID-DE-TOMI",
+        "proyecto_valen": "PEGAR-UUID-DE-VALEN",
+        "proyecto_juli": "PEGAR-UUID-DE-JULI",
+        "token_tutor": "",
+        "token_cotutor": "",
+        "token_familiar": "",
+        "token_docente": "",
+        "token_psico": "",
+        "token_tutora_valen": "",
+        "token_tutor_juli": "",
+        "token_prueba": "",
+        "email_prueba": "",
+        "password_prueba": "Prueba1234!"
+      }
+    },
+    {
+      "_id": "fld_login",
+      "_type": "request_group",
+      "parentId": "wrk_trama",
+      "name": "1. Login (correr primero)",
+      "description": "Loguea a los usuarios del DataSeeder y guarda sus tokens en el entorno. Correr toda la carpeta antes de las demás.",
+      "metaSortKey": 100
+    },
+    {
+      "_id": "req_login_tutor",
+      "_type": "request",
+      "parentId": "fld_login",
+      "name": "Login Marta (tutor)",
+      "method": "POST",
+      "url": "{{ _.base_url }}/auth/login",
+      "description": "Login de Marta, tutora admin de Tomi. Guarda el token en `token_tutor`.\n\n**Respuesta esperada:** `200`",
+      "metaSortKey": 110,
+      "authentication": {},
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"email\": \"tutor@trama.test\",\n  \"password\": \"{{ _.password_mock }}\"\n}"
+      },
+      "afterResponseScript": "insomnia.test('Responde 200', () => {\n  insomnia.expect(insomnia.response.code).to.equal(200);\n});\nconst body = insomnia.response.json();\nif (body.access_token) {\n  insomnia.environment.set('token_tutor', body.access_token);\n}\n"
+    },
+    {
+      "_id": "req_login_cotutor",
+      "_type": "request",
+      "parentId": "fld_login",
+      "name": "Login Jorge (cotutor)",
+      "method": "POST",
+      "url": "{{ _.base_url }}/auth/login",
+      "description": "Login de Jorge, co-tutor admin de Tomi. Guarda el token en `token_cotutor`.\n\n**Respuesta esperada:** `200`",
+      "metaSortKey": 120,
+      "authentication": {},
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"email\": \"cotutor@trama.test\",\n  \"password\": \"{{ _.password_mock }}\"\n}"
+      },
+      "afterResponseScript": "insomnia.test('Responde 200', () => {\n  insomnia.expect(insomnia.response.code).to.equal(200);\n});\nconst body = insomnia.response.json();\nif (body.access_token) {\n  insomnia.environment.set('token_cotutor', body.access_token);\n}\n"
+    },
+    {
+      "_id": "req_login_familiar",
+      "_type": "request",
+      "parentId": "fld_login",
+      "name": "Login Elena (familiar)",
+      "method": "POST",
+      "url": "{{ _.base_url }}/auth/login",
+      "description": "Login de Elena, familiar en los 3 proyectos. Guarda el token en `token_familiar`.\n\n**Respuesta esperada:** `200`",
+      "metaSortKey": 130,
+      "authentication": {},
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"email\": \"familiar@trama.test\",\n  \"password\": \"{{ _.password_mock }}\"\n}"
+      },
+      "afterResponseScript": "insomnia.test('Responde 200', () => {\n  insomnia.expect(insomnia.response.code).to.equal(200);\n});\nconst body = insomnia.response.json();\nif (body.access_token) {\n  insomnia.environment.set('token_familiar', body.access_token);\n}\n"
+    },
+    {
+      "_id": "req_login_docente",
+      "_type": "request",
+      "parentId": "fld_login",
+      "name": "Login María (docente)",
+      "method": "POST",
+      "url": "{{ _.base_url }}/auth/login",
+      "description": "Login de María, docente en los 3 proyectos. Guarda el token en `token_docente`.\n\n**Respuesta esperada:** `200`",
+      "metaSortKey": 140,
+      "authentication": {},
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"email\": \"docente@trama.test\",\n  \"password\": \"{{ _.password_mock }}\"\n}"
+      },
+      "afterResponseScript": "insomnia.test('Responde 200', () => {\n  insomnia.expect(insomnia.response.code).to.equal(200);\n});\nconst body = insomnia.response.json();\nif (body.access_token) {\n  insomnia.environment.set('token_docente', body.access_token);\n}\n"
+    },
+    {
+      "_id": "req_login_psico",
+      "_type": "request",
+      "parentId": "fld_login",
+      "name": "Login Diego (psico)",
+      "method": "POST",
+      "url": "{{ _.base_url }}/auth/login",
+      "description": "Login de Diego, psicólogo en los 3 proyectos. Guarda el token en `token_psico`.\n\n**Respuesta esperada:** `200`",
+      "metaSortKey": 150,
+      "authentication": {},
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"email\": \"psico@trama.test\",\n  \"password\": \"{{ _.password_mock }}\"\n}"
+      },
+      "afterResponseScript": "insomnia.test('Responde 200', () => {\n  insomnia.expect(insomnia.response.code).to.equal(200);\n});\nconst body = insomnia.response.json();\nif (body.access_token) {\n  insomnia.environment.set('token_psico', body.access_token);\n}\n"
+    },
+    {
+      "_id": "req_login_tutora_valen",
+      "_type": "request",
+      "parentId": "fld_login",
+      "name": "Login Laura (tutora_valen)",
+      "method": "POST",
+      "url": "{{ _.base_url }}/auth/login",
+      "description": "Login de Laura, tutora admin de Valen. Guarda el token en `token_tutora_valen`.\n\n**Respuesta esperada:** `200`",
+      "metaSortKey": 160,
+      "authentication": {},
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"email\": \"tutora.valen@trama.test\",\n  \"password\": \"{{ _.password_mock }}\"\n}"
+      },
+      "afterResponseScript": "insomnia.test('Responde 200', () => {\n  insomnia.expect(insomnia.response.code).to.equal(200);\n});\nconst body = insomnia.response.json();\nif (body.access_token) {\n  insomnia.environment.set('token_tutora_valen', body.access_token);\n}\n"
+    },
+    {
+      "_id": "req_login_tutor_juli",
+      "_type": "request",
+      "parentId": "fld_login",
+      "name": "Login Pablo (tutor_juli)",
+      "method": "POST",
+      "url": "{{ _.base_url }}/auth/login",
+      "description": "Login de Pablo, tutor admin de Juli (ajeno a Tomi). Guarda el token en `token_tutor_juli`.\n\n**Respuesta esperada:** `200`",
+      "metaSortKey": 170,
+      "authentication": {},
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"email\": \"tutor.juli@trama.test\",\n  \"password\": \"{{ _.password_mock }}\"\n}"
+      },
+      "afterResponseScript": "insomnia.test('Responde 200', () => {\n  insomnia.expect(insomnia.response.code).to.equal(200);\n});\nconst body = insomnia.response.json();\nif (body.access_token) {\n  insomnia.environment.set('token_tutor_juli', body.access_token);\n}\n"
+    },
+    {
+      "_id": "req_login_inexistente",
+      "_type": "request",
+      "parentId": "fld_login",
+      "name": "Login con email inexistente",
+      "method": "POST",
+      "url": "{{ _.base_url }}/auth/login",
+      "description": "Un email que no está registrado. No suma intentos fallidos a nadie.\n\n**Respuesta esperada:** `401`",
+      "metaSortKey": 180,
+      "authentication": {},
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"email\": \"nadie@trama.test\",\n  \"password\": \"{{ _.password_mock }}\"\n}"
+      },
+      "afterResponseScript": "insomnia.test('Responde 401', () => {\n  insomnia.expect(insomnia.response.code).to.equal(401);\n});\n"
+    },
+    {
+      "_id": "req_login_email_invalido",
+      "_type": "request",
+      "parentId": "fld_login",
+      "name": "Login con email mal formado",
+      "method": "POST",
+      "url": "{{ _.base_url }}/auth/login",
+      "description": "El email no tiene formato válido: lo rechaza Bean Validation (`@Email`).\n\n**Respuesta esperada:** `400`",
+      "metaSortKey": 190,
+      "authentication": {},
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"email\": \"esto-no-es-un-email\",\n  \"password\": \"{{ _.password_mock }}\"\n}"
+      },
+      "afterResponseScript": "insomnia.test('Responde 400', () => {\n  insomnia.expect(insomnia.response.code).to.equal(400);\n});\n"
+    },
+    {
+      "_id": "req_login_vacio",
+      "_type": "request",
+      "parentId": "fld_login",
+      "name": "Login sin datos",
+      "method": "POST",
+      "url": "{{ _.base_url }}/auth/login",
+      "description": "Cuerpo vacío: `@NotBlank` en email y contraseña.\n\n**Respuesta esperada:** `400`",
+      "metaSortKey": 200,
+      "authentication": {},
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "body": {
+        "mimeType": "application/json",
+        "text": "{}"
+      },
+      "afterResponseScript": "insomnia.test('Responde 400', () => {\n  insomnia.expect(insomnia.response.code).to.equal(400);\n});\n"
+    },
+    {
+      "_id": "fld_registro",
+      "_type": "request_group",
+      "parentId": "wrk_trama",
+      "name": "2. Registro",
+      "description": "Alta de usuarios. El registro exitoso genera un email nuevo en cada envío.",
+      "metaSortKey": 300
+    },
+    {
+      "_id": "req_registro_ok",
+      "_type": "request",
+      "parentId": "fld_registro",
+      "name": "Registro exitoso (email nuevo)",
+      "method": "POST",
+      "url": "{{ _.base_url }}/auth/registro",
+      "description": "Crea un usuario con un email aleatorio (lo genera el script previo y lo guarda en `email_prueba`). Guarda el token en `token_prueba`. Este usuario no es miembro de ningún proyecto y se usa en la carpeta 6 (bloqueo).\n\n**Respuesta esperada:** `201`",
+      "metaSortKey": 310,
+      "authentication": {},
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"nombre\": \"Usuario\",\n  \"apellido\": \"Prueba\",\n  \"email\": \"{{ _.email_prueba }}\",\n  \"password\": \"{{ _.password_prueba }}\"\n}"
+      },
+      "afterResponseScript": "insomnia.test('Responde 201', () => {\n  insomnia.expect(insomnia.response.code).to.equal(201);\n});\nconst body = insomnia.response.json();\nif (body.access_token) {\n  insomnia.environment.set('token_prueba', body.access_token);\n}\n",
+      "preRequestScript": "insomnia.environment.set('email_prueba', 'prueba.' + Date.now() + '@trama.test');\n"
+    },
+    {
+      "_id": "req_registro_duplicado",
+      "_type": "request",
+      "parentId": "fld_registro",
+      "name": "Registro con email ya usado",
+      "method": "POST",
+      "url": "{{ _.base_url }}/auth/registro",
+      "description": "`tutor@trama.test` ya existe (DataSeeder). Código `EMAIL_EN_USO`.\n\n**Respuesta esperada:** `409`",
+      "metaSortKey": 320,
+      "authentication": {},
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"nombre\": \"Otra\",\n  \"apellido\": \"Persona\",\n  \"email\": \"tutor@trama.test\",\n  \"password\": \"Prueba1234!\"\n}"
+      },
+      "afterResponseScript": "insomnia.test('Responde 409', () => {\n  insomnia.expect(insomnia.response.code).to.equal(409);\n});\n"
+    },
+    {
+      "_id": "req_registro_debil",
+      "_type": "request",
+      "parentId": "fld_registro",
+      "name": "Registro con contraseña débil",
+      "method": "POST",
+      "url": "{{ _.base_url }}/auth/registro",
+      "description": "La contraseña no tiene mayúscula, número ni carácter especial. Código `DATOS_INVALIDOS`.\n\n**Respuesta esperada:** `400`",
+      "metaSortKey": 330,
+      "authentication": {},
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"nombre\": \"Usuario\",\n  \"apellido\": \"Prueba\",\n  \"email\": \"debil@trama.test\",\n  \"password\": \"abcdefgh\"\n}"
+      },
+      "afterResponseScript": "insomnia.test('Responde 400', () => {\n  insomnia.expect(insomnia.response.code).to.equal(400);\n});\n"
+    },
+    {
+      "_id": "req_registro_vacio",
+      "_type": "request",
+      "parentId": "fld_registro",
+      "name": "Registro sin datos",
+      "method": "POST",
+      "url": "{{ _.base_url }}/auth/registro",
+      "description": "Todos los campos son obligatorios.\n\n**Respuesta esperada:** `400`",
+      "metaSortKey": 340,
+      "authentication": {},
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "body": {
+        "mimeType": "application/json",
+        "text": "{}"
+      },
+      "afterResponseScript": "insomnia.test('Responde 400', () => {\n  insomnia.expect(insomnia.response.code).to.equal(400);\n});\n"
+    },
+    {
+      "_id": "fld_perfil",
+      "_type": "request_group",
+      "parentId": "wrk_trama",
+      "name": "3. Mi perfil (/auth/yo)",
+      "description": "Datos del usuario logueado. Nunca devuelve la contraseña.",
+      "metaSortKey": 440
+    },
+    {
+      "_id": "req_yo_tutor",
+      "_type": "request",
+      "parentId": "fld_perfil",
+      "name": "Mi perfil como Marta",
+      "method": "GET",
+      "url": "{{ _.base_url }}/auth/yo",
+      "description": "Devuelve id, nombre, apellido y email de Marta. No incluye `passwordHash`.\n\n**Respuesta esperada:** `200`",
+      "metaSortKey": 450,
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.token_tutor }}",
+        "prefix": "Bearer"
+      },
+      "headers": [],
+      "body": {},
+      "afterResponseScript": "insomnia.test('Responde 200', () => {\n  insomnia.expect(insomnia.response.code).to.equal(200);\n});\n"
+    },
+    {
+      "_id": "req_yo_sin_token",
+      "_type": "request",
+      "parentId": "fld_perfil",
+      "name": "Mi perfil sin token",
+      "method": "GET",
+      "url": "{{ _.base_url }}/auth/yo",
+      "description": "Sin header `Authorization`. Código `NO_AUTENTICADO`.\n\n**Respuesta esperada:** `401`",
+      "metaSortKey": 460,
+      "authentication": {},
+      "headers": [],
+      "body": {},
+      "afterResponseScript": "insomnia.test('Responde 401', () => {\n  insomnia.expect(insomnia.response.code).to.equal(401);\n});\n"
+    },
+    {
+      "_id": "req_yo_token_invalido",
+      "_type": "request",
+      "parentId": "fld_perfil",
+      "name": "Mi perfil con token inventado",
+      "method": "GET",
+      "url": "{{ _.base_url }}/auth/yo",
+      "description": "Un token mal firmado se rechaza.\n\n**Respuesta esperada:** `401`",
+      "metaSortKey": 470,
+      "authentication": {
+        "type": "bearer",
+        "token": "token.inventado.123",
+        "prefix": "Bearer"
+      },
+      "headers": [],
+      "body": {},
+      "afterResponseScript": "insomnia.test('Responde 401', () => {\n  insomnia.expect(insomnia.response.code).to.equal(401);\n});\n"
+    },
+    {
+      "_id": "fld_ver",
+      "_type": "request_group",
+      "parentId": "wrk_trama",
+      "name": "4. Ver un niño (criterios 3 y 5)",
+      "description": "GET /proyectos/{id}: solo lo ven los miembros del proyecto.",
+      "metaSortKey": 570
+    },
+    {
+      "_id": "req_ver_tutor",
+      "_type": "request",
+      "parentId": "fld_ver",
+      "name": "Marta ve a Tomi",
+      "method": "GET",
+      "url": "{{ _.base_url }}/proyectos/{{ _.proyecto_tomi }}",
+      "description": "Marta es tutora de Tomi.\n\n**Respuesta esperada:** `200`",
+      "metaSortKey": 580,
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.token_tutor }}",
+        "prefix": "Bearer"
+      },
+      "headers": [],
+      "body": {},
+      "afterResponseScript": "insomnia.test('Responde 200', () => {\n  insomnia.expect(insomnia.response.code).to.equal(200);\n});\n"
+    },
+    {
+      "_id": "req_ver_familiar",
+      "_type": "request",
+      "parentId": "fld_ver",
+      "name": "Elena (familiar) ve a Tomi",
+      "method": "GET",
+      "url": "{{ _.base_url }}/proyectos/{{ _.proyecto_tomi }}",
+      "description": "Cualquier rol miembro puede ver.\n\n**Respuesta esperada:** `200`",
+      "metaSortKey": 590,
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.token_familiar }}",
+        "prefix": "Bearer"
+      },
+      "headers": [],
+      "body": {},
+      "afterResponseScript": "insomnia.test('Responde 200', () => {\n  insomnia.expect(insomnia.response.code).to.equal(200);\n});\n"
+    },
+    {
+      "_id": "req_ver_psico_juli",
+      "_type": "request",
+      "parentId": "fld_ver",
+      "name": "Diego (psico) ve a Juli",
+      "method": "GET",
+      "url": "{{ _.base_url }}/proyectos/{{ _.proyecto_juli }}",
+      "description": "Diego está en 3 proyectos. Juli le queda en solo lectura por el plan gratuito, pero ver sí puede.\n\n**Respuesta esperada:** `200`",
+      "metaSortKey": 600,
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.token_psico }}",
+        "prefix": "Bearer"
+      },
+      "headers": [],
+      "body": {},
+      "afterResponseScript": "insomnia.test('Responde 200', () => {\n  insomnia.expect(insomnia.response.code).to.equal(200);\n});\n"
+    },
+    {
+      "_id": "req_ver_ajeno",
+      "_type": "request",
+      "parentId": "fld_ver",
+      "name": "Pablo (ajeno) intenta ver a Tomi",
+      "method": "GET",
+      "url": "{{ _.base_url }}/proyectos/{{ _.proyecto_tomi }}",
+      "description": "Pablo no es miembro de Tomi. Criterio 3: la app lo rechaza (`ACCESO_DENEGADO`).\n\n**Respuesta esperada:** `403`",
+      "metaSortKey": 610,
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.token_tutor_juli }}",
+        "prefix": "Bearer"
+      },
+      "headers": [],
+      "body": {},
+      "afterResponseScript": "insomnia.test('Responde 403', () => {\n  insomnia.expect(insomnia.response.code).to.equal(403);\n});\n"
+    },
+    {
+      "_id": "req_ver_nuevo",
+      "_type": "request",
+      "parentId": "fld_ver",
+      "name": "Usuario sin proyectos intenta ver a Tomi",
+      "method": "GET",
+      "url": "{{ _.base_url }}/proyectos/{{ _.proyecto_tomi }}",
+      "description": "Usa el usuario del registro (carpeta 2). Tampoco es miembro.\n\n**Respuesta esperada:** `403`",
+      "metaSortKey": 620,
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.token_prueba }}",
+        "prefix": "Bearer"
+      },
+      "headers": [],
+      "body": {},
+      "afterResponseScript": "insomnia.test('Responde 403', () => {\n  insomnia.expect(insomnia.response.code).to.equal(403);\n});\n"
+    },
+    {
+      "_id": "req_ver_sin_token",
+      "_type": "request",
+      "parentId": "fld_ver",
+      "name": "Ver a Tomi sin token",
+      "method": "GET",
+      "url": "{{ _.base_url }}/proyectos/{{ _.proyecto_tomi }}",
+      "description": "Sin sesión no se ve nada.\n\n**Respuesta esperada:** `401`",
+      "metaSortKey": 630,
+      "authentication": {},
+      "headers": [],
+      "body": {},
+      "afterResponseScript": "insomnia.test('Responde 401', () => {\n  insomnia.expect(insomnia.response.code).to.equal(401);\n});\n"
+    },
+    {
+      "_id": "req_ver_uuid_inventado",
+      "_type": "request",
+      "parentId": "fld_ver",
+      "name": "Ver un UUID inventado",
+      "method": "GET",
+      "url": "{{ _.base_url }}/proyectos/00000000-0000-4000-8000-000000000000",
+      "description": "Criterio 5: con un id que no existe responde 403, no 404. Así la API no revela qué niños existen.\n\n**Respuesta esperada:** `403`",
+      "metaSortKey": 640,
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.token_tutor }}",
+        "prefix": "Bearer"
+      },
+      "headers": [],
+      "body": {},
+      "afterResponseScript": "insomnia.test('Responde 403', () => {\n  insomnia.expect(insomnia.response.code).to.equal(403);\n});\n"
+    },
+    {
+      "_id": "req_ver_id_numerico",
+      "_type": "request",
+      "parentId": "fld_ver",
+      "name": "Ver con id numérico (/proyectos/1)",
+      "method": "GET",
+      "url": "{{ _.base_url }}/proyectos/1",
+      "description": "Criterio 5: los ids son UUID. Un id numérico es un dato inválido (`DATOS_INVALIDOS`).\n\n**Respuesta esperada:** `400`",
+      "metaSortKey": 650,
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.token_tutor }}",
+        "prefix": "Bearer"
+      },
+      "headers": [],
+      "body": {},
+      "afterResponseScript": "insomnia.test('Responde 400', () => {\n  insomnia.expect(insomnia.response.code).to.equal(400);\n});\n"
+    },
+    {
+      "_id": "fld_config",
+      "_type": "request_group",
+      "parentId": "wrk_trama",
+      "name": "5. Configuración del niño (criterio 4)",
+      "description": "PUT /proyectos/{id}/configuracion: solo un tutor administrador. Correr 'Restaurar' al final para dejar los valores originales.",
+      "metaSortKey": 750
+    },
+    {
+      "_id": "req_cfg_tutor",
+      "_type": "request",
+      "parentId": "fld_config",
+      "name": "Marta (tutora admin) cambia la configuración",
+      "method": "PUT",
+      "url": "{{ _.base_url }}/proyectos/{{ _.proyecto_tomi }}/configuracion",
+      "description": "Marta es tutora admin: puede. La respuesta muestra los valores nuevos.\n\n**Respuesta esperada:** `200`",
+      "metaSortKey": 760,
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.token_tutor }}",
+        "prefix": "Bearer"
+      },
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"familiarPuedeCargar\": false,\n  \"familiarVeNotas\": true\n}"
+      },
+      "afterResponseScript": "insomnia.test('Responde 200', () => {\n  insomnia.expect(insomnia.response.code).to.equal(200);\n});\n"
+    },
+    {
+      "_id": "req_cfg_cotutor",
+      "_type": "request",
+      "parentId": "fld_config",
+      "name": "Jorge (co-tutor admin) cambia la configuración",
+      "method": "PUT",
+      "url": "{{ _.base_url }}/proyectos/{{ _.proyecto_tomi }}/configuracion",
+      "description": "Un co-tutor con `esAdmin = true` también puede.\n\n**Respuesta esperada:** `200`",
+      "metaSortKey": 770,
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.token_cotutor }}",
+        "prefix": "Bearer"
+      },
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"familiarPuedeCargar\": false,\n  \"familiarVeNotas\": true\n}"
+      },
+      "afterResponseScript": "insomnia.test('Responde 200', () => {\n  insomnia.expect(insomnia.response.code).to.equal(200);\n});\n"
+    },
+    {
+      "_id": "req_cfg_familiar",
+      "_type": "request",
+      "parentId": "fld_config",
+      "name": "Elena (familiar) intenta cambiarla",
+      "method": "PUT",
+      "url": "{{ _.base_url }}/proyectos/{{ _.proyecto_tomi }}/configuracion",
+      "description": "Es miembro pero no admin: `ACCESO_DENEGADO`.\n\n**Respuesta esperada:** `403`",
+      "metaSortKey": 780,
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.token_familiar }}",
+        "prefix": "Bearer"
+      },
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"familiarPuedeCargar\": false,\n  \"familiarVeNotas\": true\n}"
+      },
+      "afterResponseScript": "insomnia.test('Responde 403', () => {\n  insomnia.expect(insomnia.response.code).to.equal(403);\n});\n"
+    },
+    {
+      "_id": "req_cfg_docente",
+      "_type": "request",
+      "parentId": "fld_config",
+      "name": "María (docente) intenta cambiarla",
+      "method": "PUT",
+      "url": "{{ _.base_url }}/proyectos/{{ _.proyecto_tomi }}/configuracion",
+      "description": "Es miembro pero no admin.\n\n**Respuesta esperada:** `403`",
+      "metaSortKey": 790,
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.token_docente }}",
+        "prefix": "Bearer"
+      },
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"familiarPuedeCargar\": false,\n  \"familiarVeNotas\": true\n}"
+      },
+      "afterResponseScript": "insomnia.test('Responde 403', () => {\n  insomnia.expect(insomnia.response.code).to.equal(403);\n});\n"
+    },
+    {
+      "_id": "req_cfg_psico",
+      "_type": "request",
+      "parentId": "fld_config",
+      "name": "Diego (psico) intenta cambiarla",
+      "method": "PUT",
+      "url": "{{ _.base_url }}/proyectos/{{ _.proyecto_tomi }}/configuracion",
+      "description": "Es miembro pero no admin.\n\n**Respuesta esperada:** `403`",
+      "metaSortKey": 800,
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.token_psico }}",
+        "prefix": "Bearer"
+      },
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"familiarPuedeCargar\": false,\n  \"familiarVeNotas\": true\n}"
+      },
+      "afterResponseScript": "insomnia.test('Responde 403', () => {\n  insomnia.expect(insomnia.response.code).to.equal(403);\n});\n"
+    },
+    {
+      "_id": "req_cfg_ajeno",
+      "_type": "request",
+      "parentId": "fld_config",
+      "name": "Pablo (ajeno) intenta cambiarla",
+      "method": "PUT",
+      "url": "{{ _.base_url }}/proyectos/{{ _.proyecto_tomi }}/configuracion",
+      "description": "Es tutor admin, pero de Juli, no de Tomi.\n\n**Respuesta esperada:** `403`",
+      "metaSortKey": 810,
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.token_tutor_juli }}",
+        "prefix": "Bearer"
+      },
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"familiarPuedeCargar\": false,\n  \"familiarVeNotas\": true\n}"
+      },
+      "afterResponseScript": "insomnia.test('Responde 403', () => {\n  insomnia.expect(insomnia.response.code).to.equal(403);\n});\n"
+    },
+    {
+      "_id": "req_cfg_vacio",
+      "_type": "request",
+      "parentId": "fld_config",
+      "name": "Marta envía la configuración sin campos",
+      "method": "PUT",
+      "url": "{{ _.base_url }}/proyectos/{{ _.proyecto_tomi }}/configuracion",
+      "description": "`@NotNull` en los dos campos: `DATOS_INVALIDOS`.\n\n**Respuesta esperada:** `400`",
+      "metaSortKey": 820,
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.token_tutor }}",
+        "prefix": "Bearer"
+      },
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "body": {
+        "mimeType": "application/json",
+        "text": "{}"
+      },
+      "afterResponseScript": "insomnia.test('Responde 400', () => {\n  insomnia.expect(insomnia.response.code).to.equal(400);\n});\n"
+    },
+    {
+      "_id": "req_cfg_restaurar",
+      "_type": "request",
+      "parentId": "fld_config",
+      "name": "Restaurar la configuración original",
+      "method": "PUT",
+      "url": "{{ _.base_url }}/proyectos/{{ _.proyecto_tomi }}/configuracion",
+      "description": "Vuelve a `familiarPuedeCargar = true` y `familiarVeNotas = false`.\n\n**Respuesta esperada:** `200`",
+      "metaSortKey": 830,
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.token_tutor }}",
+        "prefix": "Bearer"
+      },
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"familiarPuedeCargar\": true,\n  \"familiarVeNotas\": false\n}"
+      },
+      "afterResponseScript": "insomnia.test('Responde 200', () => {\n  insomnia.expect(insomnia.response.code).to.equal(200);\n});\n"
+    },
+    {
+      "_id": "fld_bloqueo",
+      "_type": "request_group",
+      "parentId": "wrk_trama",
+      "name": "6. Bloqueo de cuenta (5 intentos)",
+      "description": "Usa el usuario creado en 'Registro exitoso'. NUNCA usar un usuario del DataSeeder: queda bloqueado 15 minutos.",
+      "metaSortKey": 930
+    },
+    {
+      "_id": "req_bloqueo_fallido",
+      "_type": "request",
+      "parentId": "fld_bloqueo",
+      "name": "Contraseña incorrecta (enviar 5 veces)",
+      "method": "POST",
+      "url": "{{ _.base_url }}/auth/login",
+      "description": "Enviar este request 5 veces seguidas. Los intentos 1 a 4 responden `401`. El 5.º responde `429 CUENTA_BLOQUEADA`. El test de abajo espera 401: en el 5.º intento va a fallar, y eso es lo correcto.\n\n**Respuesta esperada:** `401`",
+      "metaSortKey": 940,
+      "authentication": {},
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"email\": \"{{ _.email_prueba }}\",\n  \"password\": \"Incorrecta1!\"\n}"
+      },
+      "afterResponseScript": "insomnia.test('Responde 401', () => {\n  insomnia.expect(insomnia.response.code).to.equal(401);\n});\n"
+    },
+    {
+      "_id": "req_bloqueo_correcto",
+      "_type": "request",
+      "parentId": "fld_bloqueo",
+      "name": "Contraseña correcta con la cuenta bloqueada",
+      "method": "POST",
+      "url": "{{ _.base_url }}/auth/login",
+      "description": "Después de los 5 intentos, aunque la contraseña sea correcta, la cuenta sigue bloqueada durante 15 minutos.\n\n**Respuesta esperada:** `429`",
+      "metaSortKey": 950,
+      "authentication": {},
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"email\": \"{{ _.email_prueba }}\",\n  \"password\": \"{{ _.password_prueba }}\"\n}"
+      },
+      "afterResponseScript": "insomnia.test('Responde 429', () => {\n  insomnia.expect(insomnia.response.code).to.equal(429);\n});\n"
+    }
+  ]
+}

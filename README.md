@@ -227,6 +227,59 @@ cd backend
 .\mvnw.cmd spring-boot:run
 ```
 
+#### 1. Variables de entorno
+
+Copiar `.env.example` como `.env` en la raíz del repo y completar los valores:
+
+```
+MYSQL_PASSWORD=...
+MYSQL_ROOT_PASSWORD=...
+JWT_SECRET=...
+```
+
+`JWT_SECRET` tiene que tener al menos 32 caracteres. Se puede generar con `openssl rand -base64 48`. El `.env` nunca se sube al repo.
+
+#### 2. Levantar MySQL
+
+Con Docker Desktop abierto, desde la raíz:
+
+```bash
+docker compose up -d
+```
+
+Conexión: `jdbc:mysql://localhost:3307/trama`, usuario `trama`, contraseña la de `MYSQL_PASSWORD`.
+
+Para apagarlo: `docker compose stop`. Ojo: `docker compose down -v` borra los datos.
+
+#### 3. Levantar el backend
+
+```bash
+cd backend
+./mvnw spring-boot:run      # macOS / Linux
+.\mvnw.cmd spring-boot:run  # Windows
+```
+
+### Datos mock (DataSeeder)
+
+Con el perfil `dev` (el que viene por defecto), la clase `DataSeeder` carga datos ficticios la primera vez que arranca la app. Si ya existen, no hace nada.
+
+Usuarios de prueba, todos con la contraseña `Trama1234!`:
+
+| Email | Rol |
+|---|---|
+| `tutor@trama.test` | Tutora admin de Tomi |
+| `cotutor@trama.test` | Co-tutor de Tomi |
+| `familiar@trama.test` | Familiar en los 3 proyectos |
+| `docente@trama.test` | Docente en los 3 proyectos |
+| `psico@trama.test` | Psicólogo en los 3 proyectos (en el 3.º, solo lectura por plan gratuito) |
+| `tutora.valen@trama.test` | Tutora admin de Valen |
+| `tutor.juli@trama.test` | Tutor admin de Juli |
+
+**Regla:** cada historia que crea una tabla nueva agrega sus datos mock al `DataSeeder`.
+
+Para volver a cargar los datos desde cero, vaciar las tablas y levantar la app de nuevo.
+
+
 ### Frontend
 
 Los comandos de instalación y ejecución se documentarán cuando se incorpore la estructura base del frontend.
