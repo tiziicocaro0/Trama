@@ -50,7 +50,7 @@ Trama/
 - `.github/workflows/`: configuración de integración continua.
 - `README.md`: documentación del proyecto.
 
-**Nota:** los proyectos base del backend y frontend todavía están en preparación.
+**Nota:** el proyecto base del frontend todavía está en preparación.
 
 ## Clonar el repositorio
 
@@ -210,9 +210,35 @@ Los comandos definitivos se verificarán cuando esté disponible el proyecto fro
 
 ### Estado de la CI
 
-La integración continua está configurada inicialmente, pero los tests todavía no pueden completarse correctamente porque los proyectos base del backend y frontend están pendientes.
+- **Backend:** el CI levanta un MySQL de prueba y corre todos los tests en cada Pull Request.
+- **Frontend:** el job se activa automáticamente cuando exista `frontend/package.json`.
 
-Una vez incorporados, se validarán las ejecuciones y se configurarán los checks obligatorios para impedir merges cuando fallen los tests.
+### Configuración de Git Hooks
+
+Trama utiliza un hook local `pre-push` para verificar los tests del backend antes de subir modificaciones a GitHub.
+
+#### Activación
+
+Cada integrante debe activarlo **una vez** por cada copia local del repositorio. Desde la carpeta raíz de Trama:
+
+```bash
+git config core.hooksPath .githooks
+```
+
+#### Requisitos para pushear cambios del backend
+
+- MySQL levantado: `docker compose up -d`
+- Archivo `.env` en la raíz (copiado de `.env.example` y completado). El hook lo lee solo.
+
+#### Funcionamiento
+
+- Si entre los commits que se suben hay cambios en `backend/`, corre `./mvnw -B clean test`.
+- Si los tests pasan, el push sigue. Si fallan, el push se cancela.
+- Si no hay cambios en `backend/`, el push sigue sin correr Maven.
+
+El hook está en `.githooks/pre-push`.
+
+**Nota:** los hooks se ejecutan localmente y complementan las verificaciones de GitHub Actions. No reemplazan los checks obligatorios de los Pull Requests.
 
 ## Ejecución local
 
