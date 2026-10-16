@@ -1,9 +1,12 @@
 package com.trama.tpo.demo.aporte;
 
+import com.trama.tpo.demo.config.CifradoConverter;
 import com.trama.tpo.demo.entity.proyecto.Proyecto;
 import com.trama.tpo.demo.entity.usuario.Usuario;
+
 import jakarta.persistence.*;
 import lombok.*;
+
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 import org.hibernate.annotations.JdbcTypeCode;
@@ -42,8 +45,15 @@ public class Aporte {
     @Column(name = "titulo", nullable = false, length = 150)
     private String titulo;
 
-    // Pendiente de integrar CifradoConverter (historia 0.20).
-    // No guardar contenido sensible sin cifrar.
+    // Contenido cifrado (historia 0.20)
+    @Convert(converter = CifradoConverter.class)
+    @Column(name = "contenido", columnDefinition = "MEDIUMBLOB")
+    private String contenido;
+
+    // Datos JSON cifrados (historia 0.20)
+    @Convert(converter = CifradoConverter.class)
+    @Column(name = "datos", columnDefinition = "MEDIUMBLOB")
+    private String datos;
 
     @Enumerated(EnumType.STRING)
     @Builder.Default
