@@ -53,6 +53,15 @@ jobs:
           distribution: temurin
           java-version: '21'
           cache: maven
+      
+      - name: Generar clave de cifrado para los tests
+        if: steps.backend.outputs.exists == 'true'
+        shell: bash
+        run: |
+          CLAVE=$(openssl rand -base64 32)
+          echo "::add-mask::$CLAVE"
+          echo "TRAMA_CRYPTO_KEY=$CLAVE" >> "$GITHUB_ENV"
+
 
       - name: Ejecutar tests del backend
         if: steps.backend.outputs.exists == 'true'
