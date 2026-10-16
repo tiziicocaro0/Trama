@@ -1,0 +1,241 @@
+erDiagram
+    ACUERDO {
+        BINARY[16] id PK "NOT NULL"
+        BINARY[16] reunion_id FK "NOT NULL"
+        BINARY[16] responsable_id FK "NOT NULL"
+        VARCHAR[500] descripcion "NOT NULL"
+        DATE fecha_revision "NOT NULL"
+        TINYINT[1] cumplido "NOT NULL"
+        DATETIME avisado_en "NULL"
+    }
+    APORTE {
+        BINARY[16] id PK "NOT NULL"
+        BINARY[16] proyecto_id FK "NOT NULL"
+        BINARY[16] autor_id FK "NOT NULL"
+        VARCHAR[30] tipo "NOT NULL"
+        VARCHAR[150] titulo "NOT NULL"
+        MEDIUMBLOB contenido "NULL"
+        MEDIUMBLOB datos "NULL"
+        VARCHAR[15] visibilidad "NOT NULL"
+        TINYINT[1] archivado "NOT NULL"
+        DATETIME creado_en "NOT NULL"
+        DATETIME actualizado_en "NOT NULL"
+    }
+    APORTE_ARCHIVO {
+        BINARY[16] aporte_id PK,FK "NOT NULL"
+        BINARY[16] archivo_id PK,FK "NOT NULL"
+    }
+    APORTE_VERSION {
+        BINARY[16] id PK "NOT NULL"
+        BINARY[16] aporte_id FK "NOT NULL"
+        BINARY[16] autor_id FK "NOT NULL"
+        VARCHAR[150] titulo "NOT NULL"
+        MEDIUMBLOB contenido "NULL"
+        MEDIUMBLOB datos "NULL"
+        DATETIME creado_en "NOT NULL"
+    }
+    ARCHIVO {
+        BINARY[16] id PK "NOT NULL"
+        BINARY[16] proyecto_id FK "NOT NULL"
+        BINARY[16] autor_id FK "NOT NULL"
+        VARCHAR[255] nombre_original "NOT NULL"
+        VARCHAR[20] tipo_mime "NOT NULL"
+        INT_U tamano_bytes "NOT NULL"
+        CHAR[36] ruta UK "NOT NULL"
+        DATETIME fecha "NOT NULL"
+    }
+    COMENTARIO {
+        BINARY[16] id PK "NOT NULL"
+        BINARY[16] aporte_id FK "NOT NULL"
+        BINARY[16] autor_id FK "NOT NULL"
+        VARBINARY[4096] texto "NOT NULL"
+        DATETIME fecha "NOT NULL"
+    }
+    CONFIRMACION_APORTE {
+        BINARY[16] aporte_id PK,FK "NOT NULL"
+        BINARY[16] usuario_id PK,FK "NOT NULL"
+        DATETIME fecha "NOT NULL"
+    }
+    EVENTO {
+        BINARY[16] id PK "NOT NULL"
+        BINARY[16] proyecto_id FK "NOT NULL"
+        BINARY[16] autor_id FK "NOT NULL"
+        BINARY[16] imagen_id FK "NULL"
+        VARCHAR[10] tipo "NOT NULL"
+        VARCHAR[150] titulo "NOT NULL"
+        VARBINARY[4096] descripcion "NULL"
+        DATE fecha "NOT NULL"
+        TIME hora_inicio "NULL"
+        TIME hora_fin "NULL"
+        TINYINT[1] recurrente "NOT NULL"
+        TINYINT_U dia_semana "NULL"
+        DATE fecha_fin_recurrencia "NULL"
+        TINYINT[1] es_cambio "NOT NULL"
+        MEDIUMBLOB acta "NULL"
+        DATETIME creado_en "NOT NULL"
+    }
+    EVENTO_EXCEPCION {
+        BINARY[16] id PK "NOT NULL"
+        BINARY[16] evento_id FK,UK "NOT NULL"
+        DATE fecha_ocurrencia UK "NOT NULL"
+        TINYINT[1] cancelado "NOT NULL"
+        VARCHAR[150] titulo "NULL"
+        TIME hora_inicio "NULL"
+        TIME hora_fin "NULL"
+    }
+    EVENTO_PARTICIPANTE {
+        BINARY[16] evento_id PK,FK "NOT NULL"
+        BINARY[16] usuario_id PK,FK "NOT NULL"
+    }
+    INSTITUCION {
+        BINARY[16] id PK "NOT NULL"
+        BINARY[16] paquete_id FK "NOT NULL"
+        BINARY[16] responsable_id FK "NOT NULL"
+        VARCHAR[120] nombre "NOT NULL"
+    }
+    INVITACION {
+        BINARY[16] id PK "NOT NULL"
+        BINARY[16] proyecto_id FK "NOT NULL"
+        BINARY[16] invitado_por FK "NOT NULL"
+        VARCHAR[254] email "NOT NULL"
+        VARCHAR[12] rol "NOT NULL"
+        CHAR[64] token_hash UK "NOT NULL"
+        DATETIME vence_en "NOT NULL"
+        VARCHAR[10] estado "NOT NULL"
+        DATETIME creado_en "NOT NULL"
+    }
+    LICENCIA_PROFESIONAL {
+        BINARY[16] id PK "NOT NULL"
+        BINARY[16] institucion_id FK,UK "NOT NULL"
+        BINARY[16] usuario_id FK,UK "NOT NULL"
+        DATE desde "NOT NULL"
+        DATE hasta "NULL"
+    }
+    MEMBRESIA {
+        BINARY[16] id PK "NOT NULL"
+        BINARY[16] usuario_id FK,UK "NOT NULL"
+        BINARY[16] proyecto_id FK,UK "NOT NULL"
+        VARCHAR[12] rol "NOT NULL"
+        TINYINT[1] es_admin "NOT NULL"
+        VARCHAR[30] especialidad "NULL"
+        VARCHAR[40] matricula "NULL"
+        DATETIME fecha_alta "NOT NULL"
+    }
+    NOTIFICACION {
+        BINARY[16] id PK "NOT NULL"
+        BINARY[16] usuario_id FK "NOT NULL"
+        BINARY[16] proyecto_id FK "NULL"
+        VARCHAR[20] tipo "NOT NULL"
+        VARCHAR[255] texto "NOT NULL"
+        VARCHAR[255] link "NOT NULL"
+        TINYINT[1] leida "NOT NULL"
+        DATETIME fecha "NOT NULL"
+    }
+    PAQUETE {
+        BINARY[16] id PK "NOT NULL"
+        VARCHAR[40] nombre UK "NOT NULL"
+        SMALLINT_U cupo_ninos "NOT NULL"
+        SMALLINT_U cupo_profesionales "NOT NULL"
+        DECIMAL[10_2] precio "NOT NULL"
+    }
+    PREFERENCIA_NOTIFICACION {
+        BINARY[16] usuario_id PK,FK "NOT NULL"
+        VARCHAR[20] tipo PK "NOT NULL"
+        TINYINT[1] por_email "NOT NULL"
+    }
+    PROYECTO {
+        BINARY[16] id PK "NOT NULL"
+        VARCHAR[80] nombre "NOT NULL"
+        VARCHAR[80] apellido "NOT NULL"
+        VARCHAR[40] apodo "NULL"
+        DATE fecha_nacimiento "NOT NULL"
+        VARCHAR[120] escuela "NOT NULL"
+        VARCHAR[30] grado "NOT NULL"
+        BINARY[16] foto_archivo_id FK "NULL"
+        DATETIME consentimiento_fecha "NOT NULL"
+        TINYINT[1] familiar_puede_cargar "NOT NULL"
+        TINYINT[1] familiar_ve_notas "NOT NULL"
+        DATETIME eliminacion_programada "NULL"
+        BINARY[16] eliminacion_pedida_por FK "NULL"
+        DATETIME creado_en "NOT NULL"
+    }
+    REGISTRO_ACCION {
+        BINARY[16] id PK "NOT NULL"
+        BINARY[16] usuario_id FK "NOT NULL"
+        BINARY[16] proyecto_id FK "NOT NULL"
+        VARCHAR[10] accion "NOT NULL"
+        VARCHAR[30] seccion "NOT NULL"
+        DATETIME fecha "NOT NULL"
+    }
+    SOLICITUD_REVISION {
+        BINARY[16] id PK "NOT NULL"
+        BINARY[16] aporte_id FK "NOT NULL"
+        BINARY[16] solicitante_id FK "NOT NULL"
+        VARBINARY[4096] motivo "NOT NULL"
+        VARCHAR[10] estado "NOT NULL"
+        DATETIME fecha "NOT NULL"
+    }
+    SUSCRIPCION {
+        BINARY[16] usuario_id PK,FK "NOT NULL"
+        TINYINT[1] activa "NOT NULL"
+        DATE desde "NOT NULL"
+        DATE hasta "NULL"
+    }
+    TOKEN_RECUPERACION {
+        BINARY[16] id PK "NOT NULL"
+        BINARY[16] usuario_id FK "NOT NULL"
+        CHAR[64] token_hash UK "NOT NULL"
+        DATETIME vence_en "NOT NULL"
+        DATETIME usado_en "NULL"
+        DATETIME creado_en "NOT NULL"
+    }
+    USUARIO {
+        BINARY[16] id PK "NOT NULL"
+        VARCHAR[80] nombre "NOT NULL"
+        VARCHAR[80] apellido "NOT NULL"
+        VARCHAR[254] email UK "NOT NULL"
+        CHAR[60] password_hash "NOT NULL"
+        TINYINT_U intentos_fallidos "NOT NULL"
+        DATETIME bloqueado_hasta "NULL"
+        INT_U token_version "NOT NULL"
+        DATETIME fecha_alta "NOT NULL"
+    }
+    USUARIO ||--o{ ACUERDO : "responsable_id RESTRICT"
+    EVENTO ||--o{ ACUERDO : "reunion_id CASCADE"
+    USUARIO ||--o{ APORTE : "autor_id RESTRICT"
+    PROYECTO ||--o{ APORTE : "proyecto_id CASCADE"
+    APORTE ||--o{ APORTE_ARCHIVO : "aporte_id CASCADE"
+    ARCHIVO ||--o{ APORTE_ARCHIVO : "archivo_id CASCADE"
+    APORTE ||--o{ APORTE_VERSION : "aporte_id CASCADE"
+    USUARIO ||--o{ APORTE_VERSION : "autor_id RESTRICT"
+    USUARIO ||--o{ ARCHIVO : "autor_id RESTRICT"
+    PROYECTO ||--o{ ARCHIVO : "proyecto_id CASCADE"
+    APORTE ||--o{ COMENTARIO : "aporte_id CASCADE"
+    USUARIO ||--o{ COMENTARIO : "autor_id RESTRICT"
+    APORTE ||--o{ CONFIRMACION_APORTE : "aporte_id CASCADE"
+    USUARIO ||--o{ CONFIRMACION_APORTE : "usuario_id RESTRICT"
+    USUARIO ||--o{ EVENTO : "autor_id RESTRICT"
+    ARCHIVO |o--o{ EVENTO : "imagen_id SET NULL"
+    PROYECTO ||--o{ EVENTO : "proyecto_id CASCADE"
+    EVENTO ||--o{ EVENTO_EXCEPCION : "evento_id CASCADE"
+    EVENTO ||--o{ EVENTO_PARTICIPANTE : "evento_id CASCADE"
+    USUARIO ||--o{ EVENTO_PARTICIPANTE : "usuario_id RESTRICT"
+    PAQUETE ||--o{ INSTITUCION : "paquete_id RESTRICT"
+    USUARIO ||--o{ INSTITUCION : "responsable_id RESTRICT"
+    PROYECTO ||--o{ INVITACION : "proyecto_id CASCADE"
+    USUARIO ||--o{ INVITACION : "invitado_por RESTRICT"
+    INSTITUCION ||--o{ LICENCIA_PROFESIONAL : "institucion_id CASCADE"
+    USUARIO ||--o{ LICENCIA_PROFESIONAL : "usuario_id RESTRICT"
+    PROYECTO ||--o{ MEMBRESIA : "proyecto_id CASCADE"
+    USUARIO ||--o{ MEMBRESIA : "usuario_id RESTRICT"
+    PROYECTO |o--o{ NOTIFICACION : "proyecto_id CASCADE"
+    USUARIO ||--o{ NOTIFICACION : "usuario_id CASCADE"
+    USUARIO ||--o{ PREFERENCIA_NOTIFICACION : "usuario_id CASCADE"
+    USUARIO |o--o{ PROYECTO : "eliminacion_pedida_por SET NULL"
+    ARCHIVO |o--o{ PROYECTO : "foto_archivo_id SET NULL"
+    PROYECTO ||--o{ REGISTRO_ACCION : "proyecto_id CASCADE"
+    USUARIO ||--o{ REGISTRO_ACCION : "usuario_id RESTRICT"
+    APORTE ||--o{ SOLICITUD_REVISION : "aporte_id CASCADE"
+    USUARIO ||--o{ SOLICITUD_REVISION : "solicitante_id RESTRICT"
+    USUARIO ||--o| SUSCRIPCION : "usuario_id CASCADE"
+    USUARIO ||--o{ TOKEN_RECUPERACION : "usuario_id CASCADE"

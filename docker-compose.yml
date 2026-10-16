@@ -1,0 +1,22 @@
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: trama-mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_DATABASE: trama
+      MYSQL_USER: trama
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+    command:
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_0900_ai_ci
+      - --default-time-zone=+00:00
+    ports:
+      - "3307:3306"
+    volumes:
+      - trama-mysql-data:/var/lib/mysql
+      - ./bd/init:/docker-entrypoint-initdb.d
+
+volumes:
+  trama-mysql-data:

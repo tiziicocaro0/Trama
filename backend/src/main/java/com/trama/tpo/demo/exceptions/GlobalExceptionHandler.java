@@ -1,0 +1,111 @@
+package com.trama.tpo.demo.exceptions;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.core.AuthenticationException;
+import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
+
+
+@RestControllerAdvice
+public class GlobalExceptionHandler {
+
+    public record ErrorResponse(
+            String codigo,
+            String mensaje
+    ) {}
+
+    // ERRORES DE NEGOCIO
+    @ExceptionHandler(ApiException.class)
+    public ResponseEntity<ErrorResponse> handleApiException(
+            ApiException e) {
+
+        return ResponseEntity
+                .status(e.getEstado())
+                .body(new ErrorResponse(
+                        e.getCodigo(),
+                        e.getMessage()
+                ));
+    }
+
+    // CREDENCIALES INCORRECTAS
+    @ExceptionHandler(BadCredentialsException.class)
+    public ResponseEntity<ErrorResponse> handleBadCredentials(
+            BadCredentialsException e) {
+
+        return ResponseEntity
+                .status(HttpStatus.UNAUTHORIZED)
+                .body(new ErrorResponse(
+                        "CREDENCIALES_INVALIDAS",
+                        "Email o contraseña inválidos"
+                ));
+    }
+
+    // OTROS ERRORES DE AUTENTICACION
+    @ExceptionHandler(AuthenticationException.class)
+    public ResponseEntity<ErrorResponse> handleAuthentication(
+            AuthenticationException e) {
+
+        return ResponseEntity
+                .status(HttpStatus.UNAUTHORIZED)
+                .body(new ErrorResponse(
+                        "NO_AUTENTICADO",
+                        "Debés iniciar sesión"
+                ));
+    }
+
+    // ACCESO DENEGADO
+    @ExceptionHandler(AccessDeniedException.class)
+    public ResponseEntity<ErrorResponse> handleAccessDenied(
+            AccessDeniedException e) {
+
+        return ResponseEntity
+                .status(HttpStatus.FORBIDDEN)
+                .body(new ErrorResponse(
+                        "ACCESO_DENEGADO",
+                        "No tenés permiso para realizar esta acción"
+                ));
+    }
+
+    // VALIDACIONES DE DTO
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    public ResponseEntity<ErrorResponse> handleValidation(
+            MethodArgumentNotValidException e) {
+
+        return ResponseEntity
+                .status(HttpStatus.BAD_REQUEST)
+                .body(new ErrorResponse(
+                        "DATOS_INVALIDOS",
+                        "Los datos enviados no son válidos"
+                ));
+    }
+    
+    // PARÁMETROS CON FORMATO INVÁLIDO (ej. un id que no es UUID)
+    @ExceptionHandler(MethodArgumentTypeMismatchException.class)
+    public ResponseEntity<ErrorResponse> handleTypeMismatch(
+            MethodArgumentTypeMismatchException e) {
+
+        return ResponseEntity
+                .status(HttpStatus.BAD_REQUEST)
+                .body(new ErrorResponse(
+                        "DATOS_INVALIDOS",
+                        "Los datos enviados no son válidos"
+                ));
+    }
+
+    // ERRORES INESPERADOS
+    @ExceptionHandler(Exception.class)
+    public ResponseEntity<ErrorResponse> handleUnexpected(
+            Exception e) {
+
+        return ResponseEntity
+                .status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(new ErrorResponse(
+                        "ERROR_INTERNO",
+                        "Ocurrió un error inesperado"
+                ));
+    }
+}

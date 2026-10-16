@@ -1,7 +1,4 @@
-# Variables de entorno
 .env
-
-# Sistema Operativo
 .DS_Store
 Thumbs.db
 

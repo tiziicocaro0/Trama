@@ -50,7 +50,7 @@ Trama/
 - `.github/workflows/`: configuración de integración continua.
 - `README.md`: documentación del proyecto.
 
-**Nota:** los proyectos base del backend y frontend todavía están en preparación.
+**Nota:** el proyecto base del frontend todavía está en preparación.
 
 ## Clonar el repositorio
 
@@ -210,9 +210,35 @@ Los comandos definitivos se verificarán cuando esté disponible el proyecto fro
 
 ### Estado de la CI
 
-La integración continua está configurada inicialmente, pero los tests todavía no pueden completarse correctamente porque los proyectos base del backend y frontend están pendientes.
+- **Backend:** el CI levanta un MySQL de prueba y corre todos los tests en cada Pull Request.
+- **Frontend:** el job se activa automáticamente cuando exista `frontend/package.json`.
 
-Una vez incorporados, se validarán las ejecuciones y se configurarán los checks obligatorios para impedir merges cuando fallen los tests.
+### Configuración de Git Hooks
+
+Trama utiliza un hook local `pre-push` para verificar los tests del backend antes de subir modificaciones a GitHub.
+
+#### Activación
+
+Cada integrante debe activarlo **una vez** por cada copia local del repositorio. Desde la carpeta raíz de Trama:
+
+```bash
+git config core.hooksPath .githooks
+```
+
+#### Requisitos para pushear cambios del backend
+
+- MySQL levantado: `docker compose up -d`
+- Archivo `.env` en la raíz (copiado de `.env.example` y completado). El hook lo lee solo.
+
+#### Funcionamiento
+
+- Si entre los commits que se suben hay cambios en `backend/`, corre `./mvnw -B clean test`.
+- Si los tests pasan, el push sigue. Si fallan, el push se cancela.
+- Si no hay cambios en `backend/`, el push sigue sin correr Maven.
+
+El hook está en `.githooks/pre-push`.
+
+**Nota:** los hooks se ejecutan localmente y complementan las verificaciones de GitHub Actions. No reemplazan los checks obligatorios de los Pull Requests.
 
 ## Ejecución local
 
@@ -226,6 +252,59 @@ En Windows:
 cd backend
 .\mvnw.cmd spring-boot:run
 ```
+
+#### 1. Variables de entorno
+
+Copiar `.env.example` como `.env` en la raíz del repo y completar los valores:
+
+```
+MYSQL_PASSWORD=...
+MYSQL_ROOT_PASSWORD=...
+JWT_SECRET=...
+```
+
+`JWT_SECRET` tiene que tener al menos 32 caracteres. Se puede generar con `openssl rand -base64 48`. El `.env` nunca se sube al repo.
+
+#### 2. Levantar MySQL
+
+Con Docker Desktop abierto, desde la raíz:
+
+```bash
+docker compose up -d
+```
+
+Conexión: `jdbc:mysql://localhost:3307/trama`, usuario `trama`, contraseña la de `MYSQL_PASSWORD`.
+
+Para apagarlo: `docker compose stop`. Ojo: `docker compose down -v` borra los datos.
+
+#### 3. Levantar el backend
+
+```bash
+cd backend
+./mvnw spring-boot:run      # macOS / Linux
+.\mvnw.cmd spring-boot:run  # Windows
+```
+
+### Datos mock (DataSeeder)
+
+Con el perfil `dev` (el que viene por defecto), la clase `DataSeeder` carga datos ficticios la primera vez que arranca la app. Si ya existen, no hace nada.
+
+Usuarios de prueba, todos con la contraseña `Trama1234!`:
+
+| Email | Rol |
+|---|---|
+| `tutor@trama.test` | Tutora admin de Tomi |
+| `cotutor@trama.test` | Co-tutor de Tomi |
+| `familiar@trama.test` | Familiar en los 3 proyectos |
+| `docente@trama.test` | Docente en los 3 proyectos |
+| `psico@trama.test` | Psicólogo en los 3 proyectos (en el 3.º, solo lectura por plan gratuito) |
+| `tutora.valen@trama.test` | Tutora admin de Valen |
+| `tutor.juli@trama.test` | Tutor admin de Juli |
+
+**Regla:** cada historia que crea una tabla nueva agrega sus datos mock al `DataSeeder`.
+
+Para volver a cargar los datos desde cero, vaciar las tablas y levantar la app de nuevo.
+
 
 ### Frontend
 
