@@ -67,7 +67,7 @@ export default function EditorAporte({
       noValidate
       aria-label={`${aporte ? 'Editar' : 'Agregar'} ${sustantivo} en ${seccion.titulo}`}
       aria-busy={enviando}
-      className="mt-4 space-y-4 rounded-control border border-borde bg-bienvenida-luz p-4"
+      className="mt-4 space-y-4 rounded-md border border-borde bg-bienvenida-luz p-4"
     >
       <p className="font-semibold text-secundario">
         {aporte
@@ -106,7 +106,7 @@ export default function EditorAporte({
           maxLength={10000}
           rows={4}
           disabled={enviando}
-          className="w-full rounded-control border border-borde bg-superficie p-4 text-texto focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primario"
+          className="w-full rounded-md border border-borde bg-superficie p-4 text-texto focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primario"
         />
       </div>
       <SelectorVisibilidad

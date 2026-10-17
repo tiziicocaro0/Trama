@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { MagnifyingGlass } from '@phosphor-icons/react'
-import { Link } from 'react-router'
+import { Link } from 'react-router-dom'
 import useAuth from '../../hooks/useAuth.js'
 import Button from '../../components/ui/Button.jsx'
 import Input from '../../components/ui/Input.jsx'
@@ -32,12 +32,12 @@ export default function AcompanamientosPage() {
         <div className="mx-auto max-w-4xl">
           <Link
             to="/inicio"
-            className="mb-5 inline-flex min-h-11 items-center rounded-pequeno text-primario underline underline-offset-4 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-primario"
+            className="mb-5 inline-flex min-h-11 items-center rounded-sm text-primario underline underline-offset-4 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-primario"
           >
             Volver al inicio
           </Link>
           <header className="mb-8 sm:mb-10">
-            <h1 className="break-words font-identidad text-h1 text-secundario sm:text-display">
+            <h1 className="break-words font-display text-h1 text-secundario sm:text-display">
               Acompañamientos
             </h1>
             <p className="mt-3 text-base text-texto-suave sm:text-subtitulo">
@@ -50,18 +50,18 @@ export default function AcompanamientosPage() {
           {cargando ? (
             <p role="status">Cargando tus acompañamientos…</p>
           ) : error ? (
-            <div className="space-y-4 rounded-tarjeta bg-superficie p-6">
+            <div className="space-y-4 rounded-lg bg-superficie p-6">
               <p role="alert">{error}</p>
               <Button onClick={reintentar}>Reintentar</Button>
             </div>
           ) : proyectos?.length === 0 ? (
             <section
-              className="rounded-tarjeta bg-superficie p-6"
+              className="rounded-lg bg-superficie p-6"
               aria-labelledby="sin-acompanamientos"
             >
               <h2
                 id="sin-acompanamientos"
-                className="font-identidad text-h2 text-secundario"
+                className="font-display text-h2 text-secundario"
               >
                 Todavía no tenés acompañamientos
               </h2>

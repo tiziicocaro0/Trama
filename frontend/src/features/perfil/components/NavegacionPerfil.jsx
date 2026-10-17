@@ -1,4 +1,4 @@
-import { useLocation } from 'react-router'
+import { useLocation } from 'react-router-dom'
 import Button from '../../../components/ui/Button.jsx'
 
 const espacios = [

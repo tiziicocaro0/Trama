@@ -8,7 +8,7 @@ import {
   Star,
   NotePencil,
 } from '@phosphor-icons/react'
-import { Link } from 'react-router'
+import { Link } from 'react-router-dom'
 import TarjetaAporte from '../../../components/ui/TarjetaAporte.jsx'
 import { useRef, useState } from 'react'
 import Button from '../../../components/ui/Button.jsx'
@@ -48,17 +48,17 @@ export default function BloquePerfil({
   return (
     <section
       aria-labelledby={`titulo-${seccion.slug}`}
-      className="flex min-w-0 flex-col rounded-tarjeta bg-superficie p-5 shadow-suave sm:p-6"
+      className="flex min-w-0 flex-col rounded-lg bg-superficie p-5 shadow-sm sm:p-6"
     >
       <div className="mb-3 flex items-center gap-3">
         <span
-          className={`flex size-10 shrink-0 items-center justify-center rounded-pequeno ${seccion.tono}`}
+          className={`flex size-10 shrink-0 items-center justify-center rounded-sm ${seccion.tono}`}
         >
           <Icon size={24} aria-hidden="true" />
         </span>
         <h2
           id={`titulo-${seccion.slug}`}
-          className="font-identidad text-h2 text-secundario"
+          className="font-display text-h2 text-secundario"
         >
           {seccion.titulo}
         </h2>
@@ -110,7 +110,7 @@ export default function BloquePerfil({
         <Link
           to={`/proyectos/${proyectoId}/${seccion.slug}`}
           aria-label={`Ver todo: ${seccion.titulo}`}
-          className="mt-auto flex min-h-11 items-center justify-between gap-3 rounded-pequeno font-semibold text-primario hover:underline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-primario"
+          className="mt-auto flex min-h-11 items-center justify-between gap-3 rounded-sm font-semibold text-primario hover:underline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-primario"
         >
           Ver todo <ArrowRight size={20} aria-hidden="true" />
         </Link>

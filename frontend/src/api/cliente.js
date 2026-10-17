@@ -1,50 +1,53 @@
-import axios from 'axios'
+import axios from 'axios';
 
-let tokenEnMemoria = null
-const observadores = new Set()
+// Base única del front: Axios + token. Une la base de Maxi (0.14) con la
+// sesión de Zoe (1.1). Un 401 avisa al AuthProvider para cerrar la sesión.
+
+let tokenActual = null;
+const observadores = new Set();
 
 export function alRechazarSesion(observador) {
-  observadores.add(observador)
-  return () => observadores.delete(observador)
+  observadores.add(observador);
+  return () => observadores.delete(observador);
 }
 
+// Decisión de Zoe (1.1): el token vive solo en memoria por seguridad.
+// Al recargar la página hay que volver a iniciar sesión.
 export function guardarToken(token) {
-  tokenEnMemoria = token
+  tokenActual = token;
 }
 
 export function obtenerToken() {
-  return tokenEnMemoria
+  return tokenActual;
 }
 
-const cliente = axios.create({
+export const clienteApi = axios.create({
   baseURL: import.meta.env.VITE_API_URL?.trim(),
   timeout: 15000,
-})
+  headers: { 'Content-Type': 'application/json' },
+});
 
-cliente.interceptors.request.use((config) => {
-  if (
-    tokenEnMemoria &&
-    !['/auth/registro', '/auth/login'].includes(config.url)
-  ) {
-    config.headers.set('Authorization', `Bearer ${tokenEnMemoria}`)
+clienteApi.interceptors.request.use((config) => {
+  if (tokenActual && !['/auth/registro', '/auth/login'].includes(config.url)) {
+    config.headers.set('Authorization', `Bearer ${tokenActual}`);
   }
-  return config
-})
+  return config;
+});
 
-cliente.interceptors.response.use(
+clienteApi.interceptors.response.use(
   (respuesta) => respuesta,
   (error) => {
-    const autorizacion = error.config?.headers?.get?.('Authorization')
+    const autorizacion = error.config?.headers?.get?.('Authorization');
     if (
       error.response?.status === 401 &&
-      tokenEnMemoria &&
-      autorizacion === `Bearer ${tokenEnMemoria}`
+      tokenActual &&
+      autorizacion === `Bearer ${tokenActual}`
     ) {
-      guardarToken(null)
-      observadores.forEach((observador) => observador())
+      guardarToken(null);
+      observadores.forEach((observador) => observador());
     }
-    return Promise.reject(error)
+    return Promise.reject(error);
   },
-)
+);
 
-export default cliente
+export default clienteApi;

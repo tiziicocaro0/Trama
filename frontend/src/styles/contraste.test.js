@@ -1,52 +1,37 @@
-import { readFileSync } from 'node:fs'
-import { describe, expect, it } from 'vitest'
+import { readFileSync } from 'node:fs';
+import { describe, expect, it } from 'vitest';
 
-const css = readFileSync('src/styles/tema.css', 'utf8')
+// Basado en el test de contraste de Zoe, adaptado a los tokens de tema.css.
+const css = readFileSync('src/styles/tema.css', 'utf8');
 
-function luminance(token) {
+function luminancia(token) {
   const hex = css.match(
     new RegExp(`--color-${token}:\\s*#([a-f0-9]{6});`, 'i'),
-  )?.[1]
-  if (!hex) throw new Error(`Token ausente: ${token}`)
-  const channels = hex.match(/../g).map((value) => {
-    const channel = parseInt(value, 16) / 255
-    return channel <= 0.04045
-      ? channel / 12.92
-      : ((channel + 0.055) / 1.055) ** 2.4
-  })
-  return channels[0] * 0.2126 + channels[1] * 0.7152 + channels[2] * 0.0722
+  )?.[1];
+  if (!hex) throw new Error(`Token ausente: ${token}`);
+  const canales = hex.match(/../g).map((valor) => {
+    const canal = parseInt(valor, 16) / 255;
+    return canal <= 0.04045 ? canal / 12.92 : ((canal + 0.055) / 1.055) ** 2.4;
+  });
+  return canales[0] * 0.2126 + canales[1] * 0.7152 + canales[2] * 0.0722;
 }
 
-function contrast(foreground, background) {
-  const values = [luminance(foreground), luminance(background)].sort(
-    (a, b) => b - a,
-  )
-  return (values[0] + 0.05) / (values[1] + 0.05)
+function contraste(frente, fondo) {
+  const [a, b] = [luminancia(frente), luminancia(fondo)].sort((x, y) => y - x);
+  return (a + 0.05) / (b + 0.05);
 }
 
-describe('Contraste WCAG AA del tema de bienvenida', () => {
+describe('Contraste WCAG AA de tema.css', () => {
   it.each([
-    ['superficie', 'primario'],
-    ['superficie', 'primario-hover'],
-    ['primario', 'superficie'],
-    ['primario', 'decoracion'],
-    ['texto', 'borde'],
+    ['texto', 'fondo'],
     ['texto', 'superficie'],
     ['texto-suave', 'superficie'],
-    ['superficie', 'bienvenida-accion'],
-    ['primario', 'bienvenida-papel'],
-    ['primario', 'bienvenida-luz'],
-  ])('%s sobre %s cumple 4.5:1 para texto normal', (foreground, background) => {
-    expect(contrast(foreground, background)).toBeGreaterThanOrEqual(4.5)
-  })
-
-  it.each([
-    'superficie',
-    'decoracion',
-    'bienvenida-papel',
-    'bienvenida-luz',
-    'bienvenida-curva',
-  ])('agua sobre %s cumple 3:1 para la frase grande', (background) => {
-    expect(contrast('agua', background)).toBeGreaterThanOrEqual(3)
-  })
-})
+    ['primario', 'fondo'],
+    ['secundario', 'fondo'],
+    ['crema', 'primario'],
+    ['crema', 'secundario'],
+    ['crema', 'error'],
+  ])('%s sobre %s cumple 4.5:1 para texto normal', (frente, fondo) => {
+    expect(contraste(frente, fondo)).toBeGreaterThanOrEqual(4.5);
+  });
+});

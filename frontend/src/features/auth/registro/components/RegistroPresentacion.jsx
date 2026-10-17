@@ -1,4 +1,4 @@
-import { Link } from 'react-router'
+import { Link } from 'react-router-dom'
 import BrandLogo from '../../../../components/ui/BrandLogo.jsx'
 
 export default function RegistroPresentacion() {
@@ -7,12 +7,12 @@ export default function RegistroPresentacion() {
       <Link
         to="/"
         aria-label="TRAMA: volver a la bienvenida"
-        className="ml-0 block w-36 rounded-pequeno focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-primario lg:ml-6"
+        className="ml-0 block w-36 rounded-sm focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-primario lg:ml-6"
       >
         <BrandLogo />
       </Link>
       <div className="relative mt-8 lg:mt-40">
-        <h1 className="font-identidad text-display leading-none text-primario lg:text-registro-portada">
+        <h1 className="font-display text-display leading-none text-primario lg:text-registro-portada">
           Crear tu
           <br className="hidden lg:block" /> cuenta
         </h1>

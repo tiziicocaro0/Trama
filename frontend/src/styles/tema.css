@@ -1,42 +1,103 @@
-@import 'tailwindcss';
+@import "tailwindcss";
 
 @theme {
-  --color-fondo: #f1e4cd;
-  --color-primario: #963417;
-  --color-secundario: #4b4f21;
+  /* 01. Paleta y tokens de color — Colores principales */
+  --color-crema: #F1E4CD;
+  --color-terracota: #963417;
+  --color-oliva: #4B4F21;
   --color-agua: #628981;
-  --color-miel: #cf893a;
-  --color-texto: #2e2e2e;
-  --color-texto-suave: #6b6b6b;
-  --color-borde: #d9d4c8;
-  --color-exito: #4a7c59;
-  --color-error: #b0413e;
-  --color-aviso: #e3a632;
-  /* Superficie de bienvenida y fondos decorativos muestreados de 07-bienvenida.png. */
-  --color-superficie: #fbf5e9;
+  --color-miel: #CF893A;
+  --color-superficie: #FAF3E3;
+
+  /* 01. Colores funcionales (Guía de estilo oficial) */
+  --color-texto: #2E2E2E;
+  --color-texto-suave: #6B6B6B;
+  --color-borde: #D9D4C8;
+  --color-exito: #4A7C59;
+  --color-error: #B0413E;
+  --color-aviso: #E3A632;
+
+  /* Roles semánticos: un nombre por rol, siempre en español */
+  --color-fondo: #F1E4CD;      /* crema */
+  --color-primario: #963417;   /* terracota */
+  --color-secundario: #4B4F21; /* oliva */
+  --color-acento: #CF893A;     /* miel */
+
+  /* 02. Tipografías oficiales */
+  --font-display: "Handlee", cursive;
+  --font-sans: "Nunito Sans", sans-serif;
+
+  /* 02. Escala tipográfica (Display 48px, H1 36px, H2 28px, Subtítulo 20px, Body 16px, Small 14px, Caption 12px) */
+  --text-xs: 0.75rem;
+  --text-xs--line-height: 1rem;
+  --text-caption: 0.75rem;
+  --text-caption--line-height: 1rem;
+
+  --text-sm: 0.875rem;
+  --text-sm--line-height: 1.25rem;
+  --text-small: 0.875rem;
+  --text-small--line-height: 1.25rem;
+
+  --text-base: 1rem;
+  --text-base--line-height: 1.5rem;
+  --text-body: 1rem;
+  --text-body--line-height: 1.5rem;
+
+  --text-lg: 1.125rem;
+  --text-lg--line-height: 1.75rem;
+
+  --text-xl: 1.25rem;
+  --text-xl--line-height: 1.75rem;
+  --text-subtitulo: 1.25rem;
+  --text-subtitulo--line-height: 1.75rem;
+
+  --text-2xl: 1.75rem;
+  --text-2xl--line-height: 2.25rem;
+  --text-h2: 1.75rem;
+  --text-h2--line-height: 2.25rem;
+
+  --text-3xl: 2.25rem;
+  --text-3xl--line-height: 2.5rem;
+  --text-4xl: 2.25rem;
+  --text-4xl--line-height: 2.5rem;
+  --text-h1: 2.25rem;
+  --text-h1--line-height: 2.5rem;
+
+  --text-5xl: 3rem;
+  --text-5xl--line-height: 1.15;
+  --text-display: 3rem;
+  --text-display--line-height: 1.15;
+
+  /* 03. Escala de espaciados oficial (4px, 8px, 12px, 16px, 24px, 32px) */
+  --spacing: 0.25rem;
+  --spacing-space-1: 0.25rem;
+  --spacing-space-2: 0.5rem;
+  --spacing-space-3: 0.75rem;
+  --spacing-space-4: 1rem;
+  --spacing-space-5: 1.5rem;
+  --spacing-space-6: 2rem;
+
+  /* 03. Radios de borde (8px, 16px, 24px, 999px) */
+  --radius-sm: 0.5rem;
+  --radius-md: 1rem;
+  --radius-lg: 1.5rem;
+  --radius-full: 999px;
+
+  /* 03. Sombras oficiales (Sombra suave y Sombra elevada) */
+  --shadow-sm: 0 2px 8px rgba(46, 46, 46, 0.06);
+  --shadow-md: 0 6px 20px rgba(46, 46, 46, 0.10);
+
+  /* 04. Tokens de las pantallas de bienvenida y registro (muestreados de los mockups de Sofía) */
   --color-decoracion: #f6e9d5;
-  /* Variantes semánticas derivadas de terracota para interacción y contorno. */
   --color-primario-hover: #7d2b13;
   --color-contorno-accion: #d59983;
-  /* Tonos cálidos muestreados de la referencia definitiva (1790 × 878). */
   --color-bienvenida-papel: #fef5e9;
   --color-bienvenida-curva: #fce7d3;
   --color-bienvenida-luz: #fffaf1;
   --color-bienvenida-accion: #9e3d22;
   --shadow-bienvenida: 0 4px 12px #4b4f2110;
   --shadow-bienvenida-accion: 0 12px 40px #96341712;
-  --font-base: 'Nunito Sans', sans-serif;
-  --font-identidad: 'Handlee', cursive;
-  --text-display: 3rem;
-  --text-h1: 2.25rem;
-  --text-h2: 1.75rem;
-  --text-subtitulo: 1.25rem;
-  --radius-pequeno: 0.5rem;
-  --radius-control: 1rem;
-  --radius-tarjeta: 1.5rem;
   --radius-marco: 3rem;
-  --shadow-suave: 0 2px 8px #2e2e2e0f;
-  /* Registro: escala de la referencia 08; colores reutilizados de la guía. */
   --text-registro-portada: 5rem;
   --text-registro-etapa: 3.25rem;
   --container-registro-form: 36.5rem;
@@ -44,16 +105,54 @@
 
 @layer base {
   body {
-    margin: 0;
-    background: var(--color-fondo);
+    background-color: var(--color-crema);
     color: var(--color-texto);
-    font-family: var(--font-base);
+    font-family: var(--font-sans);
+    font-size: var(--text-base);
+    line-height: var(--text-base--line-height);
+    margin: 0;
+    min-height: 100vh;
+    -webkit-font-smoothing: antialiased;
   }
-  button,
-  a {
-    -webkit-tap-highlight-color: transparent;
+
+  h1,
+  h2,
+  h3,
+  h4 {
+    font-family: var(--font-display);
+    font-weight: 400;
+  }
+
+  h1 {
+    font-size: var(--text-h1);
+    line-height: var(--text-h1--line-height);
+  }
+
+  h2 {
+    font-size: var(--text-h2);
+    line-height: var(--text-h2--line-height);
+  }
+
+  :focus-visible {
+    outline: 3px solid var(--color-miel);
+    outline-offset: 2px;
   }
 }
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* ============================================================
+   Estilos propios de las pantallas de bienvenida, login y registro
+   ============================================================ */
 
 /* Se encuadra el margen transparente del PNG original, sin alterar el asset. */
 .brand-logo {
@@ -81,7 +180,7 @@
   padding: 0.75rem 1rem;
   background: var(--color-superficie);
   color: var(--color-primario);
-  border-radius: var(--radius-pequeno);
+  border-radius: var(--radius-sm);
   transform: translateY(-200%);
 }
 .skip-link:focus {
@@ -163,7 +262,7 @@
 }
 .welcome-actions a {
   min-height: clamp(4.5rem, 6.15vw, 9rem);
-  border-radius: var(--radius-tarjeta);
+  border-radius: var(--radius-lg);
   border-width: 1.5px;
   border-color: var(--color-primario);
   font-size: clamp(1.25rem, 1.79vw, 2.5rem);
@@ -221,7 +320,7 @@
   .welcome-shell {
     margin: 0.5rem;
     min-height: calc(100svh - 1rem);
-    border-radius: var(--radius-tarjeta);
+    border-radius: var(--radius-lg);
   }
   .welcome-header {
     position: relative;
@@ -271,6 +370,6 @@
   .welcome-actions a:last-child {
     min-height: 3.5rem;
     font-size: 1rem;
-    border-radius: var(--radius-control);
+    border-radius: var(--radius-md);
   }
 }

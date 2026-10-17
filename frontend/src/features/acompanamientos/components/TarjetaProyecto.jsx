@@ -1,5 +1,5 @@
 import { CaretRight, User } from '@phosphor-icons/react'
-import { Link } from 'react-router'
+import { Link } from 'react-router-dom'
 import { calcularEdad } from '../../perfil/perfil.js'
 
 export default function TarjetaProyecto({ proyecto }) {
@@ -8,7 +8,7 @@ export default function TarjetaProyecto({ proyecto }) {
     <Link
       to={`/proyectos/${proyecto.id}`}
       aria-label={`Ver perfil de ${proyecto.nombre}`}
-      className="flex min-w-0 items-center gap-4 rounded-tarjeta bg-superficie p-5 shadow-suave transition-colors hover:bg-bienvenida-luz focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-primario motion-reduce:transition-none sm:gap-6 sm:p-6"
+      className="flex min-w-0 items-center gap-4 rounded-lg bg-superficie p-5 shadow-sm transition-colors hover:bg-bienvenida-luz focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-primario motion-reduce:transition-none sm:gap-6 sm:p-6"
     >
       <span
         role="img"
@@ -18,7 +18,7 @@ export default function TarjetaProyecto({ proyecto }) {
         <User size={40} weight="light" aria-hidden="true" />
       </span>
       <div className="min-w-0 flex-1">
-        <h2 className="break-words font-identidad text-h2 text-secundario sm:text-h1">
+        <h2 className="break-words font-display text-h2 text-secundario sm:text-h1">
           {proyecto.nombre}
         </h2>
         <p className="mt-2 text-base sm:text-subtitulo">

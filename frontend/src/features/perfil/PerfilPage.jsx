@@ -1,5 +1,5 @@
 import { Heart } from '@phosphor-icons/react'
-import { Link, useParams } from 'react-router'
+import { Link, useParams } from 'react-router-dom'
 import { useState } from 'react'
 import Button from '../../components/ui/Button.jsx'
 import CabeceraPerfil from './components/CabeceraPerfil.jsx'
@@ -32,7 +32,7 @@ export default function PerfilPage() {
       >
         {slug && !seccion ? (
           <div className="space-y-4">
-            <h1 className="font-identidad text-h1 text-secundario">
+            <h1 className="font-display text-h1 text-secundario">
               Sección no encontrada
             </h1>
             <Button to={`/proyectos/${id}`} variant="secondary">
@@ -44,8 +44,8 @@ export default function PerfilPage() {
             Cargando el perfil…
           </p>
         ) : error ? (
-          <div className="space-y-5 rounded-tarjeta bg-superficie p-6">
-            <h1 className="font-identidad text-h1 text-secundario">
+          <div className="space-y-5 rounded-lg bg-superficie p-6">
+            <h1 className="font-display text-h1 text-secundario">
               No pudimos mostrar el perfil
             </h1>
             <p role="alert">{error}</p>
@@ -63,7 +63,7 @@ export default function PerfilPage() {
             {!seccion && (
               <aside
                 aria-label="Si se desregula · Próximamente"
-                className="mb-6 rounded-control border border-borde bg-superficie/70 p-4 sm:p-5"
+                className="mb-6 rounded-md border border-borde bg-superficie/70 p-4 sm:p-5"
               >
                 <p className="flex items-center gap-2 font-semibold text-primario">
                   <Heart size={20} aria-hidden="true" />
@@ -116,7 +116,7 @@ export default function PerfilPage() {
             {seccion && (
               <Link
                 to={`/proyectos/${id}`}
-                className="mt-6 inline-flex min-h-11 items-center rounded-pequeno font-semibold text-primario underline underline-offset-4 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-primario"
+                className="mt-6 inline-flex min-h-11 items-center rounded-sm font-semibold text-primario underline underline-offset-4 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-primario"
               >
                 Volver al perfil
               </Link>

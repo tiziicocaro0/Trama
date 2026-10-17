@@ -1,5 +1,5 @@
 import { User } from '@phosphor-icons/react'
-import { useParams } from 'react-router'
+import { useParams } from 'react-router-dom'
 import { obtenerRedProyecto } from '../../api/proyectos.js'
 import Button from '../../components/ui/Button.jsx'
 import CabeceraPerfil from './components/CabeceraPerfil.jsx'
@@ -25,7 +25,7 @@ export default function RedPage() {
           <p role="status">Cargando la red de apoyo…</p>
         ) : error ? (
           <div className="space-y-4">
-            <h1 className="font-identidad text-h1 text-secundario">
+            <h1 className="font-display text-h1 text-secundario">
               No pudimos mostrar la red
             </h1>
             <p role="alert">{error}</p>
@@ -42,7 +42,7 @@ export default function RedPage() {
               <section aria-labelledby="titulo-red">
                 <h2
                   id="titulo-red"
-                  className="font-identidad text-h1 text-secundario"
+                  className="font-display text-h1 text-secundario"
                 >
                   Red
                 </h2>
@@ -54,13 +54,13 @@ export default function RedPage() {
                     {profesionales.map((persona) => (
                       <li
                         key={persona.id}
-                        className="flex items-start gap-4 rounded-tarjeta bg-superficie p-6 shadow-suave"
+                        className="flex items-start gap-4 rounded-lg bg-superficie p-6 shadow-sm"
                       >
                         <span className="flex size-12 shrink-0 items-center justify-center rounded-full bg-decoracion text-secundario">
                           <User size={24} aria-hidden="true" />
                         </span>
                         <div className="min-w-0">
-                          <h3 className="break-words font-identidad text-h2 text-secundario">
+                          <h3 className="break-words font-display text-h2 text-secundario">
                             {persona.nombre} {persona.apellido}
                           </h3>
                           <p className="mt-2 font-semibold">
@@ -75,7 +75,7 @@ export default function RedPage() {
                     ))}
                   </ul>
                 ) : (
-                  <p className="rounded-tarjeta bg-superficie p-6">
+                  <p className="rounded-lg bg-superficie p-6">
                     Todavía no hay profesionales vinculados a este
                     acompañamiento.
                   </p>

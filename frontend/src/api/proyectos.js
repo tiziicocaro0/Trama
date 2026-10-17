@@ -1,4 +1,30 @@
 import cliente from './cliente.js'
+import { calcularEdad } from '../features/perfil/perfil.js'
+export { PROYECTOS_MOCK } from './proyectos.mock.js'
+
+export function filtrarProyectosPorMiembro(proyectos, usuarioId) {
+  return proyectos.filter((proyecto) => !proyecto.miembrosIds || proyecto.miembrosIds.includes(usuarioId))
+}
+
+// Adaptador compartido por MisProyectos (develop) y Acompañamientos (RF-10).
+export async function obtenerMisProyectos(usuarioId, signal) {
+  const lista = await listarMisProyectos(signal)
+  signal?.throwIfAborted()
+  const propios = usuarioId ? filtrarProyectosPorMiembro(lista, usuarioId) : lista
+  const etiquetasRol = { TUTOR: 'Tutor/a', FAMILIAR: 'Familiar', EDUCACION: 'Educación', SALUD: 'Salud' }
+  return Promise.all(propios.map(async (item) => {
+    const detalle = item.edad || item.fechaNacimiento ? item : await obtenerProyecto(item.id, signal)
+    const proyecto = { ...item, ...detalle }
+    const edad = calcularEdad(proyecto.fechaNacimiento)
+    return {
+      ...proyecto,
+      iniciales: proyecto.iniciales ?? proyecto.nombre.slice(0, 2).toLocaleUpperCase('es'),
+      tono: proyecto.tono ?? 'terracota',
+      edad: proyecto.edad ?? (edad === null ? 'Edad no disponible' : `${edad} ${edad === 1 ? 'año' : 'años'}`),
+      rol: etiquetasRol[proyecto.rol] ?? proyecto.rol,
+    }
+  }))
+}
 
 export async function obtenerRedProyecto(id, signal) {
   if (!cliente.defaults.baseURL)
@@ -35,13 +61,15 @@ export async function crearProyecto(datos) {
     if (error.response?.status === 400)
       throw new Error(
         'Revisá los datos y confirmá tu autorización antes de continuar.',
+        { cause: error },
       )
     if (error.response?.status === 401)
-      throw new Error('Tu sesión venció. Ingresá nuevamente.')
+      throw new Error('Tu sesión venció. Ingresá nuevamente.', { cause: error })
     if (error.response?.status === 403)
-      throw new Error('No tenés permiso para crear este acompañamiento.')
+      throw new Error('No tenés permiso para crear este acompañamiento.', { cause: error })
     throw new Error(
       'No pudimos confirmar la creación. Revisá tus acompañamientos antes de volver a intentarlo.',
+      { cause: error },
     )
   }
   if (typeof respuesta.data?.id !== 'string' || !respuesta.data.id.trim()) {
@@ -58,7 +86,7 @@ export async function listarMisProyectos(signal) {
       'Falta configurar la conexión con TRAMA. Revisá VITE_API_URL.',
     )
   }
-  const { data } = await cliente.get('/proyectos', { signal })
+  const { data } = await cliente.get('/proyectos', ...(signal ? [{ signal }] : []))
   if (
     !Array.isArray(data) ||
     data.some(

@@ -7,7 +7,7 @@ import {
   SpinnerGap,
   User,
 } from '@phosphor-icons/react'
-import { Link } from 'react-router'
+import { Link } from 'react-router-dom'
 import Button from '../../../../components/ui/Button.jsx'
 import Input from '../../../../components/ui/Input.jsx'
 import FormField from '../../../../components/ui/FormField.jsx'
@@ -65,7 +65,7 @@ export default function RegistroFormulario({ registro, formRef, titleRef }) {
         id="registro-titulo"
         ref={titleRef}
         tabIndex={-1}
-        className="font-identidad text-h1 leading-tight text-primario outline-none lg:text-registro-etapa"
+        className="font-display text-h1 leading-tight text-primario outline-none lg:text-registro-etapa"
       >
         {titulos[etapa]}
       </h2>
@@ -138,7 +138,7 @@ export default function RegistroFormulario({ registro, formRef, titleRef }) {
           </>
         )}
         {etapa === 2 && (
-          <dl className="space-y-5 rounded-control border border-borde p-6">
+          <dl className="space-y-5 rounded-md border border-borde p-6">
             {[
               ['Nombre', valores.nombre],
               ['Apellido', valores.apellido],
@@ -155,7 +155,7 @@ export default function RegistroFormulario({ registro, formRef, titleRef }) {
       {mensaje && (
         <p
           role="alert"
-          className="mt-4 rounded-pequeno border border-error p-3 text-error"
+          className="mt-4 rounded-sm border border-error p-3 text-error"
         >
           {mensaje}
         </p>
@@ -164,7 +164,7 @@ export default function RegistroFormulario({ registro, formRef, titleRef }) {
         <Button
           type="submit"
           disabled={enviando}
-          className="w-full shadow-suave"
+          className="w-full shadow-sm"
         >
           {enviando ? (
             <>
@@ -193,7 +193,7 @@ export default function RegistroFormulario({ registro, formRef, titleRef }) {
         ¿Ya tenés cuenta?{' '}
         <Link
           to="/login"
-          className="rounded-pequeno font-bold text-primario underline-offset-4 hover:underline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-primario"
+          className="rounded-sm font-bold text-primario underline-offset-4 hover:underline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-primario"
         >
           Ingresá acá
         </Link>

@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react'
-import { Link, useSearchParams } from 'react-router'
+import { Link, useSearchParams } from 'react-router-dom'
 import useAuth from '../../hooks/useAuth.js'
 import InicioSidebar from './InicioSidebar.jsx'
 import { Acompanamientos, Eventos, Recursos } from './InicioSecciones.jsx'
@@ -35,7 +35,7 @@ export default function InicioPage() {
             <p className="text-sm font-bold text-secundario">TU ESPACIO</p>
             <h1
               aria-label={`Hola, ${usuario.nombre}.`}
-              className="mt-1 break-words font-identidad text-h1 leading-tight text-primario sm:text-display lg:text-6xl"
+              className="mt-1 break-words font-display text-h1 leading-tight text-primario sm:text-display lg:text-6xl"
             >
               Hola, {usuario.nombre}
               <span className="text-miel">.</span>
@@ -48,7 +48,7 @@ export default function InicioPage() {
           {seccion && (
             <section
               aria-labelledby="seccion-pendiente"
-              className="mb-6 rounded-tarjeta border border-borde bg-superficie p-5"
+              className="mb-6 rounded-lg border border-borde bg-superficie p-5"
             >
               <h2
                 ref={tituloPendiente}

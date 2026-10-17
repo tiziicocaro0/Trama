@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { ArrowLeft, Envelope, SpinnerGap } from '@phosphor-icons/react'
-import { Link } from 'react-router'
+import { Link } from 'react-router-dom'
 import BrandLogo from '../../../components/ui/BrandLogo.jsx'
 import Button from '../../../components/ui/Button.jsx'
 import Input from '../../../components/ui/Input.jsx'
@@ -65,7 +65,7 @@ export default function LoginPage() {
         <Link
           to="/"
           aria-label="Volver a la bienvenida"
-          className="absolute top-0 left-0 flex size-11 items-center justify-center rounded-pequeno text-primario focus-visible:outline-2 focus-visible:outline-primario"
+          className="absolute top-0 left-0 flex size-11 items-center justify-center rounded-sm text-primario focus-visible:outline-2 focus-visible:outline-primario"
         >
           <ArrowLeft size={24} aria-hidden="true" />
         </Link>
@@ -85,7 +85,7 @@ export default function LoginPage() {
         <p className="mt-6 text-center text-sm font-bold tracking-widest text-secundario">
           QUÉ BUENO VERTE
         </p>
-        <h1 className="mt-2 text-center font-identidad text-h1 text-primario">
+        <h1 className="mt-2 text-center font-display text-h1 text-primario">
           Hola de nuevo
         </h1>
         <p className="mt-3 text-center text-lg text-texto-suave">
@@ -130,7 +130,7 @@ export default function LoginPage() {
           {(mensaje || mensajeSesion) && (
             <p
               role="alert"
-              className="rounded-pequeno border border-primario p-3 text-primario"
+              className="rounded-sm border border-primario p-3 text-primario"
             >
               {mensaje || mensajeSesion}
             </p>
@@ -138,7 +138,7 @@ export default function LoginPage() {
           <Button
             type="submit"
             disabled={enviando}
-            className="w-full shadow-suave"
+            className="w-full shadow-sm"
           >
             {enviando ? (
               <>
@@ -158,7 +158,7 @@ export default function LoginPage() {
           ¿Todavía no tenés cuenta?{' '}
           <Link
             to="/registro"
-            className="rounded-pequeno font-bold text-primario hover:underline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-primario"
+            className="rounded-sm font-bold text-primario hover:underline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-primario"
           >
             Creá una
           </Link>

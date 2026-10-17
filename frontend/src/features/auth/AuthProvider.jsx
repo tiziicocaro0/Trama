@@ -100,6 +100,8 @@ export default function AuthProvider({ children }) {
 
   useEffect(() => {
     if (obtenerToken()) {
+      // Verificar la sesión al montar es sincronizar con el backend (sistema externo).
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       void reintentar()
     }
   }, [reintentar])

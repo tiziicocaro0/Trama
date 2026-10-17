@@ -1,4 +1,4 @@
-import { Navigate } from 'react-router'
+import { Navigate } from 'react-router-dom'
 import useAuth from '../hooks/useAuth.js'
 import Button from '../components/ui/Button.jsx'
 

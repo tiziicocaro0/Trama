@@ -7,7 +7,7 @@ import {
   Lightbulb,
   Users,
 } from '@phosphor-icons/react'
-import { Link } from 'react-router'
+import { Link } from 'react-router-dom'
 import {
   acompanamientosEjemplo,
   eventosEjemplo,
@@ -83,7 +83,7 @@ export function Acompanamientos() {
           return (
             <li
               key={id}
-              className={`flex min-w-0 items-center gap-2 rounded-tarjeta p-3 sm:gap-3 sm:p-4 ${fondo}`}
+              className={`flex min-w-0 items-center gap-2 rounded-lg p-3 sm:gap-3 sm:p-4 ${fondo}`}
             >
               <span
                 className={`flex size-11 shrink-0 items-center justify-center rounded-full sm:size-12 ${icono}`}
@@ -91,7 +91,7 @@ export function Acompanamientos() {
                 <Icon size={32} weight="light" aria-hidden="true" />
               </span>
               <div className="min-w-0 flex-1">
-                <h3 className="whitespace-nowrap font-identidad text-subtitulo leading-tight text-primario">
+                <h3 className="whitespace-nowrap font-display text-subtitulo leading-tight text-primario">
                   {titulo}
                 </h3>
                 <p className="mt-1 text-xs leading-snug text-texto-suave">
@@ -115,10 +115,10 @@ function Panel({ id, titulo, seccion, accion, children }) {
   return (
     <section
       aria-labelledby={id}
-      className="min-w-0 rounded-tarjeta border border-borde/30 bg-bienvenida-luz p-4 shadow-suave"
+      className="min-w-0 rounded-lg border border-borde/30 bg-bienvenida-luz p-4 shadow-sm"
     >
       <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
-        <h2 id={id} className="font-identidad text-subtitulo text-primario">
+        <h2 id={id} className="font-display text-subtitulo text-primario">
           {titulo}
         </h2>
         <EnlaceInicio seccion={seccion} etiqueta={`${accion} · Próximamente`}>
@@ -145,7 +145,7 @@ export function Eventos() {
         {eventosEjemplo.map(({ id, dia, fecha, titulo, horario, tono }) => (
           <li key={id} className="flex items-center gap-3 py-3">
             <div
-              className={`flex size-14 shrink-0 flex-col items-center justify-center rounded-pequeno ${tonos[tono].fecha}`}
+              className={`flex size-14 shrink-0 flex-col items-center justify-center rounded-sm ${tonos[tono].fecha}`}
             >
               <span className="text-xs font-bold">{dia}</span>
               <span className="text-2xl font-semibold leading-none">

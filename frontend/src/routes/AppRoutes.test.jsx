@@ -1,6 +1,6 @@
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { MemoryRouter } from 'react-router'
+import { MemoryRouter } from 'react-router-dom'
 import { describe, expect, it } from 'vitest'
 import AppRoutes from './AppRoutes.jsx'
 import AuthProvider from '../features/auth/AuthProvider.jsx'
@@ -16,6 +16,12 @@ function renderRoute(path = '/') {
 }
 
 describe('Navegación de bienvenida', () => {
+  it.each(['/inicio', '/acompanamientos', '/acompanamientos/nuevo', '/proyectos', '/proyectos/nuevo', '/proyectos/ejemplo', '/proyectos/ejemplo/red', '/proyectos/ejemplo/datos-personales', '/proyectos/ejemplo/notas', '/recursos', '/calendario', '/perfil'])(
+    'protege el acceso directo a %s sin sesión', (path) => {
+      renderRoute(path)
+      expect(screen.getByRole('heading', { name: 'Hola de nuevo' })).toBeInTheDocument()
+    },
+  )
   it('muestra identidad y acciones accesibles', () => {
     renderRoute()
     expect(screen.getByRole('img', { name: 'TRAMA' })).toHaveAttribute(

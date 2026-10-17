@@ -1,5 +1,5 @@
 import { BookOpen, CalendarBlank, User, Users } from '@phosphor-icons/react'
-import { Link, NavLink, useSearchParams } from 'react-router'
+import { Link, NavLink, useSearchParams } from 'react-router-dom'
 import BrandLogo from '../../components/ui/BrandLogo.jsx'
 import HiloInicio from './HiloInicio.jsx'
 
@@ -42,7 +42,7 @@ export default function InicioSidebar({ cerrarSesion }) {
                 <Link
                   to={id ? `/inicio?seccion=${id}` : '/acompanamientos'}
                   aria-current={seleccionada ? 'page' : false}
-                  className={`flex min-h-12 flex-col items-center gap-1 rounded-control px-2 py-3 text-xs focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primario sm:justify-center sm:text-sm lg:flex-row lg:justify-start lg:gap-3 lg:px-3 xl:min-h-13 xl:px-4 xl:text-base ${seleccionada ? 'bg-decoracion font-semibold text-primario' : 'text-texto-suave hover:bg-decoracion/60'}`}
+                  className={`flex min-h-12 flex-col items-center gap-1 rounded-md px-2 py-3 text-xs focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primario sm:justify-center sm:text-sm lg:flex-row lg:justify-start lg:gap-3 lg:px-3 xl:min-h-13 xl:px-4 xl:text-base ${seleccionada ? 'bg-decoracion font-semibold text-primario' : 'text-texto-suave hover:bg-decoracion/60'}`}
                 >
                   <Icon
                     size={24}
@@ -63,7 +63,7 @@ export default function InicioSidebar({ cerrarSesion }) {
         </ul>
       </nav>
       <div className="mt-6 flex flex-col">
-        <p className="px-8 font-identidad text-subtitulo leading-6 font-bold text-agua">
+        <p className="px-8 font-display text-subtitulo leading-6 font-bold text-agua">
           Distintas miradas,
           <br />
           una misma persona.
@@ -73,7 +73,7 @@ export default function InicioSidebar({ cerrarSesion }) {
           <button
             type="button"
             aria-label="Cerrar sesión"
-            className="block h-11 w-11/12 cursor-pointer rounded-control border-0 bg-decoracion/80 p-0 transition-opacity hover:opacity-85 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-primario motion-reduce:transition-none xl:h-12"
+            className="block h-11 w-11/12 cursor-pointer rounded-md border-0 bg-decoracion/80 p-0 transition-opacity hover:opacity-85 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-primario motion-reduce:transition-none xl:h-12"
             onClick={() => cerrarSesion()}
           >
             <img

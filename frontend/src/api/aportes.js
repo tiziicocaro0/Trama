@@ -37,15 +37,17 @@ export async function guardarAporte(proyectoId, aporteId, datos) {
     if (error.response?.status === 403)
       throw new Error(
         'No tenés permiso para editar este aporte. Solo su autor puede modificarlo.',
+        { cause: error },
       )
     if (error.response?.status === 401)
-      throw new Error('Tu sesión venció. Ingresá nuevamente.')
+      throw new Error('Tu sesión venció. Ingresá nuevamente.', { cause: error })
     if (error.response?.status === 404)
-      throw new Error('No encontramos este aporte. Volvé a cargar el perfil.')
+      throw new Error('No encontramos este aporte. Volvé a cargar el perfil.', { cause: error })
     if (error.response?.status === 400)
-      throw new Error('Revisá el título, la descripción y la visibilidad.')
+      throw new Error('Revisá el título, la descripción y la visibilidad.', { cause: error })
     throw new Error(
       'No pudimos confirmar el guardado. Revisá el perfil antes de volver a intentarlo.',
+      { cause: error },
     )
   }
 }

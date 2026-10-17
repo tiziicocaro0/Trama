@@ -22,7 +22,7 @@ export default function BienvenidaPage() {
           />
         </div>
         <div className="welcome-content">
-          <h1 className="font-identidad text-h1 leading-snug text-agua">
+          <h1 className="font-display text-h1 leading-snug text-agua">
             Distintas miradas,
             <br />
             una misma persona.

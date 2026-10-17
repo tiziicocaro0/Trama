@@ -1,5 +1,5 @@
 import { useEffect } from 'react'
-import { Route, Routes, useLocation } from 'react-router'
+import { Route, Routes, useLocation } from 'react-router-dom'
 import BienvenidaPage from '../features/bienvenida/BienvenidaPage.jsx'
 import PaginaTemporal from '../features/auth/PaginaTemporal.jsx'
 import RegistroPage from '../features/auth/registro/RegistroPage.jsx'
@@ -12,6 +12,10 @@ import AcompanamientosPage from '../features/acompanamientos/AcompanamientosPage
 import NuevoAcompanamientoPage from '../features/acompanamientos/NuevoAcompanamientoPage.jsx'
 import RedPage from '../features/perfil/RedPage.jsx'
 import DatosPersonalesPage from '../features/perfil/DatosPersonalesPage.jsx'
+import { Layout } from '../components/layout/Layout.jsx'
+import { Tarjeta } from '../components/ui/Tarjeta.jsx'
+import { Componentes } from '../pages/Componentes.jsx'
+import { MisProyectos } from '../pages/MisProyectos.jsx'
 
 const titles = {
   '/': 'Bienvenida',
@@ -20,6 +24,16 @@ const titles = {
   '/inicio': 'Inicio',
   '/acompanamientos': 'Acompañamientos',
   '/acompanamientos/nuevo': 'Nuevo acompañamiento',
+  '/proyectos': 'Mis proyectos',
+  '/proyectos/nuevo': 'Nuevo acompañamiento',
+  '/recursos': 'Recursos',
+  '/calendario': 'Calendario',
+  '/perfil': 'Mi perfil',
+  '/componentes': 'Componentes',
+}
+
+function Proximamente({ titulo }) {
+  return <Tarjeta titulo={titulo}>Próximamente</Tarjeta>
 }
 
 export default function AppRoutes() {
@@ -126,6 +140,17 @@ export default function AppRoutes() {
           </Acceso>
         }
       />
+      <Route
+        path="/proyectos/nuevo"
+        element={<Acceso privado><NuevoAcompanamientoPage /></Acceso>}
+      />
+      {import.meta.env.DEV && <Route path="/componentes" element={<Componentes />} />}
+      <Route element={<Acceso privado><Layout /></Acceso>}>
+        <Route path="/proyectos" element={<MisProyectos />} />
+        <Route path="/recursos" element={<Proximamente titulo="Recursos" />} />
+        <Route path="/calendario" element={<Proximamente titulo="Calendario" />} />
+        <Route path="/perfil" element={<Proximamente titulo="Mi perfil" />} />
+      </Route>
       <Route
         path="*"
         element={<PaginaTemporal title="Página no encontrada" />}

@@ -5,10 +5,13 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
+import java.sql.Timestamp;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
+import jakarta.persistence.EntityManager;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -38,6 +41,7 @@ class AportesPerfilTest {
     @Autowired AporteRepository aportes;
     @Autowired AporteVersionRepository versiones;
     @Autowired JdbcTemplate jdbc;
+    @Autowired EntityManager entityManager;
     private Proyecto proyecto;
     private Usuario tutor, cotutor, salud, docente, familiar, ajeno;
 
@@ -187,15 +191,45 @@ class AportesPerfilTest {
     @Test
     void profesionalRespetaElLimiteDeDosProyectosEditables() throws Exception {
         UUID id = crear(docente, "ESTRATEGIA", "TODOS");
-        var membresia = membresias.findByUsuarioIdAndProyectoId(docente.getId(), proyecto.getId()).orElseThrow();
-        membresia.setFechaAlta(Instant.now().plusSeconds(60));
-        membresias.saveAndFlush(membresia);
-        vincular(docente, proyecto(), Rol.EDUCACION);
-        vincular(docente, proyecto(), Rol.SALUD);
+        var primerProyecto = proyecto();
+        var segundoProyecto = proyecto();
+        vincular(docente, primerProyecto, Rol.EDUCACION);
+        vincular(docente, segundoProyecto, Rol.SALUD);
+        entityManager.flush();
+
+        // fechaAlta es inmutable para JPA. El fixture fija fechas distintas en la base
+        // para que el orden no dependa del reloj ni del desempate por UUID.
+        for (var alta : Map.of(primerProyecto.getId(), "2020-01-01T12:00:00Z",
+                segundoProyecto.getId(), "2020-01-02T12:00:00Z",
+                proyecto.getId(), "2020-01-03T12:00:00Z").entrySet()) {
+            assertThat(jdbc.update("update membresia set fecha_alta = ? where usuario_id = ? and proyecto_id = ?",
+                    Timestamp.from(Instant.parse(alta.getValue())), binario(docente.getId()), binario(alta.getKey())))
+                    .isEqualTo(1);
+        }
+        entityManager.clear();
+        assertThat(membresias.findByUsuarioIdAndRolInOrderByFechaAltaAscIdAsc(
+                docente.getId(), Set.of(Rol.EDUCACION, Rol.SALUD)))
+                .extracting(membresia -> membresia.getProyecto().getId())
+                .containsExactly(primerProyecto.getId(), segundoProyecto.getId(), proyecto.getId());
+
+        for (var editable : new Proyecto[] { primerProyecto, segundoProyecto }) {
+            String rutaEditable = "/api/proyectos/" + editable.getId() + "/aportes";
+            mvc.perform(get(rutaEditable).header("Authorization", token(docente))).andExpect(status().isOk())
+                    .andExpect(jsonPath("$.puedeCrear").value(true));
+            mvc.perform(post(rutaEditable).header("Authorization", token(docente)).contentType(MediaType.APPLICATION_JSON)
+                    .content(datos("ESTRATEGIA", "Ejemplo", "", "TODOS"))).andExpect(status().isCreated());
+        }
         mvc.perform(get(ruta()).header("Authorization", token(docente))).andExpect(status().isOk())
-                .andExpect(jsonPath("$.puedeCrear").value(false));
+                .andExpect(jsonPath("$.puedeCrear").value(false))
+                .andExpect(jsonPath("$.aportes[0].puedeEditar").value(false));
+        mvc.perform(post(ruta()).header("Authorization", token(docente)).contentType(MediaType.APPLICATION_JSON)
+                .content(datos("ESTRATEGIA", "Ejemplo", "", "TODOS"))).andExpect(status().isForbidden());
         mvc.perform(put(ruta() + "/" + id).header("Authorization", token(docente)).contentType(MediaType.APPLICATION_JSON)
                 .content(datos("ESTRATEGIA", "Ejemplo", "", "TODOS"))).andExpect(status().isForbidden());
+        for (Usuario miembroSinLimiteProfesional : new Usuario[] { tutor, familiar }) {
+            mvc.perform(get(ruta()).header("Authorization", token(miembroSinLimiteProfesional)))
+                    .andExpect(status().isOk()).andExpect(jsonPath("$.puedeCrear").value(true));
+        }
     }
 
     @Test

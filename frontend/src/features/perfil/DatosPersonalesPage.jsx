@@ -1,4 +1,4 @@
-import { useParams } from 'react-router'
+import { useParams } from 'react-router-dom'
 import Button from '../../components/ui/Button.jsx'
 import CabeceraPerfil from './components/CabeceraPerfil.jsx'
 import NavegacionPerfil from './components/NavegacionPerfil.jsx'
@@ -31,7 +31,7 @@ export default function DatosPersonalesPage() {
           <p role="status">Cargando los datos personales…</p>
         ) : error ? (
           <div className="space-y-4">
-            <h1 className="font-identidad text-h1 text-secundario">
+            <h1 className="font-display text-h1 text-secundario">
               No pudimos mostrar los datos personales
             </h1>
             <p role="alert">{error}</p>
@@ -50,11 +50,11 @@ export default function DatosPersonalesPage() {
               <NavegacionPerfil proyectoId={id} />
               <section
                 aria-labelledby="titulo-datos-personales"
-                className="rounded-tarjeta bg-superficie p-5 shadow-suave sm:p-8"
+                className="rounded-lg bg-superficie p-5 shadow-sm sm:p-8"
               >
                 <h2
                   id="titulo-datos-personales"
-                  className="font-identidad text-h1 text-secundario"
+                  className="font-display text-h1 text-secundario"
                 >
                   Datos personales
                 </h2>

@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { listarMisProyectos, obtenerProyecto } from '../../../api/proyectos.js'
+import { obtenerMisProyectos } from '../../../api/proyectos.js'
 
 export default function useAcompanamientos() {
   const [intento, setIntento] = useState(0)
@@ -9,12 +9,7 @@ export default function useAcompanamientos() {
     const controller = new AbortController()
     async function cargar() {
       try {
-        const lista = await listarMisProyectos(controller.signal)
-        if (controller.signal.aborted) return
-        // El listado no incluye la fecha de nacimiento; se obtiene del detalle real.
-        const proyectos = await Promise.all(
-          lista.map((item) => obtenerProyecto(item.id, controller.signal)),
-        )
+        const proyectos = await obtenerMisProyectos(undefined, controller.signal)
         if (!controller.signal.aborted) setResultado({ intento, proyectos })
       } catch (error) {
         if (controller.signal.aborted) return

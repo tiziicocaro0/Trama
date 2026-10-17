@@ -47,7 +47,7 @@ export default function TarjetaAporte({ aporte, alEditar, resumen = false }) {
             type="button"
             onClick={alEditar}
             aria-label={`Editar ${esNota ? 'nota' : 'aporte'}: ${aporte.titulo}`}
-            className="mt-2 inline-flex min-h-11 items-center rounded-pequeno font-semibold text-primario underline underline-offset-4 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-primario"
+            className="mt-2 inline-flex min-h-11 items-center rounded-sm font-semibold text-primario underline underline-offset-4 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-primario"
           >
             Editar
           </button>

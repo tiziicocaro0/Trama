@@ -1,5 +1,5 @@
 import { useRef, useState } from 'react'
-import { useNavigate } from 'react-router'
+import { useNavigate } from 'react-router-dom'
 import Button from '../../components/ui/Button.jsx'
 import Input from '../../components/ui/Input.jsx'
 import FormField from '../../components/ui/FormField.jsx'
@@ -102,7 +102,7 @@ export default function NuevoAcompanamientoPage() {
         className="min-w-0 flex-1 px-4 py-6 sm:px-8 lg:py-10"
       >
         <div className="mx-auto max-w-3xl">
-          <h1 className="font-identidad text-h1 text-secundario sm:text-display">
+          <h1 className="font-display text-h1 text-secundario sm:text-display">
             Nuevo acompañamiento
           </h1>
           <p className="mt-3 text-texto-suave">
@@ -114,7 +114,7 @@ export default function NuevoAcompanamientoPage() {
             noValidate
             aria-label="Crear acompañamiento"
             aria-busy={enviando}
-            className="mt-6 space-y-6 rounded-tarjeta bg-superficie p-5 shadow-suave sm:p-8"
+            className="mt-6 space-y-6 rounded-lg bg-superficie p-5 shadow-sm sm:p-8"
           >
             <div className="grid gap-5 sm:grid-cols-2">
               {campos.map((campo) => (
@@ -142,7 +142,7 @@ export default function NuevoAcompanamientoPage() {
               ))}
             </div>
             <div>
-              <label className="flex min-h-11 items-start gap-3 rounded-control p-2 focus-within:outline-2 focus-within:outline-primario">
+              <label className="flex min-h-11 items-start gap-3 rounded-md p-2 focus-within:outline-2 focus-within:outline-primario">
                 <input
                   name="consentimiento"
                   type="checkbox"
@@ -175,7 +175,7 @@ export default function NuevoAcompanamientoPage() {
                 ref={alerta}
                 tabIndex={-1}
                 role="alert"
-                className="rounded-pequeno border border-error p-3 text-error"
+                className="rounded-sm border border-error p-3 text-error"
               >
                 {mensaje}
               </p>
