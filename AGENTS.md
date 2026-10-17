@@ -76,3 +76,52 @@ Si una instrucción del usuario contradice estas reglas, avisale antes de hacerl
 - [ ] Se respetan los permisos y hay test de acceso denegado.
 - [ ] No hay secretos, datos reales ni código de debug.
 - [ ] Reutiliza lo que ya existía.
+## Branding y sistema visual de TRAMA
+
+El frontend debe respetar estrictamente la identidad visual definida para TRAMA.
+
+### Fuentes de referencia
+
+Antes de desarrollar o modificar una interfaz:
+
+1. Leer `CONTEXTO.md`.
+2. Leer `docs/branding.md`, que documenta el sistema visual de TRAMA.
+3. Revisar los mockups disponibles en `docs/referencias/`.
+4. Revisar los componentes existentes en `frontend/src/components/ui/`.
+5. Consultar los tokens definidos en `frontend/src/styles/tema.css`.
+
+### Reglas de diseño
+
+- Utilizar exclusivamente los tokens visuales existentes en `tema.css`.
+- Utilizar Handlee para títulos expresivos e identidad visual.
+- Utilizar Nunito Sans para textos, botones, formularios y elementos funcionales.
+- Mantener la estética cálida, cercana, sencilla y accesible de TRAMA.
+- Respetar los espaciados, bordes, sombras y estados definidos en la guía de estilo.
+- Reutilizar el logo y las ilustraciones originales del proyecto.
+- No recrear el logo mediante texto ni reemplazar las ilustraciones por emojis.
+- Mantener la coherencia visual entre todas las pantallas.
+- Respetar los diseños responsive y los criterios de accesibilidad.
+- Utilizar Phosphor Icons cuando ya estén disponibles en el proyecto.
+- No agregar nuevas dependencias sin autorización.
+
+### Implementación de mockups
+
+Cuando el usuario solicite implementar una pantalla a partir de una imagen:
+
+1. Analizar cuidadosamente la referencia.
+2. Identificar su estructura, distribución, componentes, tipografías y espaciados.
+3. Buscar componentes existentes antes de crear otros nuevos.
+4. Implementar la pantalla respetando el diseño original.
+5. Adaptarla a desktop, tablet y mobile sin perder su identidad.
+6. No modificar el sistema visual global sin autorización.
+7. Si un mockup contradice los tokens existentes, informar la diferencia antes de modificar código.
+
+### Restricciones
+
+No modificar archivos del backend, contratos de API, migraciones ni reglas de negocio como parte de tareas exclusivamente visuales.
+
+No crear un nuevo frontend si ya existe uno funcional.
+
+No sobrescribir componentes existentes sin analizar sus dependencias.
+
+Ante cualquier duda sobre el diseño, consultar antes de tomar decisiones que alteren la identidad de TRAMA.
