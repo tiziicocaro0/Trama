@@ -17,6 +17,31 @@ services:
     volumes:
       - trama-mysql-data:/var/lib/mysql
       - ./bd/init:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: ["CMD-SHELL", "mysql -h 127.0.0.1 -u trama -p\"$${MYSQL_PASSWORD}\" trama -e 'SELECT 1' >/dev/null 2>&1"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 30s
+
+  backend:
+    build:
+      context: ./backend
+    image: trama-backend:local
+    container_name: trama-backend
+    restart: unless-stopped
+    depends_on:
+      mysql:
+        condition: service_healthy
+    environment:
+      SPRING_PROFILES_ACTIVE: prod
+      DB_URL: jdbc:mysql://mysql:3306/trama
+      DB_USERNAME: trama
+      DB_PASSWORD: ${MYSQL_PASSWORD}
+      JWT_SECRET: ${JWT_SECRET}
+      SERVER_PORT: 8080
+    ports:
+      - "4002:8080"
 
 volumes:
   trama-mysql-data:

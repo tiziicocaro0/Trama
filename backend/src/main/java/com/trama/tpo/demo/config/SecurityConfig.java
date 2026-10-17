@@ -80,6 +80,9 @@ public class SecurityConfig {
                 // Proteger el resto de la API
                 .requestMatchers("/api/**").authenticated()
 
+                // Permitir consultar el estado del servidor
+                .requestMatchers("/actuator/health").permitAll()
+
                 // Denegar rutas no declaradas
                 .anyRequest().denyAll()
             )
