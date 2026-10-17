@@ -91,7 +91,7 @@ describe('Flujo integrado de autenticación con transporte Axios simulado', () =
     await user.click(screen.getByRole('button', { name: 'Continuar' }))
     await user.click(screen.getByRole('button', { name: 'Crear cuenta' }))
     expect(
-      await screen.findByRole('heading', { name: '¡Hola, Nora!' }),
+      await screen.findByRole('heading', { name: 'Hola, Nora.' }),
     ).toBeInTheDocument()
     expect(peticiones.map(({ url }) => url)).toEqual([
       '/auth/registro',
@@ -108,16 +108,18 @@ describe('Flujo integrado de autenticación con transporte Axios simulado', () =
     abrir()
     await login(user)
     expect(
-      await screen.findByRole('heading', { name: '¡Hola, Nora!' }),
+      await screen.findByRole('heading', { name: 'Hola, Nora.' }),
     ).toBeInTheDocument()
-    expect(screen.getByText(identidad.email)).toBeInTheDocument()
+    expect(screen.queryByText(identidad.email)).not.toBeInTheDocument()
     expect(JSON.parse(peticiones[0].data)).toEqual({
       email: 'nora@trama.test',
       password: 'Prueba123!',
     })
     expect(peticiones[0].headers.get('Authorization')).toBeUndefined()
     expect(screen.queryByText('No usar esta identidad')).not.toBeInTheDocument()
-    expect(screen.getAllByText('Próximamente')).toHaveLength(4)
+    expect(
+      screen.getByText(/los acompañamientos y eventos son ficticios/),
+    ).toBeInTheDocument()
   })
 
   it('rechaza credenciales incorrectas y no crea una sesión', async () => {
@@ -155,7 +157,7 @@ describe('Flujo integrado de autenticación con transporte Axios simulado', () =
     expect(peticiones).toHaveLength(0)
   })
 
-  it.each(['/login', '/registro'])(
+  it.each(['/', '/login', '/registro'])(
     'redirige una sesión verificada desde %s a Inicio',
     async (ruta) => {
       guardarToken(jwt())
@@ -165,7 +167,7 @@ describe('Flujo integrado de autenticación con transporte Axios simulado', () =
       )
       expect(screen.queryByLabelText('Contraseña')).not.toBeInTheDocument()
       expect(
-        await screen.findByRole('heading', { name: '¡Hola, Nora!' }),
+        await screen.findByRole('heading', { name: 'Hola, Nora.' }),
       ).toBeInTheDocument()
     },
   )
@@ -174,8 +176,10 @@ describe('Flujo integrado de autenticación con transporte Axios simulado', () =
     const user = userEvent.setup()
     guardarToken(jwt())
     const vista = abrir('/inicio')
-    await screen.findByRole('heading', { name: '¡Hola, Nora!' })
-    await user.click(screen.getByRole('button', { name: 'Cerrar sesión' }))
+    await screen.findByRole('heading', { name: 'Hola, Nora.' })
+    await user.click(
+      screen.getAllByRole('button', { name: 'Cerrar sesión' })[0],
+    )
     expect(
       await screen.findByRole('heading', { name: 'Hola de nuevo' }),
     ).toBeInTheDocument()
@@ -191,7 +195,7 @@ describe('Flujo integrado de autenticación con transporte Axios simulado', () =
   it('un 401 de una petición autenticada elimina la sesión', async () => {
     guardarToken(jwt())
     abrir('/inicio')
-    await screen.findByRole('heading', { name: '¡Hola, Nora!' })
+    await screen.findByRole('heading', { name: 'Hola, Nora.' })
     fallarIdentidad = true
     await act(async () => {
       await expect(cliente.get('/auth/yo')).rejects.toMatchObject({
@@ -210,7 +214,7 @@ describe('Flujo integrado de autenticación con transporte Axios simulado', () =
     abrir('/inicio')
     await act(async () => {})
     expect(
-      screen.getByRole('heading', { name: '¡Hola, Nora!' }),
+      screen.getByRole('heading', { name: 'Hola, Nora.' }),
     ).toBeInTheDocument()
     act(() => {
       vi.advanceTimersByTime(3000)

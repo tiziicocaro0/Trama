@@ -24,7 +24,14 @@ export default function AppRoutes() {
 
   return (
     <Routes>
-      <Route path="/" element={<BienvenidaPage />} />
+      <Route
+        path="/"
+        element={
+          <Acceso>
+            <BienvenidaPage />
+          </Acceso>
+        }
+      />
       <Route
         path="/login"
         element={
