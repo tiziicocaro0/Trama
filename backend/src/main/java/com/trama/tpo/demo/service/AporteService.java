@@ -15,7 +15,10 @@ import com.trama.tpo.demo.repository.AporteVersionRepository;
 import com.trama.tpo.demo.repository.MembresiaRepository;
 import com.trama.tpo.demo.repository.ProyectoRepository;
 import com.trama.tpo.demo.repository.UsuarioRepository;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
+import com.trama.tpo.demo.aporte.interes.DatosInteres;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
@@ -59,6 +62,7 @@ public class AporteService {
 
         permisoService.verificarMiembro(proyectoId);
         permisoService.verificarPuedeEditar(proyectoId);
+        validarInteres(request);
 
         UUID usuarioId = usuarioActual.obtenerId();
 
@@ -144,6 +148,17 @@ public class AporteService {
                     HttpStatus.CONFLICT
             );
         }
+        // No permitir cambiar el tipo de aporte
+        if (aporte.getTipo() != request.tipo()) {
+        throw new ApiException(
+                "TIPO_APORTE_INVALIDO",
+                "No se puede cambiar el tipo de un aporte",
+                HttpStatus.BAD_REQUEST
+        );
+        }
+
+        // Validar los datos específicos del interés
+        validarInteres(request);
 
         // Guardar la versión anterior antes de editar
         AporteVersion version = AporteVersion.builder()
@@ -246,4 +261,45 @@ public class AporteService {
                 aporte.getActualizadoEn()
         );
     }
+    private void validarInteres(AporteRequest request) {
+
+        if (request.tipo() != TipoAporte.INTERES) {
+                return;
+        }
+
+        if (request.datos() == null || request.datos().isBlank()) {
+                throw new ApiException(
+                        "DATOS_INTERES_INVALIDOS",
+                        "La categoría y la intensidad son obligatorias",
+                        HttpStatus.BAD_REQUEST
+                );
+        }
+
+        try {
+                ObjectMapper mapper = new ObjectMapper();
+
+                DatosInteres datos = mapper.readValue(
+                        request.datos(),
+                        DatosInteres.class
+                );
+
+                if (datos.categoria() == null ||
+                        datos.intensidad() == null) {
+
+                throw new ApiException(
+                        "DATOS_INTERES_INVALIDOS",
+                        "La categoría y la intensidad son obligatorias",
+                        HttpStatus.BAD_REQUEST
+                );
+                }
+
+        } catch (JsonProcessingException e) {
+
+                throw new ApiException(
+                        "DATOS_INTERES_INVALIDOS",
+                        "Los datos del interés no son válidos",
+                        HttpStatus.BAD_REQUEST
+                );
+        }
+        }
 }
