@@ -1,5 +1,6 @@
 package com.trama.tpo.demo;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
@@ -22,12 +23,16 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 
 import com.trama.tpo.demo.aporte.Aporte;
+import com.trama.tpo.demo.aporte.AporteVersion;
+import com.trama.tpo.demo.aporte.TipoAporte;
+import com.trama.tpo.demo.aporte.Visibilidad;
 import com.trama.tpo.demo.config.JwtService;
 import com.trama.tpo.demo.entity.membresia.Membresia;
 import com.trama.tpo.demo.entity.membresia.Rol;
 import com.trama.tpo.demo.entity.proyecto.Proyecto;
 import com.trama.tpo.demo.entity.usuario.Usuario;
 import com.trama.tpo.demo.repository.AporteRepository;
+import com.trama.tpo.demo.repository.AporteVersionRepository;
 import com.trama.tpo.demo.repository.MembresiaRepository;
 import com.trama.tpo.demo.repository.ProyectoRepository;
 import com.trama.tpo.demo.repository.UsuarioRepository;
@@ -75,8 +80,13 @@ class AporteControllerTest {
     @Autowired
     private AporteRepository aporteRepository;
 
+    @Autowired
+    private AporteVersionRepository aporteVersionRepository;
+
     private Usuario tutorAutor;
     private Usuario otroTutor;
+    private Usuario profesionalSalud;
+    private Usuario profesionalEducacion;
     private Proyecto proyecto;
 
     @BeforeEach
@@ -84,6 +94,8 @@ class AporteControllerTest {
 
         tutorAutor = crearUsuario("Autor");
         otroTutor = crearUsuario("OtroTutor");
+        profesionalSalud = crearUsuario("Salud");
+        profesionalEducacion = crearUsuario("Educacion");
 
         proyecto = proyectoRepository.save(Proyecto.builder()
                 .nombre("Niño")
@@ -96,25 +108,41 @@ class AporteControllerTest {
 
         crearMembresia(tutorAutor, true);
         crearMembresia(otroTutor, false);
+
+        crearMembresiaConRol(profesionalSalud, Rol.SALUD);
+        crearMembresiaConRol(profesionalEducacion, Rol.EDUCACION);
     }
 
     @AfterEach
     void limpiarDatos() {
 
+        // Eliminar primero las versiones del proyecto
+        aporteVersionRepository.eliminarPorProyectoId(proyecto.getId());
+
+        // Eliminar aportes no archivados
         aporteRepository.deleteAll(
                 aporteRepository.findByProyectoIdAndArchivadoOrderByCreadoEnDesc(
                         proyecto.getId(), false));
 
+        // Eliminar aportes archivados
         aporteRepository.deleteAll(
                 aporteRepository.findByProyectoIdAndArchivadoOrderByCreadoEnDesc(
                         proyecto.getId(), true));
 
+        // Eliminar membresías
         membresiaRepository.deleteAll(
                 membresiaRepository.findByProyectoId(proyecto.getId()));
 
+        // Eliminar proyecto
         proyectoRepository.delete(proyecto);
 
-        usuarioRepository.deleteAll(List.of(tutorAutor, otroTutor));
+        // Eliminar usuarios
+        usuarioRepository.deleteAll(List.of(
+                tutorAutor,
+                otroTutor,
+                profesionalSalud,
+                profesionalEducacion
+        ));
     }
 
     // CRITERIO 1: un miembro autorizado puede crear un aporte
@@ -206,16 +234,132 @@ class AporteControllerTest {
                         .value(tutorAutor.getId().toString()));
     }
 
+    // CRITERIO 7: editar conserva una versión del contenido anterior
+    @Test
+    void editarAporteGuardaVersionAnterior() throws Exception {
+
+        Aporte aporte = crearAporte();
+        UUID aporteId = aporte.getId();
+
+        mockMvc.perform(put(rutaAportes() + "/" + aporteId)
+                .header("Authorization", token(tutorAutor))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(APORTE_EDITADO))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.titulo").value("Le gusta pintar"))
+                .andExpect(jsonPath("$.contenido")
+                        .value("Disfruta pintar con acuarelas"));
+
+        // Comprobar los datos actualizados
+        Aporte actualizado = aporteRepository.findById(aporteId)
+                .orElseThrow();
+
+        assertEquals("Le gusta pintar", actualizado.getTitulo());
+        assertEquals(
+                "Disfruta pintar con acuarelas",
+                actualizado.getContenido()
+        );
+
+        // Buscar la versión anterior
+        List<AporteVersion> versiones =
+                aporteVersionRepository.findAll().stream()
+                        .filter(version ->
+                                version.getAporte().getId().equals(aporteId))
+                        .toList();
+
+        assertEquals(1, versiones.size());
+
+        AporteVersion versionAnterior = versiones.get(0);
+
+        assertEquals(
+                "Le gusta dibujar",
+                versionAnterior.getTitulo()
+        );
+
+        assertEquals(
+                "Disfruta dibujar animales",
+                versionAnterior.getContenido()
+        );
+
+        assertEquals("{}", versionAnterior.getDatos());
+
+        assertEquals(
+                tutorAutor.getId(),
+                versionAnterior.getAutor().getId()
+        );
+    }
+
+    // CRITERIO 8: cada rol ve solamente los aportes permitidos
+    @Test
+    void listarAportesRespetaVisibilidadPorRol() throws Exception {
+
+        crearAporteConVisibilidad(
+                "Aporte público", Visibilidad.TODOS);
+
+        crearAporteConVisibilidad(
+                "Solo tutores", Visibilidad.SOLO_TUTORES);
+
+        crearAporteConVisibilidad(
+                "Solo salud", Visibilidad.SOLO_SALUD);
+
+        crearAporteConVisibilidad(
+                "Solo educación", Visibilidad.SOLO_EDUCACION);
+
+        // El tutor puede ver los cuatro aportes
+        mockMvc.perform(get(rutaAportes())
+                .header("Authorization", token(tutorAutor)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.length()").value(4));
+
+        // Salud solo puede ver TODOS y SOLO_SALUD
+        mockMvc.perform(get(rutaAportes())
+                .header("Authorization", token(profesionalSalud)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.length()").value(2))
+                .andExpect(jsonPath(
+                        "$[?(@.titulo == 'Aporte público')]").exists())
+                .andExpect(jsonPath(
+                        "$[?(@.titulo == 'Solo salud')]").exists());
+
+        // Educación solo puede ver TODOS y SOLO_EDUCACION
+        mockMvc.perform(get(rutaAportes())
+                .header("Authorization", token(profesionalEducacion)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.length()").value(2))
+                .andExpect(jsonPath(
+                        "$[?(@.titulo == 'Aporte público')]").exists())
+                .andExpect(jsonPath(
+                        "$[?(@.titulo == 'Solo educación')]").exists());
+    }
+
+    // MÉTODOS AUXILIARES
+
     private Aporte crearAporte() {
 
         return aporteRepository.saveAndFlush(Aporte.builder()
                 .proyecto(proyecto)
                 .autor(tutorAutor)
-                .tipo(com.trama.tpo.demo.aporte.TipoAporte.FORTALEZA)
+                .tipo(TipoAporte.FORTALEZA)
                 .titulo("Le gusta dibujar")
                 .contenido("Disfruta dibujar animales")
                 .datos("{}")
-                .visibilidad(com.trama.tpo.demo.aporte.Visibilidad.TODOS)
+                .visibilidad(Visibilidad.TODOS)
+                .archivado(false)
+                .build());
+    }
+
+    private Aporte crearAporteConVisibilidad(
+            String titulo,
+            Visibilidad visibilidad) {
+
+        return aporteRepository.saveAndFlush(Aporte.builder()
+                .proyecto(proyecto)
+                .autor(tutorAutor)
+                .tipo(TipoAporte.FORTALEZA)
+                .titulo(titulo)
+                .contenido("Contenido de prueba")
+                .datos("{}")
+                .visibilidad(visibilidad)
                 .archivado(false)
                 .build());
     }
@@ -238,6 +382,16 @@ class AporteControllerTest {
                 .proyecto(proyecto)
                 .rol(Rol.TUTOR)
                 .esAdmin(esAdmin)
+                .build());
+    }
+
+    private void crearMembresiaConRol(Usuario usuario, Rol rol) {
+
+        membresiaRepository.save(Membresia.builder()
+                .usuario(usuario)
+                .proyecto(proyecto)
+                .rol(rol)
+                .esAdmin(false)
                 .build());
     }
 

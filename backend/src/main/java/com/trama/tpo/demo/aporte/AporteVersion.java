@@ -1,6 +1,7 @@
 package com.trama.tpo.demo.aporte;
 
 import com.trama.tpo.demo.entity.usuario.Usuario;
+import com.trama.tpo.demo.config.CifradoConverter;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
@@ -36,8 +37,13 @@ public class AporteVersion {
     @Column(name = "titulo", nullable = false, length = 150)
     private String titulo;
 
-    // Los campos contenido y datos se integrarán
-    // cuando esté disponible CifradoConverter (historia 0.20).
+    @Convert(converter = CifradoConverter.class)
+    @Column(name = "contenido", columnDefinition = "MEDIUMBLOB")
+    private String contenido;
+
+    @Convert(converter = CifradoConverter.class)
+    @Column(name = "datos", columnDefinition = "MEDIUMBLOB")
+    private String datos;
 
     @CreationTimestamp
     @Column(name = "creado_en", nullable = false, updatable = false)

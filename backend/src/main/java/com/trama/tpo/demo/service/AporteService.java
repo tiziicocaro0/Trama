@@ -1,6 +1,7 @@
 package com.trama.tpo.demo.service;
 
 import com.trama.tpo.demo.aporte.Aporte;
+import com.trama.tpo.demo.aporte.AporteVersion;
 import com.trama.tpo.demo.aporte.TipoAporte;
 import com.trama.tpo.demo.aporte.Visibilidad;
 import com.trama.tpo.demo.entity.dto.AporteRequest;
@@ -10,6 +11,7 @@ import com.trama.tpo.demo.entity.proyecto.Proyecto;
 import com.trama.tpo.demo.entity.usuario.Usuario;
 import com.trama.tpo.demo.exceptions.ApiException;
 import com.trama.tpo.demo.repository.AporteRepository;
+import com.trama.tpo.demo.repository.AporteVersionRepository;
 import com.trama.tpo.demo.repository.MembresiaRepository;
 import com.trama.tpo.demo.repository.ProyectoRepository;
 import com.trama.tpo.demo.repository.UsuarioRepository;
@@ -26,6 +28,7 @@ import java.util.UUID;
 public class AporteService {
 
     private final AporteRepository aporteRepository;
+    private final AporteVersionRepository aporteVersionRepository;
     private final ProyectoRepository proyectoRepository;
     private final UsuarioRepository usuarioRepository;
     private final MembresiaRepository membresiaRepository;
@@ -34,6 +37,7 @@ public class AporteService {
 
     public AporteService(
             AporteRepository aporteRepository,
+            AporteVersionRepository aporteVersionRepository,
             ProyectoRepository proyectoRepository,
             UsuarioRepository usuarioRepository,
             MembresiaRepository membresiaRepository,
@@ -41,6 +45,7 @@ public class AporteService {
             UsuarioActual usuarioActual) {
 
         this.aporteRepository = aporteRepository;
+        this.aporteVersionRepository = aporteVersionRepository;
         this.proyectoRepository = proyectoRepository;
         this.usuarioRepository = usuarioRepository;
         this.membresiaRepository = membresiaRepository;
@@ -106,20 +111,19 @@ public class AporteService {
 
         boolean incluirArchivados = Boolean.TRUE.equals(archivados);
 
-        List<Aporte> aportes;
+        // Determinar qué aportes puede ver el usuario según su rol
+        List<Visibilidad> visibilidadesPermitidas =
+                obtenerVisibilidadesPermitidas(rol);
 
-        if (tipo == null) {
-            aportes = aporteRepository
-                    .findByProyectoIdAndArchivadoOrderByCreadoEnDesc(
-                            proyectoId, incluirArchivados);
-        } else {
-            aportes = aporteRepository
-                    .findByProyectoIdAndTipoAndArchivadoOrderByCreadoEnDesc(
-                            proyectoId, tipo, incluirArchivados);
-        }
+        // Filtrar directamente desde la base de datos
+        List<Aporte> aportes = aporteRepository.buscarAportesVisibles(
+                proyectoId,
+                incluirArchivados,
+                tipo,
+                visibilidadesPermitidas
+        );
 
         return aportes.stream()
-                .filter(aporte -> puedeVer(aporte, rol))
                 .map(this::convertirRespuesta)
                 .toList();
     }
@@ -141,6 +145,18 @@ public class AporteService {
             );
         }
 
+        // Guardar la versión anterior antes de editar
+        AporteVersion version = AporteVersion.builder()
+                .aporte(aporte)
+                .autor(aporte.getAutor())
+                .titulo(aporte.getTitulo())
+                .contenido(aporte.getContenido())
+                .datos(aporte.getDatos())
+                .build();
+
+        aporteVersionRepository.save(version);
+
+        // Actualizar el aporte
         aporte.setTipo(request.tipo());
         aporte.setTitulo(request.titulo());
         aporte.setContenido(request.contenido());
@@ -168,6 +184,7 @@ public class AporteService {
                         HttpStatus.NOT_FOUND
                 ));
 
+        // Solamente el autor puede editar o archivar
         permisoService.verificarAutor(aporte.getAutor().getId());
 
         return aporte;
@@ -184,20 +201,31 @@ public class AporteService {
         aporteRepository.save(aporte);
     }
 
-    // CONTROLAR VISIBILIDAD
-    private boolean puedeVer(Aporte aporte, Rol rol) {
+    // DETERMINAR VISIBILIDADES PERMITIDAS SEGÚN EL ROL
+    private List<Visibilidad> obtenerVisibilidadesPermitidas(Rol rol) {
 
-        Visibilidad visibilidad = aporte.getVisibilidad();
+        return switch (rol) {
 
-        if (visibilidad == null || visibilidad == Visibilidad.TODOS) {
-            return true;
-        }
+            case TUTOR -> List.of(
+                    Visibilidad.TODOS,
+                    Visibilidad.SOLO_TUTORES,
+                    Visibilidad.SOLO_SALUD,
+                    Visibilidad.SOLO_EDUCACION
+            );
 
-        return switch (visibilidad) {
-            case SOLO_TUTORES -> rol == Rol.TUTOR;
-            case SOLO_SALUD -> rol == Rol.SALUD || rol == Rol.TUTOR;
-            case SOLO_EDUCACION -> rol == Rol.EDUCACION || rol == Rol.TUTOR;
-            default -> false;
+            case SALUD -> List.of(
+                    Visibilidad.TODOS,
+                    Visibilidad.SOLO_SALUD
+            );
+
+            case EDUCACION -> List.of(
+                    Visibilidad.TODOS,
+                    Visibilidad.SOLO_EDUCACION
+            );
+
+            default -> List.of(
+                    Visibilidad.TODOS
+            );
         };
     }
 
