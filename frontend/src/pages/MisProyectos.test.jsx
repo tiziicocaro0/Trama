@@ -6,9 +6,13 @@ import { clienteApi } from '../api/cliente';
 import { PROYECTOS_MOCK } from '../api/proyectos';
 import { USUARIO_MOCK } from '../hooks/useAuth';
 import { MisProyectos } from './MisProyectos';
+// La sesión real la da AuthProvider (1.1); acá se simula un usuario logueado.
+vi.mock('../hooks/useAuth', async (importOriginal) => {
+  const original = await importOriginal();
+  const sesion = () => ({ usuario: original.USUARIO_MOCK, estado: 'autenticado' });
+  return { ...original, useAuth: sesion, default: sesion };
+});
 vi.mock('../api/cliente', () => ({
-  TOKEN_KEY: 'trama_token',
-  USUARIO_KEY: 'trama_usuario',
   clienteApi: {
     get: vi.fn(),
   },

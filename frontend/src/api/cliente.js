@@ -1,31 +1,53 @@
 import axios from 'axios';
-export const TOKEN_KEY = 'trama_token';
-export const USUARIO_KEY = 'trama_usuario';
-const baseURL = import.meta.env.VITE_API_URL || 'http://localhost:8080/api';
+
+// Base única del front: Axios + token. Une la base de Maxi (0.14) con la
+// sesión de Zoe (1.1). Un 401 avisa al AuthProvider para cerrar la sesión.
+
+let tokenActual = null;
+const observadores = new Set();
+
+export function alRechazarSesion(observador) {
+  observadores.add(observador);
+  return () => observadores.delete(observador);
+}
+
+// Decisión de Zoe (1.1): el token vive solo en memoria por seguridad.
+// Al recargar la página hay que volver a iniciar sesión.
+export function guardarToken(token) {
+  tokenActual = token;
+}
+
+export function obtenerToken() {
+  return tokenActual;
+}
+
 export const clienteApi = axios.create({
-  baseURL,
-  headers: {
-    'Content-Type': 'application/json',
-  },
+  baseURL: import.meta.env.VITE_API_URL?.trim(),
+  timeout: 15000,
+  headers: { 'Content-Type': 'application/json' },
 });
+
 clienteApi.interceptors.request.use((config) => {
-  const token = localStorage.getItem(TOKEN_KEY);
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
+  if (tokenActual && !['/auth/registro', '/auth/login'].includes(config.url)) {
+    config.headers.set('Authorization', `Bearer ${tokenActual}`);
   }
   return config;
 });
+
 clienteApi.interceptors.response.use(
-  (response) => response,
+  (respuesta) => respuesta,
   (error) => {
-    if (error.response?.status === 401) {
-      localStorage.removeItem(TOKEN_KEY);
-      localStorage.removeItem(USUARIO_KEY);
-      if (window.location.pathname !== '/login') {
-        window.location.assign('/login');
-      }
+    const autorizacion = error.config?.headers?.get?.('Authorization');
+    if (
+      error.response?.status === 401 &&
+      tokenActual &&
+      autorizacion === `Bearer ${tokenActual}`
+    ) {
+      guardarToken(null);
+      observadores.forEach((observador) => observador());
     }
     return Promise.reject(error);
   },
 );
+
 export default clienteApi;

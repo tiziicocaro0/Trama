@@ -1,3 +1,4 @@
+import { useAuth } from '../../hooks/useAuth';
 import { NavLink, Outlet } from 'react-router-dom';
 import logoTrama from '../../assets/logo.png';
 const ITEMS_NAVEGACION = [
@@ -58,6 +59,7 @@ function LogoTrama({ className = 'h-10 w-auto' }) {
   );
 }
 export function Layout() {
+  const { cerrarSesion } = useAuth();
   return (
     <div className="flex min-h-screen flex-col bg-crema font-sans text-oliva md:flex-row">
       {/* Encabezado mobile: campana a la izquierda y logo TRAMA arriba a la derecha */}
@@ -82,7 +84,16 @@ export function Layout() {
             className="absolute right-2 top-2 h-2 w-2 rounded-full bg-miel"
           />
         </button>
-        <LogoTrama className="h-9 w-auto" />
+        <div className="flex items-center gap-3">
+          <LogoTrama className="h-9 w-auto" />
+          <button
+            type="button"
+            onClick={() => cerrarSesion()}
+            className="rounded-full px-3 py-2 text-sm font-semibold text-terracota hover:bg-oliva/10"
+          >
+            Cerrar sesión
+          </button>
+        </div>
       </header>
 
       {/* Sidebar desktop */}
@@ -127,9 +138,18 @@ export function Layout() {
           </nav>
         </div>
 
-        <p className="px-2 font-display text-base leading-snug text-agua">
-          Distintas miradas, una misma persona.
-        </p>
+        <div className="flex flex-col gap-4">
+          <p className="px-2 font-display text-base leading-snug text-agua">
+            Distintas miradas, una misma persona.
+          </p>
+          <button
+            type="button"
+            onClick={() => cerrarSesion()}
+            className="rounded-2xl px-4 py-3 text-left text-sm font-semibold text-terracota hover:bg-oliva/5"
+          >
+            Cerrar sesión
+          </button>
+        </div>
       </aside>
 
       {/* Contenido principal */}

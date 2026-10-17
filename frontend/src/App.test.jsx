@@ -4,10 +4,18 @@ import { MemoryRouter } from 'react-router-dom';
 import { describe, expect, it } from 'vitest';
 import { App } from './App';
 import { CampoContraseña } from './components/ui/CampoContraseña';
+
+// La sesión real la da AuthProvider (1.1); acá se simula un usuario logueado.
+vi.mock('./hooks/useAuth', async (importOriginal) => {
+  const original = await importOriginal();
+  const sesion = () => ({ usuario: original.USUARIO_MOCK, estado: 'autenticado' });
+  return { ...original, useAuth: sesion, default: sesion };
+});
+
 describe('Arquitectura base del Frontend (0.14)', () => {
   it('accede directamente a /proyectos con la sesión mockeada de useAuth y filtra por miembro', async () => {
     render(
-      <MemoryRouter initialEntries={['/']}>
+      <MemoryRouter initialEntries={['/proyectos']}>
         <App />
       </MemoryRouter>,
     );
