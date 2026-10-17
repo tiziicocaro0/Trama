@@ -8,11 +8,11 @@ export interface TarjetaProps extends HTMLAttributes<HTMLDivElement> {
 export function Tarjeta({ titulo, children, className = '', ...props }: TarjetaProps) {
   return (
     <div
-      className={`rounded-3xl border border-oliva/10 bg-superficie p-5 shadow-sm md:p-6 ${className}`.trim()}
+      className={`rounded-lg border border-borde bg-superficie p-space-4 shadow-sm transition-shadow hover:shadow-md md:p-space-5 ${className}`.trim()}
       {...props}
     >
       {titulo && (
-        <h3 className="mb-3 font-display text-2xl font-normal text-terracota">{titulo}</h3>
+        <h3 className="mb-space-3 font-display text-2xl font-normal text-terracota">{titulo}</h3>
       )}
       {children}
     </div>
