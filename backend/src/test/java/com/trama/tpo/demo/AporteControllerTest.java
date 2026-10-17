@@ -335,6 +335,76 @@ class AporteControllerTest {
                         "$[?(@.titulo == 'Solo educación')]").exists());
     }
 
+        @Test
+        void notaProfesionalTieneVisibilidadSoloSaludPorDefecto()
+                throws Exception {
+
+        String request = """
+                {
+                "tipo": "NOTA_PROFESIONAL",
+                "titulo": "Nota de seguimiento",
+                "contenido": "Observación profesional"
+                }
+                """;
+
+        mockMvc.perform(post(rutaAportes())
+                .header("Authorization", token(tutorAutor))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(request))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.visibilidad")
+                        .value("SOLO_SALUD"));
+        }
+
+        @Test
+        void aporteComunTieneVisibilidadTodosPorDefecto()
+                throws Exception {
+
+        String request = """
+                {
+                "tipo": "FORTALEZA",
+                "titulo": "Le gusta leer",
+                "contenido": "Disfruta los cuentos",
+                "datos": "{\\"contexto\\":\\"CASA\\"}"
+                }
+                """;
+
+        mockMvc.perform(post(rutaAportes())
+                .header("Authorization", token(tutorAutor))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(request))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.visibilidad")
+                        .value("TODOS"));
+        }
+
+        @Test
+        void editarSinVisibilidadConservaLaAnterior()
+                throws Exception {
+
+        Aporte aporte = crearAporteConVisibilidad(
+                "Aporte restringido",
+                Visibilidad.SOLO_TUTORES
+        );
+
+        String request = """
+                {
+                "tipo": "FORTALEZA",
+                "titulo": "Aporte actualizado",
+                "contenido": "Nuevo contenido",
+                "datos": "{\\"contexto\\":\\"CASA\\"}"
+                }
+                """;
+
+        mockMvc.perform(put(rutaAportes() + "/" + aporte.getId())
+                .header("Authorization", token(tutorAutor))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(request))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.visibilidad")
+                        .value("SOLO_TUTORES"));
+        }
+
     // MÉTODOS AUXILIARES
 
     private Aporte crearAporte() {

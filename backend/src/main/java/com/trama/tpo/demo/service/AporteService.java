@@ -89,9 +89,9 @@ public class AporteService {
                 .titulo(request.titulo())
                 .contenido(request.contenido())
                 .datos(request.datos())
-                .visibilidad(request.visibilidad() == null
-                        ? Visibilidad.TODOS
-                        : request.visibilidad())
+                .visibilidad(request.visibilidad() != null
+                        ? request.visibilidad()
+                        : obtenerVisibilidadPorDefecto(request.tipo()))
                 .archivado(false)
                 .build();
 
@@ -180,9 +180,9 @@ public class AporteService {
         aporte.setContenido(request.contenido());
         aporte.setDatos(request.datos());
 
-        aporte.setVisibilidad(request.visibilidad() == null
-                ? Visibilidad.TODOS
-                : request.visibilidad());
+        if (request.visibilidad() != null) {
+                aporte.setVisibilidad(request.visibilidad());
+        }
 
         return convertirRespuesta(aporteRepository.saveAndFlush(aporte));
     }
@@ -205,6 +205,12 @@ public class AporteService {
         // Solamente el autor puede editar o archivar
         permisoService.verificarAutor(aporte.getAutor().getId());
 
+        // Verificar que también tenga permiso para ver el aporte
+        permisoService.verificarPuedeVerAporte(
+                proyectoId,
+                aporte.getVisibilidad()
+        );
+
         return aporte;
     }
 
@@ -217,6 +223,15 @@ public class AporteService {
         aporte.setArchivado(true);
 
         aporteRepository.save(aporte);
+    }
+
+    // VISIBILIDAD PREDETERMINADA SEGÚN EL TIPO
+    private Visibilidad obtenerVisibilidadPorDefecto(TipoAporte tipo) {
+
+        return switch (tipo) {
+            case NOTA_PROFESIONAL -> Visibilidad.SOLO_SALUD;
+            default -> Visibilidad.TODOS;
+        };
     }
 
     // DETERMINAR VISIBILIDADES PERMITIDAS SEGÚN EL ROL
