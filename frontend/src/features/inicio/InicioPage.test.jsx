@@ -94,7 +94,6 @@ describe('Inicio de TRAMA', () => {
 
   it.each([
     ['Ver Familia · Próximamente', 'Familia'],
-    ['Ver todos los acompañamientos', 'Acompañamientos'],
     ['Ver calendario · Próximamente', 'Calendario'],
     ['Guías y materiales · Próximamente', 'Guías y materiales'],
     ['Ver todos · Próximamente', 'Recursos'],
@@ -109,6 +108,16 @@ describe('Inicio de TRAMA', () => {
       ).toHaveFocus()
     },
   )
+
+  it('enlaza el sidebar y Ver todos a Acompañamientos', () => {
+    abrir()
+    expect(
+      screen.getByRole('link', { name: 'Acompañamientos', exact: true }),
+    ).toHaveAttribute('href', '/acompanamientos')
+    expect(
+      screen.getByRole('link', { name: 'Ver todos los acompañamientos' }),
+    ).toHaveAttribute('href', '/acompanamientos')
+  })
 
   it('reutiliza el cierre de sesión desde el único botón del sidebar', async () => {
     const user = userEvent.setup()

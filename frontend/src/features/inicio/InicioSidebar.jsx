@@ -1,5 +1,5 @@
 import { BookOpen, CalendarBlank, User, Users } from '@phosphor-icons/react'
-import { NavLink, useSearchParams } from 'react-router'
+import { Link, NavLink, useSearchParams } from 'react-router'
 import BrandLogo from '../../components/ui/BrandLogo.jsx'
 import HiloInicio from './HiloInicio.jsx'
 
@@ -39,8 +39,8 @@ export default function InicioSidebar({ cerrarSesion }) {
               : !navegacion.some((item) => item.id && item.id === actual)
             return (
               <li key={titulo}>
-                <NavLink
-                  to={id ? `/inicio?seccion=${id}` : '/inicio'}
+                <Link
+                  to={id ? `/inicio?seccion=${id}` : '/acompanamientos'}
                   aria-current={seleccionada ? 'page' : false}
                   className={`flex min-h-12 flex-col items-center gap-1 rounded-control px-2 py-3 text-xs focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primario sm:justify-center sm:text-sm lg:flex-row lg:justify-start lg:gap-3 lg:px-3 xl:min-h-13 xl:px-4 xl:text-base ${seleccionada ? 'bg-decoracion font-semibold text-primario' : 'text-texto-suave hover:bg-decoracion/60'}`}
                 >
@@ -56,7 +56,7 @@ export default function InicioSidebar({ cerrarSesion }) {
                       className="ml-auto hidden size-2 shrink-0 rounded-full bg-miel lg:block"
                     />
                   )}
-                </NavLink>
+                </Link>
               </li>
             )
           })}

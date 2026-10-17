@@ -43,7 +43,11 @@ const iconosRecursos = {
 function EnlaceInicio({ seccion, children, etiqueta, circular = false }) {
   return (
     <Link
-      to={`/inicio?seccion=${seccion}`}
+      to={
+        seccion === 'acompanamientos'
+          ? '/acompanamientos'
+          : `/inicio?seccion=${seccion}`
+      }
       aria-label={etiqueta}
       className={`inline-flex min-h-11 shrink-0 items-center justify-center gap-2 rounded-full text-primario transition-colors hover:bg-decoracion focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-primario motion-reduce:transition-none ${circular ? 'size-11 bg-superficie/65' : 'bg-decoracion/80 px-3 py-2 text-sm font-semibold'}`}
     >
