@@ -256,7 +256,10 @@ Si todavía no existe `.env`, copiar `.env.example` y completar las variables:
 MYSQL_PASSWORD=
 MYSQL_ROOT_PASSWORD=
 JWT_SECRET=
+TRAMA_CRYPTO_KEY=
 ```
+
+`TRAMA_CRYPTO_KEY` es la clave de cifrado (AES-256, en Base64). Se genera una vez con `openssl rand -base64 32`.
 
 Las contraseñas y claves deben mantenerse privadas. El archivo `.env` no debe subirse al repositorio.
 
@@ -265,10 +268,12 @@ Las contraseñas y claves deben mantenerse privadas. El archivo `.env` no debe s
 Desde la raíz del proyecto, ejecutar:
 
 ```bash
-docker compose up -d --build
+docker compose --profile app up -d --build
 ```
 
-Este comando construye la imagen del backend e inicia los servicios definidos en Docker Compose.
+Este comando construye la imagen del backend e inicia MySQL y el backend.
+
+> `docker compose up -d` (sin `--profile app`) levanta **solo MySQL**, que es lo que se usa para desarrollar con el backend corriendo desde el IDE. Así no chocan en el puerto 4002.
 
 ### 3. Comprobar el funcionamiento
 
@@ -305,7 +310,7 @@ docker compose logs --tail=80 backend
 ### 5. Detener los servicios
 
 ```bash
-docker compose stop
+docker compose --profile app stop
 ```
 
 Este comando detiene los contenedores sin eliminar los datos persistentes de MySQL.
