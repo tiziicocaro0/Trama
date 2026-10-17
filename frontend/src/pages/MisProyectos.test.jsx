@@ -12,11 +12,10 @@ vi.mock('../hooks/useAuth', async (importOriginal) => {
   const sesion = () => ({ usuario: original.USUARIO_MOCK, estado: 'autenticado' });
   return { ...original, useAuth: sesion, default: sesion };
 });
-vi.mock('../api/cliente', () => ({
-  clienteApi: {
-    get: vi.fn(),
-  },
-}));
+vi.mock('../api/cliente', () => {
+  const cliente = { defaults: { baseURL: '/api' }, get: vi.fn() };
+  return { clienteApi: cliente, default: cliente };
+});
 const mockGet = vi.mocked(clienteApi.get);
 const tomas = PROYECTOS_MOCK[0];
 const martina = PROYECTOS_MOCK[1];
@@ -41,6 +40,25 @@ function renderMisProyectos() {
 describe('MisProyectos (Tarea 1.10)', () => {
   beforeEach(() => {
     mockGet.mockReset();
+  });
+  it('muestra error sin sustituir la API por proyectos ficticios', async () => {
+    mockGet.mockRejectedValueOnce(new Error('Sin conexión'));
+    renderMisProyectos();
+    expect(await screen.findByText(/no pudimos cargar tus proyectos/i)).toBeInTheDocument();
+    expect(screen.queryByText('Tomás')).not.toBeInTheDocument();
+    expect(screen.queryByText('Portada del proyecto')).not.toBeInTheDocument();
+  });
+  it('completa las tarjetas con fechas de nacimiento reales del detalle', async () => {
+    mockGet.mockImplementation(async (ruta) => ({ data: ruta === '/proyectos'
+      ? [{ id: tomas.id, nombre: 'Niño de ejemplo', rol: 'TUTOR' }, { id: martina.id, nombre: 'Otra niña', rol: 'SALUD' }]
+      : { id: ruta.split('/').at(-1), nombre: ruta.endsWith(tomas.id) ? 'Niño de ejemplo' : 'Otra niña', fechaNacimiento: '2020-01-01' }
+    }));
+    renderMisProyectos();
+    expect(await screen.findByText('Niño de ejemplo')).toBeInTheDocument();
+    expect(screen.getAllByText(/\d+ años/)).toHaveLength(2);
+    expect(screen.getByText('Tutor/a')).toBeInTheDocument();
+    expect(screen.getByText('Salud')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /niño de ejemplo/i })).toHaveAttribute('href', `/proyectos/${tomas.id}`);
   });
   it('filtra los proyectos y muestra solo aquellos donde el usuario actual es miembro', async () => {
     mockGet.mockResolvedValueOnce({

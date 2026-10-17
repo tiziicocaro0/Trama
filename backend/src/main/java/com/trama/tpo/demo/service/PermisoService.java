@@ -9,6 +9,7 @@ import org.springframework.stereotype.Service;
 
 import com.trama.tpo.demo.entity.membresia.Membresia;
 import com.trama.tpo.demo.entity.membresia.Rol;
+import com.trama.tpo.demo.aporte.Visibilidad;
 import com.trama.tpo.demo.repository.MembresiaRepository;
 
 @Service
@@ -23,6 +24,12 @@ public class PermisoService {
 
         this.usuarioActual = usuarioActual;
         this.membresiaRepository = membresiaRepository;
+    }
+
+    // Al crear todavía no existe proyecto ni membresía: cualquier usuario autenticado
+    // puede crear uno y queda como su tutor administrador.
+    public UUID verificarPuedeCrearProyecto() {
+        return usuarioActual.obtenerId();
     }
 
     // 1. VERIFICAR QUE PERTENECE AL PROYECTO
@@ -101,6 +108,26 @@ public class PermisoService {
         throw new AccessDeniedException(
                 "No tenés permiso para editar este proyecto"
         );
+    }
+
+    public Set<Visibilidad> visibilidadesPermitidas(UUID proyectoId) {
+        Rol rol = obtenerMembresia(proyectoId).getRol();
+        return switch (rol) {
+            case TUTOR -> Set.of(Visibilidad.values());
+            case SALUD -> Set.of(Visibilidad.TODOS, Visibilidad.SOLO_SALUD);
+            case EDUCACION -> Set.of(Visibilidad.TODOS, Visibilidad.SOLO_EDUCACION);
+            case FAMILIAR -> Set.of(Visibilidad.TODOS);
+        };
+    }
+
+    public boolean puedeEditar(UUID proyectoId) {
+        verificarMiembro(proyectoId);
+        try {
+            verificarPuedeEditar(proyectoId);
+            return true;
+        } catch (AccessDeniedException sinPermisoDeEdicion) {
+            return false;
+        }
     }
 
     // 4. VERIFICAR AUTORÍA DE UN APORTE
