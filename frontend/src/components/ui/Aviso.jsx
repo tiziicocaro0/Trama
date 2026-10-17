@@ -1,20 +1,10 @@
-import type { ReactNode } from 'react';
-
-export type TipoAviso = 'info' | 'exito' | 'alerta' | 'error';
-
-export interface AvisoProps {
-  tipo?: TipoAviso;
-  children: ReactNode;
-}
-
-const CLASES_TIPO: Record<TipoAviso, string> = {
+const CLASES_TIPO = {
   info: 'border-agua bg-agua/15 text-oliva',
   exito: 'border-oliva bg-oliva/10 text-oliva',
   alerta: 'border-miel bg-miel/20 text-oliva',
   error: 'border-terracota bg-terracota/15 text-terracota',
 };
-
-export function Aviso({ tipo = 'info', children }: AvisoProps) {
+export function Aviso({ tipo = 'info', children }) {
   return (
     <div
       role={tipo === 'error' ? 'alert' : 'status'}
@@ -24,6 +14,4 @@ export function Aviso({ tipo = 'info', children }: AvisoProps) {
     </div>
   );
 }
-
 export default Aviso;
-

@@ -1,24 +1,6 @@
 import { USUARIO_MOCK } from '../hooks/useAuth';
 import { clienteApi } from './cliente';
-
-export type RolProyecto = 'Madre' | 'Padre' | 'Terapeuta' | 'Docente' | 'Familiar';
-export type TonoAvatar = 'terracota' | 'agua' | 'oliva' | 'miel';
-
-export interface ProyectoResumen {
-  id: string;
-  nombre: string;
-  apodo: string | null;
-  foto: string | null;
-  iniciales: string;
-  tono: TonoAvatar;
-  rol: RolProyecto;
-  edad: string;
-  actualizado: string;
-  tieneActualizacionPendiente: boolean;
-  miembrosIds: string[];
-}
-
-export const PROYECTOS_MOCK: ProyectoResumen[] = [
+export const PROYECTOS_MOCK = [
   {
     id: '11111111-1111-1111-1111-111111111111',
     nombre: 'Tomás',
@@ -72,24 +54,20 @@ export const PROYECTOS_MOCK: ProyectoResumen[] = [
     miembrosIds: ['00000000-0000-0000-0000-000000000099'],
   },
 ];
-
-export function filtrarProyectosPorMiembro(
-  proyectos: ProyectoResumen[],
-  usuarioId: string,
-): ProyectoResumen[] {
+export function filtrarProyectosPorMiembro(proyectos, usuarioId) {
   return proyectos.filter(
-    (proyecto) => !proyecto.miembrosIds || proyecto.miembrosIds.includes(usuarioId),
+    (proyecto) =>
+      !proyecto.miembrosIds || proyecto.miembrosIds.includes(usuarioId),
   );
 }
-
 /**
  * Consulta `GET /api/proyectos` mediante `clienteApi` (Axios).
  * Si el backend no está disponible en desarrollo, utiliza `PROYECTOS_MOCK`
  * y filtra estrictamente los proyectos donde `usuarioId` es miembro.
  */
-export async function obtenerMisProyectos(usuarioId: string): Promise<ProyectoResumen[]> {
+export async function obtenerMisProyectos(usuarioId) {
   try {
-    const { data } = await clienteApi.get<ProyectoResumen[]>('/proyectos');
+    const { data } = await clienteApi.get('/proyectos');
     return filtrarProyectosPorMiembro(data, usuarioId);
   } catch {
     return filtrarProyectosPorMiembro(PROYECTOS_MOCK, usuarioId);

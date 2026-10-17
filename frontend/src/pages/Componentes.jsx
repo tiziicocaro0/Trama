@@ -7,33 +7,36 @@ import { Cargando } from '../components/ui/Cargando';
 import { Modal } from '../components/ui/Modal';
 import { Selector } from '../components/ui/Selector';
 import { Tarjeta } from '../components/ui/Tarjeta';
-
 const COLORES_PALETA = [
-  { nombre: 'Crema', hex: '#F1E4CD', clase: 'bg-crema text-oliva border border-oliva/20' },
-  { nombre: 'Terracota', hex: '#963417', clase: 'bg-terracota text-crema' },
-  { nombre: 'Oliva', hex: '#4B4F21', clase: 'bg-oliva text-crema' },
-  { nombre: 'Agua', hex: '#628981', clase: 'bg-agua text-crema' },
-  { nombre: 'Miel', hex: '#CF893A', clase: 'bg-miel text-crema' },
+  {
+    nombre: 'Crema',
+    token: '--color-crema',
+    clase: 'bg-crema text-oliva border border-oliva/20',
+  },
+  { nombre: 'Terracota', token: '--color-terracota', clase: 'bg-terracota text-crema' },
+  { nombre: 'Oliva', token: '--color-oliva', clase: 'bg-oliva text-crema' },
+  { nombre: 'Agua', token: '--color-agua', clase: 'bg-agua text-crema' },
+  { nombre: 'Miel', token: '--color-miel', clase: 'bg-miel text-crema' },
 ];
-
 const OPCIONES_ROL = [
   { valor: 'madre', etiqueta: 'Madre / Padre' },
   { valor: 'docente', etiqueta: 'Docente' },
   { valor: 'acompanante', etiqueta: 'Acompañante' },
 ];
-
 export function Componentes() {
   const [modalAbierto, setModalAbierto] = useState(false);
   const [nombre, setNombre] = useState('');
   const [clave, setClave] = useState('');
   const [rol, setRol] = useState('madre');
-
   return (
     <div className="mx-auto flex max-w-4xl flex-col gap-8">
       <header>
-        <h1 className="font-display text-4xl text-terracota">Catálogo de componentes UI</h1>
+        <h1 className="font-display text-4xl text-terracota">
+          Catálogo de componentes UI
+        </h1>
         <p className="mt-1 font-sans text-base text-oliva/80">
-          Demostración de la paleta oficial y componentes base de TRAMA (solo visible en desarrollo).
+          Demostración de la paleta oficial y componentes base de TRAMA (solo
+          visible en desarrollo).
         </p>
       </header>
 
@@ -45,7 +48,7 @@ export function Componentes() {
               className={`flex flex-col items-center justify-center rounded-2xl p-4 text-center ${c.clase}`}
             >
               <span className="font-display text-lg">{c.nombre}</span>
-              <span className="font-sans text-xs opacity-90">{c.hex}</span>
+              <span className="font-sans text-xs opacity-90">{c.token}</span>
             </div>
           ))}
         </div>
@@ -94,16 +97,24 @@ export function Componentes() {
 
       <Tarjeta titulo="Avisos">
         <div className="flex flex-col gap-3">
-          <Aviso tipo="info">Información: podés invitar a nuevas personas al equipo.</Aviso>
+          <Aviso tipo="info">
+            Información: podés invitar a nuevas personas al equipo.
+          </Aviso>
           <Aviso tipo="exito">¡Listo! Guardamos tu aporte correctamente.</Aviso>
-          <Aviso tipo="alerta">Revisá los permisos de visibilidad antes de publicar.</Aviso>
-          <Aviso tipo="error">No pudimos conectar con el servidor. Intentá nuevamente.</Aviso>
+          <Aviso tipo="alerta">
+            Revisá los permisos de visibilidad antes de publicar.
+          </Aviso>
+          <Aviso tipo="error">
+            No pudimos conectar con el servidor. Intentá nuevamente.
+          </Aviso>
         </div>
       </Tarjeta>
 
       <Tarjeta titulo="Modal e indicador de carga">
         <div className="flex flex-wrap items-center justify-between gap-6">
-          <Boton onClick={() => setModalAbierto(true)}>Abrir modal de prueba</Boton>
+          <Boton onClick={() => setModalAbierto(true)}>
+            Abrir modal de prueba
+          </Boton>
           <Cargando mensaje="Cargando acompañamientos…" />
         </div>
         <Modal
@@ -112,7 +123,8 @@ export function Componentes() {
           onCerrar={() => setModalAbierto(false)}
         >
           <p className="mb-6">
-            Este es un ejemplo del componente Modal utilizando únicamente las clases del tema.
+            Este es un ejemplo del componente Modal utilizando únicamente las
+            clases del tema.
           </p>
           <div className="flex justify-end gap-3">
             <Boton variante="fantasma" onClick={() => setModalAbierto(false)}>
@@ -125,6 +137,4 @@ export function Componentes() {
     </div>
   );
 }
-
 export default Componentes;
-

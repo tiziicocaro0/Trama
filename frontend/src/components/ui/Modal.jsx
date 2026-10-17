@@ -1,15 +1,5 @@
-import type { ReactNode } from 'react';
-
-export interface ModalProps {
-  abierto: boolean;
-  titulo: string;
-  onCerrar: () => void;
-  children: ReactNode;
-}
-
-export function Modal({ abierto, titulo, onCerrar, children }: ModalProps) {
+export function Modal({ abierto, titulo, onCerrar, children }) {
   if (!abierto) return null;
-
   return (
     <div
       role="dialog"
@@ -19,7 +9,10 @@ export function Modal({ abierto, titulo, onCerrar, children }: ModalProps) {
     >
       <div className="w-full max-w-lg rounded-3xl border border-oliva/20 bg-crema p-6 shadow-lg">
         <div className="mb-4 flex items-center justify-between gap-4">
-          <h2 id="modal-titulo" className="font-display text-2xl font-normal text-terracota">
+          <h2
+            id="modal-titulo"
+            className="font-display text-2xl font-normal text-terracota"
+          >
             {titulo}
           </h2>
           <button
@@ -36,6 +29,4 @@ export function Modal({ abierto, titulo, onCerrar, children }: ModalProps) {
     </div>
   );
 }
-
 export default Modal;
-

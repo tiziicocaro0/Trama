@@ -1,23 +1,15 @@
-import { useId, useState, type InputHTMLAttributes } from 'react';
-
-export interface CampoContraseñaProps
-  extends Omit<InputHTMLAttributes<HTMLInputElement>, 'type'> {
-  etiqueta: string;
-  error?: string;
-}
-
+import { useId, useState } from 'react';
 export function CampoContraseña({
   etiqueta,
   error,
   id,
   className = '',
   ...props
-}: CampoContraseñaProps) {
+}) {
   const [mostrar, setMostrar] = useState(false);
   const idGenerado = useId();
   const inputId = id ?? idGenerado;
   const errorId = `${inputId}-error`;
-
   return (
     <div className="flex flex-col gap-1.5 font-sans">
       <label htmlFor={inputId} className="text-sm font-semibold text-oliva">
@@ -29,9 +21,7 @@ export function CampoContraseña({
           type={mostrar ? 'text' : 'password'}
           aria-invalid={Boolean(error)}
           aria-describedby={error ? errorId : undefined}
-          className={`w-full rounded-2xl border bg-crema/60 py-2.5 pl-4 pr-12 text-base text-oliva placeholder:text-oliva/50 transition ${
-            error ? 'border-terracota' : 'border-oliva/30 focus:border-terracota'
-          } ${className}`.trim()}
+          className={`w-full rounded-2xl border bg-crema/60 py-2.5 pl-4 pr-12 text-base text-oliva placeholder:text-oliva/50 transition ${error ? 'border-terracota' : 'border-oliva/30 focus:border-terracota'} ${className}`.trim()}
           {...props}
         />
         <button
@@ -63,13 +53,15 @@ export function CampoContraseña({
         </button>
       </div>
       {error && (
-        <span id={errorId} role="alert" className="text-xs font-semibold text-terracota">
+        <span
+          id={errorId}
+          role="alert"
+          className="text-xs font-semibold text-terracota"
+        >
           {error}
         </span>
       )}
     </div>
   );
 }
-
 export default CampoContraseña;
-

@@ -1,24 +1,19 @@
 import { NavLink, Outlet } from 'react-router-dom';
 import logoTrama from '../../assets/logo.png';
-
-type NombreIcono = 'acompanamientos' | 'recursos' | 'calendario' | 'perfil';
-
-const ITEMS_NAVEGACION: { ruta: string; etiqueta: string; icono: NombreIcono }[] = [
+const ITEMS_NAVEGACION = [
   { ruta: '/proyectos', etiqueta: 'Acompañamientos', icono: 'acompanamientos' },
   { ruta: '/recursos', etiqueta: 'Recursos', icono: 'recursos' },
   { ruta: '/calendario', etiqueta: 'Calendario', icono: 'calendario' },
   { ruta: '/perfil', etiqueta: 'Mi perfil', icono: 'perfil' },
 ];
-
-function IconoMenu({ nombre }: { nombre: NombreIcono }) {
+function IconoMenu({ nombre }) {
   const propsComunes = {
     viewBox: '0 0 24 24',
     className: 'h-5 w-5 shrink-0 fill-none stroke-current stroke-2',
-    strokeLinecap: 'round' as const,
-    strokeLinejoin: 'round' as const,
+    strokeLinecap: 'round',
+    strokeLinejoin: 'round',
     'aria-hidden': true,
   };
-
   if (nombre === 'acompanamientos') {
     return (
       <svg {...propsComunes}>
@@ -28,7 +23,6 @@ function IconoMenu({ nombre }: { nombre: NombreIcono }) {
       </svg>
     );
   }
-
   if (nombre === 'recursos') {
     return (
       <svg {...propsComunes}>
@@ -37,7 +31,6 @@ function IconoMenu({ nombre }: { nombre: NombreIcono }) {
       </svg>
     );
   }
-
   if (nombre === 'calendario') {
     return (
       <svg {...propsComunes}>
@@ -46,7 +39,6 @@ function IconoMenu({ nombre }: { nombre: NombreIcono }) {
       </svg>
     );
   }
-
   return (
     <svg {...propsComunes}>
       <circle cx="12" cy="8" r="4" />
@@ -54,8 +46,7 @@ function IconoMenu({ nombre }: { nombre: NombreIcono }) {
     </svg>
   );
 }
-
-function LogoTrama({ className = 'h-10 w-auto' }: { className?: string }) {
+function LogoTrama({ className = 'h-10 w-auto' }) {
   return (
     <div className="inline-flex items-center select-none" aria-label="TRAMA">
       <img
@@ -66,7 +57,6 @@ function LogoTrama({ className = 'h-10 w-auto' }: { className?: string }) {
     </div>
   );
 }
-
 export function Layout() {
   return (
     <div className="flex min-h-screen flex-col bg-crema font-sans text-oliva md:flex-row">
@@ -102,7 +92,10 @@ export function Layout() {
             <LogoTrama className="h-12 w-auto" />
           </div>
 
-          <nav aria-label="Navegación principal" className="flex flex-col gap-2">
+          <nav
+            aria-label="Navegación principal"
+            className="flex flex-col gap-2"
+          >
             {ITEMS_NAVEGACION.map((item) => (
               <NavLink
                 key={item.ruta}
@@ -154,9 +147,7 @@ export function Layout() {
             key={item.ruta}
             to={item.ruta}
             className={({ isActive }) =>
-              `flex flex-col items-center gap-1 rounded-xl px-3 py-1.5 text-xs transition ${
-                isActive ? 'font-bold text-terracota' : 'font-medium text-oliva/70'
-              }`
+              `flex flex-col items-center gap-1 rounded-xl px-3 py-1.5 text-xs transition ${isActive ? 'font-bold text-terracota' : 'font-medium text-oliva/70'}`
             }
           >
             <IconoMenu nombre={item.icono} />
@@ -167,5 +158,4 @@ export function Layout() {
     </div>
   );
 }
-
 export default Layout;

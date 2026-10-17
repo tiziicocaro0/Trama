@@ -1,13 +1,4 @@
-import { useId, type InputHTMLAttributes, type ReactNode } from 'react';
-
-export interface CampoProps extends InputHTMLAttributes<HTMLInputElement> {
-  etiqueta: string;
-  ocultarEtiqueta?: boolean;
-  iconoIzquierdo?: ReactNode;
-  error?: string;
-  ayuda?: string;
-}
-
+import { useId } from 'react';
 export function Campo({
   etiqueta,
   ocultarEtiqueta = false,
@@ -17,17 +8,18 @@ export function Campo({
   id,
   className = '',
   ...props
-}: CampoProps) {
+}) {
   const idGenerado = useId();
   const inputId = id ?? idGenerado;
   const errorId = `${inputId}-error`;
   const ayudaId = `${inputId}-ayuda`;
-
   return (
     <div className="flex flex-col gap-1.5 font-sans">
       <label
         htmlFor={inputId}
-        className={ocultarEtiqueta ? 'sr-only' : 'text-sm font-semibold text-oliva'}
+        className={
+          ocultarEtiqueta ? 'sr-only' : 'text-sm font-semibold text-oliva'
+        }
       >
         {etiqueta}
       </label>
@@ -44,11 +36,7 @@ export function Campo({
           id={inputId}
           aria-invalid={Boolean(error)}
           aria-describedby={error ? errorId : ayuda ? ayudaId : undefined}
-          className={`w-full rounded-2xl border bg-superficie/70 py-3.5 text-base text-oliva placeholder:text-oliva/55 transition ${
-            iconoIzquierdo ? 'pl-11 pr-4' : 'px-4'
-          } ${
-            error ? 'border-terracota' : 'border-oliva/15 focus:border-terracota/50'
-          } ${className}`.trim()}
+          className={`w-full rounded-2xl border bg-superficie/70 py-3.5 text-base text-oliva placeholder:text-oliva/55 transition ${iconoIzquierdo ? 'pl-11 pr-4' : 'px-4'} ${error ? 'border-terracota' : 'border-oliva/15 focus:border-terracota/50'} ${className}`.trim()}
           {...props}
         />
       </div>
@@ -58,12 +46,15 @@ export function Campo({
         </span>
       )}
       {error && (
-        <span id={errorId} role="alert" className="text-xs font-semibold text-terracota">
+        <span
+          id={errorId}
+          role="alert"
+          className="text-xs font-semibold text-terracota"
+        >
           {error}
         </span>
       )}
     </div>
   );
 }
-
 export default Campo;

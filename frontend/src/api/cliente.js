@@ -1,17 +1,13 @@
 import axios from 'axios';
-
 export const TOKEN_KEY = 'trama_token';
 export const USUARIO_KEY = 'trama_usuario';
-
 const baseURL = import.meta.env.VITE_API_URL || 'http://localhost:8080/api';
-
 export const clienteApi = axios.create({
   baseURL,
   headers: {
     'Content-Type': 'application/json',
   },
 });
-
 clienteApi.interceptors.request.use((config) => {
   const token = localStorage.getItem(TOKEN_KEY);
   if (token) {
@@ -19,7 +15,6 @@ clienteApi.interceptors.request.use((config) => {
   }
   return config;
 });
-
 clienteApi.interceptors.response.use(
   (response) => response,
   (error) => {
@@ -33,6 +28,4 @@ clienteApi.interceptors.response.use(
     return Promise.reject(error);
   },
 );
-
 export default clienteApi;
-

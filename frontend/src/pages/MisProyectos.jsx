@@ -1,30 +1,19 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link, Navigate, useNavigate } from 'react-router-dom';
-import {
-  obtenerMisProyectos,
-  type ProyectoResumen,
-  type TonoAvatar,
-} from '../api/proyectos';
+import { obtenerMisProyectos } from '../api/proyectos';
 import { Aviso } from '../components/ui/Aviso';
 import { Boton } from '../components/ui/Boton';
 import { Campo } from '../components/ui/Campo';
 import { Cargando } from '../components/ui/Cargando';
 import { Tarjeta } from '../components/ui/Tarjeta';
 import { useAuth } from '../hooks/useAuth';
-
-type EstadoCarga =
-  | { tipo: 'cargando' }
-  | { tipo: 'error' }
-  | { tipo: 'listo'; proyectos: ProyectoResumen[] };
-
-const CLASES_TONO: Record<TonoAvatar, string> = {
+const CLASES_TONO = {
   terracota: 'bg-terracota text-crema',
   agua: 'bg-agua text-crema',
   oliva: 'bg-oliva text-crema',
   miel: 'bg-miel text-crema',
 };
-
-function AvatarProyecto({ proyecto }: { proyecto: ProyectoResumen }) {
+function AvatarProyecto({ proyecto }) {
   if (proyecto.foto) {
     return (
       <img
@@ -34,7 +23,6 @@ function AvatarProyecto({ proyecto }: { proyecto: ProyectoResumen }) {
       />
     );
   }
-
   return (
     <span
       aria-hidden="true"
@@ -51,7 +39,6 @@ function AvatarProyecto({ proyecto }: { proyecto: ProyectoResumen }) {
     </span>
   );
 }
-
 function HiloDecorativo() {
   return (
     <svg
@@ -65,7 +52,6 @@ function HiloDecorativo() {
     </svg>
   );
 }
-
 function IconoLupa() {
   return (
     <svg
@@ -79,8 +65,7 @@ function IconoLupa() {
     </svg>
   );
 }
-
-function EncabezadoBienvenida({ nombreUsuario }: { nombreUsuario: string }) {
+function EncabezadoBienvenida({ nombreUsuario }) {
   return (
     <header className="mb-6">
       <p className="font-sans text-xs font-bold uppercase tracking-widest text-agua">
@@ -91,20 +76,20 @@ function EncabezadoBienvenida({ nombreUsuario }: { nombreUsuario: string }) {
         <span className="text-miel">.</span>
       </h1>
       <p className="mt-3 font-sans text-base text-oliva/75">
-        <span className="md:hidden">Conectando miradas para acompañar mejor.</span>
+        <span className="md:hidden">
+          Conectando miradas para acompañar mejor.
+        </span>
         <span className="hidden md:inline">Qué bueno tenerte por acá.</span>
       </p>
       <HiloDecorativo />
     </header>
   );
 }
-
 export function MisProyectos() {
   const { usuario } = useAuth();
   const navigate = useNavigate();
-  const [estado, setEstado] = useState<EstadoCarga>({ tipo: 'cargando' });
+  const [estado, setEstado] = useState({ tipo: 'cargando' });
   const [busqueda, setBusqueda] = useState('');
-
   useEffect(() => {
     let activo = true;
     obtenerMisProyectos(usuario.id)
@@ -118,7 +103,6 @@ export function MisProyectos() {
       activo = false;
     };
   }, [usuario.id]);
-
   const proyectosFiltrados = useMemo(() => {
     if (estado.tipo !== 'listo') return [];
     const consulta = busqueda.trim().toLocaleLowerCase('es');
@@ -127,7 +111,6 @@ export function MisProyectos() {
       `${p.nombre} ${p.apodo ?? ''}`.toLocaleLowerCase('es').includes(consulta),
     );
   }, [busqueda, estado]);
-
   if (estado.tipo === 'cargando') {
     return (
       <div className="mx-auto max-w-4xl px-6 py-10 md:px-14">
@@ -135,7 +118,6 @@ export function MisProyectos() {
       </div>
     );
   }
-
   if (estado.tipo === 'error') {
     return (
       <div className="mx-auto max-w-4xl px-6 py-10 md:px-14">
@@ -145,11 +127,9 @@ export function MisProyectos() {
       </div>
     );
   }
-
   if (estado.proyectos.length === 1) {
     return <Navigate to={`/proyectos/${estado.proyectos[0].id}`} replace />;
   }
-
   if (estado.proyectos.length === 0) {
     return (
       <div className="mx-auto max-w-4xl px-6 py-10 md:px-14">
@@ -159,8 +139,8 @@ export function MisProyectos() {
             ¡Te damos la bienvenida a Trama!
           </h2>
           <p className="mt-3 max-w-md font-sans text-base text-oliva/75">
-            Todavía no participás en ningún acompañamiento. Empezá creando el perfil de tu hijo o
-            hija para sumar a quienes lo acompañan.
+            Todavía no participás en ningún acompañamiento. Empezá creando el
+            perfil de tu hijo o hija para sumar a quienes lo acompañan.
           </p>
           <div className="mt-8">
             <Boton onClick={() => navigate('/proyectos/nuevo')}>
@@ -171,7 +151,6 @@ export function MisProyectos() {
       </div>
     );
   }
-
   return (
     <div className="mx-auto max-w-4xl px-6 py-10 md:px-14">
       <EncabezadoBienvenida nombreUsuario={usuario.nombre} />
@@ -271,5 +250,4 @@ export function MisProyectos() {
     </div>
   );
 }
-
 export default MisProyectos;
