@@ -18,7 +18,7 @@ export default function PasswordInput(props) {
           aria-pressed={visible}
           aria-controls={props.id}
           onClick={() => setVisible(!visible)}
-          className="flex size-11 items-center justify-center rounded-pequeno text-primario focus-visible:outline-2 focus-visible:outline-primario"
+          className="flex size-11 items-center justify-center rounded-sm text-primario focus-visible:outline-2 focus-visible:outline-primario"
         >
           <Icon size={20} aria-hidden="true" />
         </button>

@@ -46,7 +46,7 @@ export default function RegistroPage() {
                 id="registro-exito"
                 ref={titleRef}
                 tabIndex={-1}
-                className="font-identidad text-h1 text-primario outline-none"
+                className="font-display text-h1 text-primario outline-none"
               >
                 Cuenta creada
               </h2>

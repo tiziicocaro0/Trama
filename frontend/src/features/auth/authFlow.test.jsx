@@ -1,6 +1,6 @@
 import { act, fireEvent, render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { MemoryRouter } from 'react-router'
+import { MemoryRouter } from 'react-router-dom'
 import { AxiosError } from 'axios'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import cliente, { guardarToken, obtenerToken } from '../../api/cliente.js'

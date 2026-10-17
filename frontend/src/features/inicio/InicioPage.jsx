@@ -56,7 +56,7 @@ export default function InicioPage() {
         <p className="text-sm font-bold tracking-widest text-secundario">
           TU ESPACIO
         </p>
-        <h1 className="mt-3 break-words font-identidad text-display text-primario">
+        <h1 className="mt-3 break-words font-display text-display text-primario">
           ¡Hola, {usuario.nombre}!
         </h1>
         <p className="mt-5 max-w-2xl text-subtitulo leading-relaxed text-texto-suave">
@@ -65,7 +65,7 @@ export default function InicioPage() {
         </p>
         <section
           aria-label="Tu cuenta"
-          className="mt-8 rounded-tarjeta border border-borde bg-superficie p-6"
+          className="mt-8 rounded-lg border border-borde bg-superficie p-6"
         >
           <h2 className="font-bold text-secundario">Tu cuenta</h2>
           <p className="mt-2 break-words">
@@ -76,7 +76,7 @@ export default function InicioPage() {
         <section aria-labelledby="inicio-modulos" className="mt-12">
           <h2
             id="inicio-modulos"
-            className="font-identidad text-h1 text-secundario"
+            className="font-display text-h1 text-secundario"
           >
             Una red para acompañar
           </h2>
@@ -89,10 +89,10 @@ export default function InicioPage() {
               return (
                 <li
                   key={titulo}
-                  className="rounded-tarjeta bg-superficie p-6 shadow-suave"
+                  className="rounded-lg bg-superficie p-6 shadow-sm"
                 >
                   <Icon size={32} aria-hidden="true" className="text-agua" />
-                  <h3 className="mt-4 font-identidad text-h2 text-secundario">
+                  <h3 className="mt-4 font-display text-h2 text-secundario">
                     {titulo}
                   </h3>
                   <p className="mt-2 text-texto-suave">{detalle}</p>

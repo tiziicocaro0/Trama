@@ -14,8 +14,7 @@ npm ci
 npm run dev
 ```
 
-Abrir `http://localhost:5173`. Vite usa este origen y puerto estricto para coincidir
-con el CORS del backend; no pasa a otro puerto si está ocupado.
+Abrir `http://localhost:5173`. El backend acepta este origen por CORS.
 En PowerShell con scripts restringidos se puede usar `npm.cmd` en lugar de `npm`.
 
 ## Verificar
@@ -24,7 +23,6 @@ En PowerShell con scripts restringidos se puede usar `npm.cmd` en lugar de `npm`
 npm run lint
 npm test
 npm run check:estilos
-npm run format:check
 npm run build
 ```
 
@@ -165,21 +163,6 @@ calendario y comunicaciones están identificados como **Próximamente**, sin
 perfiles de niños, estadísticas o contenido inventado. Quedan pendientes esos
 módulos, completar perfil y verificación de email.
 
-## Comprobación optativa contra el backend real
-
-Con el backend y MySQL locales ejecutándose y `.env.local` configurado:
-
-```sh
-npm run test:auth:real
-```
-
-Este script carga las funciones reales de `src/api/` mediante Vite y usa la URL
-configurada, sin transporte simulado. Crea una cuenta ficticia nueva en MySQL en
-cada ejecución y comprueba registro, identidad, logout local, acceso sin token,
-login con la misma cuenta, contraseña incorrecta, JWT inválido y CORS. No imprime
-JWT ni contraseñas. No elimina la cuenta porque no existe un endpoint de borrado.
-Las redirecciones y el vencimiento se verifican en las pruebas React separadas.
-
 ## Archivos de autenticación e Inicio
 
 - `src/features/auth/AuthProvider.jsx`, `AuthContext.js`, `sesion.js` y sus pruebas:
@@ -193,45 +176,3 @@ Las redirecciones y el vencimiento se verifican en las pruebas React separadas.
 - `src/features/auth/registro/hooks/useRegistro.js`, `RegistroPage.jsx` y sus pruebas:
   acceso automático tras crear la cuenta, conservando el formulario por etapas.
 - `src/utils/validaciones.js`: validación de email compartida por registro y login.
-- `scripts/verificar-auth-real.js`, `package.json` y este README: comprobación real
-  optativa e instrucciones. No se agregaron dependencias ni se modificó `tema.css`.
-
-## Archivos creados en esta entrega
-
-```text
-frontend/
-  .gitignore
-  .prettierignore
-  .prettierrc.json
-  README.md
-  eslint.config.js
-  index.html
-  package.json
-  package-lock.json
-  vite.config.js
-  scripts/check-estilos.js
-  src/main.jsx
-  src/components/ui/BrandLogo.jsx
-  src/components/ui/Button.jsx
-  src/features/auth/PaginaTemporal.jsx
-  src/features/bienvenida/BienvenidaPage.jsx
-  src/routes/AppRoutes.jsx
-  src/routes/AppRoutes.test.jsx
-  src/styles/tema.css
-  src/styles/contraste.test.js
-  src/test/setup.js
-```
-
-Los PNG de `public/assets/branding/` ya existían y no se editaron.
-`node_modules/`, `.npm-cache/` y `dist/` son salidas locales ignoradas por Git.
-
-## Diferencias y revisión visual pendiente
-
-- El mockup es desktop. Tablet y móvil reorganizan la composición; el ovillo se
-  reduce y los botones quedan debajo de la frase.
-- Las formas suaves de fondo se aproximan con CSS. El logo y el ovillo son los
-  originales; su encuadre y orientación se ajustan mediante CSS.
-- Los botones respetan el terracota oficial. Su tipografía es Nunito Sans según
-  la guía; pueden aparecer pequeñas diferencias frente al render del mockup.
-- La posición, el recorte y la escala exactos necesitan comparación en navegador:
-  la herramienta de esta sesión no dispone de navegador para capturas.
