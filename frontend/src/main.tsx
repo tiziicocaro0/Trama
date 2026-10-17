@@ -1,19 +1,13 @@
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
-import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
-import MisProyectos from './pages/MisProyectos';
-import ProyectoDetalle from './pages/ProyectoDetalle';
-import './index.css';
+import { BrowserRouter } from 'react-router-dom';
+import { App } from './App';
+import './styles/tema.css';
 
 createRoot(document.getElementById('root') as HTMLElement).render(
   <StrictMode>
     <BrowserRouter>
-      <Routes>
-        <Route path="/" element={<Navigate to="/proyectos" replace />} />
-        <Route path="/proyectos" element={<MisProyectos />} />
-        <Route path="/proyectos/nuevo" element={<p className="p-6">Crear perfil (pendiente)</p>} />
-        <Route path="/proyectos/:id" element={<ProyectoDetalle />} />
-      </Routes>
+      <App />
     </BrowserRouter>
   </StrictMode>,
 );

@@ -1,83 +1,75 @@
 import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import MisProyectos from './MisProyectos';
-import { getProyectos, type Proyecto } from '../services/proyectos';
+import { clienteApi } from '../api/cliente';
+import { PROYECTOS_MOCK, type ProyectoResumen } from '../api/proyectos';
+import { USUARIO_MOCK } from '../hooks/useAuth';
+import { MisProyectos } from './MisProyectos';
 
-vi.mock('../services/proyectos', () => ({ getProyectos: vi.fn() }));
+vi.mock('../api/cliente', () => ({
+  TOKEN_KEY: 'trama_token',
+  USUARIO_KEY: 'trama_usuario',
+  clienteApi: {
+    get: vi.fn(),
+  },
+}));
 
-const mockGetProyectos = vi.mocked(getProyectos);
+const mockGet = vi.mocked(clienteApi.get);
 
-const usuario = { nombre: 'Zoe' };
+const tomas: ProyectoResumen = PROYECTOS_MOCK[0];
+const martina: ProyectoResumen = PROYECTOS_MOCK[1];
+const luciaAjena: ProyectoResumen = PROYECTOS_MOCK[3];
 
-const tomas: Proyecto = {
-  id: '1',
-  nombre: 'Tomás',
-  apodo: 'Tomi',
-  foto: null,
-  iniciales: 'TO',
-  tono: 'terracota',
-  rol: 'Madre',
-  edad: '6 años',
-  actualizado: 'Actualizado hoy',
-  tieneActualizacionPendiente: true,
-};
-const martina: Proyecto = {
-  id: '2',
-  nombre: 'Martina',
-  apodo: null,
-  foto: null,
-  iniciales: 'MA',
-  tono: 'agua',
-  rol: 'Terapeuta',
-  edad: '4 años',
-  actualizado: 'Actualizado ayer',
-  tieneActualizacionPendiente: false,
-};
-
-function renderPagina() {
+function renderMisProyectos() {
   return render(
     <MemoryRouter initialEntries={['/proyectos']}>
       <Routes>
         <Route path="/proyectos" element={<MisProyectos />} />
-        <Route path="/proyectos/nuevo" element={<div>Pantalla nuevo</div>} />
+        <Route path="/proyectos/nuevo" element={<div>Pantalla crear perfil</div>} />
         <Route path="/proyectos/:id" element={<div>Portada del proyecto</div>} />
       </Routes>
     </MemoryRouter>,
   );
 }
 
-describe('MisProyectos', () => {
+describe('MisProyectos (Tarea 1.10)', () => {
   beforeEach(() => {
-    mockGetProyectos.mockReset();
+    mockGet.mockReset();
   });
 
-  it('saluda con el nombre del usuario y renderiza una tarjeta por proyecto con su rol', async () => {
-    mockGetProyectos.mockResolvedValue({ usuario, proyectos: [tomas, martina] });
-    renderPagina();
+  it('filtra los proyectos y muestra solo aquellos donde el usuario actual es miembro', async () => {
+    mockGet.mockResolvedValueOnce({
+      data: [tomas, martina, luciaAjena],
+    });
 
-    expect(await screen.findByRole('heading', { name: /hola, zoe/i })).toBeInTheDocument();
-    expect(screen.getByText('Tomás')).toBeInTheDocument();
+    renderMisProyectos();
+
+    expect(mockGet).toHaveBeenCalledWith('/proyectos');
+    expect(await screen.findByText('Tomás')).toBeInTheDocument();
     expect(screen.getByText('Martina')).toBeInTheDocument();
     expect(screen.getByText('Madre')).toBeInTheDocument();
     expect(screen.getByText('Terapeuta')).toBeInTheDocument();
-    expect(screen.getByText('6 años')).toBeInTheDocument();
-    expect(screen.getByLabelText('Actualización pendiente')).toBeInTheDocument();
-    expect(screen.getAllByRole('link')).toHaveLength(2);
+    // Lucía no incluye a USUARIO_MOCK.id en miembrosIds y no debe renderizarse
+    expect(luciaAjena.miembrosIds).not.toContain(USUARIO_MOCK.id);
+    expect(screen.queryByText('Lucía')).not.toBeInTheDocument();
   });
 
-  it('muestra el estado vacío con el botón hacia /proyectos/nuevo', async () => {
-    mockGetProyectos.mockResolvedValue({ usuario, proyectos: [] });
-    renderPagina();
+  it('muestra el estado vacío con mensaje de bienvenida y el Boton navega a /proyectos/nuevo (Estado 0)', async () => {
+    mockGet.mockResolvedValueOnce({ data: [luciaAjena] });
+    renderMisProyectos();
 
-    const boton = await screen.findByRole('link', { name: /crear el perfil de mi hijo\/a/i });
-    expect(boton).toHaveAttribute('href', '/proyectos/nuevo');
-    expect(screen.getByText(/bienvenida/i)).toBeInTheDocument();
+    expect(await screen.findByText(/te damos la bienvenida a trama/i)).toBeInTheDocument();
+
+    const botonCrear = screen.getByRole('button', { name: /crear el perfil de mi hijo\/a/i });
+    await userEvent.click(botonCrear);
+
+    expect(screen.getByText('Pantalla crear perfil')).toBeInTheDocument();
   });
 
-  it('redirige a la portada cuando hay un solo proyecto', async () => {
-    mockGetProyectos.mockResolvedValue({ usuario, proyectos: [tomas] });
-    renderPagina();
+  it('redirige automáticamente a /proyectos/:id cuando el usuario participa en 1 solo proyecto (Estado 1)', async () => {
+    mockGet.mockResolvedValueOnce({ data: [tomas, luciaAjena] });
+    renderMisProyectos();
 
     expect(await screen.findByText('Portada del proyecto')).toBeInTheDocument();
     expect(screen.queryByText('Tomás')).not.toBeInTheDocument();

@@ -1,209 +1,115 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Link, Navigate } from 'react-router-dom';
-import AppLayout from '../components/AppLayout';
-import Avatar from '../components/Avatar';
-import { ArrowIcon, SearchIcon } from '../components/Iconos';
-import { getProyectos, type MisProyectosResponse, type Proyecto } from '../services/proyectos';
+import { Link, Navigate, useNavigate } from 'react-router-dom';
+import {
+  obtenerMisProyectos,
+  type ProyectoResumen,
+  type TonoAvatar,
+} from '../api/proyectos';
+import { Aviso } from '../components/ui/Aviso';
+import { Boton } from '../components/ui/Boton';
+import { Campo } from '../components/ui/Campo';
+import { Cargando } from '../components/ui/Cargando';
+import { Tarjeta } from '../components/ui/Tarjeta';
+import { useAuth } from '../hooks/useAuth';
 
-type Estado =
+type EstadoCarga =
   | { tipo: 'cargando' }
   | { tipo: 'error' }
-  | { tipo: 'listo'; datos: MisProyectosResponse };
+  | { tipo: 'listo'; proyectos: ProyectoResumen[] };
 
-function Eyebrow({ children }: { children: React.ReactNode }) {
+const CLASES_TONO: Record<TonoAvatar, string> = {
+  terracota: 'bg-terracota text-crema',
+  agua: 'bg-agua text-crema',
+  oliva: 'bg-oliva text-crema',
+  miel: 'bg-miel text-crema',
+};
+
+function AvatarProyecto({ proyecto }: { proyecto: ProyectoResumen }) {
+  if (proyecto.foto) {
+    return (
+      <img
+        src={proyecto.foto}
+        alt=""
+        className="h-16 w-16 shrink-0 rounded-full object-cover md:h-20 md:w-20"
+      />
+    );
+  }
+
   return (
-    <p className="font-sans text-[12px] font-semibold uppercase tracking-[0.2em] text-agua">
-      {children}
-    </p>
+    <span
+      aria-hidden="true"
+      className={`relative flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-full font-sans text-xl font-medium md:h-20 md:w-20 md:text-2xl ${CLASES_TONO[proyecto.tono]}`}
+    >
+      <svg
+        viewBox="0 0 80 80"
+        className="absolute inset-0 h-full w-full fill-none stroke-crema/45 stroke-2"
+        strokeLinecap="round"
+      >
+        <path d="M4 57c19-19 38-7 47-24 6-11 4-22-3-26" />
+      </svg>
+      <span className="relative">{proyecto.iniciales}</span>
+    </span>
   );
 }
 
-function Hilo() {
+function HiloDecorativo() {
   return (
     <svg
       viewBox="0 0 720 92"
       preserveAspectRatio="none"
-      className="mt-5 h-12 w-full fill-none stroke-miel/60 stroke-[1.5] desk:h-16"
+      className="mt-4 h-14 w-full fill-none stroke-miel/55 stroke-2 md:h-20"
       aria-hidden="true"
     >
       <path d="M-10 58C95 12 190 83 302 51c58-17 63-50 24-45-44 6-35 70 43 59 99-14 188-34 361-9" />
-      <circle cx="326" cy="6" r="3.5" className="fill-miel/60 stroke-none" />
+      <circle cx="326" cy="6" r="3.5" className="fill-miel/65 stroke-none" />
     </svg>
   );
 }
 
-function Ovillo() {
+function IconoLupa() {
   return (
     <svg
-      viewBox="0 0 72 72"
-      className="h-[72px] w-[72px] fill-miel/20 stroke-miel stroke-[2]"
+      viewBox="0 0 24 24"
+      className="h-5 w-5 fill-none stroke-current stroke-2"
       strokeLinecap="round"
-      aria-hidden="true"
+      strokeLinejoin="round"
     >
-      <circle cx="36" cy="36" r="27" />
-      <path className="fill-none" d="M12 26c14 8 34 8 48 0M10 38c16 9 36 9 52 0M16 50c12 6 28 6 40 0" />
+      <circle cx="11" cy="11" r="6.5" />
+      <path d="m16 16 4 4" />
     </svg>
   );
 }
 
-function Bienvenida({ nombre }: { nombre: string }) {
+function EncabezadoBienvenida({ nombreUsuario }: { nombreUsuario: string }) {
   return (
-    <header className="mb-7 desk:mb-8">
-      <Eyebrow>Tú espacio</Eyebrow>
-      <h1 className="mt-2 font-display text-[32px] font-normal leading-[1.15] text-terracota desk:text-[44px] desk:leading-[1.12]">
-        Hola, {nombre}
+    <header className="mb-6">
+      <p className="font-sans text-xs font-bold uppercase tracking-widest text-agua">
+        Tú espacio
+      </p>
+      <h1 className="mt-2 font-display text-5xl font-normal text-terracota md:text-6xl">
+        Hola, {nombreUsuario}
         <span className="text-miel">.</span>
       </h1>
-      <p className="mt-2 max-w-[520px] font-sans text-[15px] leading-[1.6] text-texto-suave desk:text-[16px] desk:leading-[1.65]">
-        Qué bueno tenerte por acá.
+      <p className="mt-3 font-sans text-base text-oliva/75">
+        <span className="md:hidden">Conectando miradas para acompañar mejor.</span>
+        <span className="hidden md:inline">Qué bueno tenerte por acá.</span>
       </p>
-      <Hilo />
+      <HiloDecorativo />
     </header>
   );
 }
 
-function EstadoVacio({ nombre }: { nombre: string }) {
-  return (
-    <>
-      <Bienvenida nombre={nombre} />
-      <section
-        aria-labelledby="bienvenida-titulo"
-        className="flex flex-col items-center gap-3 rounded-[23px] border border-borde bg-crema-card px-6 py-12 text-center shadow-suave desk:rounded-[26px]"
-      >
-        <Ovillo />
-        <h2
-          id="bienvenida-titulo"
-          className="font-display text-[24px] font-normal leading-[1.2] text-oliva"
-        >
-          ¡Te damos la bienvenida a Trama!
-        </h2>
-        <p className="max-w-[420px] font-sans text-[15px] leading-[1.6] text-texto-suave">
-          Todavía no participás en ningún acompañamiento. Empezá creando el perfil de tu hijo o
-          hija para sumar a quienes lo acompañan.
-        </p>
-        <Link
-          to="/proyectos/nuevo"
-          className="mt-3 inline-flex min-h-[48px] w-full items-center justify-center rounded-full bg-terracota px-8 font-sans text-[16px] font-bold text-crema transition-colors duration-[180ms] ease-in-out hover:bg-terracota/90 focus:outline-none focus-visible:ring-4 focus-visible:ring-miel/60 sm:w-auto"
-        >
-          Crear el perfil de mi hijo/a
-        </Link>
-      </section>
-    </>
-  );
-}
-
-function TarjetaProyecto({ proyecto: p }: { proyecto: Proyecto }) {
-  return (
-    <Link
-      to={`/proyectos/${p.id}`}
-      className="flex min-h-[100px] items-center gap-[14px] rounded-[23px] border border-borde bg-crema-card p-4 shadow-suave transition duration-[180ms] ease-in-out hover:-translate-y-0.5 hover:border-terracota/40 hover:shadow-elevada focus:outline-none focus-visible:ring-4 focus-visible:ring-miel/50 active:scale-[0.99] motion-reduce:transition-none motion-reduce:hover:translate-y-0 motion-reduce:active:scale-100 desk:min-h-[112px] desk:gap-[18px] desk:rounded-[26px] desk:px-[22px] desk:py-5 desk:shadow-suave-lg"
-    >
-      <span className="relative">
-        <Avatar proyecto={p} tamano="lista" />
-        {p.tieneActualizacionPendiente && (
-          <span
-            role="img"
-            aria-label="Actualización pendiente"
-            className="absolute -right-1 -top-1 h-4 w-4 rounded-full border-2 border-crema-card bg-miel"
-          />
-        )}
-      </span>
-      <span className="flex min-w-0 flex-1 flex-col">
-        <span className="flex items-baseline gap-2">
-          <strong className="truncate font-display text-[22px] font-normal leading-[1.2] text-oliva desk:text-[25px]">
-            {p.nombre}
-          </strong>
-          {p.apodo && (
-            <span className="truncate font-sans text-[13px] text-texto-suave desk:text-[14px]">
-              “{p.apodo}”
-            </span>
-          )}
-        </span>
-        <span className="mt-[5px] flex flex-wrap items-center gap-x-2 gap-y-1 font-sans text-[13px] text-texto-suave desk:text-[14px]">
-          <span>{p.edad}</span>
-          <span>{p.actualizado}</span>
-        </span>
-        <span className="mt-2 inline-flex w-fit rounded-full bg-agua/15 px-3 py-0.5 font-sans text-[12px] font-bold text-agua">
-          {p.rol}
-        </span>
-      </span>
-      <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl text-texto-suave">
-        <ArrowIcon className="h-[18px] w-[18px]" />
-      </span>
-    </Link>
-  );
-}
-
-function ListaProyectos({ nombre, proyectos }: { nombre: string; proyectos: Proyecto[] }) {
+export function MisProyectos() {
+  const { usuario } = useAuth();
+  const navigate = useNavigate();
+  const [estado, setEstado] = useState<EstadoCarga>({ tipo: 'cargando' });
   const [busqueda, setBusqueda] = useState('');
-
-  const filtrados = useMemo(() => {
-    const q = busqueda.trim().toLocaleLowerCase('es');
-    if (!q) return proyectos;
-    return proyectos.filter((p) =>
-      `${p.nombre} ${p.apodo ?? ''}`.toLocaleLowerCase('es').includes(q),
-    );
-  }, [busqueda, proyectos]);
-
-  return (
-    <>
-      <Bienvenida nombre={nombre} />
-
-      <section aria-labelledby="proyectos-titulo">
-        <Eyebrow>Tu red cercana</Eyebrow>
-        <h2
-          id="proyectos-titulo"
-          className="mt-1 font-display text-[28px] font-normal leading-[1.15] text-oliva desk:text-[36px]"
-        >
-          Acompañamientos
-        </h2>
-        <p className="mt-2 font-sans text-[15px] leading-[1.6] text-texto-suave desk:text-[16px]">
-          Espacios compartidos para su bienestar.
-        </p>
-
-        <label className="mt-5 flex min-h-[54px] w-full items-center gap-3 rounded-[19px] border border-borde bg-crema-card px-[18px] text-texto-suave transition-[border-color,box-shadow] duration-[180ms] ease-in-out focus-within:border-terracota/50 focus-within:ring-2 focus-within:ring-terracota/20 desk:h-[58px] desk:max-w-[720px] desk:rounded-[21px] desk:px-5">
-          <SearchIcon className="h-5 w-5 text-agua" />
-          <span className="sr-only">Buscar acompañamiento</span>
-          <input
-            type="search"
-            value={busqueda}
-            onChange={(e) => setBusqueda(e.target.value)}
-            placeholder="Buscar acompañamiento…"
-            className="min-w-0 flex-1 bg-transparent font-sans text-[15px] text-texto placeholder:text-texto-suave focus:outline-none"
-          />
-        </label>
-
-        <ul className="mt-5 flex flex-col gap-[14px] desk:gap-[18px]" aria-live="polite">
-          {filtrados.map((p) => (
-            <li key={p.id}>
-              <TarjetaProyecto proyecto={p} />
-            </li>
-          ))}
-        </ul>
-
-        {filtrados.length === 0 && (
-          <div className="mt-5 rounded-[23px] border border-borde bg-crema-card px-6 py-12 text-center font-sans desk:rounded-[26px]">
-            <p className="text-[16px] font-semibold text-texto">
-              No encontramos ese acompañamiento.
-            </p>
-            <span className="mt-1 block text-[15px] text-texto-suave">
-              Probá buscar con otro nombre.
-            </span>
-          </div>
-        )}
-      </section>
-    </>
-  );
-}
-
-export default function MisProyectos() {
-  const [estado, setEstado] = useState<Estado>({ tipo: 'cargando' });
 
   useEffect(() => {
     let activo = true;
-    getProyectos()
-      .then((datos) => {
-        if (activo) setEstado({ tipo: 'listo', datos });
+    obtenerMisProyectos(usuario.id)
+      .then((proyectos) => {
+        if (activo) setEstado({ tipo: 'listo', proyectos });
       })
       .catch(() => {
         if (activo) setEstado({ tipo: 'error' });
@@ -211,41 +117,159 @@ export default function MisProyectos() {
     return () => {
       activo = false;
     };
-  }, []);
+  }, [usuario.id]);
+
+  const proyectosFiltrados = useMemo(() => {
+    if (estado.tipo !== 'listo') return [];
+    const consulta = busqueda.trim().toLocaleLowerCase('es');
+    if (!consulta) return estado.proyectos;
+    return estado.proyectos.filter((p) =>
+      `${p.nombre} ${p.apodo ?? ''}`.toLocaleLowerCase('es').includes(consulta),
+    );
+  }, [busqueda, estado]);
 
   if (estado.tipo === 'cargando') {
     return (
-      <AppLayout>
-        <p role="status" className="mt-10 text-center font-sans text-[16px]">
-          Cargando tus proyectos…
-        </p>
-      </AppLayout>
+      <div className="mx-auto max-w-4xl px-6 py-10 md:px-14">
+        <Cargando mensaje="Cargando tus proyectos…" />
+      </div>
     );
   }
 
   if (estado.tipo === 'error') {
     return (
-      <AppLayout>
-        <p role="alert" className="mt-10 text-center font-sans text-[16px] text-terracota">
+      <div className="mx-auto max-w-4xl px-6 py-10 md:px-14">
+        <Aviso tipo="error">
           No pudimos cargar tus proyectos. Intentá de nuevo más tarde.
-        </p>
-      </AppLayout>
+        </Aviso>
+      </div>
     );
   }
 
-  const { usuario, proyectos } = estado.datos;
+  if (estado.proyectos.length === 1) {
+    return <Navigate to={`/proyectos/${estado.proyectos[0].id}`} replace />;
+  }
 
-  if (proyectos.length === 1) {
-    return <Navigate to={`/proyectos/${proyectos[0].id}`} replace />;
+  if (estado.proyectos.length === 0) {
+    return (
+      <div className="mx-auto max-w-4xl px-6 py-10 md:px-14">
+        <EncabezadoBienvenida nombreUsuario={usuario.nombre} />
+        <Tarjeta className="flex flex-col items-center py-12 text-center">
+          <h2 className="font-display text-3xl font-normal text-oliva md:text-4xl">
+            ¡Te damos la bienvenida a Trama!
+          </h2>
+          <p className="mt-3 max-w-md font-sans text-base text-oliva/75">
+            Todavía no participás en ningún acompañamiento. Empezá creando el perfil de tu hijo o
+            hija para sumar a quienes lo acompañan.
+          </p>
+          <div className="mt-8">
+            <Boton onClick={() => navigate('/proyectos/nuevo')}>
+              Crear el perfil de mi hijo/a
+            </Boton>
+          </div>
+        </Tarjeta>
+      </div>
+    );
   }
 
   return (
-    <AppLayout>
-      {proyectos.length === 0 ? (
-        <EstadoVacio nombre={usuario.nombre} />
-      ) : (
-        <ListaProyectos nombre={usuario.nombre} proyectos={proyectos} />
-      )}
-    </AppLayout>
+    <div className="mx-auto max-w-4xl px-6 py-10 md:px-14">
+      <EncabezadoBienvenida nombreUsuario={usuario.nombre} />
+
+      <section aria-labelledby="acompanamientos-titulo">
+        <p className="font-sans text-xs font-bold uppercase tracking-widest text-agua">
+          Tu red cercana
+        </p>
+        <h2
+          id="acompanamientos-titulo"
+          className="mt-1 font-display text-4xl font-bold text-oliva md:text-5xl"
+        >
+          Acompañamientos
+        </h2>
+        <p className="mt-2 font-sans text-base text-oliva/75">
+          Espacios compartidos para su bienestar.
+        </p>
+
+        <div className="mt-6">
+          <Campo
+            etiqueta="Buscar acompañamiento"
+            ocultarEtiqueta
+            iconoIzquierdo={<IconoLupa />}
+            type="search"
+            placeholder="Buscar acompañamiento..."
+            value={busqueda}
+            onChange={(e) => setBusqueda(e.target.value)}
+          />
+        </div>
+
+        <ul className="mt-5 flex flex-col gap-4" aria-live="polite">
+          {proyectosFiltrados.map((proyecto) => (
+            <li key={proyecto.id}>
+              <Link
+                to={`/proyectos/${proyecto.id}`}
+                className="block rounded-3xl transition hover:-translate-y-0.5"
+              >
+                <Tarjeta className="flex items-center gap-5 hover:border-terracota/30 md:gap-6">
+                  <div className="relative">
+                    <AvatarProyecto proyecto={proyecto} />
+                    {proyecto.tieneActualizacionPendiente && (
+                      <span
+                        role="img"
+                        aria-label="Actualización pendiente"
+                        className="absolute right-0 top-0 h-4 w-4 rounded-full border-2 border-superficie bg-miel"
+                      />
+                    )}
+                  </div>
+
+                  <div className="flex min-w-0 flex-1 flex-col">
+                    <div className="flex items-baseline gap-2">
+                      <strong className="truncate font-display text-2xl font-normal text-oliva md:text-3xl">
+                        {proyecto.nombre}
+                      </strong>
+                      {proyecto.apodo && (
+                        <span className="sr-only">({proyecto.apodo})</span>
+                      )}
+                    </div>
+                    <span className="mt-0.5 font-sans text-base text-oliva">
+                      {proyecto.edad}
+                    </span>
+                    <span className="mt-0.5 font-sans text-sm text-oliva/65">
+                      {proyecto.actualizado}
+                    </span>
+                    <span className="mt-2 inline-flex w-fit rounded-full bg-agua/15 px-3 py-0.5 font-sans text-xs font-semibold text-agua">
+                      {proyecto.rol}
+                    </span>
+                  </div>
+
+                  <span
+                    aria-hidden="true"
+                    className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-terracota"
+                  >
+                    <svg
+                      viewBox="0 0 24 24"
+                      className="h-5 w-5 fill-none stroke-current stroke-2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    >
+                      <path d="m9 5 7 7-7 7" />
+                    </svg>
+                  </span>
+                </Tarjeta>
+              </Link>
+            </li>
+          ))}
+        </ul>
+
+        {proyectosFiltrados.length === 0 && (
+          <div className="mt-6">
+            <Aviso tipo="info">
+              No encontramos ese acompañamiento. Probá buscar con otro nombre.
+            </Aviso>
+          </div>
+        )}
+      </section>
+    </div>
   );
 }
+
+export default MisProyectos;
