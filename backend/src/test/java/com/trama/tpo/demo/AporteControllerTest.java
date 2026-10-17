@@ -42,25 +42,25 @@ import com.trama.tpo.demo.repository.UsuarioRepository;
 @ActiveProfiles("test")
 class AporteControllerTest {
 
-    private static final String APORTE_VALIDO = """
-            {
-              "tipo": "FORTALEZA",
-              "titulo": "Le gusta dibujar",
-              "contenido": "Disfruta dibujar animales",
-              "datos": "{}",
-              "visibilidad": "TODOS"
-            }
-            """;
+        private static final String APORTE_VALIDO = """
+                {
+                "tipo": "FORTALEZA",
+                "titulo": "Le gusta dibujar",
+                "contenido": "Disfruta dibujar animales",
+                "datos": "{\\"contexto\\":\\"ESCUELA\\"}",
+                "visibilidad": "TODOS"
+                }
+                """;
 
-    private static final String APORTE_EDITADO = """
-            {
-              "tipo": "FORTALEZA",
-              "titulo": "Le gusta pintar",
-              "contenido": "Disfruta pintar con acuarelas",
-              "datos": "{}",
-              "visibilidad": "TODOS"
-            }
-            """;
+        private static final String APORTE_EDITADO = """
+                {
+                "tipo": "FORTALEZA",
+                "titulo": "Le gusta pintar",
+                "contenido": "Disfruta pintar con acuarelas",
+                "datos": "{\\"contexto\\":\\"CASA\\",\\"ejemplo\\":\\"Pintó un paisaje\\"}",
+                "visibilidad": "TODOS"
+                }
+                """;
 
     @Autowired
     private MockMvc mockMvc;
@@ -281,7 +281,10 @@ class AporteControllerTest {
                 versionAnterior.getContenido()
         );
 
-        assertEquals("{}", versionAnterior.getDatos());
+        assertEquals(
+                "{\"contexto\":\"ESCUELA\"}",
+                versionAnterior.getDatos()
+        );
 
         assertEquals(
                 tutorAutor.getId(),
@@ -342,7 +345,7 @@ class AporteControllerTest {
                 .tipo(TipoAporte.FORTALEZA)
                 .titulo("Le gusta dibujar")
                 .contenido("Disfruta dibujar animales")
-                .datos("{}")
+                .datos("{\"contexto\":\"ESCUELA\"}")
                 .visibilidad(Visibilidad.TODOS)
                 .archivado(false)
                 .build());
@@ -358,7 +361,7 @@ class AporteControllerTest {
                 .tipo(TipoAporte.FORTALEZA)
                 .titulo(titulo)
                 .contenido("Contenido de prueba")
-                .datos("{}")
+                .datos("{\"contexto\":\"ESCUELA\"}")
                 .visibilidad(visibilidad)
                 .archivado(false)
                 .build());
