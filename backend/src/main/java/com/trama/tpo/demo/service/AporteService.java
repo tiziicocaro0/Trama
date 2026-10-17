@@ -19,6 +19,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import com.trama.tpo.demo.aporte.interes.DatosInteres;
+import com.trama.tpo.demo.aporte.fortaleza.DatosFortaleza;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
@@ -63,6 +64,7 @@ public class AporteService {
         permisoService.verificarMiembro(proyectoId);
         permisoService.verificarPuedeEditar(proyectoId);
         validarInteres(request);
+        validarFortaleza(request);
 
         UUID usuarioId = usuarioActual.obtenerId();
 
@@ -157,8 +159,9 @@ public class AporteService {
         );
         }
 
-        // Validar los datos específicos del interés
+        // Validar los datos específicos del aporte
         validarInteres(request);
+        validarFortaleza(request);
 
         // Guardar la versión anterior antes de editar
         AporteVersion version = AporteVersion.builder()
@@ -298,6 +301,58 @@ public class AporteService {
                 throw new ApiException(
                         "DATOS_INTERES_INVALIDOS",
                         "Los datos del interés no son válidos",
+                        HttpStatus.BAD_REQUEST
+                );
+        }
+        }
+
+        private void validarFortaleza(AporteRequest request) {
+
+        if (request.tipo() != TipoAporte.FORTALEZA) {
+                return;
+        }
+
+        if (request.titulo() == null ||
+                request.titulo().isBlank()) {
+
+                throw new ApiException(
+                        "FORTALEZA_INVALIDA",
+                        "La descripción de la fortaleza es obligatoria",
+                        HttpStatus.BAD_REQUEST
+                );
+        }
+
+        if (request.datos() == null ||
+                request.datos().isBlank()) {
+
+                throw new ApiException(
+                        "DATOS_FORTALEZA_INVALIDOS",
+                        "El contexto de la fortaleza es obligatorio",
+                        HttpStatus.BAD_REQUEST
+                );
+        }
+
+        try {
+                ObjectMapper mapper = new ObjectMapper();
+
+                DatosFortaleza datos = mapper.readValue(
+                        request.datos(),
+                        DatosFortaleza.class
+                );
+
+                if (datos.contexto() == null) {
+                throw new ApiException(
+                        "DATOS_FORTALEZA_INVALIDOS",
+                        "El contexto de la fortaleza es obligatorio",
+                        HttpStatus.BAD_REQUEST
+                );
+                }
+
+        } catch (JsonProcessingException e) {
+
+                throw new ApiException(
+                        "DATOS_FORTALEZA_INVALIDOS",
+                        "Los datos de la fortaleza no son válidos",
                         HttpStatus.BAD_REQUEST
                 );
         }
