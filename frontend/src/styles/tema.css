@@ -1,0 +1,375 @@
+@import "tailwindcss";
+
+@theme {
+  /* 01. Paleta y tokens de color — Colores principales */
+  --color-crema: #F1E4CD;
+  --color-terracota: #963417;
+  --color-oliva: #4B4F21;
+  --color-agua: #628981;
+  --color-miel: #CF893A;
+  --color-superficie: #FAF3E3;
+
+  /* 01. Colores funcionales (Guía de estilo oficial) */
+  --color-texto: #2E2E2E;
+  --color-texto-suave: #6B6B6B;
+  --color-borde: #D9D4C8;
+  --color-exito: #4A7C59;
+  --color-error: #B0413E;
+  --color-aviso: #E3A632;
+
+  /* Roles semánticos: un nombre por rol, siempre en español */
+  --color-fondo: #F1E4CD;      /* crema */
+  --color-primario: #963417;   /* terracota */
+  --color-secundario: #4B4F21; /* oliva */
+  --color-acento: #CF893A;     /* miel */
+
+  /* 02. Tipografías oficiales */
+  --font-display: "Handlee", cursive;
+  --font-sans: "Nunito Sans", sans-serif;
+
+  /* 02. Escala tipográfica (Display 48px, H1 36px, H2 28px, Subtítulo 20px, Body 16px, Small 14px, Caption 12px) */
+  --text-xs: 0.75rem;
+  --text-xs--line-height: 1rem;
+  --text-caption: 0.75rem;
+  --text-caption--line-height: 1rem;
+
+  --text-sm: 0.875rem;
+  --text-sm--line-height: 1.25rem;
+  --text-small: 0.875rem;
+  --text-small--line-height: 1.25rem;
+
+  --text-base: 1rem;
+  --text-base--line-height: 1.5rem;
+  --text-body: 1rem;
+  --text-body--line-height: 1.5rem;
+
+  --text-lg: 1.125rem;
+  --text-lg--line-height: 1.75rem;
+
+  --text-xl: 1.25rem;
+  --text-xl--line-height: 1.75rem;
+  --text-subtitulo: 1.25rem;
+  --text-subtitulo--line-height: 1.75rem;
+
+  --text-2xl: 1.75rem;
+  --text-2xl--line-height: 2.25rem;
+  --text-h2: 1.75rem;
+  --text-h2--line-height: 2.25rem;
+
+  --text-3xl: 2.25rem;
+  --text-3xl--line-height: 2.5rem;
+  --text-4xl: 2.25rem;
+  --text-4xl--line-height: 2.5rem;
+  --text-h1: 2.25rem;
+  --text-h1--line-height: 2.5rem;
+
+  --text-5xl: 3rem;
+  --text-5xl--line-height: 1.15;
+  --text-display: 3rem;
+  --text-display--line-height: 1.15;
+
+  /* 03. Escala de espaciados oficial (4px, 8px, 12px, 16px, 24px, 32px) */
+  --spacing: 0.25rem;
+  --spacing-space-1: 0.25rem;
+  --spacing-space-2: 0.5rem;
+  --spacing-space-3: 0.75rem;
+  --spacing-space-4: 1rem;
+  --spacing-space-5: 1.5rem;
+  --spacing-space-6: 2rem;
+
+  /* 03. Radios de borde (8px, 16px, 24px, 999px) */
+  --radius-sm: 0.5rem;
+  --radius-md: 1rem;
+  --radius-lg: 1.5rem;
+  --radius-full: 999px;
+
+  /* 03. Sombras oficiales (Sombra suave y Sombra elevada) */
+  --shadow-sm: 0 2px 8px rgba(46, 46, 46, 0.06);
+  --shadow-md: 0 6px 20px rgba(46, 46, 46, 0.10);
+
+  /* 04. Tokens de las pantallas de bienvenida y registro (muestreados de los mockups de Sofía) */
+  --color-decoracion: #f6e9d5;
+  --color-primario-hover: #7d2b13;
+  --color-contorno-accion: #d59983;
+  --color-bienvenida-papel: #fef5e9;
+  --color-bienvenida-curva: #fce7d3;
+  --color-bienvenida-luz: #fffaf1;
+  --color-bienvenida-accion: #9e3d22;
+  --shadow-bienvenida: 0 4px 12px #4b4f2110;
+  --shadow-bienvenida-accion: 0 12px 40px #96341712;
+  --radius-marco: 3rem;
+  --text-registro-portada: 5rem;
+  --text-registro-etapa: 3.25rem;
+  --container-registro-form: 36.5rem;
+}
+
+@layer base {
+  body {
+    background-color: var(--color-crema);
+    color: var(--color-texto);
+    font-family: var(--font-sans);
+    font-size: var(--text-base);
+    line-height: var(--text-base--line-height);
+    margin: 0;
+    min-height: 100vh;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4 {
+    font-family: var(--font-display);
+    font-weight: 400;
+  }
+
+  h1 {
+    font-size: var(--text-h1);
+    line-height: var(--text-h1--line-height);
+  }
+
+  h2 {
+    font-size: var(--text-h2);
+    line-height: var(--text-h2--line-height);
+  }
+
+  :focus-visible {
+    outline: 3px solid var(--color-miel);
+    outline-offset: 2px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* ============================================================
+   Estilos propios de las pantallas de bienvenida, login y registro
+   ============================================================ */
+
+/* Se encuadra el margen transparente del PNG original, sin alterar el asset. */
+.brand-logo {
+  display: block;
+  position: relative;
+  overflow: hidden;
+  width: 100%;
+  aspect-ratio: 4.05;
+}
+.brand-logo img {
+  position: absolute;
+  width: 109%;
+  max-width: none;
+  left: -2.5%;
+  top: -74.5%;
+}
+.brand-logo-compact {
+  width: 12rem;
+}
+.skip-link {
+  position: absolute;
+  top: 1rem;
+  left: 1rem;
+  z-index: 10;
+  padding: 0.75rem 1rem;
+  background: var(--color-superficie);
+  color: var(--color-primario);
+  border-radius: var(--radius-sm);
+  transform: translateY(-200%);
+}
+.skip-link:focus {
+  transform: translateY(0);
+  outline: 2px solid var(--color-primario);
+}
+
+.welcome-shell {
+  position: relative;
+  isolation: isolate;
+  min-height: calc(100svh - 2.25rem);
+  margin: 1.25rem 1rem 1rem;
+  overflow: hidden;
+  border-radius: 3.5rem;
+  background: radial-gradient(
+    ellipse at 48% 36%,
+    var(--color-bienvenida-luz),
+    var(--color-bienvenida-papel) 75%
+  );
+  box-shadow: var(--shadow-bienvenida);
+}
+.welcome-backdrop {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: -1;
+  pointer-events: none;
+}
+.welcome-curve-top {
+  fill: var(--color-bienvenida-curva);
+  opacity: 0.85;
+}
+.welcome-curve-bottom {
+  fill: var(--color-bienvenida-curva);
+}
+.welcome-header {
+  position: absolute;
+  top: 20.7%;
+  left: 10%;
+  width: 36.5%;
+}
+.welcome-main {
+  min-height: calc(100svh - 2.25rem);
+  outline: none;
+}
+.welcome-illustration {
+  position: absolute;
+  width: 49%;
+  left: 4.25%;
+  top: 41.2%;
+}
+.welcome-illustration img {
+  display: block;
+  width: 100%;
+  height: auto;
+  max-width: none;
+  object-fit: contain;
+}
+.welcome-content {
+  position: relative;
+  display: grid;
+  gap: clamp(2.5rem, 3.91vw, 5.5rem);
+  margin-left: auto;
+  margin-right: 4.3%;
+  width: 34%;
+  padding-top: clamp(10rem, 13.2vw, 24rem);
+  padding-bottom: 6rem;
+}
+.welcome-content h1 {
+  padding-inline: 0.5rem;
+  font-size: clamp(2.5rem, 3.575vw, 5rem);
+  line-height: 1.22;
+  text-align: left;
+}
+.welcome-actions {
+  display: grid;
+  gap: clamp(1rem, 1.12vw, 1.5rem);
+}
+.welcome-actions a {
+  min-height: clamp(4.5rem, 6.15vw, 9rem);
+  border-radius: var(--radius-lg);
+  border-width: 1.5px;
+  border-color: var(--color-primario);
+  font-size: clamp(1.25rem, 1.79vw, 2.5rem);
+}
+.welcome-actions a:first-child {
+  background-image: radial-gradient(
+    ellipse,
+    var(--color-bienvenida-accion),
+    transparent
+  );
+  box-shadow: var(--shadow-bienvenida-accion);
+}
+.welcome-actions a:last-child {
+  min-height: clamp(4.25rem, 5.59vw, 8rem);
+}
+
+@media (min-width: 768px) and (max-width: 1199px) {
+  .welcome-shell {
+    min-height: calc(100svh - 2rem);
+  }
+  .welcome-header {
+    position: relative;
+    top: auto;
+    left: auto;
+    width: 42%;
+    margin-left: 6%;
+    padding-top: 5%;
+  }
+  .welcome-main {
+    margin-top: 0;
+    min-height: 0;
+  }
+  .welcome-content {
+    gap: 2.5rem;
+    margin-left: 53%;
+    width: 42%;
+    padding-top: 10vh;
+  }
+  .welcome-content h1 {
+    font-size: clamp(1.75rem, 3.5vw, 2.5rem);
+  }
+  .welcome-illustration {
+    width: 68%;
+    left: 1%;
+    top: 39%;
+  }
+  .welcome-actions a,
+  .welcome-actions a:last-child {
+    min-height: 4rem;
+    font-size: var(--text-subtitulo);
+  }
+}
+
+@media (max-width: 767px) {
+  .welcome-shell {
+    margin: 0.5rem;
+    min-height: calc(100svh - 1rem);
+    border-radius: var(--radius-lg);
+  }
+  .welcome-header {
+    position: relative;
+    top: auto;
+    left: auto;
+    width: 14rem;
+    max-width: 72%;
+    margin-left: 1.5rem;
+    padding-top: 1.5rem;
+  }
+  .welcome-main {
+    display: flex;
+    min-height: auto;
+    flex-direction: column;
+    align-items: center;
+    margin-top: 0;
+    padding: 1.5rem;
+  }
+  .welcome-illustration {
+    position: relative;
+    width: min(28rem, 100%);
+    flex-shrink: 0;
+    left: auto;
+    top: auto;
+    align-self: center;
+    margin: -0.5rem auto 1rem;
+  }
+  .welcome-content {
+    gap: 1.5rem;
+    margin-left: 0;
+    margin-right: 0;
+    width: 100%;
+    max-width: 26rem;
+    padding-top: 0;
+    padding-bottom: 1rem;
+  }
+  .welcome-content h1 {
+    padding-inline: 0;
+    font-size: var(--text-h2);
+    line-height: 1.4;
+    text-align: center;
+  }
+  .welcome-actions {
+    gap: 0.75rem;
+  }
+  .welcome-actions a,
+  .welcome-actions a:last-child {
+    min-height: 3.5rem;
+    font-size: 1rem;
+    border-radius: var(--radius-md);
+  }
+}
