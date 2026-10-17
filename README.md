@@ -240,6 +240,85 @@ El hook está en `.githooks/pre-push`.
 
 **Nota:** los hooks se ejecutan localmente y complementan las verificaciones de GitHub Actions. No reemplazan los checks obligatorios de los Pull Requests.
 
+## Despliegue local con Docker Compose
+
+El proyecto cuenta con un entorno de prueba que permite levantar MySQL y el backend Spring Boot mediante Docker Compose, sin necesidad de iniciar manualmente cada servicio.
+
+### 1. Requisitos
+
+- Tener Docker Desktop instalado y en funcionamiento.
+- Estar ubicado en la carpeta raíz del repositorio.
+- Contar con el archivo `.env` configurado.
+
+Si todavía no existe `.env`, copiar `.env.example` y completar las variables:
+
+```env
+MYSQL_PASSWORD=
+MYSQL_ROOT_PASSWORD=
+JWT_SECRET=
+TRAMA_CRYPTO_KEY=
+```
+
+`TRAMA_CRYPTO_KEY` es la clave de cifrado (AES-256, en Base64). Se genera una vez con `openssl rand -base64 32`.
+
+Las contraseñas y claves deben mantenerse privadas. El archivo `.env` no debe subirse al repositorio.
+
+### 2. Levantar los servicios
+
+Desde la raíz del proyecto, ejecutar:
+
+```bash
+docker compose --profile app up -d --build
+```
+
+Este comando construye la imagen del backend e inicia MySQL y el backend.
+
+> `docker compose up -d` (sin `--profile app`) levanta **solo MySQL**, que es lo que se usa para desarrollar con el backend corriendo desde el IDE. Así no chocan en el puerto 4002.
+
+### 3. Comprobar el funcionamiento
+
+Para consultar el estado de los contenedores:
+
+```bash
+docker compose ps
+```
+
+Para comprobar que Spring Boot está funcionando, acceder a:
+
+http://localhost:4002/actuator/health
+
+El resultado esperado es una respuesta HTTP 200:
+
+```json
+{"status":"UP"}
+```
+
+También se pueden consultar los registros del backend:
+
+```bash
+docker compose logs --tail=80 backend
+```
+
+### 4. Accesos del entorno local
+
+| Servicio | Dirección |
+|---|---|
+| Backend | http://localhost:4002 |
+| Estado del backend | http://localhost:4002/actuator/health |
+| MySQL | localhost:3307 |
+
+### 5. Detener los servicios
+
+```bash
+docker compose --profile app stop
+```
+
+Este comando detiene los contenedores sin eliminar los datos persistentes de MySQL.
+
+No utilizar `docker compose down -v`, ya que elimina también los volúmenes de datos.
+
+**Estado actual:** el despliegue mediante Docker Compose incluye MySQL y Spring Boot. La incorporación del frontend con Nginx queda pendiente hasta que el equipo integre su estructura en `develop`.
+
 ## Ejecución local
 
 ### Backend
@@ -270,7 +349,7 @@ JWT_SECRET=...
 Con Docker Desktop abierto, desde la raíz:
 
 ```bash
-docker compose up -d
+docker compose up -d mysql
 ```
 
 Conexión: `jdbc:mysql://localhost:3307/trama`, usuario `trama`, contraseña la de `MYSQL_PASSWORD`.

@@ -36,11 +36,25 @@ if [ "$changed" -eq 0 ]; then
     exit 0
 fi
 
-# Cargar las variables del .env (MYSQL_PASSWORD, JWT_SECRET) que necesitan los tests.
+# Cargar todas las variables del .env (MYSQL_PASSWORD, JWT_SECRET, TRAMA_CRYPTO_KEY...).
+# Se ignoran comentarios y líneas vacías, y se quitan los \r de Windows.
 if [ -f .env ]; then
-    set -a
-    eval "$(tr -d '\r' < .env)"
-    set +a
+    while IFS= read -r line || [ -n "$line" ]; do
+        line=$(printf '%s' "$line" | tr -d '\r')
+        case "$line" in
+            ''|'#'*) continue ;;
+            *=*)
+                clave="${line%%=*}"
+                valor="${line#*=}"
+                export "$clave=$valor"
+                ;;
+        esac
+    done < .env
+fi
+
+if [ -z "${MYSQL_PASSWORD:-}" ] || [ -z "${JWT_SECRET:-}" ]; then
+    echo "ERROR: Faltan MYSQL_PASSWORD o JWT_SECRET en .env."
+    exit 1
 fi
 
 echo "Cambios detectados en backend. Ejecutando tests..."
