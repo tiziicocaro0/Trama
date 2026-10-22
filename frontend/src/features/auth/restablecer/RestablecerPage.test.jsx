@@ -48,11 +48,15 @@ describe('Restablecer contraseña', () => {
   it('valida que la contraseña cumpla los requisitos de seguridad', async () => {
     const user = preparar()
     await completarPassword(user, 'debil')
-    expect(
-      screen.getByLabelText('Contraseña nueva'),
-    ).toHaveAccessibleDescription(
-      'La contraseña debe cumplir todos los requisitos de seguridad.',
+    expect(screen.getByLabelText('Contraseña nueva')).toHaveAttribute(
+      'aria-invalid',
+      'true',
     )
+    expect(
+      screen.getByText(
+        'La contraseña debe cumplir todos los requisitos de seguridad.',
+      ),
+    ).toBeInTheDocument()
     expect(restablecerContrasena).not.toHaveBeenCalled()
   })
 
