@@ -10,6 +10,7 @@ import org.springframework.stereotype.Service;
 import com.trama.tpo.demo.entity.membresia.Membresia;
 import com.trama.tpo.demo.entity.membresia.Rol;
 import com.trama.tpo.demo.repository.MembresiaRepository;
+import com.trama.tpo.demo.aporte.Visibilidad;
 
 @Service
 public class PermisoService {
@@ -112,6 +113,38 @@ public class PermisoService {
 
             throw new AccessDeniedException(
                     "Solo el autor puede modificar este aporte"
+            );
+        }
+    }
+
+    // 5. VERIFICAR VISIBILIDAD DE UN APORTE
+    public void verificarPuedeVerAporte(
+            UUID proyectoId,
+            Visibilidad visibilidad) {
+
+        Membresia membresia = obtenerMembresia(proyectoId);
+
+        Rol rol = membresia.getRol();
+
+        // Los tutores siempre pueden ver todos los aportes
+        if (rol == Rol.TUTOR) {
+            return;
+        }
+
+        boolean puedeVer = switch (visibilidad) {
+
+            case TODOS -> true;
+
+            case SOLO_TUTORES -> false;
+
+            case SOLO_SALUD -> rol == Rol.SALUD;
+
+            case SOLO_EDUCACION -> rol == Rol.EDUCACION;
+        };
+
+        if (!puedeVer) {
+            throw new AccessDeniedException(
+                    "No tenés permiso para ver este aporte"
             );
         }
     }
