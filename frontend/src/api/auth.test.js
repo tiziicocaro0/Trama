@@ -1,6 +1,12 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import cliente, { guardarToken, obtenerToken } from './cliente.js'
-import { iniciarSesion, obtenerIdentidad, registrarUsuario } from './auth.js'
+import {
+  iniciarSesion,
+  obtenerIdentidad,
+  registrarUsuario,
+  restablecerContrasena,
+  solicitarRecuperacion,
+} from './auth.js'
 
 const datos = {
   nombre: 'Alma',
@@ -187,5 +193,63 @@ describe('API real de registro con transporte simulado', () => {
     expect(
       adapter.mock.calls[1][0].headers.get('Authorization'),
     ).toBeUndefined()
+  })
+})
+
+describe('Contrato de recuperacion de contraseña', () => {
+  it('envia el email normalizado a /auth/recuperar', async () => {
+    const post = vi.spyOn(cliente, 'post').mockResolvedValue({ data: { mensaje: 'ok' } })
+    await solicitarRecuperacion({ email: ' ALMA@trama.test ' })
+    expect(post).toHaveBeenCalledExactlyOnceWith('/auth/recuperar', {
+      email: 'alma@trama.test',
+    })
+  })
+
+  it('muestra un error de conexion si no hay respuesta del servidor', async () => {
+    vi.spyOn(cliente, 'post').mockRejectedValue(new Error('Red simulada'))
+    await expect(solicitarRecuperacion({ email: datos.email })).rejects.toThrow(
+      'No pudimos conectar con TRAMA.',
+    )
+  })
+
+  it('no revela si hubo un error distinto al de conexion', async () => {
+    vi.spyOn(cliente, 'post').mockRejectedValue({ response: { status: 500 } })
+    await expect(solicitarRecuperacion({ email: datos.email })).rejects.toThrow(
+      'No pudimos procesar el pedido.',
+    )
+  })
+})
+
+describe('Contrato de restablecimiento de contraseña', () => {
+  it('envia el token y la nueva contraseña a /auth/restablecer', async () => {
+    const post = vi.spyOn(cliente, 'post').mockResolvedValue({ data: { mensaje: 'ok' } })
+    await restablecerContrasena({ token: 'token-1', password: 'Nueva123!' })
+    expect(post).toHaveBeenCalledExactlyOnceWith('/auth/restablecer', {
+      token: 'token-1',
+      password: 'Nueva123!',
+    })
+  })
+
+  it.each([
+    [400, 'TOKEN_INVALIDO', 'El enlace no es válido o ya venció.'],
+    [400, 'DATOS_INVALIDOS', 'La contraseña no cumple los requisitos de seguridad.'],
+    [500, 'ERROR_INTERNO', 'No pudimos actualizar tu contraseña.'],
+  ])(
+    'muestra un mensaje claro ante HTTP %s en restablecer',
+    async (status, codigo, mensaje) => {
+      vi.spyOn(cliente, 'post').mockRejectedValue({
+        response: { status, data: { codigo } },
+      })
+      await expect(
+        restablecerContrasena({ token: 'token-1', password: 'Nueva123!' }),
+      ).rejects.toThrow(mensaje)
+    },
+  )
+
+  it('muestra un error de conexion si no hay respuesta del servidor', async () => {
+    vi.spyOn(cliente, 'post').mockRejectedValue(new Error('Red simulada'))
+    await expect(
+      restablecerContrasena({ token: 'token-1', password: 'Nueva123!' }),
+    ).rejects.toThrow('No pudimos conectar con TRAMA.')
   })
 })

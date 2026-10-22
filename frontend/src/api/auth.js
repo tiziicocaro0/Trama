@@ -100,3 +100,52 @@ export async function obtenerIdentidad() {
     email: data.email,
   }
 }
+
+export async function solicitarRecuperacion({ email }) {
+  if (!cliente.defaults.baseURL)
+    throw new Error('Falta configurar la conexión con TRAMA. Revisá VITE_API_URL.')
+  try {
+    await cliente.post('/auth/recuperar', {
+      email: email.trim().toLowerCase(),
+    })
+  } catch (error) {
+    if (!error.response)
+      throw new Error(
+        'No pudimos conectar con TRAMA. Revisá tu conexión e intentá nuevamente.',
+        { cause: error },
+      )
+    throw new Error(
+      'No pudimos procesar el pedido. Intentá nuevamente en unos minutos.',
+      { cause: error },
+    )
+  }
+}
+
+export async function restablecerContrasena({ token, password }) {
+  if (!cliente.defaults.baseURL)
+    throw new Error('Falta configurar la conexión con TRAMA. Revisá VITE_API_URL.')
+  try {
+    await cliente.post('/auth/restablecer', { token, password })
+  } catch (error) {
+    const codigo = error.response?.data?.codigo
+    if (error.response?.status === 400 && codigo === 'TOKEN_INVALIDO')
+      throw new Error(
+        'El enlace no es válido o ya venció. Volvé a pedir la recuperación.',
+        { cause: error },
+      )
+    if (error.response?.status === 400 && codigo === 'DATOS_INVALIDOS')
+      throw new Error(
+        'La contraseña no cumple los requisitos de seguridad.',
+        { cause: error },
+      )
+    if (!error.response)
+      throw new Error(
+        'No pudimos conectar con TRAMA. Revisá tu conexión e intentá nuevamente.',
+        { cause: error },
+      )
+    throw new Error(
+      'No pudimos actualizar tu contraseña. Intentá nuevamente en unos minutos.',
+      { cause: error },
+    )
+  }
+}

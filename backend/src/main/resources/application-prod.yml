@@ -16,3 +16,6 @@ trama:
 
   invitaciones:
     url-base: ${INVITACION_URL_BASE:}
+
+  recuperacion:
+    url-base: ${RECUPERACION_URL_BASE:}
