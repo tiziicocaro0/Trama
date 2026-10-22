@@ -48,6 +48,7 @@ public class SecurityConfig {
                         "/api/auth/registro",
                         "/api/auth/login",
                         "/api/auth/recuperar",
+                        "/api/auth/verificar-codigo",
                         "/api/auth/restablecer"
                 ).permitAll()
                 .requestMatchers("/api/auth/yo").authenticated()

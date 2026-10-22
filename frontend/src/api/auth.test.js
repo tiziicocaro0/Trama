@@ -6,6 +6,7 @@ import {
   registrarUsuario,
   restablecerContrasena,
   solicitarRecuperacion,
+  verificarCodigo,
 } from './auth.js'
 
 const datos = {
@@ -220,36 +221,55 @@ describe('Contrato de recuperacion de contraseña', () => {
   })
 })
 
-describe('Contrato de restablecimiento de contraseña', () => {
-  it('envia el token y la nueva contraseña a /auth/restablecer', async () => {
-    const post = vi.spyOn(cliente, 'post').mockResolvedValue({ data: { mensaje: 'ok' } })
-    await restablecerContrasena({ token: 'token-1', password: 'Nueva123!' })
+describe('Contrato de verificación del código y nueva contraseña', () => {
+  it('envía email y código a /auth/verificar-codigo', async () => {
+    const post = vi.spyOn(cliente, 'post').mockResolvedValue({ data: {} })
+    await verificarCodigo({ email: ' ALMA@trama.test ', codigo: '123456' })
+    expect(post).toHaveBeenCalledExactlyOnceWith('/auth/verificar-codigo', {
+      email: 'alma@trama.test',
+      codigo: '123456',
+    })
+  })
+
+  it('envía email, código y contraseña a /auth/restablecer', async () => {
+    const post = vi.spyOn(cliente, 'post').mockResolvedValue({ data: {} })
+    await restablecerContrasena({
+      email: 'alma@trama.test',
+      codigo: '123456',
+      password: 'Nueva123!',
+    })
     expect(post).toHaveBeenCalledExactlyOnceWith('/auth/restablecer', {
-      token: 'token-1',
+      email: 'alma@trama.test',
+      codigo: '123456',
       password: 'Nueva123!',
     })
   })
 
   it.each([
-    [400, 'TOKEN_INVALIDO', 'El enlace no es válido o ya venció.'],
-    [400, 'DATOS_INVALIDOS', 'La contraseña no cumple los requisitos de seguridad.'],
-    [500, 'ERROR_INTERNO', 'No pudimos actualizar tu contraseña.'],
+    [400, 'CODIGO_INVALIDO', 'El código no es válido o ya venció.'],
+    [429, 'CODIGO_BLOQUEADO', 'Superaste la cantidad de intentos.'],
+    [400, 'DATOS_INVALIDOS', 'Revisá los datos ingresados.'],
+    [500, 'ERROR_INTERNO', 'No pudimos verificar el código.'],
   ])(
-    'muestra un mensaje claro ante HTTP %s en restablecer',
+    'muestra un mensaje claro ante HTTP %s al verificar',
     async (status, codigo, mensaje) => {
       vi.spyOn(cliente, 'post').mockRejectedValue({
         response: { status, data: { codigo } },
       })
       await expect(
-        restablecerContrasena({ token: 'token-1', password: 'Nueva123!' }),
+        verificarCodigo({ email: 'alma@trama.test', codigo: '123456' }),
       ).rejects.toThrow(mensaje)
     },
   )
 
-  it('muestra un error de conexion si no hay respuesta del servidor', async () => {
+  it('muestra un error de conexión si no hay respuesta del servidor', async () => {
     vi.spyOn(cliente, 'post').mockRejectedValue(new Error('Red simulada'))
     await expect(
-      restablecerContrasena({ token: 'token-1', password: 'Nueva123!' }),
+      restablecerContrasena({
+        email: 'alma@trama.test',
+        codigo: '123456',
+        password: 'Nueva123!',
+      }),
     ).rejects.toThrow('No pudimos conectar con TRAMA.')
   })
 })

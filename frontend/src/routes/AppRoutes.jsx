@@ -6,7 +6,6 @@ import PaginaTemporal from '../features/auth/PaginaTemporal.jsx';
 import LoginPage from '../features/auth/login/LoginPage.jsx';
 import RecuperarPage from '../features/auth/recuperar/RecuperarPage.jsx';
 import RegistroPage from '../features/auth/registro/RegistroPage.jsx';
-import RestablecerPage from '../features/auth/restablecer/RestablecerPage.jsx';
 import BienvenidaPage from '../features/bienvenida/BienvenidaPage.jsx';
 import InicioPage from '../features/inicio/InicioPage.jsx';
 import { Componentes } from '../pages/Componentes';
@@ -18,7 +17,6 @@ const titulos = {
   '/login': 'Iniciar sesión',
   '/recuperar': 'Recuperar contraseña',
   '/registro': 'Crear cuenta',
-  '/restablecer': 'Restablecer contraseña',
   '/inicio': 'Inicio',
   '/proyectos': 'Mis proyectos',
 };
@@ -63,14 +61,6 @@ export default function AppRoutes() {
         element={
           <Acceso>
             <RecuperarPage />
-          </Acceso>
-        }
-      />
-      <Route
-        path="/restablecer"
-        element={
-          <Acceso>
-            <RestablecerPage />
           </Acceso>
         }
       />

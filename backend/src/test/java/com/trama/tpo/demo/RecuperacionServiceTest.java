@@ -9,6 +9,7 @@ import java.security.MessageDigest;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.HexFormat;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -22,6 +23,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 
 import com.trama.tpo.demo.entity.dto.RestablecerContrasenaRequest;
 import com.trama.tpo.demo.entity.dto.SolicitarRecuperacionRequest;
+import com.trama.tpo.demo.entity.dto.VerificarCodigoRequest;
 import com.trama.tpo.demo.entity.usuario.TokenRecuperacion;
 import com.trama.tpo.demo.entity.usuario.Usuario;
 import com.trama.tpo.demo.exceptions.ApiException;
@@ -47,6 +49,8 @@ class RecuperacionServiceTest {
 
     private RecuperacionService recuperacionService;
 
+    private Usuario usuario;
+
     @BeforeEach
     void preparar() {
 
@@ -54,191 +58,193 @@ class RecuperacionServiceTest {
                 usuarioRepository,
                 tokenRecuperacionRepository,
                 passwordEncoder,
-                emailService,
-                "https://trama.example/restablecer"
+                emailService
         );
-    }
 
-    @Test
-    void siElEmailExisteGeneraTokenYEnviaMail() {
-
-        Usuario usuario = Usuario.builder()
+        usuario = Usuario.builder()
                 .id(UUID.randomUUID())
                 .nombre("Nora")
                 .apellido("Prueba")
                 .email("nora@trama.test")
                 .passwordHash("hash-anterior")
                 .build();
-
-        when(usuarioRepository.findByEmail("nora@trama.test"))
-                .thenReturn(Optional.of(usuario));
-
-        recuperacionService.solicitarRecuperacion(
-                SolicitarRecuperacionRequest.builder()
-                        .email(" Nora@trama.test ")
-                        .build()
-        );
-
-        ArgumentCaptor<TokenRecuperacion> captor =
-                ArgumentCaptor.forClass(TokenRecuperacion.class);
-
-        verify(tokenRecuperacionRepository).saveAndFlush(captor.capture());
-
-        TokenRecuperacion guardado = captor.getValue();
-        assertEquals(usuario, guardado.getUsuario());
-        assertEquals(64, guardado.getTokenHash().length());
-        assertTrue(guardado.getVenceEn().isAfter(Instant.now()));
-        assertTrue(guardado.getVenceEn().isBefore(
-                Instant.now().plus(2, ChronoUnit.HOURS)
-        ));
-
-        verify(emailService).enviarRecuperacion(
-                eq("nora@trama.test"),
-                contains("?token=")
-        );
     }
 
     @Test
-    void siElEmailNoExisteNoGeneraTokenNiEnviaMail() {
+    void siElEmailExisteGeneraCodigoDeSeisDigitosYLoEnviaPorMail() throws Exception {
 
-        when(usuarioRepository.findByEmail("fantasma@trama.test"))
-                .thenReturn(Optional.empty());
+        when(usuarioRepository.findByEmail("nora@trama.test"))
+                .thenReturn(Optional.of(usuario));
+        when(tokenRecuperacionRepository.findByUsuarioIdAndUsadoEnIsNull(usuario.getId()))
+                .thenReturn(List.of());
 
-        // No debe lanzar ninguna excepcion: el mensaje de respuesta es
-        // siempre el mismo, lo decide el controller.
-        assertDoesNotThrow(() ->
-                recuperacionService.solicitarRecuperacion(
-                        SolicitarRecuperacionRequest.builder()
-                                .email("fantasma@trama.test")
-                                .build()
-                )
-        );
+        recuperacionService.solicitarRecuperacion(
+                SolicitarRecuperacionRequest.builder().email(" Nora@trama.test ").build());
+
+        ArgumentCaptor<String> codigo = ArgumentCaptor.forClass(String.class);
+        verify(emailService).enviarCodigoRecuperacion(
+                eq("nora@trama.test"), codigo.capture(), eq(RecuperacionService.MINUTOS_VIGENCIA));
+        assertTrue(codigo.getValue().matches("\\d{6}"));
+
+        ArgumentCaptor<TokenRecuperacion> guardado = ArgumentCaptor.forClass(TokenRecuperacion.class);
+        verify(tokenRecuperacionRepository).saveAndFlush(guardado.capture());
+        assertEquals(hash(usuario.getId(), codigo.getValue()), guardado.getValue().getTokenHash());
+        assertTrue(guardado.getValue().getVenceEn().isBefore(Instant.now().plus(11, ChronoUnit.MINUTES)));
+        assertEquals(0, guardado.getValue().getIntentos());
+    }
+
+    @Test
+    void siElEmailNoExisteNoGeneraCodigoNiEnviaMail() {
+
+        when(usuarioRepository.findByEmail("fantasma@trama.test")).thenReturn(Optional.empty());
+
+        assertDoesNotThrow(() -> recuperacionService.solicitarRecuperacion(
+                SolicitarRecuperacionRequest.builder().email("fantasma@trama.test").build()));
 
         verifyNoInteractions(tokenRecuperacionRepository);
         verifyNoInteractions(emailService);
     }
 
     @Test
-    void conTokenValidoActualizaLaContrasena() throws Exception {
+    void pedirUnCodigoNuevoInvalidaLosAnteriores() {
 
-        Usuario usuario = Usuario.builder()
-                .id(UUID.randomUUID())
-                .email("nora@trama.test")
-                .passwordHash("hash-anterior")
-                .build();
+        TokenRecuperacion anterior = token("hash-viejo", Instant.now().minus(5, ChronoUnit.MINUTES));
+        when(usuarioRepository.findByEmail("nora@trama.test")).thenReturn(Optional.of(usuario));
+        when(tokenRecuperacionRepository.findByUsuarioIdAndUsadoEnIsNull(usuario.getId()))
+                .thenReturn(List.of(anterior));
 
-        TokenRecuperacion tokenGuardado = TokenRecuperacion.builder()
-                .id(UUID.randomUUID())
-                .usuario(usuario)
-                .tokenHash(sha256("token-plano"))
-                .venceEn(Instant.now().plus(30, ChronoUnit.MINUTES))
-                .build();
+        recuperacionService.solicitarRecuperacion(
+                SolicitarRecuperacionRequest.builder().email("nora@trama.test").build());
 
-        when(tokenRecuperacionRepository.findByTokenHash(sha256("token-plano")))
-                .thenReturn(Optional.of(tokenGuardado));
+        assertNotNull(anterior.getUsadoEn());
+        verify(emailService).enviarCodigoRecuperacion(anyString(), anyString(), anyInt());
+    }
 
-        when(passwordEncoder.encode("NuevaClave123!"))
-                .thenReturn("hash-nuevo");
+    @Test
+    void noReenviaSiYaSePidioUnCodigoHaceMenosDeUnMinuto() {
 
-        recuperacionService.restablecerContrasena(
-                RestablecerContrasenaRequest.builder()
-                        .token("token-plano")
-                        .password("NuevaClave123!")
-                        .build()
-        );
+        TokenRecuperacion reciente = token("hash-reciente", Instant.now().minusSeconds(10));
+        when(usuarioRepository.findByEmail("nora@trama.test")).thenReturn(Optional.of(usuario));
+        when(tokenRecuperacionRepository.findByUsuarioIdAndUsadoEnIsNull(usuario.getId()))
+                .thenReturn(List.of(reciente));
+
+        recuperacionService.solicitarRecuperacion(
+                SolicitarRecuperacionRequest.builder().email("nora@trama.test").build());
+
+        assertNull(reciente.getUsadoEn());
+        verifyNoInteractions(emailService);
+        verify(tokenRecuperacionRepository, never()).saveAndFlush(any());
+    }
+
+    @Test
+    void codigoCorrectoSeVerificaSinConsumirse() throws Exception {
+
+        TokenRecuperacion vigente = token(hash(usuario.getId(), "123456"), Instant.now());
+        prepararTokenVigente(vigente);
+
+        recuperacionService.verificarCodigo(
+                VerificarCodigoRequest.builder().email("nora@trama.test").codigo("123456").build());
+
+        assertNull(vigente.getUsadoEn());
+        assertEquals(0, vigente.getIntentos());
+    }
+
+    @Test
+    void codigoIncorrectoSumaUnIntento() throws Exception {
+
+        TokenRecuperacion vigente = token(hash(usuario.getId(), "123456"), Instant.now());
+        prepararTokenVigente(vigente);
+
+        ApiException e = assertThrows(ApiException.class, () -> recuperacionService.verificarCodigo(
+                VerificarCodigoRequest.builder().email("nora@trama.test").codigo("000000").build()));
+
+        assertEquals("CODIGO_INVALIDO", e.getCodigo());
+        assertEquals(1, vigente.getIntentos());
+        verify(tokenRecuperacionRepository).save(vigente);
+    }
+
+    @Test
+    void alQuintoIntentoFallidoElCodigoQuedaBloqueado() throws Exception {
+
+        TokenRecuperacion vigente = token(hash(usuario.getId(), "123456"), Instant.now());
+        vigente.setIntentos(RecuperacionService.MAX_INTENTOS - 1);
+        prepararTokenVigente(vigente);
+
+        ApiException e = assertThrows(ApiException.class, () -> recuperacionService.verificarCodigo(
+                VerificarCodigoRequest.builder().email("nora@trama.test").codigo("000000").build()));
+        assertEquals("CODIGO_BLOQUEADO", e.getCodigo());
+
+        // Aunque ahora se ingrese el codigo correcto, sigue bloqueado.
+        ApiException otra = assertThrows(ApiException.class, () -> recuperacionService.verificarCodigo(
+                VerificarCodigoRequest.builder().email("nora@trama.test").codigo("123456").build()));
+        assertEquals("CODIGO_BLOQUEADO", otra.getCodigo());
+    }
+
+    @Test
+    void codigoVencidoSeRechaza() throws Exception {
+
+        TokenRecuperacion vencido = token(hash(usuario.getId(), "123456"), Instant.now());
+        vencido.setVenceEn(Instant.now().minus(1, ChronoUnit.MINUTES));
+        prepararTokenVigente(vencido);
+
+        ApiException e = assertThrows(ApiException.class, () -> recuperacionService.verificarCodigo(
+                VerificarCodigoRequest.builder().email("nora@trama.test").codigo("123456").build()));
+
+        assertEquals("CODIGO_INVALIDO", e.getCodigo());
+    }
+
+    @Test
+    void conCodigoCorrectoActualizaLaContrasenaYConsumeElCodigo() throws Exception {
+
+        TokenRecuperacion vigente = token(hash(usuario.getId(), "123456"), Instant.now());
+        prepararTokenVigente(vigente);
+        when(passwordEncoder.encode("NuevaClave123!")).thenReturn("hash-nuevo");
+
+        recuperacionService.restablecerContrasena(RestablecerContrasenaRequest.builder()
+                .email("nora@trama.test").codigo("123456").password("NuevaClave123!").build());
 
         assertEquals("hash-nuevo", usuario.getPasswordHash());
         verify(usuarioRepository).save(usuario);
-
-        ArgumentCaptor<TokenRecuperacion> captor =
-                ArgumentCaptor.forClass(TokenRecuperacion.class);
-        verify(tokenRecuperacionRepository).save(captor.capture());
-        assertNotNull(captor.getValue().getUsadoEn());
+        assertNotNull(vigente.getUsadoEn());
     }
 
     @Test
-    void conTokenVencidoRechazaYNoCambiaLaContrasena() throws Exception {
+    void conCodigoIncorrectoNoCambiaLaContrasena() throws Exception {
 
-        Usuario usuario = Usuario.builder()
-                .id(UUID.randomUUID())
-                .email("nora@trama.test")
-                .passwordHash("hash-anterior")
-                .build();
+        TokenRecuperacion vigente = token(hash(usuario.getId(), "123456"), Instant.now());
+        prepararTokenVigente(vigente);
 
-        TokenRecuperacion tokenVencido = TokenRecuperacion.builder()
-                .id(UUID.randomUUID())
-                .usuario(usuario)
-                .tokenHash(sha256("token-vencido"))
-                .venceEn(Instant.now().minus(1, ChronoUnit.MINUTES))
-                .build();
+        assertThrows(ApiException.class, () -> recuperacionService.restablecerContrasena(
+                RestablecerContrasenaRequest.builder()
+                        .email("nora@trama.test").codigo("999999").password("NuevaClave123!").build()));
 
-        when(tokenRecuperacionRepository.findByTokenHash(sha256("token-vencido")))
-                .thenReturn(Optional.of(tokenVencido));
-
-        ApiException excepcion = assertThrows(ApiException.class, () ->
-                recuperacionService.restablecerContrasena(
-                        RestablecerContrasenaRequest.builder()
-                                .token("token-vencido")
-                                .password("NuevaClave123!")
-                                .build()
-                )
-        );
-
-        assertEquals("TOKEN_INVALIDO", excepcion.getCodigo());
+        assertEquals("hash-anterior", usuario.getPasswordHash());
         verify(usuarioRepository, never()).save(any());
     }
 
-    @Test
-    void conTokenYaUsadoRechazaYNoCambiaLaContrasena() throws Exception {
+    private void prepararTokenVigente(TokenRecuperacion token) {
 
-        Usuario usuario = Usuario.builder()
-                .id(UUID.randomUUID())
-                .email("nora@trama.test")
-                .passwordHash("hash-anterior")
-                .build();
+        when(usuarioRepository.findByEmail("nora@trama.test")).thenReturn(Optional.of(usuario));
+        when(tokenRecuperacionRepository
+                .findFirstByUsuarioIdAndUsadoEnIsNullOrderByCreadoEnDesc(usuario.getId()))
+                .thenReturn(Optional.of(token));
+    }
 
-        TokenRecuperacion tokenUsado = TokenRecuperacion.builder()
+    private TokenRecuperacion token(String tokenHash, Instant creadoEn) {
+
+        return TokenRecuperacion.builder()
                 .id(UUID.randomUUID())
                 .usuario(usuario)
-                .tokenHash(sha256("token-usado"))
-                .venceEn(Instant.now().plus(30, ChronoUnit.MINUTES))
-                .usadoEn(Instant.now().minus(1, ChronoUnit.MINUTES))
+                .tokenHash(tokenHash)
+                .venceEn(Instant.now().plus(RecuperacionService.MINUTOS_VIGENCIA, ChronoUnit.MINUTES))
+                .creadoEn(creadoEn)
                 .build();
-
-        when(tokenRecuperacionRepository.findByTokenHash(sha256("token-usado")))
-                .thenReturn(Optional.of(tokenUsado));
-
-        assertThrows(ApiException.class, () ->
-                recuperacionService.restablecerContrasena(
-                        RestablecerContrasenaRequest.builder()
-                                .token("token-usado")
-                                .password("NuevaClave123!")
-                                .build()
-                )
-        );
-
-        verify(usuarioRepository, never()).save(any());
     }
 
-    @Test
-    void conTokenDesconocidoRechaza() {
+    private static String hash(UUID usuarioId, String codigo) throws Exception {
 
-        when(tokenRecuperacionRepository.findByTokenHash(anyString()))
-                .thenReturn(Optional.empty());
-
-        assertThrows(ApiException.class, () ->
-                recuperacionService.restablecerContrasena(
-                        RestablecerContrasenaRequest.builder()
-                                .token("no-existe")
-                                .password("NuevaClave123!")
-                                .build()
-                )
-        );
-    }
-
-    private static String sha256(String token) throws Exception {
         MessageDigest digest = MessageDigest.getInstance("SHA-256");
-        byte[] hash = digest.digest(token.getBytes(StandardCharsets.UTF_8));
-        return HexFormat.of().formatHex(hash);
+        return HexFormat.of().formatHex(
+                digest.digest((usuarioId + ":" + codigo).getBytes(StandardCharsets.UTF_8)));
     }
 }

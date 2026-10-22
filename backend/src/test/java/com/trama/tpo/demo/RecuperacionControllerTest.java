@@ -6,16 +6,12 @@ import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-import java.nio.charset.StandardCharsets;
-import java.security.MessageDigest;
-import java.time.Instant;
-import java.time.temporal.ChronoUnit;
-import java.util.HexFormat;
 import java.util.UUID;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -24,10 +20,8 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.context.ActiveProfiles;
-import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.web.servlet.MockMvc;
 
-import com.trama.tpo.demo.entity.usuario.TokenRecuperacion;
 import com.trama.tpo.demo.entity.usuario.Usuario;
 import com.trama.tpo.demo.repository.TokenRecuperacionRepository;
 import com.trama.tpo.demo.repository.UsuarioRepository;
@@ -36,8 +30,6 @@ import com.trama.tpo.demo.service.EmailService;
 @SpringBootTest
 @AutoConfigureMockMvc
 @ActiveProfiles("test")
-@TestPropertySource(properties =
-        "trama.recuperacion.url-base=https://trama.example/restablecer")
 class RecuperacionControllerTest {
 
     @Autowired
@@ -52,7 +44,7 @@ class RecuperacionControllerTest {
     @Autowired
     private PasswordEncoder passwordEncoder;
 
-    // Simula el envio: no utiliza Mailpit ni envia emails reales.
+    // Simula el envio: no se manda ningun mail real.
     @MockBean
     private EmailService emailService;
 
@@ -72,115 +64,102 @@ class RecuperacionControllerTest {
     @AfterEach
     void limpiarDatos() {
 
-        tokenRecuperacionRepository.findAll().stream()
-                .filter(token -> token.getUsuario().getId().equals(usuario.getId()))
-                .forEach(tokenRecuperacionRepository::delete);
-
+        tokenRecuperacionRepository.deleteAll(
+                tokenRecuperacionRepository.findAll().stream()
+                        .filter(t -> t.getUsuario().getId().equals(usuario.getId()))
+                        .toList());
         tokenRecuperacionRepository.flush();
-
         usuarioRepository.delete(usuario);
     }
 
     @Test
-    void solicitarRecuperacionConEmailExistenteGeneraTokenYEnviaMail() throws Exception {
+    void flujoCompletoEmailCodigoYNuevaContrasena() throws Exception {
 
-        String request = """
-                { "email": "%s" }
-                """.formatted(usuario.getEmail());
+        String codigo = pedirCodigo();
 
-        mockMvc.perform(post("/api/auth/recuperar")
+        mockMvc.perform(post("/api/auth/verificar-codigo")
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(request))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.mensaje").exists());
-
-        verify(emailService).enviarRecuperacion(
-                eq(usuario.getEmail()),
-                contains("?token=")
-        );
-    }
-
-    @Test
-    void solicitarRecuperacionConEmailInexistenteDevuelveElMismoMensaje() throws Exception {
-
-        String request = """
-                { "email": "no-existe-nunca@example.com" }
-                """;
-
-        mockMvc.perform(post("/api/auth/recuperar")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(request))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.mensaje").exists());
-
-        // No debe filtrarse si el email existe o no: no se envia ningun correo.
-        verifyNoInteractions(emailService);
-    }
-
-    @Test
-    void restablecerConTokenValidoPermiteElegirNuevaContrasena() throws Exception {
-
-        String tokenPlano = "token-de-prueba-valido";
-
-        TokenRecuperacion token = tokenRecuperacionRepository.saveAndFlush(
-                TokenRecuperacion.builder()
-                        .usuario(usuario)
-                        .tokenHash(sha256(tokenPlano))
-                        .venceEn(Instant.now().plus(30, ChronoUnit.MINUTES))
-                        .build()
-        );
-
-        String request = """
-                { "token": "%s", "password": "NuevaClave123!" }
-                """.formatted(tokenPlano);
+                .content("""
+                        { "email": "%s", "codigo": "%s" }
+                        """.formatted(usuario.getEmail(), codigo)))
+                .andExpect(status().isOk());
 
         mockMvc.perform(post("/api/auth/restablecer")
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(request))
+                .content("""
+                        { "email": "%s", "codigo": "%s", "password": "NuevaClave123!" }
+                        """.formatted(usuario.getEmail(), codigo)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.mensaje").exists());
 
         Usuario actualizado = usuarioRepository.findById(usuario.getId()).orElseThrow();
         assertTrue(passwordEncoder.matches("NuevaClave123!", actualizado.getPasswordHash()));
 
-        TokenRecuperacion usado = tokenRecuperacionRepository.findById(token.getId()).orElseThrow();
-        assertNotNull(usado.getUsadoEn());
-    }
-
-    @Test
-    void restablecerConTokenInvalidoRechaza() throws Exception {
-
-        String request = """
-                { "token": "esto-no-existe", "password": "NuevaClave123!" }
-                """;
-
-        mockMvc.perform(post("/api/auth/restablecer")
+        // El codigo es de un solo uso.
+        mockMvc.perform(post("/api/auth/verificar-codigo")
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(request))
+                .content("""
+                        { "email": "%s", "codigo": "%s" }
+                        """.formatted(usuario.getEmail(), codigo)))
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.codigo").value("TOKEN_INVALIDO"));
+                .andExpect(jsonPath("$.codigo").value("CODIGO_INVALIDO"));
     }
 
     @Test
-    void restablecerConContrasenaDebilRechaza() throws Exception {
+    void emailInexistenteRecibeElMismoMensajeYNoSeEnviaMail() throws Exception {
 
-        String tokenPlano = "token-para-clave-debil";
+        mockMvc.perform(post("/api/auth/recuperar")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{ \"email\": \"no-existe-nunca@example.com\" }"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.mensaje").value(
+                        "Si el email está registrado, te enviamos un código de 6 dígitos."));
 
-        tokenRecuperacionRepository.saveAndFlush(
-                TokenRecuperacion.builder()
-                        .usuario(usuario)
-                        .tokenHash(sha256(tokenPlano))
-                        .venceEn(Instant.now().plus(30, ChronoUnit.MINUTES))
-                        .build()
-        );
+        verifyNoInteractions(emailService);
+    }
 
-        String request = """
-                { "token": "%s", "password": "sinmayuscula1!" }
-                """.formatted(tokenPlano);
+    @Test
+    void cincoIntentosFallidosBloqueanElCodigo() throws Exception {
+
+        String codigo = pedirCodigo();
+        String incorrecto = codigo.equals("000000") ? "111111" : "000000";
+
+        for (int i = 0; i < 4; i++) {
+            mockMvc.perform(post("/api/auth/verificar-codigo")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content("""
+                            { "email": "%s", "codigo": "%s" }
+                            """.formatted(usuario.getEmail(), incorrecto)))
+                    .andExpect(status().isBadRequest());
+        }
+
+        mockMvc.perform(post("/api/auth/verificar-codigo")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""
+                        { "email": "%s", "codigo": "%s" }
+                        """.formatted(usuario.getEmail(), incorrecto)))
+                .andExpect(status().isTooManyRequests())
+                .andExpect(jsonPath("$.codigo").value("CODIGO_BLOQUEADO"));
+
+        // Ni siquiera el codigo correcto sirve despues del bloqueo.
+        mockMvc.perform(post("/api/auth/verificar-codigo")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""
+                        { "email": "%s", "codigo": "%s" }
+                        """.formatted(usuario.getEmail(), codigo)))
+                .andExpect(status().isTooManyRequests());
+    }
+
+    @Test
+    void contrasenaDebilSeRechazaYNoCambiaNada() throws Exception {
+
+        String codigo = pedirCodigo();
 
         mockMvc.perform(post("/api/auth/restablecer")
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(request))
+                .content("""
+                        { "email": "%s", "codigo": "%s", "password": "sinmayuscula1!" }
+                        """.formatted(usuario.getEmail(), codigo)))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.codigo").value("DATOS_INVALIDOS"));
 
@@ -188,9 +167,17 @@ class RecuperacionControllerTest {
         assertTrue(passwordEncoder.matches("ClaveVieja123!", sinCambios.getPasswordHash()));
     }
 
-    private static String sha256(String token) throws Exception {
-        MessageDigest digest = MessageDigest.getInstance("SHA-256");
-        byte[] hash = digest.digest(token.getBytes(StandardCharsets.UTF_8));
-        return HexFormat.of().formatHex(hash);
+    // Pide el codigo y lo recupera del mail simulado.
+    private String pedirCodigo() throws Exception {
+
+        mockMvc.perform(post("/api/auth/recuperar")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{ \"email\": \"%s\" }".formatted(usuario.getEmail())))
+                .andExpect(status().isOk());
+
+        ArgumentCaptor<String> codigo = ArgumentCaptor.forClass(String.class);
+        verify(emailService).enviarCodigoRecuperacion(
+                eq(usuario.getEmail()), codigo.capture(), anyInt());
+        return codigo.getValue();
     }
 }

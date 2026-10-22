@@ -39,19 +39,19 @@ public class EmailService {
         );
     }
 
-    /** 1.11: mail de recuperacion de contraseña, valido por 1 hora. */
-    public void enviarRecuperacion(
+    /** 1.11: mail con el codigo de 6 digitos para recuperar la contraseña. */
+    public void enviarCodigoRecuperacion(
             String destinatario,
-            String enlaceRecuperacion) {
+            String codigo,
+            int minutosVigencia) {
 
         enviarMensaje(
             destinatario,
-            "Recupera tu contraseña en Trama",
+            "Tu codigo para recuperar la contraseña de Trama",
             "Hola!\n\n" +
             "Recibimos un pedido para recuperar tu contraseña en Trama.\n\n" +
-            "Para elegir una nueva contraseña, ingresa al siguiente enlace:\n\n" +
-            enlaceRecuperacion + "\n\n" +
-            "Este enlace tiene una validez de 1 hora.\n\n" +
+            "Tu codigo es: " + codigo + "\n\n" +
+            "Vence en " + minutosVigencia + " minutos. No lo compartas con nadie.\n\n" +
             "Si no pediste este cambio, podes ignorar este mensaje: tu contraseña actual sigue siendo valida.\n\n" +
             "Equipo Trama"
         );

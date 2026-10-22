@@ -1,17 +1,16 @@
 package com.trama.tpo.demo.service;
 
-import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
-import java.util.Base64;
 import java.util.HexFormat;
+import java.util.List;
 import java.util.Locale;
+import java.util.UUID;
 
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -19,15 +18,23 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.trama.tpo.demo.entity.dto.RestablecerContrasenaRequest;
 import com.trama.tpo.demo.entity.dto.SolicitarRecuperacionRequest;
+import com.trama.tpo.demo.entity.dto.VerificarCodigoRequest;
 import com.trama.tpo.demo.entity.usuario.TokenRecuperacion;
 import com.trama.tpo.demo.entity.usuario.Usuario;
 import com.trama.tpo.demo.exceptions.ApiException;
 import com.trama.tpo.demo.repository.TokenRecuperacionRepository;
 import com.trama.tpo.demo.repository.UsuarioRepository;
 
-/** 1.11: recuperar contraseña por email, con token de un solo uso valido 1 hora. */
+/**
+ * 1.11: recuperar contraseña con un codigo de 6 digitos enviado por mail.
+ * El codigo vence a los 10 minutos y se bloquea despues de 5 intentos fallidos.
+ */
 @Service
 public class RecuperacionService {
+
+    public static final int MINUTOS_VIGENCIA = 10;
+    public static final int MAX_INTENTOS = 5;
+    public static final long SEGUNDOS_ENTRE_ENVIOS = 60;
 
     private static final SecureRandom SECURE_RANDOM = new SecureRandom();
 
@@ -35,73 +42,77 @@ public class RecuperacionService {
     private final TokenRecuperacionRepository tokenRecuperacionRepository;
     private final PasswordEncoder passwordEncoder;
     private final EmailService emailService;
-    private final String urlBaseRecuperacion;
 
     public RecuperacionService(
             UsuarioRepository usuarioRepository,
             TokenRecuperacionRepository tokenRecuperacionRepository,
             PasswordEncoder passwordEncoder,
-            EmailService emailService,
-            @Value("${trama.recuperacion.url-base:}") String urlBaseRecuperacion) {
+            EmailService emailService) {
 
         this.usuarioRepository = usuarioRepository;
         this.tokenRecuperacionRepository = tokenRecuperacionRepository;
         this.passwordEncoder = passwordEncoder;
         this.emailService = emailService;
-        this.urlBaseRecuperacion = urlBaseRecuperacion;
     }
 
-    // 1.11 - SOLICITAR RECUPERACION
-    // El mensaje de respuesta es siempre el mismo exista o no el email,
-    // para no filtrar que emails estan registrados (ver AuthenticationController).
+    // 1.11 - PASO 1: PEDIR EL CODIGO
+    // La respuesta es siempre la misma exista o no el email, para no filtrar
+    // que direcciones estan registradas (el mensaje lo arma el controller).
     @Transactional
     public void solicitarRecuperacion(SolicitarRecuperacionRequest request) {
 
-        String email = request.getEmail()
-                .trim()
-                .toLowerCase(Locale.ROOT);
+        String email = normalizar(request.getEmail());
 
         usuarioRepository.findByEmail(email).ifPresent(usuario -> {
 
-            // Genera un token aleatorio seguro; en la base solo se guarda su SHA-256.
-            String token = generarToken();
-            String tokenHash = calcularHash(token);
+            Instant ahora = Instant.now();
 
-            Instant vencimiento = Instant.now().plus(1, ChronoUnit.HOURS);
+            List<TokenRecuperacion> pendientes = tokenRecuperacionRepository
+                    .findByUsuarioIdAndUsadoEnIsNull(usuario.getId());
 
-            TokenRecuperacion tokenRecuperacion = TokenRecuperacion.builder()
+            // Evita mandar varios mails seguidos si se aprieta "reenviar" muchas veces.
+            boolean pedidoReciente = pendientes.stream().anyMatch(token ->
+                    token.getCreadoEn() != null
+                    && token.getCreadoEn().isAfter(
+                            ahora.minusSeconds(SEGUNDOS_ENTRE_ENVIOS)));
+
+            if (pedidoReciente) {
+                return;
+            }
+
+            // Solo vale el ultimo codigo pedido: los anteriores quedan invalidados.
+            pendientes.forEach(token -> token.setUsadoEn(ahora));
+            tokenRecuperacionRepository.saveAll(pendientes);
+
+            String codigo = generarCodigo();
+
+            tokenRecuperacionRepository.saveAndFlush(TokenRecuperacion.builder()
                     .usuario(usuario)
-                    .tokenHash(tokenHash)
-                    .venceEn(vencimiento)
-                    .build();
+                    .tokenHash(calcularHash(usuario.getId(), codigo))
+                    .venceEn(ahora.plus(MINUTOS_VIGENCIA, ChronoUnit.MINUTES))
+                    .build());
 
-            tokenRecuperacionRepository.saveAndFlush(tokenRecuperacion);
-
-            String enlace = construirEnlace(token);
-
-            emailService.enviarRecuperacion(email, enlace);
+            emailService.enviarCodigoRecuperacion(email, codigo, MINUTOS_VIGENCIA);
         });
     }
 
-    // 1.11 - RESTABLECER CONTRASEÑA
-    @Transactional
+    // 1.11 - PASO 2: VERIFICAR EL CODIGO (no lo consume)
+    // noRollbackFor: el contador de intentos fallidos se tiene que guardar
+    // aunque el metodo termine lanzando la excepcion.
+    @Transactional(noRollbackFor = ApiException.class)
+    public void verificarCodigo(VerificarCodigoRequest request) {
+
+        validarCodigo(request.getEmail(), request.getCodigo());
+    }
+
+    // 1.11 - PASO 3: ELEGIR LA NUEVA CONTRASEÑA (consume el codigo)
+    @Transactional(noRollbackFor = ApiException.class)
     public void restablecerContrasena(RestablecerContrasenaRequest request) {
 
-        String tokenHash = calcularHash(request.getToken());
+        TokenRecuperacion token =
+                validarCodigo(request.getEmail(), request.getCodigo());
 
-        TokenRecuperacion tokenRecuperacion = tokenRecuperacionRepository
-                .findByTokenHash(tokenHash)
-                .orElseThrow(this::tokenInvalido);
-
-        Instant ahora = Instant.now();
-
-        if (tokenRecuperacion.getUsadoEn() != null
-                || tokenRecuperacion.getVenceEn().isBefore(ahora)) {
-
-            throw tokenInvalido();
-        }
-
-        Usuario usuario = tokenRecuperacion.getUsuario();
+        Usuario usuario = token.getUsuario();
 
         usuario.setPasswordHash(
                 passwordEncoder.encode(request.getPassword())
@@ -109,74 +120,94 @@ public class RecuperacionService {
 
         usuarioRepository.save(usuario);
 
-        tokenRecuperacion.setUsadoEn(ahora);
-        tokenRecuperacionRepository.save(tokenRecuperacion);
+        token.setUsadoEn(Instant.now());
+        tokenRecuperacionRepository.save(token);
     }
 
-    private ApiException tokenInvalido() {
+    private TokenRecuperacion validarCodigo(String emailIngresado, String codigo) {
+
+        Usuario usuario = usuarioRepository.findByEmail(normalizar(emailIngresado))
+                .orElseThrow(this::codigoInvalido);
+
+        TokenRecuperacion token = tokenRecuperacionRepository
+                .findFirstByUsuarioIdAndUsadoEnIsNullOrderByCreadoEnDesc(usuario.getId())
+                .orElseThrow(this::codigoInvalido);
+
+        if (token.getVenceEn().isBefore(Instant.now())) {
+            throw codigoInvalido();
+        }
+
+        if (token.getIntentos() >= MAX_INTENTOS) {
+            throw codigoBloqueado();
+        }
+
+        byte[] esperado = token.getTokenHash().getBytes(StandardCharsets.UTF_8);
+        byte[] recibido = calcularHash(usuario.getId(), codigo)
+                .getBytes(StandardCharsets.UTF_8);
+
+        // Comparacion en tiempo constante.
+        if (!MessageDigest.isEqual(esperado, recibido)) {
+
+            token.setIntentos(token.getIntentos() + 1);
+            tokenRecuperacionRepository.save(token);
+
+            if (token.getIntentos() >= MAX_INTENTOS) {
+                throw codigoBloqueado();
+            }
+
+            throw codigoInvalido();
+        }
+
+        return token;
+    }
+
+    private ApiException codigoInvalido() {
 
         return new ApiException(
-                "TOKEN_INVALIDO",
-                "El enlace no es valido o ya vencio. Volve a pedir la recuperacion.",
+                "CODIGO_INVALIDO",
+                "El código no es válido o ya venció",
                 HttpStatus.BAD_REQUEST
         );
     }
 
-    // Genera 32 bytes aleatorios y los convierte en un token URL-safe.
-    private String generarToken() {
+    private ApiException codigoBloqueado() {
 
-        byte[] bytes = new byte[32];
-        SECURE_RANDOM.nextBytes(bytes);
-
-        return Base64.getUrlEncoder()
-                .withoutPadding()
-                .encodeToString(bytes);
+        return new ApiException(
+                "CODIGO_BLOQUEADO",
+                "Superaste la cantidad de intentos. Pedí un código nuevo",
+                HttpStatus.TOO_MANY_REQUESTS
+        );
     }
 
-    // Calcula el SHA-256 del token original.
-    private String calcularHash(String token) {
+    private static String normalizar(String email) {
+
+        return email.trim().toLowerCase(Locale.ROOT);
+    }
+
+    // Codigo numerico de 6 digitos (000000 a 999999).
+    private static String generarCodigo() {
+
+        return String.format("%06d", SECURE_RANDOM.nextInt(1_000_000));
+    }
+
+    // Se mezcla el id del usuario para que dos personas con el mismo codigo
+    // no generen el mismo hash (token_hash es UNIQUE).
+    static String calcularHash(UUID usuarioId, String codigo) {
 
         try {
             MessageDigest digest = MessageDigest.getInstance("SHA-256");
 
             byte[] hash = digest.digest(
-                    token.getBytes(StandardCharsets.UTF_8)
+                    (usuarioId + ":" + codigo).getBytes(StandardCharsets.UTF_8)
             );
 
             return HexFormat.of().formatHex(hash);
 
         } catch (NoSuchAlgorithmException e) {
             throw new IllegalStateException(
-                    "No se pudo generar el hash del token",
+                    "No se pudo generar el hash del codigo",
                     e
             );
         }
-    }
-
-    // La URL de restablecimiento se configura segun el entorno.
-    private String construirEnlace(String token) {
-
-        if (urlBaseRecuperacion == null || urlBaseRecuperacion.isBlank()) {
-            throw new IllegalStateException(
-                    "Falta configurar trama.recuperacion.url-base"
-            );
-        }
-
-        String base = urlBaseRecuperacion.trim();
-        URI uri = URI.create(base);
-
-        if (!uri.isAbsolute()
-                || (!"http".equalsIgnoreCase(uri.getScheme())
-                && !"https".equalsIgnoreCase(uri.getScheme()))
-                || uri.getHost() == null
-                || uri.getRawQuery() != null
-                || uri.getRawFragment() != null) {
-
-            throw new IllegalStateException(
-                    "La URL base de recuperacion debe ser una direccion HTTP(S) valida, sin query ni fragmento"
-            );
-        }
-
-        return base + "?token=" + token;
     }
 }

@@ -19,6 +19,7 @@ import com.trama.tpo.demo.entity.dto.RegisterRequest;
 import com.trama.tpo.demo.entity.dto.AuthenticationRequest;
 import com.trama.tpo.demo.entity.dto.RestablecerContrasenaRequest;
 import com.trama.tpo.demo.entity.dto.SolicitarRecuperacionRequest;
+import com.trama.tpo.demo.entity.dto.VerificarCodigoRequest;
 import com.trama.tpo.demo.entity.usuario.Usuario;
 import com.trama.tpo.demo.exceptions.ApiException;
 import com.trama.tpo.demo.repository.UsuarioRepository;
@@ -96,7 +97,7 @@ public class AuthenticationController {
         return ResponseEntity.ok(respuesta);
     }
 
-    // 1.11 - SOLICITAR RECUPERACION DE CONTRASEÑA
+    // 1.11 - PASO 1: PEDIR EL CODIGO POR MAIL
     // Responde siempre el mismo mensaje, exista o no el email, para no
     // filtrar que direcciones estan registradas.
     @PostMapping("/recuperar")
@@ -107,12 +108,26 @@ public class AuthenticationController {
 
         return ResponseEntity.ok(
                 MensajeResponse.builder()
-                        .mensaje("Si el email está registrado, te enviamos instrucciones para recuperar tu contraseña.")
+                        .mensaje("Si el email está registrado, te enviamos un código de 6 dígitos.")
                         .build()
         );
     }
 
-    // 1.11 - RESTABLECER CONTRASEÑA CON EL TOKEN DEL MAIL
+    // 1.11 - PASO 2: VERIFICAR EL CODIGO
+    @PostMapping("/verificar-codigo")
+    public ResponseEntity<MensajeResponse> verificarCodigo(
+            @Valid @RequestBody VerificarCodigoRequest request) {
+
+        recuperacionService.verificarCodigo(request);
+
+        return ResponseEntity.ok(
+                MensajeResponse.builder()
+                        .mensaje("El código es correcto.")
+                        .build()
+        );
+    }
+
+    // 1.11 - PASO 3: ELEGIR LA NUEVA CONTRASEÑA
     @PostMapping("/restablecer")
     public ResponseEntity<MensajeResponse> restablecer(
             @Valid @RequestBody RestablecerContrasenaRequest request) {
