@@ -1,12 +1,19 @@
-import { useAuth } from '../../hooks/useAuth';
 import { NavLink, Outlet } from 'react-router-dom';
 import logoTrama from '../../assets/logo.png';
+import { useAuth } from '../../hooks/useAuth';
+import {
+  obtenerItemsMenuPorRol,
+  useProyectoActual,
+} from '../../hooks/useProyectoActual';
+import { Selector } from '../ui/Selector';
+
 const ITEMS_NAVEGACION = [
   { ruta: '/proyectos', etiqueta: 'Acompañamientos', icono: 'acompanamientos' },
   { ruta: '/recursos', etiqueta: 'Recursos', icono: 'recursos' },
   { ruta: '/calendario', etiqueta: 'Calendario', icono: 'calendario' },
   { ruta: '/perfil', etiqueta: 'Mi perfil', icono: 'perfil' },
 ];
+
 function IconoMenu({ nombre }) {
   const propsComunes = {
     viewBox: '0 0 24 24',
@@ -21,6 +28,15 @@ function IconoMenu({ nombre }) {
         <circle cx="9" cy="8" r="3" />
         <path d="M3.5 19v-1.5A4.5 4.5 0 0 1 8 13h2a4.5 4.5 0 0 1 4.5 4.5V19" />
         <path d="M15.5 5.5a3 3 0 0 1 0 5.8M16 13h.5a4 4 0 0 1 4 4v1" />
+      </svg>
+    );
+  }
+  if (nombre === 'invitar') {
+    return (
+      <svg {...propsComunes}>
+        <circle cx="9" cy="8" r="3" />
+        <path d="M3.5 19v-1.5A4.5 4.5 0 0 1 8 13h2a4.5 4.5 0 0 1 4.5 4.5V19" />
+        <path d="M19 8v6M16 11h6" />
       </svg>
     );
   }
@@ -47,6 +63,7 @@ function IconoMenu({ nombre }) {
     </svg>
   );
 }
+
 function LogoTrama({ className = 'h-10 w-auto' }) {
   return (
     <div className="inline-flex items-center select-none" aria-label="TRAMA">
@@ -58,44 +75,31 @@ function LogoTrama({ className = 'h-10 w-auto' }) {
     </div>
   );
 }
+
 export function Layout() {
   const { cerrarSesion } = useAuth();
+  const {
+    proyectos,
+    proyectoActual,
+    rol,
+    rolCodigo,
+    esAdmin,
+    cambiarProyecto,
+  } = useProyectoActual();
+
+  const opcionesSelector = proyectos.map((item) => ({
+    valor: item.id,
+    etiqueta: item.rol ? `${item.nombre} (${item.rol})` : item.nombre,
+  }));
+
+  const itemsMenuProyecto = obtenerItemsMenuPorRol(
+    proyectoActual,
+    rolCodigo,
+    esAdmin,
+  );
+
   return (
     <div className="flex min-h-screen flex-col bg-crema font-sans text-oliva md:flex-row">
-      {/* Encabezado mobile: campana a la izquierda y logo TRAMA arriba a la derecha */}
-      <header className="flex items-center justify-between border-b border-oliva/10 bg-crema px-5 py-3.5 md:hidden">
-        <button
-          type="button"
-          aria-label="Notificaciones"
-          className="relative flex h-10 w-10 items-center justify-center rounded-full text-oliva/80 hover:bg-oliva/10"
-        >
-          <svg
-            viewBox="0 0 24 24"
-            className="h-5 w-5 fill-none stroke-current stroke-2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            aria-hidden="true"
-          >
-            <path d="M18 9a6 6 0 0 0-12 0c0 7-3 7-3 8.5h18C21 16 18 16 18 9Z" />
-            <path d="M9.5 20a3 3 0 0 0 5 0" />
-          </svg>
-          <span
-            aria-hidden="true"
-            className="absolute right-2 top-2 h-2 w-2 rounded-full bg-miel"
-          />
-        </button>
-        <div className="flex items-center gap-3">
-          <LogoTrama className="h-9 w-auto" />
-          <button
-            type="button"
-            onClick={() => cerrarSesion()}
-            className="rounded-full px-3 py-2 text-sm font-semibold text-terracota hover:bg-oliva/10"
-          >
-            Cerrar sesión
-          </button>
-        </div>
-      </header>
-
       {/* Sidebar desktop */}
       <aside className="hidden w-64 shrink-0 flex-col justify-between border-r border-oliva/10 bg-superficie/40 px-6 py-9 md:flex">
         <div>
@@ -136,6 +140,37 @@ export function Layout() {
               </NavLink>
             ))}
           </nav>
+
+          {proyectoActual && itemsMenuProyecto.length > 0 && (
+            <div className="mt-8 border-t border-oliva/10 pt-6">
+              <p className="mb-2 px-4 text-xs font-semibold uppercase tracking-wide text-oliva/70">
+                {`Espacio de ${proyectoActual.nombre}`}
+              </p>
+              <nav
+                aria-label="Opciones del acompañamiento"
+                className="flex flex-col gap-1.5"
+              >
+                {itemsMenuProyecto.map((item) => (
+                  <NavLink
+                    key={item.ruta}
+                    to={item.ruta}
+                    className={({ isActive }) =>
+                      `flex items-center justify-between rounded-2xl px-4 py-2.5 text-sm transition ${
+                        isActive
+                          ? 'bg-miel/15 font-bold text-terracota'
+                          : 'font-medium text-oliva/75 hover:bg-oliva/5 hover:text-oliva'
+                      }`
+                    }
+                  >
+                    <span className="flex items-center gap-3">
+                      <IconoMenu nombre={item.icono} />
+                      <span>{item.etiqueta}</span>
+                    </span>
+                  </NavLink>
+                ))}
+              </nav>
+            </div>
+          )}
         </div>
 
         <div className="flex flex-col gap-4">
@@ -152,10 +187,66 @@ export function Layout() {
         </div>
       </aside>
 
-      {/* Contenido principal */}
-      <main className="flex-1 pb-24 md:pb-12">
-        <Outlet />
-      </main>
+      <div className="flex flex-1 flex-col">
+        {/* Encabezado con selector de proyecto y controles móviles */}
+        <header className="flex flex-wrap items-center justify-between gap-4 border-b border-oliva/10 bg-crema px-5 py-3.5 md:px-8">
+          <div className="flex items-center gap-3 md:hidden">
+            <button
+              type="button"
+              aria-label="Notificaciones"
+              className="relative flex h-10 w-10 items-center justify-center rounded-full text-oliva/80 hover:bg-oliva/10"
+            >
+              <svg
+                viewBox="0 0 24 24"
+                className="h-5 w-5 fill-none stroke-current stroke-2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                aria-hidden="true"
+              >
+                <path d="M18 9a6 6 0 0 0-12 0c0 7-3 7-3 8.5h18C21 16 18 16 18 9Z" />
+                <path d="M9.5 20a3 3 0 0 0 5 0" />
+              </svg>
+              <span
+                aria-hidden="true"
+                className="absolute right-2 top-2 h-2 w-2 rounded-full bg-miel"
+              />
+            </button>
+          </div>
+
+          {opcionesSelector.length > 0 && (
+            <div className="flex flex-wrap items-center gap-3">
+              <Selector
+                id="selector-proyecto-encabezado"
+                etiqueta="Niño o niña"
+                opciones={opcionesSelector}
+                value={proyectoActual?.id ?? ''}
+                onChange={(evento) => cambiarProyecto(evento.target.value)}
+              />
+              {rol && (
+                <span className="mt-5 inline-flex items-center rounded-full bg-miel/20 px-3 py-1 text-xs font-semibold text-oliva">
+                  {`Tu rol: ${rol}`}
+                </span>
+              )}
+            </div>
+          )}
+
+          <div className="flex items-center gap-3 md:hidden">
+            <LogoTrama className="h-9 w-auto" />
+            <button
+              type="button"
+              onClick={() => cerrarSesion()}
+              className="rounded-full px-3 py-2 text-sm font-semibold text-terracota hover:bg-oliva/10"
+            >
+              Cerrar sesión
+            </button>
+          </div>
+        </header>
+
+        {/* Contenido principal */}
+        <main className="flex-1 pb-24 md:pb-12">
+          <Outlet />
+        </main>
+      </div>
 
       {/* Barra de navegación inferior mobile */}
       <nav
@@ -178,4 +269,5 @@ export function Layout() {
     </div>
   );
 }
+
 export default Layout;
