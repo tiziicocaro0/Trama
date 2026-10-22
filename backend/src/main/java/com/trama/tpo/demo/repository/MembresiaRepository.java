@@ -2,6 +2,7 @@ package com.trama.tpo.demo.repository;
 
 import com.trama.tpo.demo.entity.membresia.Membresia;
 import com.trama.tpo.demo.entity.membresia.Rol;
+import com.trama.tpo.demo.entity.dto.ProfesionalRedResponse;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -23,6 +24,16 @@ public interface MembresiaRepository extends JpaRepository<Membresia, UUID> {
     boolean existsByUsuarioIdAndProyectoId(UUID usuarioId, UUID proyectoId);
 
     List<Membresia> findByProyectoId(UUID proyectoId);
+
+    @Query("""
+            select new com.trama.tpo.demo.entity.dto.ProfesionalRedResponse(
+                m.id, u.nombre, u.apellido, m.rol, m.especialidad)
+            from Membresia m join m.usuario u
+            where m.proyecto.id = :proyectoId and m.rol in :roles
+            order by u.nombre, u.apellido, m.id
+            """)
+    List<ProfesionalRedResponse> findProfesionalesRed(@Param("proyectoId") UUID proyectoId,
+            @Param("roles") Collection<Rol> roles);
 
     Optional<Membresia> findByUsuarioIdAndProyectoId(
             UUID usuarioId,

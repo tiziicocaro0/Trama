@@ -17,6 +17,8 @@ public record AporteResponse(
         Visibilidad visibilidad,
         Boolean archivado,
         Instant creadoEn,
-        Instant actualizadoEn
+        Instant actualizadoEn,
+        // true si el usuario actual es el autor y puede cargar en el proyecto
+        Boolean puedeEditar
 ) {
 }

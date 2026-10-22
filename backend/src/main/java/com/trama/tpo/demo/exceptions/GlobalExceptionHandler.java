@@ -8,6 +8,7 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 
 
 @RestControllerAdvice
@@ -84,9 +85,9 @@ public class GlobalExceptionHandler {
     }
     
     // PARÁMETROS CON FORMATO INVÁLIDO (ej. un id que no es UUID)
-    @ExceptionHandler(MethodArgumentTypeMismatchException.class)
+    @ExceptionHandler({MethodArgumentTypeMismatchException.class, HttpMessageNotReadableException.class})
     public ResponseEntity<ErrorResponse> handleTypeMismatch(
-            MethodArgumentTypeMismatchException e) {
+            Exception e) {
 
         return ResponseEntity
                 .status(HttpStatus.BAD_REQUEST)

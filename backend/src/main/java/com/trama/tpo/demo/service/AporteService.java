@@ -95,7 +95,7 @@ public class AporteService {
                 .archivado(false)
                 .build();
 
-        return convertirRespuesta(aporteRepository.saveAndFlush(aporte));
+        return convertirRespuesta(aporteRepository.saveAndFlush(aporte), true);
     }
 
     // LISTAR APORTES
@@ -129,8 +129,11 @@ public class AporteService {
                 visibilidadesPermitidas
         );
 
+        // Se calcula una sola vez: si el usuario puede cargar en este proyecto
+        boolean puedeCargar = permisoService.puedeEditar(proyectoId);
+
         return aportes.stream()
-                .map(this::convertirRespuesta)
+                .map(aporte -> convertirRespuesta(aporte, puedeCargar))
                 .toList();
     }
 
@@ -184,7 +187,7 @@ public class AporteService {
                 aporte.setVisibilidad(request.visibilidad());
         }
 
-        return convertirRespuesta(aporteRepository.saveAndFlush(aporte));
+        return convertirRespuesta(aporteRepository.saveAndFlush(aporte), true);
     }
 
     // OBTENER APORTE PARA EDITAR
@@ -263,7 +266,10 @@ public class AporteService {
     }
 
     // CONVERTIR ENTIDAD A DTO
-    private AporteResponse convertirRespuesta(Aporte aporte) {
+    private AporteResponse convertirRespuesta(Aporte aporte, boolean puedeCargar) {
+
+        boolean esAutor = aporte.getAutor().getId()
+                .equals(usuarioActual.obtenerId());
 
         return new AporteResponse(
                 aporte.getId(),
@@ -276,7 +282,8 @@ public class AporteService {
                 aporte.getVisibilidad(),
                 aporte.getArchivado(),
                 aporte.getCreadoEn(),
-                aporte.getActualizadoEn()
+                aporte.getActualizadoEn(),
+                puedeCargar && esAutor
         );
     }
     private void validarInteres(AporteRequest request) {
