@@ -73,3 +73,50 @@ export async function obtenerMisProyectos(usuarioId) {
     return filtrarProyectosPorMiembro(PROYECTOS_MOCK, usuarioId);
   }
 }
+
+export const MIEMBROS_MOCK = [
+  {
+    id: 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa1',
+    nombre: 'Marta Fernández',
+    iniciales: 'MF',
+    tono: 'terracota',
+    rol: 'Tutora administradora',
+    detalle: 'Madre',
+    esAdmin: true,
+  },
+  {
+    id: 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa2',
+    nombre: 'María Díaz',
+    iniciales: 'MD',
+    tono: 'oliva',
+    rol: 'Educación',
+    detalle: 'Docente · 3.º grado',
+    esAdmin: false,
+  },
+  {
+    id: 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa3',
+    nombre: 'Diego Torres',
+    iniciales: 'DT',
+    tono: 'agua',
+    rol: 'Salud',
+    detalle: 'Psicología · MN 12345',
+    esAdmin: false,
+  },
+  {
+    id: 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa4',
+    nombre: 'Elena Sosa',
+    iniciales: 'ES',
+    tono: 'miel',
+    rol: 'Familiar',
+    detalle: 'Abuela',
+    esAdmin: false,
+  },
+];
+
+/**
+ * Revoca el acceso de un miembro al proyecto mediante `DELETE /api/proyectos/{id}/miembros/{miembroId}`.
+ */
+export async function quitarMiembroProyecto(proyectoId, miembroId) {
+  return clienteApi.delete(`/proyectos/${proyectoId}/miembros/${miembroId}`);
+}
+

@@ -1,3 +1,4 @@
+
 import { useEffect } from 'react';
 import { Route, Routes, useLocation } from 'react-router-dom';
 import { Layout } from '../components/layout/Layout';
@@ -9,6 +10,7 @@ import BienvenidaPage from '../features/bienvenida/BienvenidaPage.jsx';
 import InicioPage from '../features/inicio/InicioPage.jsx';
 import { Componentes } from '../pages/Componentes';
 import { MisProyectos } from '../pages/MisProyectos';
+import { Red } from '../pages/Red';
 import Acceso from './Acceso.jsx';
 
 const titulos = {
@@ -85,6 +87,7 @@ export default function AppRoutes() {
           path="/proyectos/:id"
           element={<Proximamente titulo="Portada del proyecto" />}
         />
+        <Route path="/proyectos/:id/red" element={<Red />} />
         <Route path="/recursos" element={<Proximamente titulo="Recursos" />} />
         <Route
           path="/calendario"
