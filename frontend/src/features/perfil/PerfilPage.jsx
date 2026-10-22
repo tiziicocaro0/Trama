@@ -82,7 +82,7 @@ export default function PerfilPage() {
                 {mensajeGuardado}
               </p>
             )}
-            {!datos.puedeCrear && (
+            {proyecto.puedeCargar !== true && (
               <p className="mb-4 text-sm text-texto-suave">
                 Podés consultar este perfil en modo de solo lectura.
               </p>
@@ -101,10 +101,10 @@ export default function PerfilPage() {
                   )}
                   proyectoId={id}
                   completo={Boolean(seccion)}
-                  puedeCrear={datos.puedeCrear}
+                  puedeCrear={proyecto.puedeCargar === true}
                   alGuardar={() => {
                     setMensajeGuardado(
-                      item.tipo === 'NOTA'
+                      item.tipo === 'NOTA_PROFESIONAL'
                         ? 'Nota guardada.'
                         : 'Aporte guardado.',
                     )

@@ -39,8 +39,8 @@ beforeEach(() => {
     data: ruta.endsWith('/red')
       ? red
       : ruta.endsWith('/aportes')
-        ? { aportes: [], puedeCrear: true }
-        : proyecto,
+        ? []
+        : { ...proyecto, puedeCargar: true },
   }))
 })
 describe('Red de profesionales', () => {

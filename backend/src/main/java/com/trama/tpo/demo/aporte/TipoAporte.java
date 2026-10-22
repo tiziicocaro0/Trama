@@ -1,5 +1,15 @@
 package com.trama.tpo.demo.aporte;
 
 public enum TipoAporte {
-    FORTALEZA, INTERES, COMUNICACION, SENSORIAL, ESTRATEGIA, RUTINA, NOTA
+    INTERES,
+    FORTALEZA,
+    COMUNICACION,
+    SENSORIAL,
+    ESTRATEGIA,
+    RUTINA,
+    DESREGULACION,
+    OBSERVACION,
+    NOTA_PROFESIONAL,
+    ABC,
+    SUGERENCIA
 }

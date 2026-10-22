@@ -43,7 +43,7 @@ beforeEach(() => {
       ruta === '/proyectos'
         ? proyectos
         : ruta.endsWith('/aportes')
-          ? { aportes: [], puedeCrear: true }
+          ? []
           : detalles[ruta.split('/').at(-1)],
   }))
 })

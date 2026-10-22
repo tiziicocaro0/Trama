@@ -100,3 +100,75 @@ export async function obtenerIdentidad() {
     email: data.email,
   }
 }
+
+export async function solicitarRecuperacion({ email }) {
+  if (!cliente.defaults.baseURL)
+    throw new Error('Falta configurar la conexión con TRAMA. Revisá VITE_API_URL.')
+  try {
+    await cliente.post('/auth/recuperar', {
+      email: email.trim().toLowerCase(),
+    })
+  } catch (error) {
+    if (!error.response)
+      throw new Error(
+        'No pudimos conectar con TRAMA. Revisá tu conexión e intentá nuevamente.',
+        { cause: error },
+      )
+    throw new Error(
+      'No pudimos procesar el pedido. Intentá nuevamente en unos minutos.',
+      { cause: error },
+    )
+  }
+}
+
+function errorDeCodigo(error, mensajeGenerico) {
+  const codigo = error.response?.data?.codigo
+  if (error.response?.status === 400 && codigo === 'CODIGO_INVALIDO')
+    return new Error('El código no es válido o ya venció.', { cause: error })
+  if (error.response?.status === 429 && codigo === 'CODIGO_BLOQUEADO')
+    return new Error(
+      'Superaste la cantidad de intentos. Pedí un código nuevo.',
+      { cause: error },
+    )
+  if (error.response?.status === 400 && codigo === 'DATOS_INVALIDOS')
+    return new Error('Revisá los datos ingresados.', { cause: error })
+  if (!error.response)
+    return new Error(
+      'No pudimos conectar con TRAMA. Revisá tu conexión e intentá nuevamente.',
+      { cause: error },
+    )
+  return new Error(mensajeGenerico, { cause: error })
+}
+
+export async function verificarCodigo({ email, codigo }) {
+  if (!cliente.defaults.baseURL)
+    throw new Error('Falta configurar la conexión con TRAMA. Revisá VITE_API_URL.')
+  try {
+    await cliente.post('/auth/verificar-codigo', {
+      email: email.trim().toLowerCase(),
+      codigo,
+    })
+  } catch (error) {
+    throw errorDeCodigo(
+      error,
+      'No pudimos verificar el código. Intentá nuevamente en unos minutos.',
+    )
+  }
+}
+
+export async function restablecerContrasena({ email, codigo, password }) {
+  if (!cliente.defaults.baseURL)
+    throw new Error('Falta configurar la conexión con TRAMA. Revisá VITE_API_URL.')
+  try {
+    await cliente.post('/auth/restablecer', {
+      email: email.trim().toLowerCase(),
+      codigo,
+      password,
+    })
+  } catch (error) {
+    throw errorDeCodigo(
+      error,
+      'No pudimos actualizar tu contraseña. Intentá nuevamente en unos minutos.',
+    )
+  }
+}

@@ -40,7 +40,7 @@ export const seccionesPerfil = [
 export const seccionNotas = {
   slug: 'notas',
   titulo: 'Notas',
-  tipo: 'NOTA',
+  tipo: 'NOTA_PROFESIONAL',
   tono: 'bg-secundario text-superficie',
 }
 

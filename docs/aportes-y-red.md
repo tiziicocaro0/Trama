@@ -24,37 +24,28 @@ secciones originales; las notas se consultan por separado.
 
 La vinculación o invitación de profesionales no forma parte de este cambio.
 
-## API implementada
+## API que usa el perfil
 
-Todas estas rutas requieren JWT y verifican permisos mediante `PermisoService`.
+El back de aportes es el de la card 3.0 (Ana). Todas las rutas requieren JWT y verifican
+permisos con `PermisoService`.
 
 | Método | Ruta | Contrato |
 |---|---|---|
-| GET | `/api/proyectos/{proyectoId}/aportes` | `{ aportes: AporteResponse[], puedeCrear: boolean }` |
+| GET | `/api/proyectos/{proyectoId}` | Datos del proyecto; incluye `puedeCargar` (si el usuario puede cargar aportes) |
+| GET | `/api/proyectos/{proyectoId}/aportes?tipo=&archivados=false` | Lista de `AporteResponse` visibles para el usuario |
 | POST | `/api/proyectos/{proyectoId}/aportes` | Recibe `AporteRequest`; devuelve `201` con `AporteResponse` |
-| PUT | `/api/proyectos/{proyectoId}/aportes/{aporteId}` | Recibe `AporteRequest`; devuelve el aporte actualizado |
+| PUT | `/api/proyectos/{proyectoId}/aportes/{aporteId}` | Recibe `AporteRequest`; solo el autor (403 si no) |
+| POST | `/api/proyectos/{proyectoId}/aportes/{aporteId}/archivar` | Solo el autor; el perfil todavía no tiene botón de archivar |
 | GET | `/api/proyectos/{proyectoId}/red` | Lista de `{ id, nombre, apellido, rol, especialidad }`; `id` corresponde a la membresía |
 
-`AporteRequest` contiene `tipo`, `titulo` (obligatorio, hasta 150 caracteres),
-`contenido` (opcional, hasta 10000 caracteres) y `visibilidad`.
-Tipos habilitados: `FORTALEZA`, `INTERES`, `COMUNICACION`, `SENSORIAL`, `ESTRATEGIA`, `RUTINA`, `NOTA`.
-No se permite cambiar el tipo de un aporte existente.
+`AporteRequest` contiene `tipo`, `titulo` (obligatorio, hasta 150 caracteres), `contenido`,
+`datos` (JSON con los campos propios del tipo) y `visibilidad` (si falta, se usa la del tipo).
+Intereses exigen `datos.categoria` y `datos.intensidad`; fortalezas exigen `datos.contexto`.
+La sección «Notas» usa el tipo `NOTA_PROFESIONAL`.
 
-`AporteResponse` incluye `id`, `tipo`, `titulo`, `contenido`, `visibilidad`, `creadoEn`,
-`actualizadoEn` y `puedeEditar`.
-
-## Permisos y persistencia
-
-- Solo miembros acceden al proyecto. Solo el autor puede editar su aporte y debe
-  conservar el permiso de escritura del proyecto.
-- Familiares respetan `familiarPuedeCargar`; profesionales respetan el límite gratuito
-  ya implementado por `PermisoService`.
-- Tutores ven todas las visibilidades; Salud y Educación ven `TODOS` y los aportes de
-  su ámbito; familiares ven `TODOS`. El filtro se realiza en la consulta a la base.
-- Aportes archivados no se listan ni se editan. Este cambio no agrega una acción de archivo.
-- Cada edición conserva título, contenido y datos anteriores en `aporte_version`,
-  dentro de la misma transacción. El historial no tiene una pantalla en este alcance.
-- Se reutilizan las tablas existentes de V2. No hay migraciones ni dependencias nuevas.
+`AporteResponse` incluye `id`, `proyectoId`, `autorId`, `tipo`, `titulo`, `contenido`, `datos`,
+`visibilidad`, `archivado`, `creadoEn`, `actualizadoEn` y `puedeEditar`
+(true si el usuario es el autor y puede cargar en el proyecto).
 
 ## Configuración de cifrado
 

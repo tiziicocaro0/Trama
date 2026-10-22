@@ -127,6 +127,14 @@ export default function LoginPage() {
               disabled={enviando}
             />
           </FormField>
+          <p className="-mt-1 text-right">
+            <Link
+              to="/recuperar"
+              className="rounded-sm text-sm font-bold text-primario hover:underline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-primario"
+            >
+              ¿Olvidaste tu contraseña?
+            </Link>
+          </p>
           {(mensaje || mensajeSesion) && (
             <p
               role="alert"

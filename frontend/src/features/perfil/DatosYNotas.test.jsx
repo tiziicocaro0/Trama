@@ -27,7 +27,7 @@ const proyecto = {
 const instante = '2026-10-17T15:04:05Z'
 const nota = {
   id: 'nota-ficticia',
-  tipo: 'NOTA',
+  tipo: 'NOTA_PROFESIONAL',
   titulo: 'Nota ficticia',
   contenido: 'Texto ficticio guardado',
   visibilidad: 'TODOS',
@@ -58,10 +58,10 @@ beforeEach(() => {
   puedeCrear = true
   cliente.get.mockReset().mockImplementation(async (ruta) => ({
     data: ruta.endsWith('/aportes')
-      ? { aportes, puedeCrear }
+      ? aportes
       : ruta.endsWith('/red')
         ? []
-        : proyecto,
+        : { ...proyecto, puedeCargar: puedeCrear },
   }))
   cliente.post.mockReset().mockImplementation(async (ruta, datos) => {
     const creada = { ...nota, ...datos }
@@ -178,7 +178,7 @@ describe('Notas con fecha y hora', () => {
     expect(cliente.post).toHaveBeenCalledExactlyOnceWith(
       `/proyectos/${id}/aportes`,
       {
-        tipo: 'NOTA',
+        tipo: 'NOTA_PROFESIONAL',
         titulo: 'Nota ficticia nueva',
         contenido: 'Texto ficticio nuevo',
         visibilidad: 'TODOS',

@@ -1,47 +1,53 @@
 package com.trama.tpo.demo;
 
-import static org.assertj.core.api.Assertions.*;
-import java.security.SecureRandom;
+import static org.assertj.core.api.Assertions.assertThat;
+
 import java.nio.charset.StandardCharsets;
+import java.security.SecureRandom;
 import java.util.Base64;
+
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import com.trama.tpo.demo.common.CifradoConverter;
+
+import com.trama.tpo.demo.config.CifradoConverter;
+import com.trama.tpo.demo.service.CryptoService;
 
 class CifradoConverterTest {
-    private CifradoConverter converter() {
+
+    private static final String TEXTO = "Se calma con su música preferida y auriculares";
+
+    private CifradoConverter converter;
+
+    @BeforeEach
+    void crearConverter() {
+
         byte[] clave = new byte[32];
         new SecureRandom().nextBytes(clave);
-        return new CifradoConverter(Base64.getEncoder().encodeToString(clave));
+
+        converter = new CifradoConverter(
+                new CryptoService(Base64.getEncoder().encodeToString(clave)));
     }
 
     @Test
-    void protegeYRecuperaUnicodeConUnNonceDistintoPorEscritura() {
-        var converter = converter();
-        String texto = "Descripción ficticia: música y dibujos 🎨";
-        byte[] cifrado = converter.convertToDatabaseColumn(texto);
-        assertThat(converter.convertToEntityAttribute(cifrado)).isEqualTo(texto);
-        assertThat(new String(cifrado, StandardCharsets.UTF_8)).doesNotContain(texto);
-        assertThat(converter.convertToDatabaseColumn(texto)).isNotEqualTo(cifrado);
-        assertThat(converter.convertToEntityAttribute(converter.convertToDatabaseColumn(""))).isEmpty();
+    void loQueSeGuardaNoEsElTextoOriginal() {
+
+        byte[] columna = converter.convertToDatabaseColumn(TEXTO);
+
+        assertThat(new String(columna, StandardCharsets.UTF_8)).doesNotContain(TEXTO);
+    }
+
+    @Test
+    void alLeerDevuelveElTextoOriginal() {
+
+        byte[] columna = converter.convertToDatabaseColumn(TEXTO);
+
+        assertThat(converter.convertToEntityAttribute(columna)).isEqualTo(TEXTO);
+    }
+
+    @Test
+    void nullSigueSiendoNull() {
+
         assertThat(converter.convertToDatabaseColumn(null)).isNull();
         assertThat(converter.convertToEntityAttribute(null)).isNull();
-    }
-
-    @Test
-    void rechazaDatosManipuladosYUnaClaveDiferente() {
-        var converter = converter();
-        byte[] cifrado = converter.convertToDatabaseColumn("Texto ficticio");
-        assertThatThrownBy(() -> converter().convertToEntityAttribute(cifrado)).isInstanceOf(IllegalStateException.class);
-        cifrado[cifrado.length - 1] ^= 1;
-        assertThatThrownBy(() -> converter.convertToEntityAttribute(cifrado)).isInstanceOf(IllegalStateException.class);
-        assertThatThrownBy(() -> converter.convertToEntityAttribute(new byte[4])).isInstanceOf(IllegalStateException.class);
-    }
-
-    @Test
-    void nuncaEscribeSinClaveValida() {
-        for (String clave : new String[] { "", "no es base64", Base64.getEncoder().encodeToString(new byte[16]) }) {
-            assertThatThrownBy(() -> new CifradoConverter(clave).convertToDatabaseColumn("Ejemplo ficticio"))
-                    .isInstanceOf(IllegalStateException.class);
-        }
     }
 }

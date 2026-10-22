@@ -7,11 +7,12 @@ function ruta(proyectoId) {
 }
 
 export async function listarAportes(proyectoId, signal) {
+  // La API (3.0) devuelve la lista de aportes visibles para el usuario.
+  // El permiso de cargar viene en el proyecto (puedeCargar).
   const { data } = await cliente.get(ruta(proyectoId), { signal })
   if (
-    !Array.isArray(data?.aportes) ||
-    typeof data.puedeCrear !== 'boolean' ||
-    data.aportes.some(
+    !Array.isArray(data) ||
+    data.some(
       (aporte) =>
         typeof aporte?.id !== 'string' ||
         typeof aporte.titulo !== 'string' ||
@@ -21,7 +22,7 @@ export async function listarAportes(proyectoId, signal) {
   ) {
     throw new Error('No pudimos verificar los aportes del perfil.')
   }
-  return data
+  return { aportes: data }
 }
 
 export async function guardarAporte(proyectoId, aporteId, datos) {

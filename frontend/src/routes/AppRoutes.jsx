@@ -4,6 +4,7 @@ import BienvenidaPage from '../features/bienvenida/BienvenidaPage.jsx'
 import PaginaTemporal from '../features/auth/PaginaTemporal.jsx'
 import RegistroPage from '../features/auth/registro/RegistroPage.jsx'
 import LoginPage from '../features/auth/login/LoginPage.jsx'
+import RecuperarPage from '../features/auth/recuperar/RecuperarPage.jsx'
 import InicioPage from '../features/inicio/InicioPage.jsx'
 import Acceso from './Acceso.jsx'
 import PerfilPage from '../features/perfil/PerfilPage.jsx'
@@ -20,6 +21,7 @@ import { MisProyectos } from '../pages/MisProyectos.jsx'
 const titles = {
   '/': 'Bienvenida',
   '/login': 'Iniciar sesión',
+  '/recuperar': 'Recuperar contraseña',
   '/registro': 'Crear cuenta',
   '/inicio': 'Inicio',
   '/acompanamientos': 'Acompañamientos',
@@ -81,6 +83,14 @@ export default function AppRoutes() {
         element={
           <Acceso>
             <RegistroPage />
+          </Acceso>
+        }
+      />
+      <Route
+        path="/recuperar"
+        element={
+          <Acceso>
+            <RecuperarPage />
           </Acceso>
         }
       />

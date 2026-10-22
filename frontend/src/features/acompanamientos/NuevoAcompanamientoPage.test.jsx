@@ -55,7 +55,7 @@ beforeEach(() => {
       ruta === '/proyectos'
         ? []
         : ruta.endsWith('/aportes')
-          ? { aportes: [], puedeCrear: true }
+          ? []
           : proyecto,
   }))
   cliente.post.mockReset().mockResolvedValue({ data: proyecto })

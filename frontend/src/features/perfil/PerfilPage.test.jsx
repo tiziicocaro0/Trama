@@ -60,7 +60,9 @@ function abrir(ruta = `/proyectos/${id}`, auth = sesion) {
 beforeEach(() => {
   cliente.defaults.baseURL = '/api'
   cliente.get.mockReset().mockImplementation(async (ruta) => ({
-    data: ruta.endsWith('/aportes') ? { aportes, puedeCrear: true } : proyecto,
+    data: ruta.endsWith('/aportes')
+      ? aportes
+      : { ...proyecto, puedeCargar: true },
   }))
 })
 

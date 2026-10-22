@@ -110,16 +110,8 @@ public class PermisoService {
         );
     }
 
-    public Set<Visibilidad> visibilidadesPermitidas(UUID proyectoId) {
-        Rol rol = obtenerMembresia(proyectoId).getRol();
-        return switch (rol) {
-            case TUTOR -> Set.of(Visibilidad.values());
-            case SALUD -> Set.of(Visibilidad.TODOS, Visibilidad.SOLO_SALUD);
-            case EDUCACION -> Set.of(Visibilidad.TODOS, Visibilidad.SOLO_EDUCACION);
-            case FAMILIAR -> Set.of(Visibilidad.TODOS);
-        };
-    }
-
+    // Igual que verificarPuedeEditar, pero devuelve true/false en vez de lanzar
+    // (lo usa el front para mostrar u ocultar los botones de cargar y editar).
     public boolean puedeEditar(UUID proyectoId) {
         verificarMiembro(proyectoId);
         try {
@@ -139,6 +131,38 @@ public class PermisoService {
 
             throw new AccessDeniedException(
                     "Solo el autor puede modificar este aporte"
+            );
+        }
+    }
+
+    // 5. VERIFICAR VISIBILIDAD DE UN APORTE
+    public void verificarPuedeVerAporte(
+            UUID proyectoId,
+            Visibilidad visibilidad) {
+
+        Membresia membresia = obtenerMembresia(proyectoId);
+
+        Rol rol = membresia.getRol();
+
+        // Los tutores siempre pueden ver todos los aportes
+        if (rol == Rol.TUTOR) {
+            return;
+        }
+
+        boolean puedeVer = switch (visibilidad) {
+
+            case TODOS -> true;
+
+            case SOLO_TUTORES -> false;
+
+            case SOLO_SALUD -> rol == Rol.SALUD;
+
+            case SOLO_EDUCACION -> rol == Rol.EDUCACION;
+        };
+
+        if (!puedeVer) {
+            throw new AccessDeniedException(
+                    "No tenés permiso para ver este aporte"
             );
         }
     }

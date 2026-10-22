@@ -1,7 +1,7 @@
 import { formatearFechaHora } from '../../utils/fechas.js'
 
 export default function TarjetaAporte({ aporte, alEditar, resumen = false }) {
-  const esNota = aporte.tipo === 'NOTA'
+  const esNota = aporte.tipo === 'NOTA_PROFESIONAL'
   const fechaCreacion = esNota ? formatearFechaHora(aporte.creadoEn) : null
   const fechaEdicion =
     esNota && aporte.actualizadoEn !== aporte.creadoEn

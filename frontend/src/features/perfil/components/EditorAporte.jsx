@@ -5,6 +5,60 @@ import FormField from '../../../components/ui/FormField.jsx'
 import SelectorVisibilidad from '../../../components/ui/SelectorVisibilidad.jsx'
 import { guardarAporte } from '../../../api/aportes.js'
 
+// 2.1 y 2.2: campos propios que el back exige en "datos" para estos tipos.
+// Arrancan en un valor neutro para no frenar la carga; se pueden cambiar.
+const camposPorTipo = {
+  INTERES: [
+    {
+      nombre: 'categoria',
+      etiqueta: 'Categoría',
+      inicial: 'OTRO',
+      opciones: [
+        ['JUEGO', 'Juego'],
+        ['PERSONAJE', 'Personaje'],
+        ['TEMA', 'Tema'],
+        ['ACTIVIDAD', 'Actividad'],
+        ['OBJETO', 'Objeto'],
+        ['OTRO', 'Otro'],
+      ],
+    },
+    {
+      nombre: 'intensidad',
+      etiqueta: 'Intensidad',
+      inicial: 'MEDIA',
+      opciones: [
+        ['BAJA', 'Baja'],
+        ['MEDIA', 'Media'],
+        ['ALTA', 'Alta'],
+      ],
+    },
+  ],
+  FORTALEZA: [
+    {
+      nombre: 'contexto',
+      etiqueta: '¿Dónde lo hace?',
+      inicial: 'OTRO',
+      opciones: [
+        ['CASA', 'Casa'],
+        ['ESCUELA', 'Escuela'],
+        ['CONSULTORIO', 'Consultorio'],
+        ['OTRO', 'Otro'],
+      ],
+    },
+  ],
+}
+
+function leerDatos(texto) {
+  try {
+    const datos = JSON.parse(texto ?? '')
+    return datos && typeof datos === 'object' && !Array.isArray(datos)
+      ? datos
+      : {}
+  } catch {
+    return {}
+  }
+}
+
 export default function EditorAporte({
   seccion,
   proyectoId,
@@ -15,12 +69,25 @@ export default function EditorAporte({
   const [titulo, setTitulo] = useState(aporte?.titulo ?? '')
   const [contenido, setContenido] = useState(aporte?.contenido ?? '')
   const [visibilidad, setVisibilidad] = useState(aporte?.visibilidad ?? 'TODOS')
+  const campos = camposPorTipo[seccion.tipo] ?? []
+  const [extra, setExtra] = useState(() => {
+    const guardados = leerDatos(aporte?.datos)
+    return {
+      ...guardados,
+      ...Object.fromEntries(
+        campos.map(({ nombre, inicial }) => [
+          nombre,
+          guardados[nombre] ?? inicial,
+        ]),
+      ),
+    }
+  })
   const [error, setError] = useState('')
   const [enviando, setEnviando] = useState(false)
   const pendiente = useRef(false)
   const formulario = useRef(null)
   const alerta = useRef(null)
-  const esNota = seccion.tipo === 'NOTA'
+  const esNota = seccion.tipo === 'NOTA_PROFESIONAL'
   const sustantivo = esNota ? 'nota' : 'aporte'
   useEffect(() => {
     formulario.current?.querySelector('input')?.focus()
@@ -49,6 +116,7 @@ export default function EditorAporte({
         titulo: titulo.trim(),
         contenido: contenido.trim(),
         visibilidad,
+        ...(campos.length ? { datos: JSON.stringify(extra) } : {}),
       })
       alGuardar()
     } catch (errorGuardado) {
@@ -109,6 +177,35 @@ export default function EditorAporte({
           className="w-full rounded-md border border-borde bg-superficie p-4 text-texto focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primario"
         />
       </div>
+      {campos.map(({ nombre, etiqueta, opciones }) => (
+        <div key={nombre}>
+          <label
+            htmlFor={`${nombre}-aporte-${seccion.tipo}`}
+            className="mb-2 block font-semibold"
+          >
+            {etiqueta}
+          </label>
+          <select
+            id={`${nombre}-aporte-${seccion.tipo}`}
+            name={nombre}
+            value={extra[nombre]}
+            onChange={(event) =>
+              setExtra((actual) => ({
+                ...actual,
+                [nombre]: event.target.value,
+              }))
+            }
+            disabled={enviando}
+            className="min-h-14 w-full rounded-md border border-borde bg-superficie px-4 py-3 text-texto focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primario"
+          >
+            {opciones.map(([valor, texto]) => (
+              <option key={valor} value={valor}>
+                {texto}
+              </option>
+            ))}
+          </select>
+        </div>
+      ))}
       <SelectorVisibilidad
         id={`visibilidad-aporte-${seccion.tipo}`}
         value={visibilidad}

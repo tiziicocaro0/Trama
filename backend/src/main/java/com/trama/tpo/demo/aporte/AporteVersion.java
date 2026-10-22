@@ -1,35 +1,51 @@
 package com.trama.tpo.demo.aporte;
 
-import java.time.Instant;
-import java.util.UUID;
-import org.hibernate.annotations.JdbcTypeCode;
-import org.hibernate.type.SqlTypes;
-import com.trama.tpo.demo.common.CifradoConverter;
+import com.trama.tpo.demo.entity.usuario.Usuario;
+import com.trama.tpo.demo.config.CifradoConverter;
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
-@Entity @Table(name = "aporte_version")
-@Getter @Setter @NoArgsConstructor
+import java.time.Instant;
+import java.util.UUID;
+
+@Entity
+@Table(name = "aporte_version")
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
 public class AporteVersion {
-    @Id @GeneratedValue(strategy = GenerationType.UUID)
-    @JdbcTypeCode(SqlTypes.BINARY) @Column(columnDefinition = "BINARY(16)")
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.UUID)
+    @JdbcTypeCode(SqlTypes.BINARY)
+    @Column(name = "id", columnDefinition = "BINARY(16)")
     private UUID id;
 
-    @JdbcTypeCode(SqlTypes.BINARY) @Column(name = "aporte_id", nullable = false, columnDefinition = "BINARY(16)")
-    private UUID aporteId;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "aporte_id", nullable = false)
+    private Aporte aporte;
 
-    @JdbcTypeCode(SqlTypes.BINARY) @Column(name = "autor_id", nullable = false, columnDefinition = "BINARY(16)")
-    private UUID autorId;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "autor_id", nullable = false)
+    private Usuario autor;
 
-    @Column(nullable = false, length = 150)
+    @Column(name = "titulo", nullable = false, length = 150)
     private String titulo;
 
-    @Lob @Convert(converter = CifradoConverter.class) @Column(columnDefinition = "MEDIUMBLOB")
+    @Convert(converter = CifradoConverter.class)
+    @Column(name = "contenido", columnDefinition = "MEDIUMBLOB")
     private String contenido;
 
-    @Lob @Convert(converter = CifradoConverter.class) @Column(columnDefinition = "MEDIUMBLOB")
+    @Convert(converter = CifradoConverter.class)
+    @Column(name = "datos", columnDefinition = "MEDIUMBLOB")
     private String datos;
 
-    @Column(name = "creado_en", nullable = false)
+    @CreationTimestamp
+    @Column(name = "creado_en", nullable = false, updatable = false)
     private Instant creadoEn;
 }

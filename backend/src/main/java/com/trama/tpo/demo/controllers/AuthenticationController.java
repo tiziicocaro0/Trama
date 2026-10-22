@@ -12,9 +12,14 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.trama.tpo.demo.service.AuthenticationService;
+import com.trama.tpo.demo.service.RecuperacionService;
 import com.trama.tpo.demo.entity.dto.AuthenticationResponse;
+import com.trama.tpo.demo.entity.dto.MensajeResponse;
 import com.trama.tpo.demo.entity.dto.RegisterRequest;
 import com.trama.tpo.demo.entity.dto.AuthenticationRequest;
+import com.trama.tpo.demo.entity.dto.RestablecerContrasenaRequest;
+import com.trama.tpo.demo.entity.dto.SolicitarRecuperacionRequest;
+import com.trama.tpo.demo.entity.dto.VerificarCodigoRequest;
 import com.trama.tpo.demo.entity.usuario.Usuario;
 import com.trama.tpo.demo.exceptions.ApiException;
 import com.trama.tpo.demo.repository.UsuarioRepository;
@@ -26,14 +31,17 @@ import jakarta.validation.Valid;
 public class AuthenticationController {
 
     private final AuthenticationService service;
+    private final RecuperacionService recuperacionService;
     private final UsuarioRepository usuarioRepository;
 
     // Constructor manual
     public AuthenticationController(
             AuthenticationService service,
+            RecuperacionService recuperacionService,
             UsuarioRepository usuarioRepository) {
 
         this.service = service;
+        this.recuperacionService = recuperacionService;
         this.usuarioRepository = usuarioRepository;
     }
 
@@ -87,5 +95,49 @@ public class AuthenticationController {
                 .build();
 
         return ResponseEntity.ok(respuesta);
+    }
+
+    // 1.11 - PASO 1: PEDIR EL CODIGO POR MAIL
+    // Responde siempre el mismo mensaje, exista o no el email, para no
+    // filtrar que direcciones estan registradas.
+    @PostMapping("/recuperar")
+    public ResponseEntity<MensajeResponse> recuperar(
+            @Valid @RequestBody SolicitarRecuperacionRequest request) {
+
+        recuperacionService.solicitarRecuperacion(request);
+
+        return ResponseEntity.ok(
+                MensajeResponse.builder()
+                        .mensaje("Si el email está registrado, te enviamos un código de 6 dígitos.")
+                        .build()
+        );
+    }
+
+    // 1.11 - PASO 2: VERIFICAR EL CODIGO
+    @PostMapping("/verificar-codigo")
+    public ResponseEntity<MensajeResponse> verificarCodigo(
+            @Valid @RequestBody VerificarCodigoRequest request) {
+
+        recuperacionService.verificarCodigo(request);
+
+        return ResponseEntity.ok(
+                MensajeResponse.builder()
+                        .mensaje("El código es correcto.")
+                        .build()
+        );
+    }
+
+    // 1.11 - PASO 3: ELEGIR LA NUEVA CONTRASEÑA
+    @PostMapping("/restablecer")
+    public ResponseEntity<MensajeResponse> restablecer(
+            @Valid @RequestBody RestablecerContrasenaRequest request) {
+
+        recuperacionService.restablecerContrasena(request);
+
+        return ResponseEntity.ok(
+                MensajeResponse.builder()
+                        .mensaje("Tu contraseña se actualizó correctamente.")
+                        .build()
+        );
     }
 }

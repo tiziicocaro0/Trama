@@ -21,7 +21,7 @@ const iconos = {
   SENSORIAL: Ear,
   ESTRATEGIA: Lightbulb,
   RUTINA: CalendarBlank,
-  NOTA: NotePencil,
+  NOTA_PROFESIONAL: NotePencil,
 }
 
 export default function BloquePerfil({
@@ -43,7 +43,7 @@ export default function BloquePerfil({
     disparador.current?.focus()
   }
   const Icon = iconos[seccion.tipo]
-  const esNota = seccion.tipo === 'NOTA'
+  const esNota = seccion.tipo === 'NOTA_PROFESIONAL'
   const visibles = completo ? aportes : aportes.slice(0, 3)
   return (
     <section

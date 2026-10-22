@@ -21,8 +21,14 @@ const aporteOriginal = {
   tipo: 'FORTALEZA',
   titulo: 'Título ficticio original',
   contenido: 'Descripción ficticia',
+  datos: '{"contexto":"ESCUELA"}',
   visibilidad: 'TODOS',
   puedeEditar: true,
+}
+// 2.1 y 2.2: datos que el editor manda por defecto para intereses y fortalezas
+const datosPorDefecto = {
+  FORTALEZA: { datos: '{"contexto":"OTRO"}' },
+  INTERES: { datos: '{"categoria":"OTRO","intensidad":"MEDIA"}' },
 }
 let lista
 let puedeCrear
@@ -46,7 +52,9 @@ beforeEach(() => {
   lista = []
   puedeCrear = true
   cliente.get.mockReset().mockImplementation(async (ruta) => ({
-    data: ruta.endsWith('/aportes') ? { aportes: lista, puedeCrear } : proyecto,
+    data: ruta.endsWith('/aportes')
+      ? lista
+      : { ...proyecto, puedeCargar: puedeCrear },
   }))
   cliente.post.mockReset().mockImplementation(async (ruta, datos) => {
     const aporte = { ...datos, id: 'nuevo-aporte-ficticio', puedeEditar: true }
@@ -97,6 +105,7 @@ describe('Crear y editar aportes de las seis secciones', () => {
           titulo: 'Nuevo título ficticio',
           contenido: 'Nueva descripción ficticia',
           visibilidad: 'SOLO_TUTORES',
+          ...datosPorDefecto[tipo],
         },
       )
       expect(
@@ -106,6 +115,35 @@ describe('Crear y editar aportes de las seis secciones', () => {
       expect(screen.getByRole('status')).toHaveTextContent('Aporte guardado')
     },
   )
+
+  it('un interés manda la categoría y la intensidad elegidas', async () => {
+    abrir('intereses')
+    await userEvent.click(
+      await screen.findByRole('button', { name: 'Agregar aporte' }),
+    )
+    await userEvent.type(
+      screen.getByRole('textbox', { name: 'Título' }),
+      'Dinosaurios',
+    )
+    await userEvent.selectOptions(
+      screen.getByRole('combobox', { name: 'Categoría' }),
+      'TEMA',
+    )
+    await userEvent.selectOptions(
+      screen.getByRole('combobox', { name: 'Intensidad' }),
+      'ALTA',
+    )
+    await userEvent.click(
+      screen.getByRole('button', { name: 'Guardar aporte' }),
+    )
+    expect(cliente.post).toHaveBeenCalledExactlyOnceWith(
+      `/proyectos/${id}/aportes`,
+      expect.objectContaining({
+        tipo: 'INTERES',
+        datos: '{"categoria":"TEMA","intensidad":"ALTA"}',
+      }),
+    )
+  })
 
   it('edita un aporte propio con sus datos actuales y guarda con PUT', async () => {
     lista = [aporteOriginal]
@@ -136,6 +174,7 @@ describe('Crear y editar aportes de las seis secciones', () => {
         titulo: 'Título ficticio editado',
         contenido: 'Descripción ficticia',
         visibilidad: 'TODOS',
+        datos: '{"contexto":"ESCUELA"}',
       },
     )
     expect(cliente.post).not.toHaveBeenCalled()

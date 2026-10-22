@@ -72,7 +72,8 @@ public class ProyectoService {
                 .rol(Rol.TUTOR)
                 .esAdmin(true)
                 .build());
-        return ProyectoResponse.from(proyecto);
+        // Quien crea el proyecto queda como tutor administrador
+        return ProyectoResponse.from(proyecto, true);
     }
 
     // 1.10 Mis proyectos: solo los niños donde el usuario logueado es miembro
@@ -88,7 +89,9 @@ public class ProyectoService {
 
         permisoService.verificarMiembro(proyectoId);
 
-        return ProyectoResponse.from(buscarProyecto(proyectoId));
+        return ProyectoResponse.from(
+                buscarProyecto(proyectoId),
+                permisoService.puedeEditar(proyectoId));
     }
 
     @Transactional(readOnly = true)
@@ -110,7 +113,8 @@ public class ProyectoService {
         proyecto.setFamiliarPuedeCargar(request.familiarPuedeCargar());
         proyecto.setFamiliarVeNotas(request.familiarVeNotas());
 
-        return ProyectoResponse.from(proyectoRepository.save(proyecto));
+        // Solo el tutor administrador llega hasta aca
+        return ProyectoResponse.from(proyectoRepository.save(proyecto), true);
     }
 
     private Proyecto buscarProyecto(UUID proyectoId) {
