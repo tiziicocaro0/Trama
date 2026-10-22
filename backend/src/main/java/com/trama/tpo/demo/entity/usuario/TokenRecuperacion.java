@@ -9,7 +9,10 @@ import org.hibernate.type.SqlTypes;
 import java.time.Instant;
 import java.util.UUID;
 
-/** 1.11: se guarda el SHA-256 del token; el token en claro solo viaja en el mail. */
+/**
+ * 1.11: codigo de recuperacion de 6 digitos. Se guarda solo el SHA-256
+ * (usuario + codigo); el codigo en claro solo viaja en el mail.
+ */
 @Entity
 @Table(name = "token_recuperacion")
 @Getter
@@ -37,6 +40,10 @@ public class TokenRecuperacion {
 
     @Column(name = "usado_en")
     private Instant usadoEn;
+
+    @Builder.Default
+    @Column(name = "intentos", nullable = false)
+    private int intentos = 0;
 
     @CreationTimestamp
     @Column(name = "creado_en", nullable = false, updatable = false)

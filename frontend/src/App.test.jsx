@@ -1,9 +1,20 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom';
-import { describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { App } from './App';
 import { CampoContraseña } from './components/ui/CampoContraseña';
+import { clienteApi } from './api/cliente.js';
+import { PROYECTOS_MOCK } from './api/proyectos.js';
+
+vi.mock('./api/cliente.js', () => {
+  const cliente = { defaults: { baseURL: '/api' }, get: vi.fn() };
+  return { default: cliente, clienteApi: cliente };
+});
+
+beforeEach(() => {
+  clienteApi.get.mockReset().mockResolvedValue({ data: PROYECTOS_MOCK });
+});
 
 // La sesión real la da AuthProvider (1.1); acá se simula un usuario logueado.
 vi.mock('./hooks/useAuth', async (importOriginal) => {

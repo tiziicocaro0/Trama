@@ -44,7 +44,13 @@ public class SecurityConfig {
             .authorizeHttpRequests(req -> req
 
                 // AUTENTICACION
-                .requestMatchers("/api/auth/registro", "/api/auth/login").permitAll()
+                .requestMatchers(
+                        "/api/auth/registro",
+                        "/api/auth/login",
+                        "/api/auth/recuperar",
+                        "/api/auth/verificar-codigo",
+                        "/api/auth/restablecer"
+                ).permitAll()
                 .requestMatchers("/api/auth/yo").authenticated()
 
                 // USUARIOS

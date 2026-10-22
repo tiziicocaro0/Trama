@@ -24,14 +24,15 @@ import com.trama.tpo.demo.entity.membresia.Rol;
 import com.trama.tpo.demo.exceptions.ApiException;
 import com.trama.tpo.demo.repository.MembresiaRepository;
 import com.trama.tpo.demo.repository.ProyectoRepository;
+import com.trama.tpo.demo.repository.UsuarioRepository;
 import com.trama.tpo.demo.service.PermisoService;
 import com.trama.tpo.demo.service.ProyectoService;
 import com.trama.tpo.demo.service.UsuarioActual;
 
 @ExtendWith(MockitoExtension.class)
 class PermisoServiceTest {
-    
-    @Mock 
+
+    @Mock
     private UsuarioActual usuarioActual;
 
     @Mock
@@ -39,6 +40,9 @@ class PermisoServiceTest {
 
     @Mock
     private ProyectoRepository proyectoRepository;
+
+    @Mock
+    private UsuarioRepository usuarioRepository;
 
     @InjectMocks
     private PermisoService permisoService;
@@ -53,9 +57,10 @@ class PermisoServiceTest {
         when(usuarioActual.obtenerId()).thenReturn(usuarioId);
         proyectoService = new ProyectoService(
                 proyectoRepository,
-                membresiaRepository,
                 permisoService,
-                usuarioActual);
+                usuarioActual,
+                membresiaRepository,
+                usuarioRepository);
     }
 
     @Test
@@ -112,7 +117,7 @@ class PermisoServiceTest {
 
         assertDoesNotThrow(() -> permisoService.verificarAdmin(proyectoId));
     }
-    
+
     @Test
     void noAutorRecibeAccesoDenegado() {
         UUID otroAutorId = UUID.randomUUID();

@@ -4,6 +4,36 @@ Bienvenida, registro en `/registro`, login en `/login` e Inicio privado en `/ini
 Registro e inicio de sesión usan el backend real configurado por `VITE_API_URL`.
 Los assets originales se usan sin cambios.
 
+## Dashboard de inicio
+
+`/inicio` sigue la composición de `docs/referencias/12-inicio.png` y el sidebar
+usa `docs/referencias/sidebar.png` como referencia: logo centrado, enlaces reales,
+lema, hilo y botón de logout con `/assets/branding/cerrar sesion.png`. El sidebar es adherente
+en desktop (sin scroll propio), navegación en el flujo en tablet y móvil, saludo con el nombre verificado,
+acompañamientos, próximos eventos y recursos destacados. Conserva el logo original,
+Handlee, Nunito Sans y los tokens existentes; no modifica la bienvenida.
+La lavanda y otros ajustes exactos de color quedan pendientes de autorización
+para ampliar `src/styles/tema.css` según las reglas del repositorio.
+
+- El nombre del saludo proviene de `GET /api/auth/yo`. El sidebar no muestra el email.
+- `src/features/inicio/inicio.mock.js` separa las categorías y los eventos
+  ficticios. La pantalla los identifica como ejemplos ajenos a la cuenta.
+- Recursos, calendario, perfil y acompañamientos detallados todavía no están
+  implementados. Sus enlaces usan React Router en `/inicio?seccion=…` para mostrar
+  un aviso de «Próximamente», sin consultar endpoints inexistentes.
+- Registro y login conservan sus flujos: verifican la identidad antes de entrar.
+  Una sesión válida que entra por `/` también se redirige a `/inicio`.
+- El JWT continúa solo en memoria. Una recarga completa requiere iniciar sesión
+  otra vez; cerrar sesión o vencer el token bloquea el dashboard.
+
+Para revisar: iniciar sesión o completar el registro, comprobar el saludo,
+recorrer los accesos con Tab/Enter y cerrar sesión pulsando la imagen completa.
+El botón usa el PNG original con fondo transparente, sin texto o ícono duplicado.
+En ventanas bajas, el contenido del sidebar sigue accesible con el scroll de la página.
+Volver a `/inicio` sin
+sesión debe mostrar el login. Repetir a 320, 390, 768, 1024 y 1672 píxeles, verificando
+que la navegación se reorganice y no aparezca desplazamiento horizontal.
+
 ## Ejecutar
 
 Requiere Node.js 22.12 o posterior y npm.

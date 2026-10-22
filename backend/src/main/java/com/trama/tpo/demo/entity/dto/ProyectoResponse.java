@@ -14,9 +14,11 @@ public record ProyectoResponse(
         String escuela,
         String grado,
         Boolean familiarPuedeCargar,
-        Boolean familiarVeNotas) {
+        Boolean familiarVeNotas,
+        // true si el usuario actual puede cargar aportes en este proyecto
+        Boolean puedeCargar) {
 
-    public static ProyectoResponse from(Proyecto proyecto) {
+    public static ProyectoResponse from(Proyecto proyecto, boolean puedeCargar) {
         return new ProyectoResponse(
                 proyecto.getId(),
                 proyecto.getNombre(),
@@ -26,6 +28,7 @@ public record ProyectoResponse(
                 proyecto.getEscuela(),
                 proyecto.getGrado(),
                 proyecto.getFamiliarPuedeCargar(),
-                proyecto.getFamiliarVeNotas());
+                proyecto.getFamiliarVeNotas(),
+                puedeCargar);
     }
 }

@@ -1,9 +1,14 @@
 import { Check } from '@phosphor-icons/react'
 
-export default function Stepper({ steps, current, complete = false }) {
+export default function Stepper({
+  steps,
+  current,
+  complete = false,
+  label = 'Etapas del registro',
+}) {
   return (
     <ol
-      aria-label="Etapas del registro"
+      aria-label={label}
       className="mx-auto flex w-full max-w-sm"
     >
       {steps.map((label, index) => (

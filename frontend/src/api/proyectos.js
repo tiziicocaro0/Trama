@@ -1,77 +1,124 @@
-import { USUARIO_MOCK } from '../hooks/useAuth';
-import { clienteApi } from './cliente';
-export const PROYECTOS_MOCK = [
-  {
-    id: '11111111-1111-1111-1111-111111111111',
-    nombre: 'Tomás',
-    apodo: 'Tomi',
-    foto: null,
-    iniciales: 'TO',
-    tono: 'terracota',
-    rol: 'Madre',
-    edad: '6 años',
-    actualizado: 'Actualizado hoy',
-    tieneActualizacionPendiente: true,
-    miembrosIds: [USUARIO_MOCK.id],
-  },
-  {
-    id: '22222222-2222-2222-2222-222222222222',
-    nombre: 'Martina',
-    apodo: null,
-    foto: null,
-    iniciales: 'MA',
-    tono: 'agua',
-    rol: 'Terapeuta',
-    edad: '4 años',
-    actualizado: 'Actualizado ayer',
-    tieneActualizacionPendiente: false,
-    miembrosIds: [USUARIO_MOCK.id],
-  },
-  {
-    id: '33333333-3333-3333-3333-333333333333',
-    nombre: 'Joaquín',
-    apodo: 'Joaco',
-    foto: null,
-    iniciales: 'JO',
-    tono: 'oliva',
-    rol: 'Docente',
-    edad: '8 años',
-    actualizado: 'Actualizado hace 3 días',
-    tieneActualizacionPendiente: false,
-    miembrosIds: [USUARIO_MOCK.id],
-  },
-  {
-    id: '44444444-4444-4444-4444-444444444444',
-    nombre: 'Lucía',
-    apodo: 'Luli',
-    foto: null,
-    iniciales: 'LU',
-    tono: 'miel',
-    rol: 'Docente',
-    edad: '5 años',
-    actualizado: 'Actualizado hace 5 días',
-    tieneActualizacionPendiente: false,
-    miembrosIds: ['00000000-0000-0000-0000-000000000099'],
-  },
-];
+import cliente, { clienteApi } from './cliente.js'
+import { calcularEdad } from '../features/perfil/perfil.js'
+export { PROYECTOS_MOCK } from './proyectos.mock.js'
+
 export function filtrarProyectosPorMiembro(proyectos, usuarioId) {
-  return proyectos.filter(
-    (proyecto) =>
-      !proyecto.miembrosIds || proyecto.miembrosIds.includes(usuarioId),
-  );
+  return proyectos.filter((proyecto) => !proyecto.miembrosIds || proyecto.miembrosIds.includes(usuarioId))
 }
-/**
- * Consulta `GET /api/proyectos` mediante `clienteApi` (Axios).
- * Si el backend no está disponible en desarrollo, utiliza `PROYECTOS_MOCK`
- * y filtra estrictamente los proyectos donde `usuarioId` es miembro.
- */
-export async function obtenerMisProyectos(usuarioId) {
-  try {
-    const { data } = await clienteApi.get('/proyectos');
-    return filtrarProyectosPorMiembro(data, usuarioId);
-  } catch {
-    return filtrarProyectosPorMiembro(PROYECTOS_MOCK, usuarioId);
+
+// Adaptador compartido por MisProyectos (develop) y Acompañamientos (RF-10).
+export async function obtenerMisProyectos(usuarioId, signal) {
+  const lista = await listarMisProyectos(signal)
+  signal?.throwIfAborted()
+  const propios = usuarioId ? filtrarProyectosPorMiembro(lista, usuarioId) : lista
+  const etiquetasRol = { TUTOR: 'Tutor/a', FAMILIAR: 'Familiar', EDUCACION: 'Educación', SALUD: 'Salud' }
+  return Promise.all(propios.map(async (item) => {
+    const detalle = item.edad || item.fechaNacimiento ? item : await obtenerProyecto(item.id, signal)
+    const proyecto = { ...item, ...detalle }
+    const edad = calcularEdad(proyecto.fechaNacimiento)
+    return {
+      ...proyecto,
+      iniciales: proyecto.iniciales ?? proyecto.nombre.slice(0, 2).toLocaleUpperCase('es'),
+      tono: proyecto.tono ?? 'terracota',
+      edad: proyecto.edad ?? (edad === null ? 'Edad no disponible' : `${edad} ${edad === 1 ? 'año' : 'años'}`),
+      rol: etiquetasRol[proyecto.rol] ?? proyecto.rol,
+    }
+  }))
+}
+
+export async function obtenerRedProyecto(id, signal) {
+  if (!cliente.defaults.baseURL)
+    throw new Error('Falta configurar la conexión con TRAMA.')
+  const { data } = await cliente.get(
+    `/proyectos/${encodeURIComponent(id)}/red`,
+    { signal },
+  )
+  if (
+    !Array.isArray(data) ||
+    data.some(
+      (persona) =>
+        !persona?.id ||
+        typeof persona.nombre !== 'string' ||
+        typeof persona.apellido !== 'string' ||
+        !['SALUD', 'EDUCACION'].includes(persona.rol),
+    )
+  ) {
+    throw new Error('No pudimos verificar los profesionales vinculados.')
   }
+  return data
+}
+
+export async function crearProyecto(datos) {
+  if (!cliente.defaults.baseURL) {
+    throw new Error(
+      'Falta configurar la conexión con TRAMA. Revisá VITE_API_URL.',
+    )
+  }
+  let respuesta
+  try {
+    respuesta = await cliente.post('/proyectos', datos)
+  } catch (error) {
+    if (error.response?.status === 400)
+      throw new Error(
+        'Revisá los datos y confirmá tu autorización antes de continuar.',
+        { cause: error },
+      )
+    if (error.response?.status === 401)
+      throw new Error('Tu sesión venció. Ingresá nuevamente.', { cause: error })
+    if (error.response?.status === 403)
+      throw new Error('No tenés permiso para crear este acompañamiento.', { cause: error })
+    throw new Error(
+      'No pudimos confirmar la creación. Revisá tus acompañamientos antes de volver a intentarlo.',
+      { cause: error },
+    )
+  }
+  if (typeof respuesta.data?.id !== 'string' || !respuesta.data.id.trim()) {
+    throw new Error(
+      'No recibimos la confirmación. Revisá tus acompañamientos antes de volver a intentarlo.',
+    )
+  }
+  return respuesta.data
+}
+
+export async function listarMisProyectos(signal) {
+  if (!cliente.defaults.baseURL) {
+    throw new Error(
+      'Falta configurar la conexión con TRAMA. Revisá VITE_API_URL.',
+    )
+  }
+  const { data } = await cliente.get('/proyectos', ...(signal ? [{ signal }] : []))
+  if (
+    !Array.isArray(data) ||
+    data.some(
+      (proyecto) =>
+        typeof proyecto?.id !== 'string' ||
+        !proyecto.id.trim() ||
+        typeof proyecto.nombre !== 'string' ||
+        !proyecto.nombre.trim(),
+    )
+  ) {
+    throw new Error('No pudimos verificar la lista de proyectos.')
+  }
+  return data
+}
+
+export async function obtenerProyecto(id, signal) {
+  if (!cliente.defaults.baseURL) {
+    throw new Error(
+      'Falta configurar la conexión con TRAMA. Revisá VITE_API_URL.',
+    )
+  }
+  const { data } = await cliente.get(`/proyectos/${encodeURIComponent(id)}`, {
+    signal,
+  })
+  if (
+    data?.id !== id ||
+    typeof data.nombre !== 'string' ||
+    !data.nombre.trim()
+  ) {
+    throw new Error('No pudimos verificar los datos del proyecto.')
+  }
+  return data
 }
 
 export const MIEMBROS_MOCK = [
@@ -111,12 +158,12 @@ export const MIEMBROS_MOCK = [
     detalle: 'Abuela',
     esAdmin: false,
   },
-];
+]
 
 /**
  * Revoca el acceso de un miembro al proyecto mediante `DELETE /api/proyectos/{id}/miembros/{miembroId}`.
  */
 export async function quitarMiembroProyecto(proyectoId, miembroId) {
-  return clienteApi.delete(`/proyectos/${proyectoId}/miembros/${miembroId}`);
+  const api = clienteApi ?? cliente
+  return api.delete(`/proyectos/${proyectoId}/miembros/${miembroId}`)
 }
-

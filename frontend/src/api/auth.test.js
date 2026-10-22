@@ -1,6 +1,13 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import cliente, { guardarToken, obtenerToken } from './cliente.js'
-import { iniciarSesion, obtenerIdentidad, registrarUsuario } from './auth.js'
+import {
+  iniciarSesion,
+  obtenerIdentidad,
+  registrarUsuario,
+  restablecerContrasena,
+  solicitarRecuperacion,
+  verificarCodigo,
+} from './auth.js'
 
 const datos = {
   nombre: 'Alma',
@@ -187,5 +194,82 @@ describe('API real de registro con transporte simulado', () => {
     expect(
       adapter.mock.calls[1][0].headers.get('Authorization'),
     ).toBeUndefined()
+  })
+})
+
+describe('Contrato de recuperacion de contraseña', () => {
+  it('envia el email normalizado a /auth/recuperar', async () => {
+    const post = vi.spyOn(cliente, 'post').mockResolvedValue({ data: { mensaje: 'ok' } })
+    await solicitarRecuperacion({ email: ' ALMA@trama.test ' })
+    expect(post).toHaveBeenCalledExactlyOnceWith('/auth/recuperar', {
+      email: 'alma@trama.test',
+    })
+  })
+
+  it('muestra un error de conexion si no hay respuesta del servidor', async () => {
+    vi.spyOn(cliente, 'post').mockRejectedValue(new Error('Red simulada'))
+    await expect(solicitarRecuperacion({ email: datos.email })).rejects.toThrow(
+      'No pudimos conectar con TRAMA.',
+    )
+  })
+
+  it('no revela si hubo un error distinto al de conexion', async () => {
+    vi.spyOn(cliente, 'post').mockRejectedValue({ response: { status: 500 } })
+    await expect(solicitarRecuperacion({ email: datos.email })).rejects.toThrow(
+      'No pudimos procesar el pedido.',
+    )
+  })
+})
+
+describe('Contrato de verificación del código y nueva contraseña', () => {
+  it('envía email y código a /auth/verificar-codigo', async () => {
+    const post = vi.spyOn(cliente, 'post').mockResolvedValue({ data: {} })
+    await verificarCodigo({ email: ' ALMA@trama.test ', codigo: '123456' })
+    expect(post).toHaveBeenCalledExactlyOnceWith('/auth/verificar-codigo', {
+      email: 'alma@trama.test',
+      codigo: '123456',
+    })
+  })
+
+  it('envía email, código y contraseña a /auth/restablecer', async () => {
+    const post = vi.spyOn(cliente, 'post').mockResolvedValue({ data: {} })
+    await restablecerContrasena({
+      email: 'alma@trama.test',
+      codigo: '123456',
+      password: 'Nueva123!',
+    })
+    expect(post).toHaveBeenCalledExactlyOnceWith('/auth/restablecer', {
+      email: 'alma@trama.test',
+      codigo: '123456',
+      password: 'Nueva123!',
+    })
+  })
+
+  it.each([
+    [400, 'CODIGO_INVALIDO', 'El código no es válido o ya venció.'],
+    [429, 'CODIGO_BLOQUEADO', 'Superaste la cantidad de intentos.'],
+    [400, 'DATOS_INVALIDOS', 'Revisá los datos ingresados.'],
+    [500, 'ERROR_INTERNO', 'No pudimos verificar el código.'],
+  ])(
+    'muestra un mensaje claro ante HTTP %s al verificar',
+    async (status, codigo, mensaje) => {
+      vi.spyOn(cliente, 'post').mockRejectedValue({
+        response: { status, data: { codigo } },
+      })
+      await expect(
+        verificarCodigo({ email: 'alma@trama.test', codigo: '123456' }),
+      ).rejects.toThrow(mensaje)
+    },
+  )
+
+  it('muestra un error de conexión si no hay respuesta del servidor', async () => {
+    vi.spyOn(cliente, 'post').mockRejectedValue(new Error('Red simulada'))
+    await expect(
+      restablecerContrasena({
+        email: 'alma@trama.test',
+        codigo: '123456',
+        password: 'Nueva123!',
+      }),
+    ).rejects.toThrow('No pudimos conectar con TRAMA.')
   })
 })

@@ -9,6 +9,7 @@ import org.springframework.stereotype.Service;
 
 import com.trama.tpo.demo.entity.membresia.Membresia;
 import com.trama.tpo.demo.entity.membresia.Rol;
+import com.trama.tpo.demo.aporte.Visibilidad;
 import com.trama.tpo.demo.repository.MembresiaRepository;
 
 @Service
@@ -23,6 +24,12 @@ public class PermisoService {
 
         this.usuarioActual = usuarioActual;
         this.membresiaRepository = membresiaRepository;
+    }
+
+    // Al crear todavía no existe proyecto ni membresía: cualquier usuario autenticado
+    // puede crear uno y queda como su tutor administrador.
+    public UUID verificarPuedeCrearProyecto() {
+        return usuarioActual.obtenerId();
     }
 
     // 1. VERIFICAR QUE PERTENECE AL PROYECTO
@@ -103,6 +110,18 @@ public class PermisoService {
         );
     }
 
+    // Igual que verificarPuedeEditar, pero devuelve true/false en vez de lanzar
+    // (lo usa el front para mostrar u ocultar los botones de cargar y editar).
+    public boolean puedeEditar(UUID proyectoId) {
+        verificarMiembro(proyectoId);
+        try {
+            verificarPuedeEditar(proyectoId);
+            return true;
+        } catch (AccessDeniedException sinPermisoDeEdicion) {
+            return false;
+        }
+    }
+
     // 4. VERIFICAR AUTORÍA DE UN APORTE
     public void verificarAutor(UUID autorId) {
 
@@ -112,6 +131,38 @@ public class PermisoService {
 
             throw new AccessDeniedException(
                     "Solo el autor puede modificar este aporte"
+            );
+        }
+    }
+
+    // 5. VERIFICAR VISIBILIDAD DE UN APORTE
+    public void verificarPuedeVerAporte(
+            UUID proyectoId,
+            Visibilidad visibilidad) {
+
+        Membresia membresia = obtenerMembresia(proyectoId);
+
+        Rol rol = membresia.getRol();
+
+        // Los tutores siempre pueden ver todos los aportes
+        if (rol == Rol.TUTOR) {
+            return;
+        }
+
+        boolean puedeVer = switch (visibilidad) {
+
+            case TODOS -> true;
+
+            case SOLO_TUTORES -> false;
+
+            case SOLO_SALUD -> rol == Rol.SALUD;
+
+            case SOLO_EDUCACION -> rol == Rol.EDUCACION;
+        };
+
+        if (!puedeVer) {
+            throw new AccessDeniedException(
+                    "No tenés permiso para ver este aporte"
             );
         }
     }
