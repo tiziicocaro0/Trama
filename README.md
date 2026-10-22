@@ -313,9 +313,61 @@ docker compose logs --tail=80 backend
 docker compose --profile app stop
 ```
 
-Este comando detiene los contenedores sin eliminar los datos persistentes de MySQL.
+Este comando detiene los contenedores sin eliminar los datos persistentes: la base (volumen `trama-mysql-data`) y los archivos adjuntos (volumen `trama-uploads`).
 
-No utilizar `docker compose down -v`, ya que elimina también los volúmenes de datos.
+No utilizar `docker compose down -v`, ya que elimina también los volúmenes: se pierden la base **y** los archivos.
+
+### 6. Archivos adjuntos
+
+El backend guarda los archivos adjuntos cifrados en `/app/uploads`, dentro de su contenedor. Esa carpeta es el volumen persistente `trama-uploads`: los archivos no se pierden al reiniciar o reconstruir el contenedor.
+
+| Dónde corre el backend | Carpeta de archivos |
+|---|---|
+| Docker Compose (`--profile app`) | `/app/uploads`, en el volumen `trama-uploads` |
+| Desde el IDE o con `./mvnw` | `uploads/` en la raíz del repo, ignorada por git. Se puede cambiar con `UPLOADS_DIR` en el `.env` |
+
+Para ver los archivos guardados (cada uno tiene un nombre UUID y está cifrado):
+
+```bash
+docker exec trama-backend ls -la /app/uploads
+```
+
+La base y los archivos van juntos: la tabla `archivo` guarda el UUID de cada uno. Para respaldar o mover el entorno, siempre hay que copiar los dos volúmenes a la vez.
+
+### 7. Actualizar los contenedores
+
+Después de traer cambios de `develop` que tocan el `docker-compose.yml`, el `Dockerfile` o el backend, hay que reconstruir:
+
+```bash
+docker compose --profile app up -d --build
+```
+
+Los contenedores se recrean con la configuración nueva y los datos de los volúmenes se mantienen.
+
+### 8. Backups cifrados
+
+Un backup guarda **juntos** la base y los archivos adjuntos, en un solo archivo cifrado con AES-256. Requiere `TRAMA_BACKUP_KEY` en el `.env` (se genera con `openssl rand -base64 32` y es distinta de `TRAMA_CRYPTO_KEY`).
+
+Hacer un backup (MySQL tiene que estar levantado):
+
+```bash
+docker compose --profile backup run --rm backup
+```
+
+Queda en `backups/trama-AAAAMMDD-HHMMSS.tar.gz.gpg`, carpeta ignorada por git.
+
+Restaurar un backup en una base de **prueba** (`trama_restaurada`), sin tocar los datos reales:
+
+```bash
+docker compose --profile backup run --rm --entrypoint sh backup \
+    /scripts/restaurar.sh trama-AAAAMMDD-HHMMSS.tar.gz.gpg
+```
+
+Para restaurar sobre la base y los archivos **reales**, agregar `--sobrescribir-real` al final. Esto reemplaza los datos actuales.
+
+⚠️ Guardar las claves **fuera** de los backups:
+- Sin `TRAMA_BACKUP_KEY`, el backup no se puede abrir.
+- Sin `TRAMA_CRYPTO_KEY`, los campos sensibles de la base restaurada no se pueden leer.
 
 **Estado actual:** el despliegue mediante Docker Compose incluye MySQL y Spring Boot. La incorporación del frontend con Nginx queda pendiente hasta que el equipo integre su estructura en `develop`.
 
@@ -409,7 +461,14 @@ Todo el texto libre que se carga sobre el niño se guarda cifrado en la base:
 | `evento` | `descripcion`, `acta` (actas de reunión) |
 | `solicitud_revision` | `motivo` |
 
-Los archivos adjuntos también se guardan cifrados en disco.
+Los archivos adjuntos también se guardan cifrados, fuera de la base:
+
+- `ArchivoStorageService` los cifra con la misma clave y el mismo formato (`[IV][cifrado + tag]`) antes de escribirlos en disco.
+- Cada archivo se guarda con un nombre UUID, nunca con el original. El nombre original va en la columna `archivo.nombre_original`.
+- La carpeta se configura con `UPLOADS_DIR`. En producción es obligatoria: si falta, la app no arranca.
+- El service no verifica permisos. Los endpoints de subida y descarga (4.3) tienen que llamar a `PermisoService` antes de usarlo.
+
+Los backups se cifran con AES-256 usando una clave aparte (`TRAMA_BACKUP_KEY`). Ver [Despliegue local con Docker Compose](#despliegue-local-con-docker-compose), sección 8.
 
 **No se cifran** los títulos de los aportes y eventos, porque se muestran en listados. Por eso un título nunca debe tener información sensible.
 

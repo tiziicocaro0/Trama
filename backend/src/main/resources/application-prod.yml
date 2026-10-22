@@ -16,3 +16,6 @@ trama:
 
   invitaciones:
     url-base: ${INVITACION_URL_BASE:}
+
+  archivos:
+    directorio: ${UPLOADS_DIR}

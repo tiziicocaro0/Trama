@@ -53,6 +53,12 @@ services:
       SPRING_MAIL_SMTP_AUTH: ${SPRING_MAIL_SMTP_AUTH:-false}
       SPRING_MAIL_SMTP_STARTTLS: ${SPRING_MAIL_SMTP_STARTTLS:-false}
 
+      # Archivos adjuntos cifrados (0.3)
+      UPLOADS_DIR: /app/uploads
+
+    volumes:
+      - trama-uploads:/app/uploads
+
     ports:
       - "4002:8080"
   # Servidor de correo local para desarrollo
@@ -64,5 +70,23 @@ services:
     ports:
       - "127.0.0.1:1025:1025"
       - "127.0.0.1:8025:8025"
+  # Backups cifrados de la base y los archivos (0.3): corre una vez y se apaga.
+  #   docker compose --profile backup run --rm backup
+  backup:
+    image: mysql:8.0
+    profiles: ["backup"]
+    depends_on:
+      mysql:
+        condition: service_healthy
+    environment:
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      TRAMA_BACKUP_KEY: ${TRAMA_BACKUP_KEY}
+    volumes:
+      - ./backup:/scripts:ro
+      - ./backups:/backups
+      - trama-uploads:/uploads
+    entrypoint: ["sh", "/scripts/backup.sh"]
 volumes:
   trama-mysql-data:
+  trama-uploads:
