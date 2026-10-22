@@ -28,7 +28,16 @@ export const clienteApi = axios.create({
 });
 
 clienteApi.interceptors.request.use((config) => {
-  if (tokenActual && !['/auth/registro', '/auth/login'].includes(config.url)) {
+  if (
+    tokenActual &&
+    ![
+      '/auth/registro',
+      '/auth/login',
+      '/auth/recuperar',
+      '/auth/verificar-codigo',
+      '/auth/restablecer',
+    ].includes(config.url)
+  ) {
     config.headers.set('Authorization', `Bearer ${tokenActual}`);
   }
   return config;

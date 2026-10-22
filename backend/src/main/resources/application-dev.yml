@@ -7,10 +7,12 @@ spring:
   jpa:
     show-sql: false
 
-    # Correo de prueba con Mailpit
+  # Correo: Gmail o Mailpit segun las variables del .env
   mail:
-    host: ${SMTP_HOST:localhost}
-    port: ${SMTP_PORT:1025}
+    host: ${SPRING_MAIL_HOST:${SMTP_HOST:localhost}}
+    port: ${SPRING_MAIL_PORT:${SMTP_PORT:1025}}
+    username: ${SPRING_MAIL_USERNAME:}
+    password: ${SPRING_MAIL_PASSWORD:}
 
 trama:
   mail:
