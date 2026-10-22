@@ -1,6 +1,6 @@
 import { Navigate } from 'react-router-dom'
 import useAuth from '../hooks/useAuth.js'
-import Button from '../components/ui/Button.jsx'
+import Boton from '../components/ui/Boton.jsx'
 
 export default function Acceso({ privado = false, children }) {
   const { usuario, estado, mensajeSesion, reintentar, cerrarSesion } = useAuth()
@@ -15,10 +15,10 @@ export default function Acceso({ privado = false, children }) {
         ) : (
           <>
             <p role="alert">{mensajeSesion}</p>
-            <Button onClick={reintentar}>Reintentar conexión</Button>
-            <Button variant="secondary" onClick={() => cerrarSesion()}>
+            <Boton onClick={reintentar}>Reintentar conexión</Boton>
+            <Boton variant="secondary" onClick={() => cerrarSesion()}>
               Volver al inicio de sesión
-            </Button>
+            </Boton>
           </>
         )}
       </main>

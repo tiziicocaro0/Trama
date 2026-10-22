@@ -1,12 +1,12 @@
 import { useState } from 'react'
 import { Eye, EyeSlash, Lock } from '@phosphor-icons/react'
-import Input from './Input.jsx'
+import Campo from './Campo.jsx'
 
-export default function PasswordInput(props) {
+export default function CampoContrasena(props) {
   const [visible, setVisible] = useState(false)
   const Icon = visible ? EyeSlash : Eye
   return (
-    <Input
+    <Campo
       {...props}
       type={visible ? 'text' : 'password'}
       icon={Lock}

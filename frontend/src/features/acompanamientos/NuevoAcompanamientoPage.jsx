@@ -1,8 +1,8 @@
 import { useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import Button from '../../components/ui/Button.jsx'
-import Input from '../../components/ui/Input.jsx'
-import FormField from '../../components/ui/FormField.jsx'
+import Boton from '../../components/ui/Boton.jsx'
+import Campo from '../../components/ui/Campo.jsx'
+import CampoFormulario from '../../components/ui/CampoFormulario.jsx'
 import InicioSidebar from '../inicio/InicioSidebar.jsx'
 import useAuth from '../../hooks/useAuth.js'
 import { crearProyecto } from '../../api/proyectos.js'
@@ -122,12 +122,12 @@ export default function NuevoAcompanamientoPage() {
                   <p aria-hidden="true" className="mb-2 font-semibold">
                     {campo.etiqueta}
                   </p>
-                  <FormField
+                  <CampoFormulario
                     id={`nuevo-${campo.nombre}`}
                     label={campo.etiqueta}
                     error={errores[campo.nombre]}
                   >
-                    <Input
+                    <Campo
                       name={campo.nombre}
                       type={campo.type ?? 'text'}
                       maxLength={campo.maxLength}
@@ -137,7 +137,7 @@ export default function NuevoAcompanamientoPage() {
                       required={!campo.opcional}
                       disabled={enviando}
                     />
-                  </FormField>
+                  </CampoFormulario>
                 </div>
               ))}
             </div>
@@ -181,16 +181,16 @@ export default function NuevoAcompanamientoPage() {
               </p>
             )}
             <div className="flex flex-col gap-3 sm:flex-row">
-              <Button type="submit" disabled={enviando}>
+              <Boton type="submit" disabled={enviando}>
                 {enviando ? 'Creando acompañamiento…' : 'Crear acompañamiento'}
-              </Button>
-              <Button
+              </Boton>
+              <Boton
                 to="/acompanamientos"
                 variant="secondary"
                 disabled={enviando}
               >
                 Volver a acompañamientos
-              </Button>
+              </Boton>
             </div>
           </form>
         </div>

@@ -1,6 +1,6 @@
 import { Check } from '@phosphor-icons/react'
 
-export default function Stepper({
+export default function Pasos({
   steps,
   current,
   complete = false,

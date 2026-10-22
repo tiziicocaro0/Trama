@@ -2,7 +2,6 @@ package com.trama.tpo.demo.service;
 
 import java.util.List;
 import java.util.UUID;
-import java.util.Set;
 import java.time.Instant;
 
 import org.springframework.http.HttpStatus;
@@ -13,7 +12,6 @@ import com.trama.tpo.demo.entity.dto.ConfiguracionProyectoRequest;
 import com.trama.tpo.demo.entity.dto.CrearProyectoRequest;
 import com.trama.tpo.demo.entity.dto.MiProyectoDTO;
 import com.trama.tpo.demo.entity.dto.ProyectoResponse;
-import com.trama.tpo.demo.entity.dto.ProfesionalRedResponse;
 import com.trama.tpo.demo.entity.proyecto.Proyecto;
 import com.trama.tpo.demo.entity.membresia.Membresia;
 import com.trama.tpo.demo.entity.membresia.Rol;
@@ -94,11 +92,6 @@ public class ProyectoService {
                 permisoService.puedeEditar(proyectoId));
     }
 
-    @Transactional(readOnly = true)
-    public List<ProfesionalRedResponse> listarRed(UUID proyectoId) {
-        permisoService.verificarMiembro(proyectoId);
-        return membresiaRepository.findProfesionalesRed(proyectoId, Set.of(Rol.EDUCACION, Rol.SALUD));
-    }
 
     // Cambiar qué puede hacer la familia: solo el tutor administrador
     @Transactional

@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'react'
 import { CheckCircle } from '@phosphor-icons/react'
-import Button from '../../../components/ui/Button.jsx'
-import Stepper from '../../../components/ui/Stepper.jsx'
+import Boton from '../../../components/ui/Boton.jsx'
+import Pasos from '../../../components/ui/Pasos.jsx'
 import useRegistro from './hooks/useRegistro.js'
 import RegistroPresentacion from './components/RegistroPresentacion.jsx'
 import RegistroFormulario from './components/RegistroFormulario.jsx'
@@ -27,7 +27,7 @@ export default function RegistroPage() {
       <RegistroPresentacion />
       <main tabIndex={-1} className="px-6 py-8 lg:col-span-5 lg:px-12 lg:py-16">
         <div className="mx-auto w-full max-w-registro-form">
-          <Stepper
+          <Pasos
             steps={['Datos', 'Seguridad', 'Confirmación']}
             current={etapa}
             complete={exito}
@@ -57,9 +57,9 @@ export default function RegistroPage() {
                 {registro.mensaje ||
                   'Verificando tu sesión para entrar a TRAMA…'}
               </p>
-              <Button to="/login" variant="secondary">
+              <Boton to="/login" variant="secondary">
                 Ir al inicio de sesión
-              </Button>
+              </Boton>
             </section>
           ) : (
             <RegistroFormulario
