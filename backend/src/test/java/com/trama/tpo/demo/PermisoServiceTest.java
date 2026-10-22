@@ -1,9 +1,12 @@
 package com.trama.tpo.demo;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -13,25 +16,38 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.access.AccessDeniedException;
 
 import com.trama.tpo.demo.entity.membresia.Membresia;
 import com.trama.tpo.demo.entity.membresia.Rol;
+import com.trama.tpo.demo.exceptions.ApiException;
 import com.trama.tpo.demo.repository.MembresiaRepository;
+import com.trama.tpo.demo.repository.ProyectoRepository;
+import com.trama.tpo.demo.repository.UsuarioRepository;
 import com.trama.tpo.demo.service.PermisoService;
+import com.trama.tpo.demo.service.ProyectoService;
 import com.trama.tpo.demo.service.UsuarioActual;
 
 @ExtendWith(MockitoExtension.class)
 class PermisoServiceTest {
-    
-    @Mock 
+
+    @Mock
     private UsuarioActual usuarioActual;
 
     @Mock
     private MembresiaRepository membresiaRepository;
 
+    @Mock
+    private ProyectoRepository proyectoRepository;
+
+    @Mock
+    private UsuarioRepository usuarioRepository;
+
     @InjectMocks
     private PermisoService permisoService;
+
+    private ProyectoService proyectoService;
 
     private final UUID usuarioId = UUID.randomUUID();
     private final UUID proyectoId = UUID.randomUUID();
@@ -39,6 +55,12 @@ class PermisoServiceTest {
     @BeforeEach
     void prepararUsuario() {
         when(usuarioActual.obtenerId()).thenReturn(usuarioId);
+        proyectoService = new ProyectoService(
+                proyectoRepository,
+                permisoService,
+                usuarioActual,
+                membresiaRepository,
+                usuarioRepository);
     }
 
     @Test
@@ -95,7 +117,7 @@ class PermisoServiceTest {
 
         assertDoesNotThrow(() -> permisoService.verificarAdmin(proyectoId));
     }
-    
+
     @Test
     void noAutorRecibeAccesoDenegado() {
         UUID otroAutorId = UUID.randomUUID();
@@ -113,5 +135,77 @@ class PermisoServiceTest {
     void aporteSinAutorRecibeAccesoDenegado() {
         assertThrows(AccessDeniedException.class,
             () -> permisoService.verificarAutor(null));
+    }
+
+    // 1.5: Si el usuario no es admin, quitarMiembro lanza AccessDeniedException (403)
+    @Test
+    void quitarMiembroSinSerAdminLanza403() {
+        UUID miembroId = UUID.randomUUID();
+        Membresia noAdmin = Membresia.builder()
+                .rol(Rol.EDUCACION)
+                .esAdmin(false)
+                .build();
+
+        when(membresiaRepository.findByUsuarioIdAndProyectoId(usuarioId, proyectoId))
+                .thenReturn(Optional.of(noAdmin));
+
+        assertThrows(AccessDeniedException.class,
+                () -> proyectoService.quitarMiembro(proyectoId, miembroId));
+    }
+
+    // 1.5: Si se intenta eliminar al único admin del proyecto, lanza ApiException 400
+    @Test
+    void quitarUnicoAdminLanza400() {
+        UUID miembroAdminId = UUID.randomUUID();
+        Membresia unicoAdmin = Membresia.builder()
+                .id(miembroAdminId)
+                .rol(Rol.TUTOR)
+                .esAdmin(true)
+                .build();
+
+        when(membresiaRepository.findByUsuarioIdAndProyectoId(usuarioId, proyectoId))
+                .thenReturn(Optional.of(unicoAdmin));
+        when(membresiaRepository.findByProyectoId(proyectoId))
+                .thenReturn(List.of(unicoAdmin));
+
+        ApiException ex = assertThrows(ApiException.class,
+                () -> proyectoService.quitarMiembro(proyectoId, miembroAdminId));
+
+        assertEquals(HttpStatus.BAD_REQUEST, ex.getEstado());
+        assertEquals("ULTIMO_ADMIN", ex.getCodigo());
+    }
+
+    // 1.5: Revocar OK y en la siguiente consulta el usuario revocado no puede entrar al proyecto (403)
+    @Test
+    void quitarMiembroRevocaAccesoYRevocadoNoPuedeEntrarAlProyecto() {
+        UUID miembroAdminId = UUID.randomUUID();
+        UUID miembroDocenteId = UUID.randomUUID();
+        UUID usuarioDocenteId = UUID.randomUUID();
+
+        Membresia admin = Membresia.builder()
+                .id(miembroAdminId)
+                .rol(Rol.TUTOR)
+                .esAdmin(true)
+                .build();
+        Membresia docente = Membresia.builder()
+                .id(miembroDocenteId)
+                .rol(Rol.EDUCACION)
+                .esAdmin(false)
+                .build();
+
+        when(membresiaRepository.findByUsuarioIdAndProyectoId(usuarioId, proyectoId))
+                .thenReturn(Optional.of(admin));
+        when(membresiaRepository.findByProyectoId(proyectoId))
+                .thenReturn(List.of(admin, docente));
+
+        assertDoesNotThrow(() -> proyectoService.quitarMiembro(proyectoId, miembroDocenteId));
+        verify(membresiaRepository).delete(docente);
+
+        // Siguiente request del usuario revocado -> 403 Forbidden
+        when(usuarioActual.obtenerId()).thenReturn(usuarioDocenteId);
+        when(membresiaRepository.findByUsuarioIdAndProyectoId(usuarioDocenteId, proyectoId))
+                .thenReturn(Optional.empty());
+
+        assertThrows(AccessDeniedException.class, () -> proyectoService.obtener(proyectoId));
     }
 }

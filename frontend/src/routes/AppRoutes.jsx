@@ -17,6 +17,7 @@ import { Layout } from '../components/layout/Layout.jsx'
 import { Tarjeta } from '../components/ui/Tarjeta.jsx'
 import { Componentes } from '../pages/Componentes.jsx'
 import { MisProyectos } from '../pages/MisProyectos.jsx'
+import { Red } from '../pages/Red.jsx'
 
 const titles = {
   '/': 'Bienvenida',
@@ -46,6 +47,7 @@ export default function AppRoutes() {
     const seccion = seccionesPerfil.find((item) => item.slug === perfil?.[1])
     const espaciosPerfil = {
       red: 'Red',
+      miembros: 'Red',
       'datos-personales': 'Datos personales',
       notas: 'Notas',
     }
@@ -157,6 +159,7 @@ export default function AppRoutes() {
       {import.meta.env.DEV && <Route path="/componentes" element={<Componentes />} />}
       <Route element={<Acceso privado><Layout /></Acceso>}>
         <Route path="/proyectos" element={<MisProyectos />} />
+        <Route path="/proyectos/:id/miembros" element={<Red />} />
         <Route path="/recursos" element={<Proximamente titulo="Recursos" />} />
         <Route path="/calendario" element={<Proximamente titulo="Calendario" />} />
         <Route path="/perfil" element={<Proximamente titulo="Mi perfil" />} />

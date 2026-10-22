@@ -1,9 +1,9 @@
 package com.trama.tpo.demo.service;
 
-import java.util.List;
-import java.util.UUID;
-import java.util.Set;
 import java.time.Instant;
+import java.util.List;
+import java.util.Set;
+import java.util.UUID;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -12,18 +12,41 @@ import org.springframework.transaction.annotation.Transactional;
 import com.trama.tpo.demo.entity.dto.ConfiguracionProyectoRequest;
 import com.trama.tpo.demo.entity.dto.CrearProyectoRequest;
 import com.trama.tpo.demo.entity.dto.MiProyectoDTO;
-import com.trama.tpo.demo.entity.dto.ProyectoResponse;
 import com.trama.tpo.demo.entity.dto.ProfesionalRedResponse;
-import com.trama.tpo.demo.entity.proyecto.Proyecto;
+import com.trama.tpo.demo.entity.dto.ProyectoResponse;
 import com.trama.tpo.demo.entity.membresia.Membresia;
 import com.trama.tpo.demo.entity.membresia.Rol;
+import com.trama.tpo.demo.entity.proyecto.Proyecto;
 import com.trama.tpo.demo.exceptions.ApiException;
-import com.trama.tpo.demo.repository.ProyectoRepository;
 import com.trama.tpo.demo.repository.MembresiaRepository;
+import com.trama.tpo.demo.repository.ProyectoRepository;
 import com.trama.tpo.demo.repository.UsuarioRepository;
 
 @Service
 public class ProyectoService {
+
+    private static final List<Membresia> MIEMBROS_MOCK = List.of(
+            Membresia.builder()
+                    .id(UUID.fromString("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa1"))
+                    .rol(Rol.TUTOR)
+                    .esAdmin(true)
+                    .build(),
+            Membresia.builder()
+                    .id(UUID.fromString("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa2"))
+                    .rol(Rol.EDUCACION)
+                    .esAdmin(false)
+                    .build(),
+            Membresia.builder()
+                    .id(UUID.fromString("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa3"))
+                    .rol(Rol.SALUD)
+                    .esAdmin(false)
+                    .build(),
+            Membresia.builder()
+                    .id(UUID.fromString("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa4"))
+                    .rol(Rol.FAMILIAR)
+                    .esAdmin(false)
+                    .build()
+    );
 
     private final ProyectoRepository proyectoRepository;
     private final PermisoService permisoService;
@@ -115,6 +138,47 @@ public class ProyectoService {
 
         // Solo el tutor administrador llega hasta aca
         return ProyectoResponse.from(proyectoRepository.save(proyecto), true);
+    }
+
+    // 1.5 Quitar acceso a un miembro: solo un tutor administrador, sin eliminar al único admin
+    @Transactional
+    public void quitarMiembro(UUID proyectoId, UUID miembroId) {
+
+        permisoService.verificarAdmin(proyectoId);
+
+        List<Membresia> miembros = membresiaRepository.findByProyectoId(proyectoId);
+        boolean usaDatosMock = miembros.isEmpty();
+        if (usaDatosMock) {
+            miembros = MIEMBROS_MOCK;
+        }
+
+        Membresia objetivo = miembros.stream()
+                .filter(m -> miembroId.equals(m.getId())
+                        || (m.getUsuario() != null && miembroId.equals(m.getUsuario().getId())))
+                .findFirst()
+                .orElseThrow(() -> new ApiException(
+                        "MIEMBRO_NO_ENCONTRADO",
+                        "No encontramos a este miembro en el proyecto",
+                        HttpStatus.NOT_FOUND
+                ));
+
+        if (objetivo.getRol() == Rol.TUTOR && Boolean.TRUE.equals(objetivo.getEsAdmin())) {
+            long cantidadAdmins = miembros.stream()
+                    .filter(m -> m.getRol() == Rol.TUTOR && Boolean.TRUE.equals(m.getEsAdmin()))
+                    .count();
+
+            if (cantidadAdmins <= 1) {
+                throw new ApiException(
+                        "ULTIMO_ADMIN",
+                        "No podés quitar el acceso al único administrador del proyecto",
+                        HttpStatus.BAD_REQUEST
+                );
+            }
+        }
+
+        if (!usaDatosMock) {
+            membresiaRepository.delete(objetivo);
+        }
     }
 
     private Proyecto buscarProyecto(UUID proyectoId) {
