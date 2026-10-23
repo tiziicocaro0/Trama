@@ -109,7 +109,9 @@ describe('Crear y editar aportes de las seis secciones', () => {
         },
       )
       expect(
-        await screen.findByRole('heading', { name: 'Nuevo título ficticio' }),
+        await screen.findByRole('heading', {
+          name: /Nuevo título ficticio/,
+        })
       ).toBeInTheDocument()
       expect(screen.getByText('Nueva descripción ficticia')).toBeInTheDocument()
       expect(screen.getByRole('status')).toHaveTextContent('Aporte guardado')
