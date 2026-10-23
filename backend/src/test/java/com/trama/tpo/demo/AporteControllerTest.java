@@ -404,6 +404,262 @@ class AporteControllerTest {
                 .andExpect(jsonPath("$.visibilidad")
                         .value("SOLO_TUTORES"));
         }
+        // RF-19: un miembro puede crear una observación válida
+        @Test
+        void crearObservacionExitosamente() throws Exception {
+
+        String request = """
+                {
+                "tipo": "OBSERVACION",
+                "titulo": "Observación en la escuela",
+                "contenido": "Participó en una actividad grupal",
+                "datos": "{\\"fecha\\":\\"2026-10-23T12:30:00-03:00\\",\\"contexto\\":\\"ESCUELA\\",\\"etiquetas\\":[\\"LOGRO\\",\\"SOCIAL\\"]}",
+                "visibilidad": "TODOS"
+                }
+                """;
+
+        mockMvc.perform(post(rutaAportes())
+                .header("Authorization", token(tutorAutor))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(request))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.tipo").value("OBSERVACION"))
+                .andExpect(jsonPath("$.titulo").value("Observación en la escuela"))
+                .andExpect(jsonPath("$.contenido")
+                        .value("Participó en una actividad grupal"))
+                .andExpect(jsonPath("$.autorId")
+                        .value(tutorAutor.getId().toString()))
+                .andExpect(jsonPath("$.datos").isNotEmpty());
+        }
+        // RF-19: una observación debe tener al menos una etiqueta
+        @Test
+        void crearObservacionSinEtiquetasEsRechazada() throws Exception {
+
+        String request = """
+                {
+                "tipo": "OBSERVACION",
+                "titulo": "Observación sin etiquetas",
+                "contenido": "Participó en una actividad",
+                "datos": "{\\"fecha\\":\\"2026-10-23T12:30:00-03:00\\",\\"contexto\\":\\"ESCUELA\\",\\"etiquetas\\":[]}",
+                "visibilidad": "TODOS"
+                }
+                """;
+
+        mockMvc.perform(post(rutaAportes())
+                .header("Authorization", token(tutorAutor))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(request))
+                .andExpect(status().isBadRequest());
+        }
+        // RF-19: una observación debe tener contexto
+        @Test
+        void crearObservacionSinContextoEsRechazada() throws Exception {
+
+        String request = """
+                {
+                "tipo": "OBSERVACION",
+                "titulo": "Observación sin contexto",
+                "contenido": "Participó en una actividad",
+                "datos": "{\\"fecha\\":\\"2026-10-23T12:30:00-03:00\\",\\"etiquetas\\":[\\"LOGRO\\"]}",
+                "visibilidad": "TODOS"
+                }
+                """;
+
+        mockMvc.perform(post(rutaAportes())
+                .header("Authorization", token(tutorAutor))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(request))
+                .andExpect(status().isBadRequest());
+        }
+        // RF-19: una observación debe tener fecha
+        @Test
+        void crearObservacionSinFechaEsRechazada() throws Exception {
+
+        String request = """
+                {
+                "tipo": "OBSERVACION",
+                "titulo": "Observación sin fecha",
+                "contenido": "Participó en una actividad",
+                "datos": "{\\"contexto\\":\\"ESCUELA\\",\\"etiquetas\\":[\\"LOGRO\\"]}",
+                "visibilidad": "TODOS"
+                }
+                """;
+
+        mockMvc.perform(post(rutaAportes())
+                .header("Authorization", token(tutorAutor))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(request))
+                .andExpect(status().isBadRequest());
+        }
+        // RF-19: una observación debe tener texto
+        @Test
+        void crearObservacionSinTextoEsRechazada() throws Exception {
+
+        String request = """
+                {
+                "tipo": "OBSERVACION",
+                "titulo": "Observación sin texto",
+                "contenido": "",
+                "datos": "{\\"fecha\\":\\"2026-10-23T12:30:00-03:00\\",\\"contexto\\":\\"ESCUELA\\",\\"etiquetas\\":[\\"LOGRO\\"]}",
+                "visibilidad": "TODOS"
+                }
+                """;
+
+        mockMvc.perform(post(rutaAportes())
+                .header("Authorization", token(tutorAutor))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(request))
+                .andExpect(status().isBadRequest());
+        }
+        // RF-19: las observaciones se ordenan por fecha, no por fecha de carga
+        @Test
+        void listarObservacionesOrdenadasPorFecha() throws Exception {
+
+        String observacionReciente = """
+                {
+                "tipo": "OBSERVACION",
+                "titulo": "Observación reciente",
+                "contenido": "Actividad del 22 de octubre",
+                "datos": "{\\"fecha\\":\\"2026-10-22T10:00:00-03:00\\",\\"contexto\\":\\"ESCUELA\\",\\"etiquetas\\":[\\"LOGRO\\"]}"
+                }
+                """;
+
+        String observacionAntigua = """
+                {
+                "tipo": "OBSERVACION",
+                "titulo": "Observación antigua",
+                "contenido": "Actividad del 18 de octubre",
+                "datos": "{\\"fecha\\":\\"2026-10-18T10:00:00-03:00\\",\\"contexto\\":\\"CASA\\",\\"etiquetas\\":[\\"SOCIAL\\"]}"
+                }
+                """;
+
+        // Cargamos primero la más reciente
+        mockMvc.perform(post(rutaAportes())
+                .header("Authorization", token(tutorAutor))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(observacionReciente))
+                .andExpect(status().isCreated());
+
+        // Cargamos después la más antigua
+        mockMvc.perform(post(rutaAportes())
+                .header("Authorization", token(tutorAutor))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(observacionAntigua))
+                .andExpect(status().isCreated());
+
+        // La más reciente debe aparecer primero,
+        // aunque haya sido cargada antes
+        mockMvc.perform(get(rutaAportes())
+                .param("tipo", "OBSERVACION")
+                .header("Authorization", token(tutorAutor)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.length()").value(2))
+                .andExpect(jsonPath("$[0].titulo")
+                        .value("Observación reciente"))
+                .andExpect(jsonPath("$[1].titulo")
+                        .value("Observación antigua"));
+        }
+        // RF-19: rechazar etiquetas que no pertenecen a la lista fija
+        @Test
+        void crearObservacionConEtiquetaInvalidaEsRechazada() throws Exception {
+
+        String request = """
+                {
+                "tipo": "OBSERVACION",
+                "titulo": "Observación con etiqueta inválida",
+                "contenido": "Participó en una actividad deportiva",
+                "datos": "{\\"fecha\\":\\"2026-10-23T12:30:00-03:00\\",\\"contexto\\":\\"ESCUELA\\",\\"etiquetas\\":[\\"DEPORTE\\"]}",
+                "visibilidad": "TODOS"
+                }
+                """;
+
+        mockMvc.perform(post(rutaAportes())
+                .header("Authorization", token(tutorAutor))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(request))
+                .andExpect(status().isBadRequest());
+        }
+        // RF-19: rechazar contextos fuera de la lista permitida
+        @Test
+        void crearObservacionConContextoInvalidoEsRechazada() throws Exception {
+
+        String request = """
+                {
+                "tipo": "OBSERVACION",
+                "titulo": "Observación con contexto inválido",
+                "contenido": "Participó en una actividad",
+                "datos": "{\\"fecha\\":\\"2026-10-23T12:30:00-03:00\\",\\"contexto\\":\\"PARQUE\\",\\"etiquetas\\":[\\"LOGRO\\"]}",
+                "visibilidad": "TODOS"
+                }
+                """;
+
+        mockMvc.perform(post(rutaAportes())
+                .header("Authorization", token(tutorAutor))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(request))
+                .andExpect(status().isBadRequest());
+        }
+        // RF-19: editar una observación existente
+        @Test
+        void editarObservacionExitosamente() throws Exception {
+
+        String requestCrear = """
+                {
+                "tipo": "OBSERVACION",
+                "titulo": "Observación inicial",
+                "contenido": "Participó en clase",
+                "datos": "{\\"fecha\\":\\"2026-10-20T10:00:00-03:00\\",\\"contexto\\":\\"ESCUELA\\",\\"etiquetas\\":[\\"LOGRO\\"]}",
+                "visibilidad": "TODOS"
+                }
+                """;
+
+        String respuesta = mockMvc.perform(post(rutaAportes())
+                .header("Authorization", token(tutorAutor))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(requestCrear))
+                .andExpect(status().isCreated())
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+
+        String aporteId = new com.fasterxml.jackson.databind.ObjectMapper()
+                .readTree(respuesta)
+                .get("id")
+                .asText();
+
+        String requestEditar = """
+                {
+                "tipo": "OBSERVACION",
+                "titulo": "Observación actualizada",
+                "contenido": "Participó y colaboró con sus compañeros",
+                "datos": "{\\"fecha\\":\\"2026-10-22T14:00:00-03:00\\",\\"contexto\\":\\"CASA\\",\\"etiquetas\\":[\\"SOCIAL\\",\\"COMUNICACION\\"]}",
+                "visibilidad": "TODOS"
+                }
+                """;
+
+        mockMvc.perform(put(rutaAportes() + "/" + aporteId)
+                .header("Authorization", token(tutorAutor))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(requestEditar))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.titulo").value("Observación actualizada"))
+                .andExpect(jsonPath("$.contenido")
+                        .value("Participó y colaboró con sus compañeros"))
+                .andExpect(jsonPath("$.datos").isNotEmpty());
+
+        mockMvc.perform(get(rutaAportes())
+                .param("tipo", "OBSERVACION")
+                .header("Authorization", token(tutorAutor)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].titulo").value("Observación actualizada"))
+                .andExpect(jsonPath("$[0].contenido")
+                        .value("Participó y colaboró con sus compañeros"))
+                .andExpect(jsonPath("$[0].datos")
+                        .value(org.hamcrest.Matchers.containsString(
+                                "\"contexto\":\"CASA\"")))
+                .andExpect(jsonPath("$[0].datos")
+                        .value(org.hamcrest.Matchers.containsString("COMUNICACION")));
+        }
 
     // MÉTODOS AUXILIARES
 
