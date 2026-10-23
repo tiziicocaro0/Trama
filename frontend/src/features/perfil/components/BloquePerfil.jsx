@@ -11,7 +11,7 @@ import {
 import { Link } from 'react-router-dom'
 import TarjetaAporte from '../../../components/ui/TarjetaAporte.jsx'
 import { useRef, useState } from 'react'
-import Button from '../../../components/ui/Button.jsx'
+import Boton from '../../../components/ui/Boton.jsx'
 import EditorAporte from './EditorAporte.jsx'
 
 const iconos = {
@@ -89,9 +89,9 @@ export default function BloquePerfil({
         </div>
       )}
       {puedeCrear && !editor && (
-        <Button variant="secondary" onClick={abrirEditor} className="mb-4">
+        <Boton variant="secondary" onClick={abrirEditor} className="mb-4">
           {esNota ? 'Agregar nota' : 'Agregar aporte'}
-        </Button>
+        </Boton>
       )}
       {editor && (
         <EditorAporte

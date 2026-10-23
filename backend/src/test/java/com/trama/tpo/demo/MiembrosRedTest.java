@@ -21,11 +21,12 @@ import com.trama.tpo.demo.entity.proyecto.Proyecto;
 import com.trama.tpo.demo.entity.usuario.Usuario;
 import com.trama.tpo.demo.repository.*;
 
+/** 1.3: la pagina Red usa GET /miembros (antes habia un /red duplicado). */
 @SpringBootTest
 @AutoConfigureMockMvc
 @ActiveProfiles("test")
 @Transactional
-class RedProyectoTest {
+class MiembrosRedTest {
     @Autowired MockMvc mvc;
     @Autowired JwtService jwt;
     @Autowired UsuarioRepository usuarios;
@@ -39,8 +40,43 @@ class RedProyectoTest {
         proyecto = proyectos.save(Proyecto.builder().nombre("Niño ficticio").apellido("Ejemplo")
                 .fechaNacimiento(LocalDate.of(2018, 5, 12)).escuela("Escuela ficticia").grado("2.º")
                 .consentimientoFecha(Instant.now()).build());
-        tutor = usuario("Tutora ficticia");
+        tutor = usuario("Ana tutora");
         vincular(tutor, proyecto, Rol.TUTOR, null);
+    }
+
+    @Test
+    void listaTodosLosMiembrosConRolEspecialidadYFechaSinDatosDeCuenta() throws Exception {
+        vincular(usuario("Docente ficticia"), proyecto, Rol.EDUCACION, "DOCENTE");
+        vincular(usuario("Familiar ficticio"), proyecto, Rol.FAMILIAR, null);
+        var otro = proyectos.save(Proyecto.builder().nombre("Otro niño ficticio").apellido("Ejemplo")
+                .fechaNacimiento(LocalDate.of(2018, 5, 12)).escuela("Escuela ficticia").grado("2.º")
+                .consentimientoFecha(Instant.now()).build());
+        vincular(usuario("Profesional de otro proyecto"), otro, Rol.SALUD, "PSICOLOGIA");
+
+        var respuesta = mvc.perform(get("/api/proyectos/" + proyecto.getId() + "/miembros")
+                .header("Authorization", "Bearer " + jwt.generateToken(tutor.getId())))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.length()").value(3))
+                // Orden alfabetico por nombre
+                .andExpect(jsonPath("$[0].nombre").value("Ana tutora"))
+                .andExpect(jsonPath("$[0].rol").value("TUTOR"))
+                .andExpect(jsonPath("$[1].nombre").value("Docente ficticia"))
+                .andExpect(jsonPath("$[1].especialidad").value("DOCENTE"))
+                .andExpect(jsonPath("$[1].fechaAlta").exists())
+                .andExpect(jsonPath("$[2].rol").value("FAMILIAR"))
+                .andReturn().getResponse().getContentAsString();
+
+        assertThat(respuesta).doesNotContain("email", "password", "matricula", "otro proyecto");
+    }
+
+    @Test
+    void rechazaUsuarioAjenoYSinSesion() throws Exception {
+        var ajeno = usuario("Ajeno ficticio");
+        mvc.perform(get("/api/proyectos/" + proyecto.getId() + "/miembros")
+                .header("Authorization", "Bearer " + jwt.generateToken(ajeno.getId())))
+                .andExpect(status().isForbidden());
+        mvc.perform(get("/api/proyectos/" + proyecto.getId() + "/miembros"))
+                .andExpect(status().isUnauthorized());
     }
 
     private Usuario usuario(String nombre) {
@@ -51,42 +87,5 @@ class RedProyectoTest {
     private void vincular(Usuario usuario, Proyecto destino, Rol rol, String especialidad) {
         membresias.save(Membresia.builder().usuario(usuario).proyecto(destino).rol(rol)
                 .especialidad(especialidad).build());
-    }
-
-    @Test
-    void listaSoloProfesionalesDelProyectoSinDatosDeCuenta() throws Exception {
-        vincular(usuario("Docente ficticia"), proyecto, Rol.EDUCACION, "DOCENTE");
-        vincular(usuario("Profesional ficticio"), proyecto, Rol.SALUD, "PSICOLOGIA");
-        vincular(usuario("Familiar ficticio"), proyecto, Rol.FAMILIAR, null);
-        var otro = proyectos.save(Proyecto.builder().nombre("Otro niño ficticio").apellido("Ejemplo")
-                .fechaNacimiento(LocalDate.of(2018, 5, 12)).escuela("Escuela ficticia").grado("2.º")
-                .consentimientoFecha(Instant.now()).build());
-        vincular(usuario("Profesional de otro proyecto"), otro, Rol.SALUD, "TERAPIA");
-        var respuesta = mvc.perform(get("/api/proyectos/" + proyecto.getId() + "/red")
-                .header("Authorization", "Bearer " + jwt.generateToken(tutor.getId())))
-                .andExpect(status().isOk()).andExpect(jsonPath("$.length()").value(2))
-                .andExpect(jsonPath("$[0].nombre").value("Docente ficticia"))
-                .andExpect(jsonPath("$[0].rol").value("EDUCACION"))
-                .andExpect(jsonPath("$[0].especialidad").value("DOCENTE"))
-                .andExpect(jsonPath("$[1].especialidad").value("PSICOLOGIA"))
-                .andReturn().getResponse().getContentAsString();
-        assertThat(respuesta).doesNotContain("email", "password", "matricula", "Familiar ficticio", "otro proyecto");
-    }
-
-    @Test
-    void devuelveListaVaciaCuandoNoHayProfesionales() throws Exception {
-        mvc.perform(get("/api/proyectos/" + proyecto.getId() + "/red")
-                .header("Authorization", "Bearer " + jwt.generateToken(tutor.getId())))
-                .andExpect(status().isOk()).andExpect(jsonPath("$.length()").value(0));
-    }
-
-    @Test
-    void rechazaUsuarioAjenoYSinSesion() throws Exception {
-        var ajeno = usuario("Ajeno ficticio");
-        mvc.perform(get("/api/proyectos/" + proyecto.getId() + "/red")
-                .header("Authorization", "Bearer " + jwt.generateToken(ajeno.getId())))
-                .andExpect(status().isForbidden());
-        mvc.perform(get("/api/proyectos/" + proyecto.getId() + "/red"))
-                .andExpect(status().isUnauthorized());
     }
 }

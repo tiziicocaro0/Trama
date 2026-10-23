@@ -1,5 +1,5 @@
 import { useParams } from 'react-router-dom'
-import Button from '../../components/ui/Button.jsx'
+import Boton from '../../components/ui/Boton.jsx'
 import CabeceraPerfil from './components/CabeceraPerfil.jsx'
 import NavegacionPerfil from './components/NavegacionPerfil.jsx'
 import usePerfil from './hooks/usePerfil.js'
@@ -35,10 +35,10 @@ export default function DatosPersonalesPage() {
               No pudimos mostrar los datos personales
             </h1>
             <p role="alert">{error}</p>
-            <Button onClick={reintentar}>Reintentar</Button>
-            <Button to={`/proyectos/${id}`} variant="secondary">
+            <Boton onClick={reintentar}>Reintentar</Boton>
+            <Boton to={`/proyectos/${id}`} variant="secondary">
               Volver al perfil
-            </Button>
+            </Boton>
           </div>
         ) : (
           proyecto && (

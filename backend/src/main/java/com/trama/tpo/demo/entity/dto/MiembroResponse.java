@@ -1,6 +1,7 @@
 
 package com.trama.tpo.demo.entity.dto;
 
+import java.time.Instant;
 import java.util.UUID;
 
 import com.trama.tpo.demo.entity.membresia.Membresia;
@@ -23,6 +24,9 @@ public class MiembroResponse {
     private String apellido;
     private Rol rol;
     private Boolean esAdmin;
+    // 1.9: solo EDUCACION o SALUD; null para el resto
+    private String especialidad;
+    private Instant fechaAlta;
 
     public static MiembroResponse from(Membresia membresia) {
 
@@ -33,6 +37,8 @@ public class MiembroResponse {
                 .apellido(membresia.getUsuario().getApellido())
                 .rol(membresia.getRol())
                 .esAdmin(membresia.getEsAdmin())
+                .especialidad(membresia.getEspecialidad())
+                .fechaAlta(membresia.getFechaAlta())
                 .build();
     }
 }

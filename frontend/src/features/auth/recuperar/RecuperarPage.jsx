@@ -9,11 +9,11 @@ import {
   SpinnerGap,
 } from '@phosphor-icons/react'
 import { Link } from 'react-router-dom'
-import BrandLogo from '../../../components/ui/BrandLogo.jsx'
-import Button from '../../../components/ui/Button.jsx'
-import Input from '../../../components/ui/Input.jsx'
-import FormField from '../../../components/ui/FormField.jsx'
-import Stepper from '../../../components/ui/Stepper.jsx'
+import Logo from '../../../components/ui/Logo.jsx'
+import Boton from '../../../components/ui/Boton.jsx'
+import Campo from '../../../components/ui/Campo.jsx'
+import CampoFormulario from '../../../components/ui/CampoFormulario.jsx'
+import Pasos from '../../../components/ui/Pasos.jsx'
 import { validarEmail } from '../../../utils/validaciones.js'
 import { requisitosPassword } from '../registro/validaciones.js'
 import {
@@ -178,10 +178,10 @@ export default function RecuperarPage() {
           <ArrowLeft size={24} aria-hidden="true" />
         </Link>
         <div className="mx-auto w-32 pt-4">
-          <BrandLogo />
+          <Logo />
         </div>
         <div className="mt-8">
-          <Stepper
+          <Pasos
             steps={['Email', 'Código', 'Contraseña']}
             current={etapa}
             complete={exito}
@@ -210,9 +210,9 @@ export default function RecuperarPage() {
             <p role="status" className="text-lg text-texto">
               Ya podés iniciar sesión con tu nueva contraseña.
             </p>
-            <Button to="/login" className="w-full shadow-sm">
+            <Boton to="/login" className="w-full shadow-sm">
               Ir al inicio de sesión
-            </Button>
+            </Boton>
           </section>
         ) : (
           <form
@@ -246,12 +246,12 @@ export default function RecuperarPage() {
               )}
 
               {etapa === 0 && (
-                <FormField
+                <CampoFormulario
                   id="recuperar-email"
                   label="Email"
                   error={errores.email}
                 >
-                  <Input
+                  <Campo
                     name="email"
                     type="email"
                     placeholder="Email"
@@ -263,16 +263,16 @@ export default function RecuperarPage() {
                     required
                     disabled={enviando}
                   />
-                </FormField>
+                </CampoFormulario>
               )}
 
               {etapa === 1 && (
-                <FormField
+                <CampoFormulario
                   id="recuperar-codigo"
                   label="Código de 6 dígitos"
                   error={errores.codigo}
                 >
-                  <Input
+                  <Campo
                     name="codigo"
                     type="text"
                     inputMode="numeric"
@@ -286,18 +286,18 @@ export default function RecuperarPage() {
                     required
                     disabled={enviando}
                   />
-                </FormField>
+                </CampoFormulario>
               )}
 
               {etapa === 2 && (
                 <>
-                  <FormField
+                  <CampoFormulario
                     id="recuperar-password"
                     label="Contraseña nueva"
                     error={errores.password}
                     hint="Usá al menos 8 caracteres, una mayúscula (A–Z), un número y un carácter especial."
                   >
-                    <Input
+                    <Campo
                       name="password"
                       type="password"
                       placeholder="Contraseña nueva"
@@ -309,7 +309,7 @@ export default function RecuperarPage() {
                       required
                       disabled={enviando}
                     />
-                  </FormField>
+                  </CampoFormulario>
                   <ul
                     aria-label="Requisitos de la contraseña"
                     className="space-y-2 text-sm"
@@ -334,12 +334,12 @@ export default function RecuperarPage() {
                       )
                     })}
                   </ul>
-                  <FormField
+                  <CampoFormulario
                     id="recuperar-confirmar"
                     label="Repetí la contraseña"
                     error={errores.confirmar}
                   >
-                    <Input
+                    <Campo
                       name="confirmar"
                       type="password"
                       placeholder="Repetí la contraseña"
@@ -350,7 +350,7 @@ export default function RecuperarPage() {
                       required
                       disabled={enviando}
                     />
-                  </FormField>
+                  </CampoFormulario>
                 </>
               )}
 
@@ -363,7 +363,7 @@ export default function RecuperarPage() {
                 </p>
               )}
 
-              <Button
+              <Boton
                 type="submit"
                 disabled={enviando}
                 className="w-full shadow-sm"
@@ -380,7 +380,7 @@ export default function RecuperarPage() {
                 ) : (
                   botones[etapa]
                 )}
-              </Button>
+              </Boton>
 
               {etapa === 1 && (
                 <div className="flex flex-col items-center gap-2 pt-2">

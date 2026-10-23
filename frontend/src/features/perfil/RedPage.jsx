@@ -1,20 +1,31 @@
 import { User } from '@phosphor-icons/react'
 import { useParams } from 'react-router-dom'
-import { obtenerRedProyecto } from '../../api/proyectos.js'
-import Button from '../../components/ui/Button.jsx'
+import { listarMiembros } from '../../api/miembros.js'
+import Boton from '../../components/ui/Boton.jsx'
 import CabeceraPerfil from './components/CabeceraPerfil.jsx'
 import usePerfil from './hooks/usePerfil.js'
 import NavegacionPerfil from './components/NavegacionPerfil.jsx'
+
+const etiquetasRol = {
+  TUTOR: 'Tutor/a',
+  FAMILIAR: 'Familiar',
+  EDUCACION: 'Educación',
+  SALUD: 'Salud',
+}
+
+function esProfesional(rol) {
+  return rol === 'EDUCACION' || rol === 'SALUD'
+}
 
 export default function RedPage() {
   const { id } = useParams()
   const {
     proyecto,
-    datos: profesionales,
+    datos: miembros,
     cargando,
     error,
     reintentar,
-  } = usePerfil(id, obtenerRedProyecto)
+  } = usePerfil(id, listarMiembros)
   return (
     <main
       tabIndex={-1}
@@ -29,10 +40,10 @@ export default function RedPage() {
               No pudimos mostrar la red
             </h1>
             <p role="alert">{error}</p>
-            <Button onClick={reintentar}>Reintentar</Button>
-            <Button to={`/proyectos/${id}`} variant="secondary">
+            <Boton onClick={reintentar}>Reintentar</Boton>
+            <Boton to={`/proyectos/${id}`} variant="secondary">
               Volver al perfil
-            </Button>
+            </Boton>
           </div>
         ) : (
           proyecto && (
@@ -47,11 +58,11 @@ export default function RedPage() {
                   Red
                 </h2>
                 <p className="mt-2 mb-6 text-texto-suave">
-                  Profesionales que acompañan este proyecto.
+                  Personas que acompañan este proyecto.
                 </p>
-                {profesionales.length ? (
+                {miembros.length ? (
                   <ul className="grid gap-4 md:grid-cols-2">
-                    {profesionales.map((persona) => (
+                    {miembros.map((persona) => (
                       <li
                         key={persona.id}
                         className="flex items-start gap-4 rounded-lg bg-superficie p-6 shadow-sm"
@@ -64,20 +75,22 @@ export default function RedPage() {
                             {persona.nombre} {persona.apellido}
                           </h3>
                           <p className="mt-2 font-semibold">
-                            {persona.rol === 'SALUD' ? 'Salud' : 'Educación'}
+                            {etiquetasRol[persona.rol]}
+                            {persona.esAdmin && ' · Administrador'}
                           </p>
-                          <p className="mt-1 break-words text-texto-suave">
-                            {persona.especialidad?.trim() ||
-                              'Especialidad no informada'}
-                          </p>
+                          {esProfesional(persona.rol) && (
+                            <p className="mt-1 break-words text-texto-suave">
+                              {persona.especialidad?.trim() ||
+                                'Especialidad no informada'}
+                            </p>
+                          )}
                         </div>
                       </li>
                     ))}
                   </ul>
                 ) : (
                   <p className="rounded-lg bg-superficie p-6">
-                    Todavía no hay profesionales vinculados a este
-                    acompañamiento.
+                    Todavía no hay miembros en esta red.
                   </p>
                 )}
               </section>

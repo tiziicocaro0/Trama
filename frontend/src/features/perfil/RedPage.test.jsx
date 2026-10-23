@@ -13,6 +13,22 @@ const id = '0f8b4fc3-e754-4707-8769-28d7210de226'
 const proyecto = { id, nombre: 'Niño ficticio', fechaNacimiento: '2018-05-12' }
 const red = [
   {
+    id: 'membresia-tutora',
+    nombre: 'Tutora ficticia',
+    apellido: 'Ejemplo',
+    rol: 'TUTOR',
+    esAdmin: true,
+    especialidad: null,
+  },
+  {
+    id: 'membresia-familiar',
+    nombre: 'Familiar ficticio',
+    apellido: 'Ejemplo',
+    rol: 'FAMILIAR',
+    esAdmin: false,
+    especialidad: null,
+  },
+  {
     id: 'membresia-ejemplo',
     nombre: 'Docente ficticia',
     apellido: 'Ejemplo',
@@ -36,7 +52,7 @@ function abrir(ruta = `/proyectos/${id}/red`, autenticar = true) {
 }
 beforeEach(() => {
   cliente.get.mockReset().mockImplementation(async (ruta) => ({
-    data: ruta.endsWith('/red')
+    data: ruta.endsWith('/miembros')
       ? red
       : ruta.endsWith('/aportes')
         ? []
@@ -62,22 +78,32 @@ describe('Red de profesionales', () => {
       await screen.findByRole('heading', { name: 'Fortalezas' }),
     ).toBeInTheDocument()
   })
+  it('muestra a todos los miembros con su rol y marca al administrador', async () => {
+    abrir()
+    expect(
+      await screen.findByRole('heading', { name: 'Tutora ficticia Ejemplo' }),
+    ).toBeInTheDocument()
+    expect(screen.getByText('Tutor/a · Administrador')).toBeInTheDocument()
+    expect(screen.getByText('Familiar')).toBeInTheDocument()
+    // La especialidad solo aplica a Educación y Salud
+    expect(screen.queryAllByText(/Especialidad no informada/)).toHaveLength(0)
+  })
   it('muestra estado vacío y un dato faltante sin inventar profesionales', async () => {
     cliente.get.mockImplementation(async (ruta) => ({
-      data: ruta.endsWith('/red') ? [] : proyecto,
+      data: ruta.endsWith('/miembros') ? [] : proyecto,
     }))
     abrir()
     expect(
       await screen.findByText(
-        'Todavía no hay profesionales vinculados a este acompañamiento.',
+        'Todavía no hay miembros en esta red.',
       ),
     ).toBeInTheDocument()
     expect(screen.queryByText('Docente ficticia')).not.toBeInTheDocument()
   })
   it('indica cuando la especialidad no está informada', async () => {
     cliente.get.mockImplementation(async (ruta) => ({
-      data: ruta.endsWith('/red')
-        ? [{ ...red[0], especialidad: null }]
+      data: ruta.endsWith('/miembros')
+        ? [{ ...red[2], especialidad: null }]
         : proyecto,
     }))
     abrir()

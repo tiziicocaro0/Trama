@@ -17,7 +17,6 @@ import com.trama.tpo.demo.entity.dto.ConfiguracionProyectoRequest;
 import com.trama.tpo.demo.entity.dto.CrearProyectoRequest;
 import com.trama.tpo.demo.entity.dto.MiProyectoDTO;
 import com.trama.tpo.demo.entity.dto.ProyectoResponse;
-import com.trama.tpo.demo.entity.dto.ProfesionalRedResponse;
 import com.trama.tpo.demo.service.ProyectoService;
 
 import jakarta.validation.Valid;
@@ -54,10 +53,6 @@ public class ProyectoController {
         return ResponseEntity.ok(proyectoService.obtener(proyectoId));
     }
 
-    @GetMapping("/{proyectoId}/red")
-    public ResponseEntity<List<ProfesionalRedResponse>> listarRed(@PathVariable UUID proyectoId) {
-        return ResponseEntity.ok(proyectoService.listarRed(proyectoId));
-    }
 
     // CONFIGURACIÓN DE LA FAMILIA
     @PutMapping("/{proyectoId}/configuracion")

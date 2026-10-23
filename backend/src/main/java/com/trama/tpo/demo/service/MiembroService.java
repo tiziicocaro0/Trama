@@ -32,7 +32,8 @@ public class MiembroService {
         permisoService.verificarMiembro(proyectoId);
 
         // Buscar las membresias y convertirlas en DTO.
-        return membresiaRepository.findByProyectoId(proyectoId)
+        return membresiaRepository
+                .findByProyectoIdOrderByUsuarioNombreAscUsuarioApellidoAsc(proyectoId)
                 .stream()
                 .map(MiembroResponse::from)
                 .toList();

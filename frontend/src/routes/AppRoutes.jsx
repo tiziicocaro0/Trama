@@ -1,5 +1,5 @@
 import { useEffect } from 'react'
-import { Route, Routes, useLocation } from 'react-router-dom'
+import { Navigate, Route, Routes, useLocation } from 'react-router-dom'
 import BienvenidaPage from '../features/bienvenida/BienvenidaPage.jsx'
 import PaginaTemporal from '../features/auth/PaginaTemporal.jsx'
 import RegistroPage from '../features/auth/registro/RegistroPage.jsx'
@@ -16,7 +16,6 @@ import DatosPersonalesPage from '../features/perfil/DatosPersonalesPage.jsx'
 import { Layout } from '../components/layout/Layout.jsx'
 import { Tarjeta } from '../components/ui/Tarjeta.jsx'
 import { Componentes } from '../pages/Componentes.jsx'
-import { MisProyectos } from '../pages/MisProyectos.jsx'
 
 const titles = {
   '/': 'Bienvenida',
@@ -26,8 +25,6 @@ const titles = {
   '/inicio': 'Inicio',
   '/acompanamientos': 'Acompañamientos',
   '/acompanamientos/nuevo': 'Nuevo acompañamiento',
-  '/proyectos': 'Mis proyectos',
-  '/proyectos/nuevo': 'Nuevo acompañamiento',
   '/recursos': 'Recursos',
   '/calendario': 'Calendario',
   '/perfil': 'Mi perfil',
@@ -150,13 +147,14 @@ export default function AppRoutes() {
           </Acceso>
         }
       />
+      {/* Mis proyectos (1.10) vive en /acompanamientos, como en el mockup */}
+      <Route path="/proyectos" element={<Navigate to="/acompanamientos" replace />} />
       <Route
         path="/proyectos/nuevo"
-        element={<Acceso privado><NuevoAcompanamientoPage /></Acceso>}
+        element={<Navigate to="/acompanamientos/nuevo" replace />}
       />
       {import.meta.env.DEV && <Route path="/componentes" element={<Componentes />} />}
       <Route element={<Acceso privado><Layout /></Acceso>}>
-        <Route path="/proyectos" element={<MisProyectos />} />
         <Route path="/recursos" element={<Proximamente titulo="Recursos" />} />
         <Route path="/calendario" element={<Proximamente titulo="Calendario" />} />
         <Route path="/perfil" element={<Proximamente titulo="Mi perfil" />} />

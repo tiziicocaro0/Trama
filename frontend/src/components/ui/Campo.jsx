@@ -1,60 +1,27 @@
-import { useId } from 'react';
-export function Campo({
-  etiqueta,
-  ocultarEtiqueta = false,
-  iconoIzquierdo,
-  error,
-  ayuda,
-  id,
+export default function Campo({
+  icon: Icon,
+  endAdornment,
   className = '',
   ...props
 }) {
-  const idGenerado = useId();
-  const inputId = id ?? idGenerado;
-  const errorId = `${inputId}-error`;
-  const ayudaId = `${inputId}-ayuda`;
   return (
-    <div className="flex flex-col gap-1.5 font-sans">
-      <label
-        htmlFor={inputId}
-        className={
-          ocultarEtiqueta ? 'sr-only' : 'text-sm font-semibold text-oliva'
-        }
-      >
-        {etiqueta}
-      </label>
-      <div className="relative flex items-center">
-        {iconoIzquierdo && (
-          <span
-            aria-hidden="true"
-            className="pointer-events-none absolute left-4 flex items-center text-agua"
-          >
-            {iconoIzquierdo}
-          </span>
-        )}
-        <input
-          id={inputId}
-          aria-invalid={Boolean(error)}
-          aria-describedby={error ? errorId : ayuda ? ayudaId : undefined}
-          className={`w-full rounded-2xl border bg-superficie/70 py-3.5 text-base text-oliva placeholder:text-oliva/55 transition ${iconoIzquierdo ? 'pl-11 pr-4' : 'px-4'} ${error ? 'border-terracota' : 'border-oliva/15 focus:border-terracota/50'} ${className}`.trim()}
-          {...props}
+    <div className="relative">
+      {Icon && (
+        <Icon
+          size={20}
+          aria-hidden="true"
+          className="pointer-events-none absolute top-1/2 left-5 -translate-y-1/2 text-agua"
         />
-      </div>
-      {ayuda && !error && (
-        <span id={ayudaId} className="text-xs text-oliva/70">
-          {ayuda}
-        </span>
       )}
-      {error && (
-        <span
-          id={errorId}
-          role="alert"
-          className="text-xs font-semibold text-terracota"
-        >
-          {error}
+      <input
+        {...props}
+        className={`min-h-18 w-full rounded-md border bg-superficie py-4 text-lg text-texto placeholder:text-texto-suave focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primario disabled:cursor-wait ${endAdornment ? 'pr-16' : 'pr-5'} ${Icon ? 'pl-14' : 'pl-5'} ${props['aria-invalid'] ? 'border-error' : 'border-borde'} ${className}`}
+      />
+      {endAdornment && (
+        <span className="absolute top-1/2 right-2 -translate-y-1/2">
+          {endAdornment}
         </span>
       )}
     </div>
-  );
+  )
 }
-export default Campo;

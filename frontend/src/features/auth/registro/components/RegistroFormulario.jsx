@@ -8,9 +8,9 @@ import {
   User,
 } from '@phosphor-icons/react'
 import { Link } from 'react-router-dom'
-import Button from '../../../../components/ui/Button.jsx'
-import Input from '../../../../components/ui/Input.jsx'
-import FormField from '../../../../components/ui/FormField.jsx'
+import Boton from '../../../../components/ui/Boton.jsx'
+import Campo from '../../../../components/ui/Campo.jsx'
+import CampoFormulario from '../../../../components/ui/CampoFormulario.jsx'
 import { requisitosPassword } from '../validaciones.js'
 
 export default function RegistroFormulario({ registro, formRef, titleRef }) {
@@ -33,12 +33,12 @@ export default function RegistroFormulario({ registro, formRef, titleRef }) {
 
   function campo(nombre, label, Icon, props = {}) {
     return (
-      <FormField
+      <CampoFormulario
         id={`registro-${nombre}`}
         label={label}
         error={errores[nombre]}
       >
-        <Input
+        <Campo
           name={nombre}
           placeholder={label}
           icon={Icon}
@@ -48,7 +48,7 @@ export default function RegistroFormulario({ registro, formRef, titleRef }) {
           required
           {...props}
         />
-      </FormField>
+      </CampoFormulario>
     )
   }
 
@@ -92,13 +92,13 @@ export default function RegistroFormulario({ registro, formRef, titleRef }) {
         )}
         {etapa === 1 && (
           <>
-            <FormField
+            <CampoFormulario
               id="registro-password"
               label="Contraseña"
               error={errores.password}
               hint="Usá al menos 8 caracteres, una mayúscula (A–Z), un número y un carácter especial."
             >
-              <Input
+              <Campo
                 name="password"
                 type="password"
                 placeholder="Contraseña"
@@ -110,7 +110,7 @@ export default function RegistroFormulario({ registro, formRef, titleRef }) {
                 required
                 disabled={enviando}
               />
-            </FormField>
+            </CampoFormulario>
             <ul
               aria-label="Requisitos de la contraseña"
               className="space-y-2 text-sm"
@@ -161,7 +161,7 @@ export default function RegistroFormulario({ registro, formRef, titleRef }) {
         </p>
       )}
       <div className="mt-6 flex flex-col gap-3">
-        <Button
+        <Boton
           type="submit"
           disabled={enviando}
           className="w-full shadow-sm"
@@ -181,12 +181,12 @@ export default function RegistroFormulario({ registro, formRef, titleRef }) {
               <CaretRight aria-hidden="true" size={20} />
             </>
           )}
-        </Button>
+        </Boton>
         {etapa > 0 && (
-          <Button variant="secondary" disabled={enviando} onClick={volver}>
+          <Boton variant="secondary" disabled={enviando} onClick={volver}>
             <ArrowLeft size={20} aria-hidden="true" />
             Volver
-          </Button>
+          </Boton>
         )}
       </div>
       <p className="mt-6 text-center text-texto-suave">

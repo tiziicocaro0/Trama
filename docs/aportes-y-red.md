@@ -11,8 +11,8 @@ usan como fixtures de tests.
 2. Elegir un niño y pulsar «Agregar aporte» en una sección.
 3. Completar título, descripción opcional y visibilidad; guardar.
 4. «Editar» aparece en aportes propios cuando el usuario puede escribir en el proyecto.
-5. «Red» abre los profesionales de Educación y Salud vinculados al proyecto, con nombre,
-   apellido, rol y especialidad. Si no se informó especialidad, se indica expresamente.
+5. «Red» muestra a todos los miembros del proyecto con nombre, apellido y rol; marca a los
+   administradores y, para Educación y Salud, la especialidad (o que no se informó).
 6. «Datos personales» muestra nombre, apellido, apodo, fecha de nacimiento, colegio y grado
    guardados al crear el acompañamiento; esta vista es de consulta.
 7. «Notas» permite agregar notas y editar las propias. Muestra fecha y hora de creación
@@ -36,7 +36,7 @@ permisos con `PermisoService`.
 | POST | `/api/proyectos/{proyectoId}/aportes` | Recibe `AporteRequest`; devuelve `201` con `AporteResponse` |
 | PUT | `/api/proyectos/{proyectoId}/aportes/{aporteId}` | Recibe `AporteRequest`; solo el autor (403 si no) |
 | POST | `/api/proyectos/{proyectoId}/aportes/{aporteId}/archivar` | Solo el autor; el perfil todavía no tiene botón de archivar |
-| GET | `/api/proyectos/{proyectoId}/red` | Lista de `{ id, nombre, apellido, rol, especialidad }`; `id` corresponde a la membresía |
+| GET | `/api/proyectos/{proyectoId}/miembros` | Lista de `{ id, usuarioId, nombre, apellido, rol, esAdmin, especialidad, fechaAlta }` (card 1.3); `id` corresponde a la membresía |
 
 `AporteRequest` contiene `tipo`, `titulo` (obligatorio, hasta 150 caracteres), `contenido`,
 `datos` (JSON con los campos propios del tipo) y `visibilidad` (si falta, se usa la del tipo).

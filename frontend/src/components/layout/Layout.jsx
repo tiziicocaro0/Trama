@@ -2,7 +2,7 @@ import { useAuth } from '../../hooks/useAuth';
 import { NavLink, Outlet } from 'react-router-dom';
 import logoTrama from '../../assets/logo.png';
 const ITEMS_NAVEGACION = [
-  { ruta: '/proyectos', etiqueta: 'Acompañamientos', icono: 'acompanamientos' },
+  { ruta: '/acompanamientos', etiqueta: 'Acompañamientos', icono: 'acompanamientos' },
   { ruta: '/recursos', etiqueta: 'Recursos', icono: 'recursos' },
   { ruta: '/calendario', etiqueta: 'Calendario', icono: 'calendario' },
   { ruta: '/perfil', etiqueta: 'Mi perfil', icono: 'perfil' },
