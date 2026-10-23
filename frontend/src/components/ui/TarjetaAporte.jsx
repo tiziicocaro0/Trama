@@ -1,3 +1,4 @@
+import { Lock } from '@phosphor-icons/react'
 import { formatearFechaHora } from '../../utils/fechas.js'
 
 export default function TarjetaAporte({ aporte, alEditar, resumen = false }) {
@@ -7,6 +8,12 @@ export default function TarjetaAporte({ aporte, alEditar, resumen = false }) {
     esNota && aporte.actualizadoEn !== aporte.creadoEn
       ? formatearFechaHora(aporte.actualizadoEn)
       : null
+
+  // 3.1: Identificar aportes con visibilidad restringida
+  const esRestringido =
+    aporte.visibilidad != null &&
+    aporte.visibilidad !== 'TODOS'
+
   return (
     <article className="flex gap-2 py-2 text-texto">
       <span
@@ -14,9 +21,21 @@ export default function TarjetaAporte({ aporte, alEditar, resumen = false }) {
         className="mt-2 size-1.5 shrink-0 rounded-full bg-miel"
       />
       <div className="min-w-0 flex-1">
-        <h3 className="break-words text-base font-semibold leading-relaxed">
-          {aporte.titulo}
+        <h3 className="flex items-center gap-2 break-words text-base font-semibold leading-relaxed">
+          <span className="min-w-0">{aporte.titulo}</span>
+
+          {/* 3.1: Candado para aportes restringidos */}
+          {esRestringido && (
+            <Lock
+              size={18}
+              weight="regular"
+              className="shrink-0 text-secundario"
+              role="img"
+              aria-label="Visibilidad restringida"
+            />
+          )}
         </h3>
+
         {aporte.contenido && (
           <p
             className={`mt-1 whitespace-pre-wrap break-words text-sm text-texto-suave ${resumen ? 'line-clamp-3' : ''}`}
@@ -24,6 +43,7 @@ export default function TarjetaAporte({ aporte, alEditar, resumen = false }) {
             {aporte.contenido}
           </p>
         )}
+
         {esNota && (
           <div className="mt-3 space-y-1 text-sm text-texto-suave">
             <p>
@@ -42,6 +62,7 @@ export default function TarjetaAporte({ aporte, alEditar, resumen = false }) {
             )}
           </div>
         )}
+
         {aporte.puedeEditar && alEditar && (
           <button
             type="button"
