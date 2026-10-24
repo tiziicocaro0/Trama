@@ -13,6 +13,7 @@ import AcompanamientosPage from '../features/acompanamientos/AcompanamientosPage
 import NuevoAcompanamientoPage from '../features/acompanamientos/NuevoAcompanamientoPage.jsx'
 import RedPage from '../features/perfil/RedPage.jsx'
 import DatosPersonalesPage from '../features/perfil/DatosPersonalesPage.jsx'
+import BitacoraPage from '../features/bitacora/BitacoraPage.jsx'
 import { Layout } from '../components/layout/Layout.jsx'
 import { Tarjeta } from '../components/ui/Tarjeta.jsx'
 import { Componentes } from '../pages/Componentes.jsx'
@@ -45,6 +46,7 @@ export default function AppRoutes() {
       red: 'Red',
       'datos-personales': 'Datos personales',
       notas: 'Notas',
+      bitacora: 'Bitácora',
     }
     const espacio = Object.hasOwn(espaciosPerfil, perfil?.[1])
       ? espaciosPerfil[perfil[1]]
@@ -136,6 +138,14 @@ export default function AppRoutes() {
         element={
           <Acceso privado>
             <DatosPersonalesPage />
+          </Acceso>
+        }
+      />
+      <Route
+        path="/proyectos/:id/bitacora"
+        element={
+          <Acceso privado>
+            <BitacoraPage />
           </Acceso>
         }
       />
