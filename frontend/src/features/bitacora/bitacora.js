@@ -18,6 +18,27 @@ export const ETIQUETAS_OBSERVACION = [
 export const ETIQUETAS_CONTEXTO = Object.fromEntries(CONTEXTOS_OBSERVACION)
 export const ETIQUETAS_TAG = Object.fromEntries(ETIQUETAS_OBSERVACION)
 
+export const TAMANIO_PAGINA_BITACORA = 20
+
+export const FILTROS_INICIALES_BITACORA = {
+  desde: '',
+  hasta: '',
+  contexto: '',
+  etiqueta: '',
+  autorId: '',
+}
+
+export function tieneFiltrosActivos(filtros) {
+  if (!filtros) return false
+  return Boolean(
+    filtros.desde ||
+      filtros.hasta ||
+      filtros.contexto ||
+      filtros.etiqueta ||
+      filtros.autorId,
+  )
+}
+
 export function obtenerFechaHoraLocalActual(ahora = new Date()) {
   const pad = (numero) => String(numero).padStart(2, '0')
   const anio = ahora.getFullYear()
@@ -68,6 +89,28 @@ export function leerDatosObservacion(datosRaw) {
   } catch {
     return { fecha: null, contexto: null, etiquetas: [] }
   }
+}
+
+export function filtrarObservaciones(observaciones, filtros) {
+  if (!Array.isArray(observaciones)) return []
+  if (!tieneFiltrosActivos(filtros)) return observaciones
+
+  return observaciones.filter((observacion) => {
+    const info = leerDatosObservacion(observacion?.datos)
+    const fechaIso = info.fecha ?? observacion?.creadoEn ?? ''
+    const fechaDia = typeof fechaIso === 'string' ? fechaIso.slice(0, 10) : ''
+
+    if (filtros.desde && (!fechaDia || fechaDia < filtros.desde)) return false
+    if (filtros.hasta && (!fechaDia || fechaDia > filtros.hasta)) return false
+    if (filtros.contexto && info.contexto !== filtros.contexto) return false
+    if (filtros.etiqueta && !info.etiquetas.includes(filtros.etiqueta)) {
+      return false
+    }
+    if (filtros.autorId && observacion?.autorId !== filtros.autorId) {
+      return false
+    }
+    return true
+  })
 }
 
 export function ordenarObservacionesPorFecha(observaciones) {
@@ -123,4 +166,3 @@ export function resolverNombreAutor(aporte, miembros = [], usuarioActual = null)
   }
   return 'Miembro de la red'
 }
-

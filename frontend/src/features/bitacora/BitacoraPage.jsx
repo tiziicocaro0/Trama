@@ -12,37 +12,93 @@ import usePerfil from '../perfil/hooks/usePerfil.js'
 import {
   ETIQUETAS_CONTEXTO,
   ETIQUETAS_TAG,
+  FILTROS_INICIALES_BITACORA,
+  filtrarObservaciones,
   leerDatosObservacion,
   ordenarObservacionesPorFecha,
   resolverNombreAutor,
+  TAMANIO_PAGINA_BITACORA,
 } from './bitacora.js'
+import BarraFiltrosBitacora from './components/BarraFiltrosBitacora.jsx'
 import FormularioObservacion from './components/FormularioObservacion.jsx'
 
 export default function BitacoraPage() {
   const { id } = useParams()
   const { usuario } = useAuth()
+  const [filtros, setFiltros] = useState(FILTROS_INICIALES_BITACORA)
+  const [observacionesExtra, setObservacionesExtra] = useState([])
+  const [paginaActual, setPaginaActual] = useState(0)
+  const [ultimaTandaCantidad, setUltimaTandaCantidad] = useState(null)
+  const [cargandoMas, setCargandoMas] = useState(false)
   const [mostrandoFormulario, setMostrandoFormulario] = useState(false)
   const [observacionEnEdicion, setObservacionEnEdicion] = useState(null)
   const [mensajeGuardado, setMensajeGuardado] = useState('')
 
-  const cargarBitacoraYMiembros = useCallback(async (proyectoId, signal) => {
-    const [observaciones, miembros] = await Promise.all([
-      listarBitacora(proyectoId, signal),
-      listarMiembros(proyectoId, signal).catch(() => []),
-    ])
-    return { observaciones, miembros }
-  }, [])
+  const cargarBitacoraYMiembros = useCallback(
+    async (proyectoId, signal) => {
+      const [observaciones, miembros] = await Promise.all([
+        listarBitacora(proyectoId, { ...filtros, pagina: 0, signal }),
+        listarMiembros(proyectoId, signal).catch(() => []),
+      ])
+      return { observaciones, miembros }
+    },
+    [filtros],
+  )
 
   const { proyecto, datos, cargando, error, reintentar } = usePerfil(
     id,
     cargarBitacoraYMiembros,
   )
 
+  function actualizarFiltro(campo, valor) {
+    setObservacionesExtra([])
+    setPaginaActual(0)
+    setUltimaTandaCantidad(null)
+    setFiltros((actuales) => ({ ...actuales, [campo]: valor }))
+  }
+
+  function limpiarFiltros() {
+    setObservacionesExtra([])
+    setPaginaActual(0)
+    setUltimaTandaCantidad(null)
+    setFiltros(FILTROS_INICIALES_BITACORA)
+  }
+
+  async function cargarMas() {
+    if (cargandoMas) return
+    const siguientePagina = paginaActual + 1
+    setCargandoMas(true)
+    try {
+      const nuevas = await listarBitacora(id, {
+        ...filtros,
+        pagina: siguientePagina,
+      })
+      setObservacionesExtra((previas) => {
+        const idsExistentes = new Set(
+          [...(datos?.observaciones ?? []), ...previas].map((item) => item.id),
+        )
+        const sinDuplicados = nuevas.filter(
+          (item) => !idsExistentes.has(item.id),
+        )
+        return [...previas, ...sinDuplicados]
+      })
+      setPaginaActual(siguientePagina)
+      setUltimaTandaCantidad(nuevas.length)
+    } finally {
+      setCargandoMas(false)
+    }
+  }
+
+  const baseObservaciones = datos?.observaciones ?? []
+  const todasCombinadas = [...baseObservaciones, ...observacionesExtra]
   const observacionesOrdenadas = ordenarObservacionesPorFecha(
-    datos?.observaciones ?? [],
+    filtrarObservaciones(todasCombinadas, filtros),
   )
   const miembros = datos?.miembros ?? []
   const puedeCrear = proyecto?.puedeCargar === true
+  const cantidadUltimaPagina =
+    ultimaTandaCantidad ?? baseObservaciones.length
+  const hayMasPaginas = cantidadUltimaPagina >= TAMANIO_PAGINA_BITACORA
 
   return (
     <main
@@ -50,7 +106,7 @@ export default function BitacoraPage() {
       className="min-h-svh bg-fondo px-4 py-6 text-texto sm:px-8 sm:py-10"
     >
       <div className="mx-auto max-w-6xl">
-        {cargando ? (
+        {cargando && !proyecto ? (
           <p role="status">Cargando la bitácora…</p>
         ) : error ? (
           <div className="space-y-4 rounded-lg bg-superficie p-6">
@@ -103,6 +159,15 @@ export default function BitacoraPage() {
                     )}
                 </div>
 
+                {!mostrandoFormulario && !observacionEnEdicion && (
+                  <BarraFiltrosBitacora
+                    filtros={filtros}
+                    miembros={miembros}
+                    alCambiarFiltro={actualizarFiltro}
+                    alLimpiar={limpiarFiltros}
+                  />
+                )}
+
                 {mensajeGuardado && (
                   <p role="status" className="mb-4 text-secundario">
                     {mensajeGuardado}
@@ -116,6 +181,9 @@ export default function BitacoraPage() {
                     alGuardar={() => {
                       setMostrandoFormulario(false)
                       setObservacionEnEdicion(null)
+                      setObservacionesExtra([])
+                      setPaginaActual(0)
+                      setUltimaTandaCantidad(null)
                       setMensajeGuardado('Observación guardada.')
                       reintentar()
                     }}
@@ -191,25 +259,21 @@ export default function BitacoraPage() {
                               </span>
                             ))}
                           </div>
-
-                          {observacion.puedeEditar &&
-                            !mostrandoFormulario &&
-                            !observacionEnEdicion && (
-                              <button
-                                type="button"
-                                onClick={() => {
-                                  setMensajeGuardado('')
-                                  setObservacionEnEdicion(observacion)
-                                }}
-                                aria-label={`Editar observación: ${observacion.titulo}`}
-                                className="mt-3 inline-flex min-h-11 items-center rounded-sm font-semibold text-primario underline underline-offset-4 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-primario"
-                              >
-                                Editar
-                              </button>
-                            )}
                         </article>
                       )
                     })}
+
+                    {hayMasPaginas && (
+                      <div className="pt-2 text-center">
+                        <Boton
+                          variant="secondary"
+                          onClick={cargarMas}
+                          disabled={cargandoMas}
+                        >
+                          {cargandoMas ? 'Cargando…' : 'Ver más'}
+                        </Boton>
+                      </div>
+                    )}
                   </div>
                 ) : (
                   <p className="rounded-lg bg-superficie p-6 text-texto-suave">
@@ -224,4 +288,3 @@ export default function BitacoraPage() {
     </main>
   )
 }
-

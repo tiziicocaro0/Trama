@@ -31,8 +31,29 @@ export async function listarAportes(proyectoId, signal) {
   return { aportes: data }
 }
 
-export async function listarBitacora(proyectoId, signal) {
-  const { data } = await cliente.get(rutaBitacora(proyectoId), { signal })
+export async function listarBitacora(proyectoId, signalOrOpciones) {
+  const esSignal =
+    signalOrOpciones instanceof AbortSignal ||
+    typeof signalOrOpciones?.aborted === 'boolean'
+  const signal = esSignal ? signalOrOpciones : signalOrOpciones?.signal
+  const opciones = !esSignal && signalOrOpciones ? signalOrOpciones : {}
+
+  const params = {}
+  if (opciones.desde) params.desde = opciones.desde
+  if (opciones.hasta) params.hasta = opciones.hasta
+  if (opciones.contexto) params.contexto = opciones.contexto
+  if (opciones.etiqueta) params.etiqueta = opciones.etiqueta
+  if (opciones.autorId) params.autorId = opciones.autorId
+  if (typeof opciones.pagina === 'number' && opciones.pagina > 0) {
+    params.pagina = opciones.pagina
+  }
+
+  const config =
+    Object.keys(params).length > 0
+      ? { ...(signal ? { signal } : {}), params }
+      : { signal }
+
+  const { data } = await cliente.get(rutaBitacora(proyectoId), config)
   if (
     !Array.isArray(data) ||
     data.some(
