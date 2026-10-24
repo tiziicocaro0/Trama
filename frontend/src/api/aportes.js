@@ -6,6 +6,12 @@ function ruta(proyectoId) {
   return `/proyectos/${encodeURIComponent(proyectoId)}/aportes`
 }
 
+function rutaBitacora(proyectoId) {
+  if (!cliente.defaults.baseURL)
+    throw new Error('Falta configurar la conexión con TRAMA.')
+  return `/proyectos/${encodeURIComponent(proyectoId)}/bitacora`
+}
+
 export async function listarAportes(proyectoId, signal) {
   // La API (3.0) devuelve la lista de aportes visibles para el usuario.
   // El permiso de cargar viene en el proyecto (puedeCargar).
@@ -23,6 +29,22 @@ export async function listarAportes(proyectoId, signal) {
     throw new Error('No pudimos verificar los aportes del perfil.')
   }
   return { aportes: data }
+}
+
+export async function listarBitacora(proyectoId, signal) {
+  const { data } = await cliente.get(rutaBitacora(proyectoId), { signal })
+  if (
+    !Array.isArray(data) ||
+    data.some(
+      (aporte) =>
+        typeof aporte?.id !== 'string' ||
+        typeof aporte.tipo !== 'string' ||
+        typeof aporte.datos !== 'string',
+    )
+  ) {
+    throw new Error('No pudimos verificar las observaciones de la bitácora.')
+  }
+  return data
 }
 
 export async function guardarAporte(proyectoId, aporteId, datos) {
