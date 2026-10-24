@@ -10,6 +10,7 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.http.HttpMethod;
 
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
@@ -57,6 +58,10 @@ public class SecurityConfig {
                 .requestMatchers("/api/membresias/**").authenticated()
 
                 // INVITACIONES
+                // Consultar una invitacion no requiere iniciar sesion.
+                .requestMatchers(HttpMethod.GET, "/api/invitaciones/*").permitAll()
+
+                // Aceptar una invitacion y cualquier otra operacion requieren autenticacion.
                 .requestMatchers("/api/invitaciones/**").authenticated()
 
                 // APORTES
