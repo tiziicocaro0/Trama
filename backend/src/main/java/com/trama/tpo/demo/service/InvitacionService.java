@@ -22,7 +22,6 @@ import com.trama.tpo.demo.entity.dto.InvitacionRequest;
 import com.trama.tpo.demo.entity.dto.InvitacionResponse;
 import com.trama.tpo.demo.entity.invitacion.EstadoInvitacion;
 import com.trama.tpo.demo.entity.invitacion.Invitacion;
-import com.trama.tpo.demo.entity.membresia.Especialidad;
 import com.trama.tpo.demo.entity.membresia.Rol;
 import com.trama.tpo.demo.entity.proyecto.Proyecto;
 import com.trama.tpo.demo.entity.usuario.Usuario;
@@ -31,7 +30,6 @@ import com.trama.tpo.demo.repository.InvitacionRepository;
 import com.trama.tpo.demo.repository.MembresiaRepository;
 import com.trama.tpo.demo.repository.ProyectoRepository;
 import com.trama.tpo.demo.repository.UsuarioRepository;
-import com.trama.tpo.demo.entity.dto.AceptarInvitacionRequest;
 import com.trama.tpo.demo.entity.dto.InvitacionDetalleResponse;
 import com.trama.tpo.demo.entity.membresia.Membresia;
 import com.trama.tpo.demo.entity.dto.MiembroResponse;
@@ -100,9 +98,10 @@ public class InvitacionService {
         return InvitacionDetalleResponse.from(invitacion);
     }
 
-    // 1.9 — Aceptar una invitacion y crear la membresia (con especialidad si corresponde).
+    // Aceptar una invitacion y crear la membresia.
+    // La especialidad se configura despues con PUT /miembros/me/especialidades.
     @Transactional
-    public MiembroResponse aceptarInvitacion(String token, AceptarInvitacionRequest request) {
+    public MiembroResponse aceptarInvitacion(String token) {
 
         // 1. Buscar la invitacion bloqueando su registro.
         String tokenHash = calcularHash(token);
@@ -161,46 +160,24 @@ public class InvitacionService {
             );
         }
 
-        // 6. Validar especialidad para roles EDUCACION y SALUD.
-        Rol rol = invitacion.getRol();
-        Especialidad especialidad = request != null ? request.getEspecialidad() : null;
-        String matricula = request != null ? request.getMatricula() : null;
-
-        boolean requiereEspecialidad = (rol == Rol.EDUCACION || rol == Rol.SALUD);
-
-        if (requiereEspecialidad && especialidad == null) {
-            throw new ApiException(
-                    "ESPECIALIDAD_REQUERIDA",
-                    "Los profesionales de educacion y salud deben indicar su especialidad",
-                    HttpStatus.BAD_REQUEST
-            );
-        }
-
-        if (!requiereEspecialidad) {
-            // Para TUTOR y FAMILIAR se ignoran ambos campos.
-            especialidad = null;
-            matricula = null;
-        }
-
-        // 7. Crear la membresia con el rol indicado en la invitacion.
+        // 6. Crear la membresia con el rol indicado en la invitacion.
         Membresia membresia = Membresia.builder()
                 .usuario(usuario)
                 .proyecto(invitacion.getProyecto())
-                .rol(rol)
+                .rol(invitacion.getRol())
                 .esAdmin(false)
-                .especialidad(especialidad)
-                .matricula(matricula != null ? matricula.trim() : null)
                 .build();
 
         membresia = membresiaRepository.saveAndFlush(membresia);
 
-        // 8. Marcar la invitacion como utilizada.
+        // 7. Marcar la invitacion como utilizada.
         invitacion.setEstado(EstadoInvitacion.ACEPTADA);
         invitacionRepository.saveAndFlush(invitacion);
 
-        // 9. Devolver los datos de la nueva membresia.
+        // 8. Devolver los datos de la nueva membresia.
         return MiembroResponse.from(membresia);
     }
+
     @Transactional
     public InvitacionResponse crearInvitacion(
             UUID proyectoId,
