@@ -7,11 +7,16 @@ import java.util.UUID;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.trama.tpo.demo.entity.dto.EspecialidadRequest;
 import com.trama.tpo.demo.entity.dto.MiembroResponse;
 import com.trama.tpo.demo.service.MiembroService;
+
+import jakarta.validation.Valid;
 
 @RestController
 @RequestMapping("/api/proyectos/{proyectoId}/miembros")
@@ -30,6 +35,17 @@ public class MiembroController {
 
         return ResponseEntity.ok(
                 miembroService.listarMiembros(proyectoId)
+        );
+    }
+
+    // 1.9 - CAMBIAR MIS ESPECIALIDADES EN ESTE PROYECTO
+    @PutMapping("/me/especialidades")
+    public ResponseEntity<MiembroResponse> cambiarEspecialidades(
+            @PathVariable UUID proyectoId,
+            @Valid @RequestBody EspecialidadRequest request) {
+
+        return ResponseEntity.ok(
+                miembroService.cambiarEspecialidades(proyectoId, request)
         );
     }
 }
