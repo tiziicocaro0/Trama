@@ -102,11 +102,16 @@ export default function PerfilPage() {
                   proyectoId={id}
                   completo={Boolean(seccion)}
                   puedeCrear={proyecto.puedeCargar === true}
-                  alGuardar={() => {
+                  alGuardar={(accion) => {
+                    const esNota = item.tipo === 'NOTA_PROFESIONAL'
                     setMensajeGuardado(
-                      item.tipo === 'NOTA_PROFESIONAL'
-                        ? 'Nota guardada.'
-                        : 'Aporte guardado.',
+                      accion === 'archivado'
+                        ? esNota
+                          ? 'Nota archivada.'
+                          : 'Aporte archivado.'
+                        : esNota
+                          ? 'Nota guardada.'
+                          : 'Aporte guardado.',
                     )
                     reintentar()
                   }}
