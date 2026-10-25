@@ -1,7 +1,12 @@
+import { useState } from 'react'
 import { User } from '@phosphor-icons/react'
 import { useParams } from 'react-router-dom'
 import { listarMiembros } from '../../api/miembros.js'
+import { quitarMiembroProyecto } from '../../api/proyectos.js'
+import { Aviso } from '../../components/ui/Aviso.jsx'
 import Boton from '../../components/ui/Boton.jsx'
+import { Modal } from '../../components/ui/Modal.jsx'
+import useAuth from '../../hooks/useAuth.js'
 import CabeceraPerfil from './components/CabeceraPerfil.jsx'
 import usePerfil from './hooks/usePerfil.js'
 import NavegacionPerfil from './components/NavegacionPerfil.jsx'
@@ -19,6 +24,14 @@ function esProfesional(rol) {
 
 export default function RedPage() {
   const { id } = useParams()
+  const auth = useAuth()
+  const usuario = auth?.usuario ?? auth
+  const rolUsuario = auth?.rol ?? usuario?.rol
+  const esAdmin =
+    rolUsuario === 'Admin' ||
+    rolUsuario === 'ADMIN' ||
+    Boolean(auth?.esAdmin ?? usuario?.esAdmin)
+
   const {
     proyecto,
     datos: miembros,
@@ -26,6 +39,39 @@ export default function RedPage() {
     error,
     reintentar,
   } = usePerfil(id, listarMiembros)
+
+  const [eliminadosIds, setEliminadosIds] = useState([])
+  const [miembroSeleccionado, setMiembroSeleccionado] = useState(null)
+  const [eliminando, setEliminando] = useState(false)
+  const [errorEliminacion, setErrorEliminacion] = useState('')
+
+  const miembrosVisibles = (miembros ?? []).filter(
+    (persona) => !eliminadosIds.includes(persona.id),
+  )
+
+  function nombreCompleto(persona) {
+    return [persona?.nombre, persona?.apellido].filter(Boolean).join(' ').trim()
+  }
+
+  async function confirmarQuitarAcceso() {
+    if (!miembroSeleccionado) return
+    setEliminando(true)
+    setErrorEliminacion('')
+    try {
+      await quitarMiembroProyecto(id, miembroSeleccionado.id)
+      setEliminadosIds((actuales) => [...actuales, miembroSeleccionado.id])
+      setMiembroSeleccionado(null)
+    } catch (err) {
+      const mensaje =
+        err?.response?.data?.mensaje ||
+        'No pudimos quitar el acceso a este miembro. Intentá nuevamente.'
+      setErrorEliminacion(mensaje)
+      setMiembroSeleccionado(null)
+    } finally {
+      setEliminando(false)
+    }
+  }
+
   return (
     <main
       tabIndex={-1}
@@ -60,33 +106,60 @@ export default function RedPage() {
                 <p className="mt-2 mb-6 text-texto-suave">
                   Personas que acompañan este proyecto.
                 </p>
-                {miembros.length ? (
+
+                {errorEliminacion && (
+                  <div className="mb-6">
+                    <Aviso tipo="error">{errorEliminacion}</Aviso>
+                  </div>
+                )}
+
+                {miembrosVisibles.length ? (
                   <ul className="grid gap-4 md:grid-cols-2">
-                    {miembros.map((persona) => (
-                      <li
-                        key={persona.id}
-                        className="flex items-start gap-4 rounded-lg bg-superficie p-6 shadow-sm"
-                      >
-                        <span className="flex size-12 shrink-0 items-center justify-center rounded-full bg-decoracion text-secundario">
-                          <User size={24} aria-hidden="true" />
-                        </span>
-                        <div className="min-w-0">
-                          <h3 className="break-words font-display text-h2 text-secundario">
-                            {persona.nombre} {persona.apellido}
-                          </h3>
-                          <p className="mt-2 font-semibold">
-                            {etiquetasRol[persona.rol]}
-                            {persona.esAdmin && ' · Administrador'}
-                          </p>
-                          {esProfesional(persona.rol) && (
-                            <p className="mt-1 break-words text-texto-suave">
-                              {persona.especialidad?.trim() ||
-                                'Especialidad no informada'}
-                            </p>
+                    {miembrosVisibles.map((persona) => {
+                      const nombre = nombreCompleto(persona)
+                      return (
+                        <li
+                          key={persona.id}
+                          className="flex flex-col justify-between gap-4 rounded-lg bg-superficie p-6 shadow-sm sm:flex-row sm:items-start"
+                        >
+                          <div className="flex items-start gap-4">
+                            <span className="flex size-12 shrink-0 items-center justify-center rounded-full bg-decoracion text-secundario">
+                              <User size={24} aria-hidden="true" />
+                            </span>
+                            <div className="min-w-0">
+                              <h3 className="break-words font-display text-h2 text-secundario">
+                                {persona.nombre} {persona.apellido}
+                              </h3>
+                              <p className="mt-2 font-semibold">
+                                {etiquetasRol[persona.rol]}
+                                {persona.esAdmin && ' · Administrador'}
+                              </p>
+                              {esProfesional(persona.rol) && (
+                                <p className="mt-1 break-words text-texto-suave">
+                                  {persona.especialidad?.trim() ||
+                                    'Especialidad no informada'}
+                                </p>
+                              )}
+                            </div>
+                          </div>
+
+                          {esAdmin && (
+                            <div className="flex shrink-0 justify-end">
+                              <Boton
+                                variante="peligro"
+                                onClick={() => {
+                                  setErrorEliminacion('')
+                                  setMiembroSeleccionado(persona)
+                                }}
+                                aria-label={`Quitar acceso a ${nombre}`}
+                              >
+                                Quitar acceso
+                              </Boton>
+                            </div>
                           )}
-                        </div>
-                      </li>
-                    ))}
+                        </li>
+                      )
+                    })}
                   </ul>
                 ) : (
                   <p className="rounded-lg bg-superficie p-6">
@@ -94,6 +167,38 @@ export default function RedPage() {
                   </p>
                 )}
               </section>
+
+              <Modal
+                abierto={Boolean(miembroSeleccionado)}
+                titulo="Confirmar acción"
+                onCerrar={() => {
+                  if (!eliminando) setMiembroSeleccionado(null)
+                }}
+              >
+                {miembroSeleccionado && (
+                  <div>
+                    <p className="mb-6">
+                      {`¿Quitarle el acceso a ${nombreCompleto(miembroSeleccionado)}? Sus aportes van a quedar en el perfil.`}
+                    </p>
+                    <div className="flex justify-end gap-3">
+                      <Boton
+                        variante="fantasma"
+                        onClick={() => setMiembroSeleccionado(null)}
+                        disabled={eliminando}
+                      >
+                        Cancelar
+                      </Boton>
+                      <Boton
+                        variante="peligro"
+                        onClick={confirmarQuitarAcceso}
+                        disabled={eliminando}
+                      >
+                        Confirmar
+                      </Boton>
+                    </div>
+                  </div>
+                )}
+              </Modal>
             </>
           )
         )}

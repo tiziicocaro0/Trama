@@ -44,6 +44,7 @@ export default function AppRoutes() {
     const seccion = seccionesPerfil.find((item) => item.slug === perfil?.[1])
     const espaciosPerfil = {
       red: 'Red',
+      miembros: 'Red',
       'datos-personales': 'Datos personales',
       notas: 'Notas',
       bitacora: 'Bitácora',
