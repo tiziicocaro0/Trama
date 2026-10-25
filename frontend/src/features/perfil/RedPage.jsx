@@ -1,7 +1,7 @@
 import { useState } from 'react'
-import { User } from '@phosphor-icons/react'
+import { User, PencilSimple } from '@phosphor-icons/react'
 import { useParams } from 'react-router-dom'
-import { listarMiembros } from '../../api/miembros.js'
+import { listarMiembros, cambiarEspecialidades } from '../../api/miembros.js'
 import { quitarMiembroProyecto } from '../../api/proyectos.js'
 import { Aviso } from '../../components/ui/Aviso.jsx'
 import Boton from '../../components/ui/Boton.jsx'
@@ -10,6 +10,7 @@ import useAuth from '../../hooks/useAuth.js'
 import CabeceraPerfil from './components/CabeceraPerfil.jsx'
 import usePerfil from './hooks/usePerfil.js'
 import NavegacionPerfil from './components/NavegacionPerfil.jsx'
+import EspecialidadModal from './components/EspecialidadModal.jsx'
 
 const etiquetasRol = {
   TUTOR: 'Tutor/a',
@@ -18,8 +19,47 @@ const etiquetasRol = {
   SALUD: 'Salud',
 }
 
+const etiquetasEspecialidad = {
+  DOCENTE_PRIMARIO: 'Docente primario',
+  DOCENTE_SECUNDARIO: 'Docente secundario',
+  DOCENTE_EDUCACION_ESPECIAL: 'Docente de educación especial',
+  MAESTRO_NIVEL_INICIAL: 'Maestro/a de nivel inicial',
+  MAESTRA_INTEGRADORA: 'Maestra integradora',
+  EQUIPO_ORIENTACION: 'Equipo de orientación',
+  PRECEPTOR_ESCOLAR: 'Preceptor/a escolar',
+  DIRECTOR_ESCUELA: 'Director/a de escuela',
+  ASISTENTE_EDUCACIONAL: 'Asistente educacional',
+  INSPECTOR: 'Inspector/a',
+  OTRA_EDUCACION: 'Otra (educación)',
+  PSICOLOGIA: 'Psicología',
+  PSICOPEDAGOGIA: 'Psicopedagogía',
+  FONOAUDIOLOGIA: 'Fonoaudiología',
+  LOGOPEDA: 'Logopeda',
+  TERAPIA_OCUPACIONAL: 'Terapia ocupacional',
+  ACOMPANANTE_TERAPEUTICO: 'Acompañante terapéutico',
+  PSIQUIATRIA: 'Psiquiatría',
+  PSIQUIATRIA_INFANTO_JUVENIL: 'Psiquiatría infanto-juvenil',
+  PEDIATRIA: 'Pediatría',
+  GENETISTA: 'Genetista',
+  PSICOLOGO_SOCIAL: 'Psicólogo/a social',
+  TRABAJADOR_SOCIAL: 'Trabajador/a social',
+  OTRA_SALUD: 'Otra (salud)',
+}
+
 function esProfesional(rol) {
   return rol === 'EDUCACION' || rol === 'SALUD'
+}
+
+function formatearEspecialidades(especialidades) {
+  if (!Array.isArray(especialidades) || especialidades.length === 0) {
+    return 'Especialidad no informada'
+  }
+  return especialidades
+    .map((item) => {
+      const nombre = etiquetasEspecialidad[item.especialidad] ?? item.especialidad
+      return item.aclaracion ? `${nombre} · ${item.aclaracion}` : nombre
+    })
+    .join(' — ')
 }
 
 export default function RedPage() {
@@ -45,8 +85,18 @@ export default function RedPage() {
   const [eliminando, setEliminando] = useState(false)
   const [errorEliminacion, setErrorEliminacion] = useState('')
 
+  // 1.9: estado del modal de especialidades
+  const [modalEspecialidad, setModalEspecialidad] = useState(false)
+  const [especialidadesLocales, setEspecialidadesLocales] = useState(null)
+  const [exitoEspecialidad, setExitoEspecialidad] = useState('')
+
   const miembrosVisibles = (miembros ?? []).filter(
     (persona) => !eliminadosIds.includes(persona.id),
+  )
+
+  // Encontrar al miembro actual en la lista
+  const miembroActual = miembrosVisibles.find(
+    (persona) => persona.usuarioId === usuario?.id,
   )
 
   function nombreCompleto(persona) {
@@ -70,6 +120,25 @@ export default function RedPage() {
     } finally {
       setEliminando(false)
     }
+  }
+
+  async function guardarEspecialidades(lista) {
+    const respuesta = await cambiarEspecialidades(id, lista)
+    setEspecialidadesLocales(respuesta.especialidades ?? lista)
+    setModalEspecialidad(false)
+    setExitoEspecialidad('Especialidades actualizadas correctamente.')
+    setTimeout(() => setExitoEspecialidad(''), 4000)
+  }
+
+  // Las especialidades del miembro actual (priorizando las actualizadas localmente)
+  function obtenerEspecialidades(persona) {
+    if (
+      especialidadesLocales &&
+      persona.usuarioId === usuario?.id
+    ) {
+      return especialidadesLocales
+    }
+    return persona.especialidades ?? []
   }
 
   return (
@@ -107,6 +176,12 @@ export default function RedPage() {
                   Personas que acompañan este proyecto.
                 </p>
 
+                {exitoEspecialidad && (
+                  <div className="mb-6">
+                    <Aviso tipo="exito">{exitoEspecialidad}</Aviso>
+                  </div>
+                )}
+
                 {errorEliminacion && (
                   <div className="mb-6">
                     <Aviso tipo="error">{errorEliminacion}</Aviso>
@@ -117,6 +192,8 @@ export default function RedPage() {
                   <ul className="grid gap-4 md:grid-cols-2">
                     {miembrosVisibles.map((persona) => {
                       const nombre = nombreCompleto(persona)
+                      const esMiPerfil = persona.usuarioId === usuario?.id
+                      const especialidades = obtenerEspecialidades(persona)
                       return (
                         <li
                           key={persona.id}
@@ -135,10 +212,22 @@ export default function RedPage() {
                                 {persona.esAdmin && ' · Administrador'}
                               </p>
                               {esProfesional(persona.rol) && (
-                                <p className="mt-1 break-words text-texto-suave">
-                                  {persona.especialidad?.trim() ||
-                                    'Especialidad no informada'}
-                                </p>
+                                <div className="mt-1">
+                                  <p className="break-words text-texto-suave">
+                                    {formatearEspecialidades(especialidades)}
+                                  </p>
+                                  {esMiPerfil && (
+                                    <button
+                                      type="button"
+                                      onClick={() => setModalEspecialidad(true)}
+                                      className="mt-2 inline-flex items-center gap-1.5 text-sm font-semibold text-primario hover:text-primario-hover"
+                                      aria-label="Editar mis especialidades"
+                                    >
+                                      <PencilSimple size={16} aria-hidden="true" />
+                                      Editar especialidades
+                                    </button>
+                                  )}
+                                </div>
                               )}
                             </div>
                           </div>
@@ -199,6 +288,16 @@ export default function RedPage() {
                   </div>
                 )}
               </Modal>
+
+              {miembroActual && esProfesional(miembroActual.rol) && (
+                <EspecialidadModal
+                  abierto={modalEspecialidad}
+                  onCerrar={() => setModalEspecialidad(false)}
+                  onGuardar={guardarEspecialidades}
+                  rol={miembroActual.rol}
+                  especialidadesActuales={obtenerEspecialidades(miembroActual)}
+                />
+              )}
             </>
           )
         )}

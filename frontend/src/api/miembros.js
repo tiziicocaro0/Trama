@@ -24,3 +24,15 @@ export async function listarMiembros(proyectoId, signal) {
   }
   return data
 }
+
+// 1.9: guardar las especialidades del miembro actual.
+// PUT /api/proyectos/{id}/miembros/me/especialidades
+export async function cambiarEspecialidades(proyectoId, especialidades) {
+  if (!cliente.defaults.baseURL)
+    throw new Error('Falta configurar la conexión con TRAMA.')
+  const { data } = await cliente.put(
+    `/proyectos/${encodeURIComponent(proyectoId)}/miembros/me/especialidades`,
+    { especialidades },
+  )
+  return data
+}
