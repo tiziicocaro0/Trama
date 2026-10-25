@@ -65,7 +65,6 @@ describe('EspecialidadModal', () => {
   })
 
   it('valida que se seleccione al menos una especialidad', async () => {
-    const user = userEvent.setup()
     const onGuardar = vi.fn()
     abrir({ rol: 'SALUD', onGuardar })
 

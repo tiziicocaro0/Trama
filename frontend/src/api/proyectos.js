@@ -96,6 +96,15 @@ export async function obtenerProyecto(id, signal) {
   return data
 }
 
+
+export async function actualizarProyecto(id, datos) {
+  const { data } = await cliente.put(
+    "/proyectos/" + encodeURIComponent(id),
+    datos,
+  )
+  return data
+}
+
 export const MIEMBROS_MOCK = [
   {
     id: 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa1',

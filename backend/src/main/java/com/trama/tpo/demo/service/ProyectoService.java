@@ -9,6 +9,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.trama.tpo.demo.entity.dto.ConfiguracionProyectoRequest;
+import com.trama.tpo.demo.entity.dto.ActualizarDatosProyectoRequest;
 import com.trama.tpo.demo.entity.dto.CrearProyectoRequest;
 import com.trama.tpo.demo.entity.dto.MiProyectoDTO;
 import com.trama.tpo.demo.entity.dto.ProyectoResponse;
@@ -107,6 +108,27 @@ public class ProyectoService {
                 proyecto.setFamiliarVeNotas(request.familiarVeNotas());
 
                 // Solo el tutor administrador llega hasta aca
+                return ProyectoResponse.from(proyectoRepository.save(proyecto), true);
+        }
+
+
+        // Editar datos personales del niño: solo el tutor administrador
+        @Transactional
+        public ProyectoResponse actualizarDatos(
+                        UUID proyectoId,
+                        ActualizarDatosProyectoRequest request) {
+
+                permisoService.verificarAdmin(proyectoId);
+
+                Proyecto proyecto = buscarProyecto(proyectoId);
+
+                proyecto.setNombre(request.nombre());
+                proyecto.setApellido(request.apellido());
+                proyecto.setApodo(request.apodo());
+                proyecto.setFechaNacimiento(request.fechaNacimiento());
+                proyecto.setEscuela(request.escuela());
+                proyecto.setGrado(request.grado());
+
                 return ProyectoResponse.from(proyectoRepository.save(proyecto), true);
         }
 
