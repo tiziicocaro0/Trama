@@ -1,9 +1,8 @@
 package com.trama.tpo.demo.service;
 
-import java.time.Instant;
 import java.util.List;
-import java.util.Set;
 import java.util.UUID;
+import java.time.Instant;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -12,182 +11,145 @@ import org.springframework.transaction.annotation.Transactional;
 import com.trama.tpo.demo.entity.dto.ConfiguracionProyectoRequest;
 import com.trama.tpo.demo.entity.dto.CrearProyectoRequest;
 import com.trama.tpo.demo.entity.dto.MiProyectoDTO;
-import com.trama.tpo.demo.entity.dto.ProfesionalRedResponse;
 import com.trama.tpo.demo.entity.dto.ProyectoResponse;
+import com.trama.tpo.demo.entity.proyecto.Proyecto;
 import com.trama.tpo.demo.entity.membresia.Membresia;
 import com.trama.tpo.demo.entity.membresia.Rol;
-import com.trama.tpo.demo.entity.proyecto.Proyecto;
 import com.trama.tpo.demo.exceptions.ApiException;
-import com.trama.tpo.demo.repository.MembresiaRepository;
 import com.trama.tpo.demo.repository.ProyectoRepository;
+import com.trama.tpo.demo.repository.MembresiaRepository;
 import com.trama.tpo.demo.repository.UsuarioRepository;
 
 @Service
 public class ProyectoService {
 
-    private static final List<Membresia> MIEMBROS_MOCK = List.of(
-            Membresia.builder()
-                    .id(UUID.fromString("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa1"))
-                    .rol(Rol.TUTOR)
-                    .esAdmin(true)
-                    .build(),
-            Membresia.builder()
-                    .id(UUID.fromString("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa2"))
-                    .rol(Rol.EDUCACION)
-                    .esAdmin(false)
-                    .build(),
-            Membresia.builder()
-                    .id(UUID.fromString("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa3"))
-                    .rol(Rol.SALUD)
-                    .esAdmin(false)
-                    .build(),
-            Membresia.builder()
-                    .id(UUID.fromString("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa4"))
-                    .rol(Rol.FAMILIAR)
-                    .esAdmin(false)
-                    .build()
-    );
+        private final ProyectoRepository proyectoRepository;
+        private final PermisoService permisoService;
+        private final UsuarioActual usuarioActual;
+        private final MembresiaRepository membresiaRepository;
+        private final UsuarioRepository usuarioRepository;
 
-    private final ProyectoRepository proyectoRepository;
-    private final PermisoService permisoService;
-    private final UsuarioActual usuarioActual;
-    private final MembresiaRepository membresiaRepository;
-    private final UsuarioRepository usuarioRepository;
+        public ProyectoService(
+                        ProyectoRepository proyectoRepository,
+                        PermisoService permisoService,
+                        UsuarioActual usuarioActual,
+                        MembresiaRepository membresiaRepository,
+                        UsuarioRepository usuarioRepository) {
 
-    public ProyectoService(
-            ProyectoRepository proyectoRepository,
-            PermisoService permisoService,
-            UsuarioActual usuarioActual,
-            MembresiaRepository membresiaRepository,
-            UsuarioRepository usuarioRepository) {
-
-        this.proyectoRepository = proyectoRepository;
-        this.permisoService = permisoService;
-        this.usuarioActual = usuarioActual;
-        this.membresiaRepository = membresiaRepository;
-        this.usuarioRepository = usuarioRepository;
-    }
-
-    @Transactional
-    public ProyectoResponse crear(CrearProyectoRequest request) {
-        UUID usuarioId = permisoService.verificarPuedeCrearProyecto();
-        if (!Boolean.TRUE.equals(request.consentimiento())) {
-            throw new ApiException("CONSENTIMIENTO_REQUERIDO",
-                    "Necesitamos tu autorización para crear el acompañamiento", HttpStatus.BAD_REQUEST);
-        }
-        var usuario = usuarioRepository.findById(usuarioId)
-                .orElseThrow(() -> new ApiException("USUARIO_NO_ENCONTRADO",
-                        "Usuario no encontrado", HttpStatus.NOT_FOUND));
-
-        Proyecto proyecto = proyectoRepository.save(Proyecto.builder()
-                .nombre(request.nombre())
-                .apellido(request.apellido())
-                .apodo(request.apodo())
-                .fechaNacimiento(request.fechaNacimiento())
-                .escuela(request.escuela())
-                .grado(request.grado())
-                .consentimientoFecha(Instant.now())
-                .build());
-
-        membresiaRepository.save(Membresia.builder()
-                .proyecto(proyecto)
-                .usuario(usuario)
-                .rol(Rol.TUTOR)
-                .esAdmin(true)
-                .build());
-        // Quien crea el proyecto queda como tutor administrador
-        return ProyectoResponse.from(proyecto, true);
-    }
-
-    // 1.10 Mis proyectos: solo los niños donde el usuario logueado es miembro
-    @Transactional(readOnly = true)
-    public List<MiProyectoDTO> listarMisProyectos() {
-
-        return proyectoRepository.findMisProyectos(usuarioActual.obtenerId());
-    }
-
-    // Ver los datos de un niño: solo sus miembros
-    @Transactional(readOnly = true)
-    public ProyectoResponse obtener(UUID proyectoId) {
-
-        permisoService.verificarMiembro(proyectoId);
-
-        return ProyectoResponse.from(
-                buscarProyecto(proyectoId),
-                permisoService.puedeEditar(proyectoId));
-    }
-
-    @Transactional(readOnly = true)
-    public List<ProfesionalRedResponse> listarRed(UUID proyectoId) {
-        permisoService.verificarMiembro(proyectoId);
-        return membresiaRepository.findProfesionalesRed(proyectoId, Set.of(Rol.EDUCACION, Rol.SALUD));
-    }
-
-    // Cambiar qué puede hacer la familia: solo el tutor administrador
-    @Transactional
-    public ProyectoResponse actualizarConfiguracion(
-            UUID proyectoId,
-            ConfiguracionProyectoRequest request) {
-
-        permisoService.verificarAdmin(proyectoId);
-
-        Proyecto proyecto = buscarProyecto(proyectoId);
-
-        proyecto.setFamiliarPuedeCargar(request.familiarPuedeCargar());
-        proyecto.setFamiliarVeNotas(request.familiarVeNotas());
-
-        // Solo el tutor administrador llega hasta aca
-        return ProyectoResponse.from(proyectoRepository.save(proyecto), true);
-    }
-
-    // 1.5 Quitar acceso a un miembro: solo un tutor administrador, sin eliminar al único admin
-    @Transactional
-    public void quitarMiembro(UUID proyectoId, UUID miembroId) {
-
-        permisoService.verificarAdmin(proyectoId);
-
-        List<Membresia> miembros = membresiaRepository.findByProyectoId(proyectoId);
-        boolean usaDatosMock = miembros.isEmpty();
-        if (usaDatosMock) {
-            miembros = MIEMBROS_MOCK;
+                this.proyectoRepository = proyectoRepository;
+                this.permisoService = permisoService;
+                this.usuarioActual = usuarioActual;
+                this.membresiaRepository = membresiaRepository;
+                this.usuarioRepository = usuarioRepository;
         }
 
-        Membresia objetivo = miembros.stream()
-                .filter(m -> miembroId.equals(m.getId())
-                        || (m.getUsuario() != null && miembroId.equals(m.getUsuario().getId())))
-                .findFirst()
-                .orElseThrow(() -> new ApiException(
-                        "MIEMBRO_NO_ENCONTRADO",
-                        "No encontramos a este miembro en el proyecto",
-                        HttpStatus.NOT_FOUND
-                ));
+        @Transactional
+        public ProyectoResponse crear(CrearProyectoRequest request) {
+                UUID usuarioId = permisoService.verificarPuedeCrearProyecto();
+                if (!Boolean.TRUE.equals(request.consentimiento())) {
+                        throw new ApiException("CONSENTIMIENTO_REQUERIDO",
+                                        "Necesitamos tu autorización para crear el acompañamiento",
+                                        HttpStatus.BAD_REQUEST);
+                }
+                var usuario = usuarioRepository.findById(usuarioId)
+                                .orElseThrow(() -> new ApiException("USUARIO_NO_ENCONTRADO",
+                                                "Usuario no encontrado", HttpStatus.NOT_FOUND));
 
-        if (objetivo.getRol() == Rol.TUTOR && Boolean.TRUE.equals(objetivo.getEsAdmin())) {
-            long cantidadAdmins = miembros.stream()
-                    .filter(m -> m.getRol() == Rol.TUTOR && Boolean.TRUE.equals(m.getEsAdmin()))
-                    .count();
+                Proyecto proyecto = proyectoRepository.save(Proyecto.builder()
+                                .nombre(request.nombre())
+                                .apellido(request.apellido())
+                                .apodo(request.apodo())
+                                .fechaNacimiento(request.fechaNacimiento())
+                                .escuela(request.escuela())
+                                .grado(request.grado())
+                                .consentimientoFecha(Instant.now())
+                                .build());
 
-            if (cantidadAdmins <= 1) {
-                throw new ApiException(
-                        "ULTIMO_ADMIN",
-                        "No podés quitar el acceso al único administrador del proyecto",
-                        HttpStatus.BAD_REQUEST
-                );
-            }
+                membresiaRepository.save(Membresia.builder()
+                                .proyecto(proyecto)
+                                .usuario(usuario)
+                                .rol(Rol.TUTOR)
+                                .esAdmin(true)
+                                .build());
+                // Quien crea el proyecto queda como tutor administrador
+                return ProyectoResponse.from(proyecto, true);
         }
 
-        if (!usaDatosMock) {
-            membresiaRepository.delete(objetivo);
+        // 1.10 Mis proyectos: solo los niños donde el usuario logueado es miembro
+        @Transactional(readOnly = true)
+        public List<MiProyectoDTO> listarMisProyectos() {
+
+                return proyectoRepository.findMisProyectos(usuarioActual.obtenerId());
         }
-    }
 
-    private Proyecto buscarProyecto(UUID proyectoId) {
+        // Ver los datos de un niño: solo sus miembros
+        @Transactional(readOnly = true)
+        public ProyectoResponse obtener(UUID proyectoId) {
 
-        return proyectoRepository.findById(proyectoId)
-                .orElseThrow(() -> new ApiException(
-                        "PROYECTO_NO_ENCONTRADO",
-                        "No encontramos este proyecto",
-                        HttpStatus.NOT_FOUND
-                ));
-    }
+                permisoService.verificarMiembro(proyectoId);
+
+                return ProyectoResponse.from(
+                                buscarProyecto(proyectoId),
+                                permisoService.puedeEditar(proyectoId));
+        }
+
+        // Cambiar qué puede hacer la familia: solo el tutor administrador
+        @Transactional
+        public ProyectoResponse actualizarConfiguracion(
+                        UUID proyectoId,
+                        ConfiguracionProyectoRequest request) {
+
+                permisoService.verificarAdmin(proyectoId);
+
+                Proyecto proyecto = buscarProyecto(proyectoId);
+
+                proyecto.setFamiliarPuedeCargar(request.familiarPuedeCargar());
+                proyecto.setFamiliarVeNotas(request.familiarVeNotas());
+
+                // Solo el tutor administrador llega hasta aca
+                return ProyectoResponse.from(proyectoRepository.save(proyecto), true);
+        }
+
+        // 1.5 Quitar acceso a un miembro: solo un tutor administrador, sin eliminar al
+        // único admin
+        @Transactional
+        public void quitarMiembro(UUID proyectoId, UUID miembroId) {
+
+                permisoService.verificarAdmin(proyectoId);
+
+                List<Membresia> miembros = membresiaRepository.findByProyectoId(proyectoId);
+
+                Membresia objetivo = miembros.stream()
+                                .filter(m -> miembroId.equals(m.getId())
+                                                || (m.getUsuario() != null && miembroId.equals(m.getUsuario().getId())))
+                                .findFirst()
+                                .orElseThrow(() -> new ApiException(
+                                                "MIEMBRO_NO_ENCONTRADO",
+                                                "No encontramos a este miembro en el proyecto",
+                                                HttpStatus.NOT_FOUND));
+
+                if (objetivo.getRol() == Rol.TUTOR && Boolean.TRUE.equals(objetivo.getEsAdmin())) {
+                        long cantidadAdmins = miembros.stream()
+                                        .filter(m -> m.getRol() == Rol.TUTOR && Boolean.TRUE.equals(m.getEsAdmin()))
+                                        .count();
+
+                        if (cantidadAdmins <= 1) {
+                                throw new ApiException(
+                                                "ULTIMO_ADMIN",
+                                                "No podés quitar el acceso al único administrador del proyecto",
+                                                HttpStatus.BAD_REQUEST);
+                        }
+                }
+
+                membresiaRepository.delete(objetivo);
+        }
+
+        private Proyecto buscarProyecto(UUID proyectoId) {
+
+                return proyectoRepository.findById(proyectoId)
+                                .orElseThrow(() -> new ApiException(
+                                                "PROYECTO_NO_ENCONTRADO",
+                                                "No encontramos este proyecto",
+                                                HttpStatus.NOT_FOUND));
+        }
 }
