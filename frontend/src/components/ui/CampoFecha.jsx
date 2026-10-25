@@ -6,6 +6,10 @@ const MESES = [
   'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
   'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre',
 ]
+const MESES_CORTOS = [
+  'Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun',
+  'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic',
+]
 
 function parsearFecha(valor) {
   if (typeof valor !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(valor))
@@ -56,6 +60,7 @@ function obtenerDiasDelMes(anio, mes) {
 }
 
 export default function CampoFecha({
+  id,
   name,
   value = '',
   onChange,
@@ -67,6 +72,8 @@ export default function CampoFecha({
   className = '',
 }) {
   const [abierto, setAbierto] = useState(false)
+  // 'dias' | 'anios' | 'meses'
+  const [vista, setVista] = useState('dias')
   const contenedorRef = useRef(null)
   const botonRef = useRef(null)
 
@@ -80,6 +87,11 @@ export default function CampoFecha({
       : { anio: hoy.getFullYear(), mes: hoy.getMonth() },
   )
 
+  // Rango de anios: bloques de 12, centrado en el anio actual de la vista
+  const [inicioRangoAnios, setInicioRangoAnios] = useState(
+    () => mesVista.anio - (mesVista.anio % 12),
+  )
+
   useEffect(() => {
     if (!abierto) return
     function manejarClickFuera(evento) {
@@ -88,12 +100,20 @@ export default function CampoFecha({
         !contenedorRef.current.contains(evento.target)
       ) {
         setAbierto(false)
+        setVista('dias')
       }
     }
     function manejarEscape(evento) {
       if (evento.key === 'Escape') {
-        setAbierto(false)
-        botonRef.current?.focus()
+        if (vista === 'meses') {
+          setVista('anios')
+        } else if (vista === 'anios') {
+          setVista('dias')
+        } else {
+          setAbierto(false)
+          setVista('dias')
+          botonRef.current?.focus()
+        }
       }
     }
     document.addEventListener('mousedown', manejarClickFuera)
@@ -102,7 +122,7 @@ export default function CampoFecha({
       document.removeEventListener('mousedown', manejarClickFuera)
       document.removeEventListener('keydown', manejarEscape)
     }
-  }, [abierto])
+  }, [abierto, vista])
 
   function alternar() {
     if (disabled) return
@@ -112,7 +132,12 @@ export default function CampoFecha({
           anio: fechaSeleccionada.getFullYear(),
           mes: fechaSeleccionada.getMonth(),
         })
+        setInicioRangoAnios(
+          fechaSeleccionada.getFullYear() -
+            (fechaSeleccionada.getFullYear() % 12),
+        )
       }
+      if (!prev) setVista('dias')
       return !prev
     })
   }
@@ -131,6 +156,21 @@ export default function CampoFecha({
     })
   }
 
+  function abrirSelectorAnios() {
+    setInicioRangoAnios(mesVista.anio - (mesVista.anio % 12))
+    setVista('anios')
+  }
+
+  function seleccionarAnio(anio) {
+    setMesVista((actual) => ({ ...actual, anio }))
+    setVista('meses')
+  }
+
+  function seleccionarMes(mes) {
+    setMesVista((actual) => ({ ...actual, mes }))
+    setVista('dias')
+  }
+
   function seleccionarDia(dia) {
     const fecha = new Date(mesVista.anio, mesVista.mes, dia)
     const nuevoValor = formatearParaValor(fecha)
@@ -138,6 +178,7 @@ export default function CampoFecha({
       onChange({ target: { name, value: nuevoValor, type: 'text' } })
     }
     setAbierto(false)
+    setVista('dias')
     botonRef.current?.focus()
   }
 
@@ -147,8 +188,28 @@ export default function CampoFecha({
     return fecha > max
   }
 
+  function anioDeshabilitado(anio) {
+    if (!max) return false
+    return anio > Number(max.slice(0, 4))
+  }
+
+  function mesDeshabilitadoEnVista(mes) {
+    if (!max) return false
+    const anioMax = Number(max.slice(0, 4))
+    const mesMax = Number(max.slice(5, 7)) - 1
+    if (mesVista.anio > anioMax) return true
+    if (mesVista.anio === anioMax && mes > mesMax) return true
+    return false
+  }
+
   const dias = obtenerDiasDelMes(mesVista.anio, mesVista.mes)
   const textoMostrado = formatearParaMostrar(value) || ''
+
+  // Generar grilla de anios (4 columnas x 3 filas = 12 anios)
+  const aniosGrilla = []
+  for (let i = 0; i < 12; i++) {
+    aniosGrilla.push(inicioRangoAnios + i)
+  }
 
   return (
     <div ref={contenedorRef} className={`relative ${className}`}>
@@ -174,75 +235,181 @@ export default function CampoFecha({
           <span className="text-texto-suave">dd/mm/aaaa</span>
         )}
       </button>
-      {/* Input oculto para formularios */}
-      <input type="hidden" name={name} value={value} required={required} />
+      {/* Input accesible para asociación con label y formularios */}
+      <input
+        id={id}
+        type="text"
+        name={name}
+        value={value}
+        onChange={onChange}
+        required={required}
+        tabIndex={-1}
+        className="sr-only"
+      />
       {abierto && (
         <div
           role="dialog"
           aria-label="Elegir fecha"
           className="absolute left-0 z-50 mt-2 w-72 rounded-lg border border-borde bg-superficie p-4 shadow-md"
         >
-          {/* Navegacion del mes */}
-          <div className="mb-3 flex items-center justify-between">
-            <button
-              type="button"
-              onClick={mesAnterior}
-              aria-label="Mes anterior"
-              className="flex size-8 items-center justify-center rounded-full text-secundario hover:bg-decoracion"
-            >
-              <CaretLeft size={18} weight="bold" />
-            </button>
-            <span className="font-display text-lg text-secundario">
-              {MESES[mesVista.mes]} {mesVista.anio}
-            </span>
-            <button
-              type="button"
-              onClick={mesSiguiente}
-              aria-label="Mes siguiente"
-              className="flex size-8 items-center justify-center rounded-full text-secundario hover:bg-decoracion"
-            >
-              <CaretRight size={18} weight="bold" />
-            </button>
-          </div>
-          {/* Dias de la semana */}
-          <div className="mb-1 grid grid-cols-7 text-center text-sm font-semibold text-texto-suave">
-            {DIAS_SEMANA.map((d) => (
-              <span key={d} className="py-1">
-                {d}
-              </span>
-            ))}
-          </div>
-          {/* Grilla de dias */}
-          <div className="grid grid-cols-7 text-center">
-            {dias.map((dia, i) =>
-              dia === null ? (
-                <span key={`vacio-${i}`} />
-              ) : (
+          {vista === 'dias' && (
+            <>
+              {/* Navegacion del mes */}
+              <div className="mb-3 flex items-center justify-between">
                 <button
-                  key={dia}
                   type="button"
-                  disabled={estaDeshabilitado(dia)}
-                  onClick={() => seleccionarDia(dia)}
-                  className={`flex size-9 items-center justify-center rounded-full text-sm transition-colors ${
-                    value ===
-                    formatearParaValor(
-                      new Date(mesVista.anio, mesVista.mes, dia),
-                    )
-                      ? 'bg-primario font-bold text-superficie'
-                      : formatearParaValor(
-                            new Date(mesVista.anio, mesVista.mes, dia),
-                          ) === hoyStr
-                        ? 'font-bold text-primario'
-                        : estaDeshabilitado(dia)
-                          ? 'cursor-not-allowed text-borde'
-                          : 'text-texto hover:bg-decoracion'
-                  }`}
+                  onClick={mesAnterior}
+                  aria-label="Mes anterior"
+                  className="flex size-8 items-center justify-center rounded-full text-secundario hover:bg-decoracion"
                 >
-                  {dia}
+                  <CaretLeft size={18} weight="bold" />
                 </button>
-              ),
-            )}
-          </div>
+                <button
+                  type="button"
+                  onClick={abrirSelectorAnios}
+                  aria-label="Elegir año y mes"
+                  className="rounded-md px-2 py-1 font-display text-lg text-secundario hover:bg-decoracion"
+                >
+                  {MESES[mesVista.mes]} {mesVista.anio}
+                </button>
+                <button
+                  type="button"
+                  onClick={mesSiguiente}
+                  aria-label="Mes siguiente"
+                  className="flex size-8 items-center justify-center rounded-full text-secundario hover:bg-decoracion"
+                >
+                  <CaretRight size={18} weight="bold" />
+                </button>
+              </div>
+              {/* Dias de la semana */}
+              <div className="mb-1 grid grid-cols-7 text-center text-sm font-semibold text-texto-suave">
+                {DIAS_SEMANA.map((d) => (
+                  <span key={d} className="py-1">
+                    {d}
+                  </span>
+                ))}
+              </div>
+              {/* Grilla de dias */}
+              <div className="grid grid-cols-7 text-center">
+                {dias.map((dia, i) =>
+                  dia === null ? (
+                    <span key={`vacio-${i}`} />
+                  ) : (
+                    <button
+                      key={dia}
+                      type="button"
+                      disabled={estaDeshabilitado(dia)}
+                      onClick={() => seleccionarDia(dia)}
+                      className={`flex size-9 items-center justify-center rounded-full text-sm transition-colors ${
+                        value ===
+                        formatearParaValor(
+                          new Date(mesVista.anio, mesVista.mes, dia),
+                        )
+                          ? 'bg-primario font-bold text-superficie'
+                          : formatearParaValor(
+                                new Date(mesVista.anio, mesVista.mes, dia),
+                              ) === hoyStr
+                            ? 'font-bold text-primario'
+                            : estaDeshabilitado(dia)
+                              ? 'cursor-not-allowed text-borde'
+                              : 'text-texto hover:bg-decoracion'
+                      }`}
+                    >
+                      {dia}
+                    </button>
+                  ),
+                )}
+              </div>
+            </>
+          )}
+
+          {vista === 'anios' && (
+            <>
+              {/* Navegacion del rango de anios */}
+              <div className="mb-3 flex items-center justify-between">
+                <button
+                  type="button"
+                  onClick={() => setInicioRangoAnios((a) => a - 12)}
+                  aria-label="Años anteriores"
+                  className="flex size-8 items-center justify-center rounded-full text-secundario hover:bg-decoracion"
+                >
+                  <CaretLeft size={18} weight="bold" />
+                </button>
+                <span className="font-display text-lg text-secundario">
+                  {inicioRangoAnios} – {inicioRangoAnios + 11}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setInicioRangoAnios((a) => a + 12)}
+                  aria-label="Años siguientes"
+                  className="flex size-8 items-center justify-center rounded-full text-secundario hover:bg-decoracion"
+                >
+                  <CaretRight size={18} weight="bold" />
+                </button>
+              </div>
+              {/* Grilla de anios (4x3) */}
+              <div className="grid grid-cols-4 gap-1">
+                {aniosGrilla.map((anio) => (
+                  <button
+                    key={anio}
+                    type="button"
+                    disabled={anioDeshabilitado(anio)}
+                    onClick={() => seleccionarAnio(anio)}
+                    className={`rounded-lg py-2 text-sm transition-colors ${
+                      anio === mesVista.anio
+                        ? 'bg-primario font-bold text-superficie'
+                        : anio === hoy.getFullYear()
+                          ? 'font-bold text-primario'
+                          : anioDeshabilitado(anio)
+                            ? 'cursor-not-allowed text-borde'
+                            : 'text-texto hover:bg-decoracion'
+                    }`}
+                  >
+                    {anio}
+                  </button>
+                ))}
+              </div>
+            </>
+          )}
+
+          {vista === 'meses' && (
+            <>
+              {/* Titulo con anio seleccionado */}
+              <div className="mb-3 flex items-center justify-center">
+                <button
+                  type="button"
+                  onClick={() => setVista('anios')}
+                  aria-label="Volver a elegir año"
+                  className="rounded-md px-2 py-1 font-display text-lg text-secundario hover:bg-decoracion"
+                >
+                  {mesVista.anio}
+                </button>
+              </div>
+              {/* Grilla de meses (4x3) */}
+              <div className="grid grid-cols-4 gap-1">
+                {MESES_CORTOS.map((nombreMes, indice) => (
+                  <button
+                    key={nombreMes}
+                    type="button"
+                    disabled={mesDeshabilitadoEnVista(indice)}
+                    onClick={() => seleccionarMes(indice)}
+                    className={`rounded-lg py-2 text-sm transition-colors ${
+                      indice === mesVista.mes
+                        ? 'bg-primario font-bold text-superficie'
+                        : indice === hoy.getMonth() &&
+                            mesVista.anio === hoy.getFullYear()
+                          ? 'font-bold text-primario'
+                          : mesDeshabilitadoEnVista(indice)
+                            ? 'cursor-not-allowed text-borde'
+                            : 'text-texto hover:bg-decoracion'
+                    }`}
+                  >
+                    {nombreMes}
+                  </button>
+                ))}
+              </div>
+            </>
+          )}
         </div>
       )}
     </div>
