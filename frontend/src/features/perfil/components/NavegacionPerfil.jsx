@@ -1,5 +1,5 @@
 import { useLocation } from 'react-router-dom'
-import Button from '../../../components/ui/Button.jsx'
+import Boton from '../../../components/ui/Boton.jsx'
 
 const espacios = [
   { slug: 'red', titulo: 'Red' },
@@ -14,14 +14,14 @@ export default function NavegacionPerfil({ proyectoId }) {
       {espacios.map(({ slug, titulo }) => {
         const destino = `/proyectos/${proyectoId}/${slug}`
         return (
-          <Button
+          <Boton
             key={slug}
             to={destino}
             variant="secondary"
             aria-current={pathname === destino ? 'page' : undefined}
           >
             {titulo}
-          </Button>
+          </Boton>
         )
       })}
     </nav>

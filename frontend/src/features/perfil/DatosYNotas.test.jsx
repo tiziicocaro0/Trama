@@ -59,7 +59,7 @@ beforeEach(() => {
   cliente.get.mockReset().mockImplementation(async (ruta) => ({
     data: ruta.endsWith('/aportes')
       ? aportes
-      : ruta.endsWith('/red')
+      : ruta.endsWith('/miembros')
         ? []
         : { ...proyecto, puedeCargar: puedeCrear },
   }))

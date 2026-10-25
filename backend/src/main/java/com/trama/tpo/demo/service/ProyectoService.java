@@ -88,10 +88,13 @@ public class ProyectoService {
 
                 permisoService.verificarMiembro(proyectoId);
 
+<<<<<<< HEAD
                 return ProyectoResponse.from(
                                 buscarProyecto(proyectoId),
                                 permisoService.puedeEditar(proyectoId));
         }
+=======
+>>>>>>> origin/develop
 
         // Cambiar qué puede hacer la familia: solo el tutor administrador
         @Transactional

@@ -1,8 +1,9 @@
 import { useState } from 'react';
 import { Aviso } from '../components/ui/Aviso';
-import { Boton } from '../components/ui/Boton';
-import { Campo } from '../components/ui/Campo';
-import { CampoContraseña } from '../components/ui/CampoContraseña';
+import Boton from '../components/ui/Boton.jsx';
+import Campo from '../components/ui/Campo.jsx';
+import CampoContrasena from '../components/ui/CampoContrasena.jsx';
+import CampoFormulario from '../components/ui/CampoFormulario.jsx';
 import { Cargando } from '../components/ui/Cargando';
 import { Modal } from '../components/ui/Modal';
 import { Selector } from '../components/ui/Selector';
@@ -56,36 +57,39 @@ export function Componentes() {
 
       <Tarjeta titulo="Botones">
         <div className="flex flex-wrap items-center gap-4">
-          <Boton variante="primario">Botón primario</Boton>
-          <Boton variante="secundario">Botón secundario</Boton>
-          <Boton variante="fantasma">Botón fantasma</Boton>
-          <Boton variante="primario" disabled>
-            Deshabilitado
-          </Boton>
+          <Boton>Botón primario</Boton>
+          <Boton variant="secondary">Botón secundario</Boton>
+          <Boton disabled>Deshabilitado</Boton>
         </div>
       </Tarjeta>
 
       <Tarjeta titulo="Campos y selectores">
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-          <Campo
-            etiqueta="Nombre completo"
-            placeholder="Ej. Zoe García"
-            value={nombre}
-            onChange={(e) => setNombre(e.target.value)}
-            ayuda="Como querés que te vean en el espacio compartido."
-          />
-          <Campo
-            etiqueta="Campo con error"
-            placeholder="correo@ejemplo.com"
-            defaultValue="correo-invalido"
+          <CampoFormulario
+            id="vitrina-nombre"
+            label="Nombre completo"
+            hint="Como querés que te vean en el espacio compartido."
+          >
+            <Campo
+              placeholder="Ej. Zoe García"
+              value={nombre}
+              onChange={(e) => setNombre(e.target.value)}
+            />
+          </CampoFormulario>
+          <CampoFormulario
+            id="vitrina-error"
+            label="Campo con error"
             error="Ingresá un correo electrónico válido."
-          />
-          <CampoContraseña
-            etiqueta="Contraseña"
-            placeholder="Ingresá tu contraseña"
-            value={clave}
-            onChange={(e) => setClave(e.target.value)}
-          />
+          >
+            <Campo placeholder="correo@ejemplo.com" defaultValue="correo-invalido" />
+          </CampoFormulario>
+          <CampoFormulario id="vitrina-clave" label="Contraseña">
+            <CampoContrasena
+              placeholder="Ingresá tu contraseña"
+              value={clave}
+              onChange={(e) => setClave(e.target.value)}
+            />
+          </CampoFormulario>
           <Selector
             etiqueta="Rol en el acompañamiento"
             opciones={OPCIONES_ROL}
@@ -127,7 +131,7 @@ export function Componentes() {
             clases del tema.
           </p>
           <div className="flex justify-end gap-3">
-            <Boton variante="fantasma" onClick={() => setModalAbierto(false)}>
+            <Boton variant="secondary" onClick={() => setModalAbierto(false)}>
               Cancelar
             </Boton>
             <Boton onClick={() => setModalAbierto(false)}>Aceptar</Boton>

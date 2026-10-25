@@ -41,7 +41,7 @@ import com.trama.tpo.demo.service.EmailService;
 @AutoConfigureMockMvc
 @ActiveProfiles("test")
 @TestPropertySource(properties =
-        "trama.invitaciones.url-base=https://trama.example/aceptar-invitacion")
+        "trama.invitaciones.url-base=https://trama.example/invitacion")
 class InvitacionControllerTest {
 
     @Autowired
@@ -172,9 +172,9 @@ void prepararDatos() {
 
         // Verificar que se solicito el envio del correo.
         verify(emailService).enviarInvitacion(
-                eq(email),
-                eq("compartido"),
-                contains("?token=")
+        eq(email),
+        eq("compartido"),
+        contains("https://trama.example/invitacion/")
         );
     }
 

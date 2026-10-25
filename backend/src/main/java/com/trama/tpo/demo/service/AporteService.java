@@ -17,7 +17,9 @@ import com.trama.tpo.demo.repository.ProyectoRepository;
 import com.trama.tpo.demo.repository.UsuarioRepository;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-
+import com.trama.tpo.demo.aporte.observacion.DatosObservacion;
+import java.util.Objects;
+import java.util.Comparator;
 import com.trama.tpo.demo.aporte.interes.DatosInteres;
 import com.trama.tpo.demo.aporte.fortaleza.DatosFortaleza;
 import org.springframework.http.HttpStatus;
@@ -65,6 +67,7 @@ public class AporteService {
         permisoService.verificarPuedeEditar(proyectoId);
         validarInteres(request);
         validarFortaleza(request);
+        validarObservacion(request);
 
         UUID usuarioId = usuarioActual.obtenerId();
 
@@ -132,9 +135,36 @@ public class AporteService {
         // Se calcula una sola vez: si el usuario puede cargar en este proyecto
         boolean puedeCargar = permisoService.puedeEditar(proyectoId);
 
-        return aportes.stream()
-                .map(aporte -> convertirRespuesta(aporte, puedeCargar))
-                .toList();
+        if (tipo == TipoAporte.OBSERVACION) {
+                ObjectMapper mapper = new ObjectMapper();
+                mapper.findAndRegisterModules();
+
+                aportes.sort(
+                        Comparator.comparing(
+                                (Aporte aporte) -> {
+                                        try {
+                                        DatosObservacion datos = mapper.readValue(
+                                                aporte.getDatos(),
+                                                DatosObservacion.class
+                                        );
+
+                                        return datos.fecha().toInstant();
+
+                                        } catch (JsonProcessingException e) {
+                                        throw new ApiException(
+                                                "DATOS_OBSERVACION_INVALIDOS",
+                                                "No se pudo leer la fecha de la observación",
+                                                HttpStatus.INTERNAL_SERVER_ERROR
+                                        );
+                                        }
+                                }
+                        ).reversed()
+                );
+                }
+
+                return aportes.stream()
+                        .map(aporte -> convertirRespuesta(aporte, puedeCargar))
+                        .toList();
     }
 
     // EDITAR APORTE
@@ -165,6 +195,7 @@ public class AporteService {
         // Validar los datos específicos del aporte
         validarInteres(request);
         validarFortaleza(request);
+        validarObservacion(request);
 
         // Guardar la versión anterior antes de editar
         AporteVersion version = AporteVersion.builder()
@@ -379,4 +410,58 @@ public class AporteService {
                 );
         }
         }
+        private void validarObservacion(AporteRequest request) {
+
+                if (request.tipo() != TipoAporte.OBSERVACION) {
+                        return;
+                }
+
+                if (request.contenido() == null ||
+                        request.contenido().isBlank()) {
+                        throw new ApiException(
+                                "OBSERVACION_INVALIDA",
+                                "El texto de la observación es obligatorio",
+                                HttpStatus.BAD_REQUEST
+                        );
+                }
+
+                if (request.datos() == null ||
+                        request.datos().isBlank()) {
+                        throw new ApiException(
+                                "DATOS_OBSERVACION_INVALIDOS",
+                                "La fecha, el contexto y las etiquetas son obligatorios",
+                                HttpStatus.BAD_REQUEST
+                        );
+                }
+
+                try {
+                        ObjectMapper mapper = new ObjectMapper();
+                        mapper.findAndRegisterModules();
+
+                        DatosObservacion datos = mapper.readValue(
+                                request.datos(),
+                                DatosObservacion.class
+                        );
+
+                        if (datos.fecha() == null ||
+                                datos.contexto() == null ||
+                                datos.etiquetas() == null ||
+                                datos.etiquetas().isEmpty() ||
+                                datos.etiquetas().stream().anyMatch(Objects::isNull)) {
+
+                        throw new ApiException(
+                                "DATOS_OBSERVACION_INVALIDOS",
+                                "La fecha, el contexto y al menos una etiqueta son obligatorios",
+                                HttpStatus.BAD_REQUEST
+                        );
+                        }
+
+                } catch (JsonProcessingException e) {
+                        throw new ApiException(
+                                "DATOS_OBSERVACION_INVALIDOS",
+                                "Los datos de la observación no son válidos",
+                                HttpStatus.BAD_REQUEST
+                        );
+                }
+                }
 }

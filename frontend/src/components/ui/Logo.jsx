@@ -1,4 +1,4 @@
-export default function BrandLogo({ className = '' }) {
+export default function Logo({ className = '' }) {
   return (
     <span className={`brand-logo ${className}`}>
       <img

@@ -1,5 +1,5 @@
-import BrandLogo from '../../components/ui/BrandLogo.jsx'
-import Button from '../../components/ui/Button.jsx'
+import Logo from '../../components/ui/Logo.jsx'
+import Boton from '../../components/ui/Boton.jsx'
 import WelcomeBackdrop from './components/WelcomeBackdrop.jsx'
 
 export default function BienvenidaPage() {
@@ -10,7 +10,7 @@ export default function BienvenidaPage() {
         Ir al contenido
       </a>
       <header className="welcome-header">
-        <BrandLogo />
+        <Logo />
       </header>
       <main id="contenido" className="welcome-main" tabIndex={-1}>
         <div className="welcome-illustration" aria-hidden="true">
@@ -28,10 +28,10 @@ export default function BienvenidaPage() {
             una misma persona.
           </h1>
           <nav aria-label="Acceso a TRAMA" className="welcome-actions">
-            <Button to="/login">Iniciar sesión</Button>
-            <Button to="/registro" variant="secondary">
+            <Boton to="/login">Iniciar sesión</Boton>
+            <Boton to="/registro" variant="secondary">
               Crear cuenta
-            </Button>
+            </Boton>
           </nav>
         </div>
       </main>

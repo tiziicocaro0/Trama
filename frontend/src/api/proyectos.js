@@ -1,16 +1,12 @@
 import cliente, { clienteApi } from './cliente.js'
 import { calcularEdad } from '../features/perfil/perfil.js'
-export { PROYECTOS_MOCK } from './proyectos.mock.js'
 
-export function filtrarProyectosPorMiembro(proyectos, usuarioId) {
-  return proyectos.filter((proyecto) => !proyecto.miembrosIds || proyecto.miembrosIds.includes(usuarioId))
-}
 
-// Adaptador compartido por MisProyectos (develop) y Acompañamientos (RF-10).
-export async function obtenerMisProyectos(usuarioId, signal) {
-  const lista = await listarMisProyectos(signal)
+// 1.10: proyectos del usuario para la página Acompañamientos.
+// El back ya devuelve solo los proyectos donde el usuario es miembro.
+export async function obtenerMisProyectos(signal) {
+  const propios = await listarMisProyectos(signal)
   signal?.throwIfAborted()
-  const propios = usuarioId ? filtrarProyectosPorMiembro(lista, usuarioId) : lista
   const etiquetasRol = { TUTOR: 'Tutor/a', FAMILIAR: 'Familiar', EDUCACION: 'Educación', SALUD: 'Salud' }
   return Promise.all(propios.map(async (item) => {
     const detalle = item.edad || item.fechaNacimiento ? item : await obtenerProyecto(item.id, signal)
@@ -26,27 +22,6 @@ export async function obtenerMisProyectos(usuarioId, signal) {
   }))
 }
 
-export async function obtenerRedProyecto(id, signal) {
-  if (!cliente.defaults.baseURL)
-    throw new Error('Falta configurar la conexión con TRAMA.')
-  const { data } = await cliente.get(
-    `/proyectos/${encodeURIComponent(id)}/red`,
-    { signal },
-  )
-  if (
-    !Array.isArray(data) ||
-    data.some(
-      (persona) =>
-        !persona?.id ||
-        typeof persona.nombre !== 'string' ||
-        typeof persona.apellido !== 'string' ||
-        !['SALUD', 'EDUCACION'].includes(persona.rol),
-    )
-  ) {
-    throw new Error('No pudimos verificar los profesionales vinculados.')
-  }
-  return data
-}
 
 export async function crearProyecto(datos) {
   if (!cliente.defaults.baseURL) {
