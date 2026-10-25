@@ -103,7 +103,7 @@ export function useProyectoActual() {
   useEffect(() => {
     const controller = new AbortController();
 
-    obtenerMisProyectos(usuario?.id, controller.signal)
+    obtenerMisProyectos(controller.signal)
       .then((lista) => {
         if (!controller.signal.aborted) {
           setProyectos(lista);
