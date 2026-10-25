@@ -30,6 +30,9 @@ import com.trama.tpo.demo.repository.InvitacionRepository;
 import com.trama.tpo.demo.repository.MembresiaRepository;
 import com.trama.tpo.demo.repository.ProyectoRepository;
 import com.trama.tpo.demo.repository.UsuarioRepository;
+import com.trama.tpo.demo.entity.dto.InvitacionDetalleResponse;
+import com.trama.tpo.demo.entity.membresia.Membresia;
+import com.trama.tpo.demo.entity.dto.MiembroResponse;
 
 @Service
 public class InvitacionService {
@@ -64,7 +67,115 @@ public class InvitacionService {
         this.emailService = emailService;
         this.urlBaseInvitacion = urlBaseInvitacion;
     }
+     // 1.4 - Consultar una invitacion mediante su token.
+    @Transactional(readOnly = true)
+    public InvitacionDetalleResponse consultarInvitacion(String token) {
 
+        // 1. Calcular el hash del token recibido.
+        String tokenHash = calcularHash(token);
+
+        // 2. Buscar la invitacion en la base de datos.
+        Invitacion invitacion = invitacionRepository
+                .findByTokenHash(tokenHash)
+                .orElseThrow(() -> new ApiException(
+                        "INVITACION_NO_ENCONTRADA",
+                        "No encontramos esta invitacion",
+                        HttpStatus.NOT_FOUND
+                ));
+
+        // 3. Comprobar que siga pendiente y no haya vencido.
+        if (invitacion.getEstado() != EstadoInvitacion.PENDIENTE
+                || !invitacion.getVenceEn().isAfter(Instant.now())) {
+
+            throw new ApiException(
+                    "INVITACION_NO_DISPONIBLE",
+                    "La invitacion vencio o ya fue utilizada",
+                    HttpStatus.GONE
+            );
+        }
+
+        // 4. Devolver solamente los datos publicos.
+        return InvitacionDetalleResponse.from(invitacion);
+    }
+
+    // Aceptar una invitacion y crear la membresia.
+    @Transactional
+    public MiembroResponse aceptarInvitacion(String token) {
+
+        // 1. Buscar la invitacion bloqueando su registro.
+        String tokenHash = calcularHash(token);
+
+        Invitacion invitacion = invitacionRepository
+                .findByTokenHashForUpdate(tokenHash)
+                .orElseThrow(() -> new ApiException(
+                        "INVITACION_NO_ENCONTRADA",
+                        "No encontramos esta invitacion",
+                        HttpStatus.NOT_FOUND
+                ));
+
+        // 2. Comprobar que siga pendiente y vigente.
+        if (invitacion.getEstado() != EstadoInvitacion.PENDIENTE
+                || !invitacion.getVenceEn().isAfter(Instant.now())) {
+
+            throw new ApiException(
+                    "INVITACION_NO_DISPONIBLE",
+                    "La invitacion vencio o ya fue utilizada",
+                    HttpStatus.GONE
+            );
+        }
+
+        // 3. Obtener al usuario autenticado.
+        UUID usuarioId = usuarioActual.obtenerId();
+
+        Usuario usuario = usuarioRepository.findById(usuarioId)
+                .orElseThrow(() -> new ApiException(
+                        "USUARIO_NO_ENCONTRADO",
+                        "No encontramos al usuario autenticado",
+                        HttpStatus.UNAUTHORIZED
+                ));
+
+        // 4. Verificar que sea el destinatario de la invitacion.
+        String emailUsuario = usuario.getEmail()
+                .trim()
+                .toLowerCase(Locale.ROOT);
+
+        if (!invitacion.getEmail().equalsIgnoreCase(emailUsuario)) {
+            throw new ApiException(
+                    "DESTINATARIO_INCORRECTO",
+                    "Esta invitacion pertenece a otra cuenta",
+                    HttpStatus.FORBIDDEN
+            );
+        }
+
+        // 5. Evitar crear una membresia duplicada.
+        if (membresiaRepository.existsByUsuarioIdAndProyectoId(
+                usuarioId,
+                invitacion.getProyecto().getId())) {
+
+            throw new ApiException(
+                    "YA_ES_MIEMBRO",
+                    "Ya perteneces a este proyecto",
+                    HttpStatus.CONFLICT
+            );
+        }
+
+        // 6. Crear la membresia con el rol indicado en la invitacion.
+        Membresia membresia = Membresia.builder()
+                .usuario(usuario)
+                .proyecto(invitacion.getProyecto())
+                .rol(invitacion.getRol())
+                .esAdmin(false)
+                .build();
+
+        membresia = membresiaRepository.saveAndFlush(membresia);
+
+        // 7. Marcar la invitacion como utilizada.
+        invitacion.setEstado(EstadoInvitacion.ACEPTADA);
+        invitacionRepository.saveAndFlush(invitacion);
+
+        // 8. Devolver los datos de la nueva membresia.
+        return MiembroResponse.from(membresia);
+    }
     @Transactional
     public InvitacionResponse crearInvitacion(
             UUID proyectoId,
@@ -233,6 +344,6 @@ public class InvitacionService {
             );
         }
 
-        return base + "?token=" + token;
+        return base.replaceAll("/+$", "") + "/" + token;
     }
 }
