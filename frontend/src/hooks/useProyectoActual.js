@@ -1,9 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import {
-  filtrarProyectosPorMiembro,
   obtenerMisProyectos,
-  PROYECTOS_MOCK,
 } from '../api/proyectos.js';
 import { useAuth } from './useAuth.js';
 
@@ -114,10 +112,7 @@ export function useProyectoActual() {
       })
       .catch(() => {
         if (!controller.signal.aborted) {
-          const fallback = usuario?.id
-            ? filtrarProyectosPorMiembro(PROYECTOS_MOCK, usuario.id)
-            : PROYECTOS_MOCK;
-          setProyectos(fallback);
+          setProyectos([]);
           setCargando(false);
         }
       });

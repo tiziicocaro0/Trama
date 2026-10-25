@@ -133,7 +133,7 @@ export default function EspecialidadModal({
         if (!guardando) onCerrar()
       }}
     >
-      <div className="flex max-h-[60vh] flex-col gap-4 overflow-y-auto">
+      <div className="flex max-h-96 flex-col gap-4 overflow-y-auto">
         {error && <Aviso tipo="error">{error}</Aviso>}
 
         <p className="text-sm text-texto-suave">

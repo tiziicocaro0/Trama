@@ -18,7 +18,7 @@ const red = [
     apellido: 'Ejemplo',
     rol: 'TUTOR',
     esAdmin: true,
-    especialidad: null,
+    especialidades: [],
   },
   {
     id: 'membresia-familiar',
@@ -26,14 +26,14 @@ const red = [
     apellido: 'Ejemplo',
     rol: 'FAMILIAR',
     esAdmin: false,
-    especialidad: null,
+    especialidades: [],
   },
   {
     id: 'membresia-ejemplo',
     nombre: 'Docente ficticia',
     apellido: 'Ejemplo',
     rol: 'EDUCACION',
-    especialidad: 'Docente',
+    especialidades: [{ especialidad: 'DOCENTE_PRIMARIO', aclaracion: null }],
   },
 ]
 function abrir(ruta = `/proyectos/${id}/red`, autenticar = true) {
@@ -69,7 +69,7 @@ describe('Red de profesionales', () => {
       await screen.findByRole('heading', { name: 'Docente ficticia Ejemplo' }),
     ).toBeInTheDocument()
     expect(screen.getByText('Educación')).toBeInTheDocument()
-    expect(screen.getByText('Docente')).toBeInTheDocument()
+    expect(screen.getByText('Docente primario')).toBeInTheDocument()
     expect(document.title).toBe('TRAMA · Red')
     await userEvent.click(
       screen.getByRole('link', { name: 'Volver al perfil' }),
@@ -103,7 +103,7 @@ describe('Red de profesionales', () => {
   it('indica cuando la especialidad no está informada', async () => {
     cliente.get.mockImplementation(async (ruta) => ({
       data: ruta.endsWith('/miembros')
-        ? [{ ...red[2], especialidad: null }]
+        ? [{ ...red[2], especialidades: [] }]
         : proyecto,
     }))
     abrir()
