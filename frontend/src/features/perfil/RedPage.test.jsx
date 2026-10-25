@@ -7,7 +7,13 @@ import AuthContext from '../auth/AuthContext.js'
 import cliente from '../../api/cliente.js'
 
 vi.mock('../../api/cliente.js', () => ({
-  default: { defaults: { baseURL: '/api' }, get: vi.fn() },
+  default: {
+    defaults: { baseURL: '/api' },
+    get: vi.fn(),
+    post: vi.fn(),
+    put: vi.fn(),
+    delete: vi.fn(),
+  },
 }))
 const id = '0f8b4fc3-e754-4707-8769-28d7210de226'
 const proyecto = { id, nombre: 'Niño ficticio', fechaNacimiento: '2018-05-12' }
@@ -36,12 +42,16 @@ const red = [
     especialidad: 'Docente',
   },
 ]
-function abrir(ruta = `/proyectos/${id}/red`, autenticar = true) {
+function abrir(
+  ruta = `/proyectos/${id}/red`,
+  autenticar = true,
+  usuarioExtra = {},
+) {
   return render(
     <MemoryRouter initialEntries={[ruta]}>
       <AuthContext.Provider
         value={{
-          usuario: autenticar ? { nombre: 'Tutora' } : null,
+          usuario: autenticar ? { nombre: 'Tutora', ...usuarioExtra } : null,
           estado: autenticar ? 'autenticado' : 'anonimo',
         }}
       >
@@ -58,6 +68,9 @@ beforeEach(() => {
         ? []
         : { ...proyecto, puedeCargar: true },
   }))
+  cliente.post.mockReset()
+  cliente.put.mockReset()
+  cliente.delete.mockReset()
 })
 describe('Red de profesionales', () => {
   it('abre Red desde el perfil y muestra las membresías reales', async () => {
@@ -94,9 +107,7 @@ describe('Red de profesionales', () => {
     }))
     abrir()
     expect(
-      await screen.findByText(
-        'Todavía no hay miembros en esta red.',
-      ),
+      await screen.findByText('Todavía no hay miembros en esta red.'),
     ).toBeInTheDocument()
     expect(screen.queryByText('Docente ficticia')).not.toBeInTheDocument()
   })
@@ -127,5 +138,69 @@ describe('Red de profesionales', () => {
       screen.getByRole('heading', { name: 'Hola de nuevo' }),
     ).toBeInTheDocument()
     expect(cliente.get).not.toHaveBeenCalled()
+  })
+  it('permite al tutor administrador invitar a un co-tutor desde el modal', async () => {
+    cliente.post.mockResolvedValue({
+      data: {
+        id: 'inv-1',
+        email: 'cotutor@ejemplo.test',
+        rol: 'TUTOR',
+        estado: 'PENDIENTE',
+      },
+    })
+    abrir(undefined, true, { esAdmin: true })
+
+    const botonInvitar = await screen.findByRole('button', {
+      name: 'Invitar miembro',
+    })
+    await userEvent.click(botonInvitar)
+
+    expect(
+      screen.getByRole('option', { name: 'Co-tutor (otro tutor legal)' }),
+    ).toBeInTheDocument()
+
+    await userEvent.type(
+      screen.getByLabelText('Correo electrónico'),
+      'cotutor@ejemplo.test',
+    )
+    await userEvent.selectOptions(screen.getByLabelText('Rol'), 'TUTOR')
+    await userEvent.click(
+      screen.getByRole('button', { name: 'Enviar invitación' }),
+    )
+
+    expect(cliente.post).toHaveBeenCalledWith(
+      `/proyectos/${id}/invitaciones`,
+      { email: 'cotutor@ejemplo.test', rol: 'TUTOR' },
+    )
+    expect(
+      await screen.findByText('Invitación enviada correctamente.'),
+    ).toBeInTheDocument()
+  })
+  it('permite al tutor administrador convertir a un familiar en co-tutor', async () => {
+    cliente.put.mockResolvedValue({
+      data: {
+        ...red[1],
+        rol: 'TUTOR',
+        esAdmin: true,
+      },
+    })
+    abrir(undefined, true, { esAdmin: true })
+
+    const botonesCoTutor = await screen.findAllByRole('button', {
+      name: 'Hacer co-tutor',
+    })
+    expect(botonesCoTutor).toHaveLength(1)
+
+    await userEvent.click(botonesCoTutor[0])
+
+    expect(cliente.put).toHaveBeenCalledWith(
+      `/proyectos/${id}/miembros/membresia-familiar/co-tutor`,
+    )
+    expect(await screen.findAllByText('Tutor/a · Administrador')).toHaveLength(
+      2,
+    )
+    expect(
+      screen.queryByRole('button', { name: 'Hacer co-tutor' }),
+    ).not.toBeInTheDocument()
   })
 })
