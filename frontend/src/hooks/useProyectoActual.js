@@ -1,10 +1,9 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import {
-  filtrarProyectosPorMiembro,
   obtenerMisProyectos,
-  PROYECTOS_MOCK,
 } from '../api/proyectos.js';
+import { PROYECTOS_MOCK } from '../api/proyectos.mock.js';
 import { useAuth } from './useAuth.js';
 
 const MAPA_ROLES = {
@@ -105,7 +104,7 @@ export function useProyectoActual() {
   useEffect(() => {
     const controller = new AbortController();
 
-    obtenerMisProyectos(usuario?.id, controller.signal)
+    obtenerMisProyectos(controller.signal)
       .then((lista) => {
         if (!controller.signal.aborted) {
           setProyectos(lista);
@@ -114,12 +113,9 @@ export function useProyectoActual() {
       })
       .catch(() => {
         if (!controller.signal.aborted) {
-          const fallback = usuario?.id
-            ? filtrarProyectosPorMiembro(PROYECTOS_MOCK, usuario.id)
-            : PROYECTOS_MOCK;
-          setProyectos(fallback);
+          setProyectos(PROYECTOS_MOCK);
           setCargando(false);
-        }
+          }
       });
 
     return () => controller.abort();
