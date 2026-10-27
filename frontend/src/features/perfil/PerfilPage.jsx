@@ -8,12 +8,22 @@ import usePerfil from './hooks/usePerfil.js'
 import { seccionesPerfil, seccionNotas } from './perfil.js'
 import NavegacionPerfil from './components/NavegacionPerfil.jsx'
 import { listarAportes } from '../../api/aportes.js'
+import { listarMiembros } from '../../api/miembros.js'
+
+async function cargarDatosPerfil(proyectoId, signal) {
+  const [{ aportes }, miembros] = await Promise.all([
+    listarAportes(proyectoId, signal),
+    listarMiembros(proyectoId, signal),
+  ])
+
+  return { aportes, miembros }
+}
 
 export default function PerfilPage() {
   const { id, seccion: slug } = useParams()
   const { proyecto, datos, error, cargando, reintentar } = usePerfil(
     id,
-    listarAportes,
+    cargarDatosPerfil,
   )
   const [mensajeGuardado, setMensajeGuardado] = useState('')
   const seccion =
@@ -99,6 +109,7 @@ export default function PerfilPage() {
                   aportes={datos.aportes.filter(
                     (aporte) => aporte.tipo === item.tipo,
                   )}
+                  miembros={datos.miembros}
                   proyectoId={id}
                   completo={Boolean(seccion)}
                   puedeCrear={proyecto.puedeCargar === true}
