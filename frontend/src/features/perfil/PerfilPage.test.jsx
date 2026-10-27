@@ -25,6 +25,17 @@ const proyecto = {
   nombre: 'Niño de ejemplo',
   fechaNacimiento: '2017-05-12',
 }
+
+const miembros = [
+  {
+    id: 'miembro-ficticio',
+    usuarioId: 'autor-ficticio',
+    nombre: 'María',
+    apellido: 'Díaz',
+    rol: 'EDUCACION',
+  },
+]
+
 const aportes = [
   'FORTALEZA',
   'INTERES',
@@ -59,11 +70,20 @@ function abrir(ruta = `/proyectos/${id}`, auth = sesion) {
 
 beforeEach(() => {
   cliente.defaults.baseURL = '/api'
-  cliente.get.mockReset().mockImplementation(async (ruta) => ({
-    data: ruta.endsWith('/aportes')
-      ? aportes
-      : { ...proyecto, puedeCargar: true },
-  }))
+
+  cliente.get.mockReset().mockImplementation(async (ruta) => {
+    if (ruta.endsWith('/aportes')) {
+      return { data: aportes }
+    }
+
+    if (ruta.endsWith('/miembros')) {
+      return { data: miembros }
+    }
+
+    return {
+      data: { ...proyecto, puedeCargar: true },
+    }
+  })
 })
 
 describe('Portada y navegación de lectura', () => {

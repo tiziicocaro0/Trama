@@ -16,8 +16,20 @@ vi.mock('../../api/cliente.js', () => ({
 }))
 const id = '304d3b5e-8c8a-4a50-83d3-a84ade17b697'
 const proyecto = { id, nombre: 'Niño ficticio', fechaNacimiento: '2018-05-12' }
+
+const miembros = [
+  {
+    id: 'miembro-ficticio',
+    usuarioId: 'autor-ficticio',
+    nombre: 'María',
+    apellido: 'Díaz',
+    rol: 'EDUCACION',
+  },
+]
+
 const aporteOriginal = {
   id: 'aporte-ficticio',
+  autorId: 'autor-ficticio',
   tipo: 'FORTALEZA',
   titulo: 'Título ficticio original',
   contenido: 'Descripción ficticia',
@@ -51,11 +63,19 @@ function abrir(slug = 'fortalezas') {
 beforeEach(() => {
   lista = []
   puedeCrear = true
-  cliente.get.mockReset().mockImplementation(async (ruta) => ({
-    data: ruta.endsWith('/aportes')
-      ? lista
-      : { ...proyecto, puedeCargar: puedeCrear },
-  }))
+  cliente.get.mockReset().mockImplementation(async (ruta) => {
+    if (ruta.endsWith('/aportes')) {
+      return { data: lista }
+    }
+
+    if (ruta.endsWith('/miembros')) {
+      return { data: miembros }
+    }
+
+    return {
+      data: { ...proyecto, puedeCargar: puedeCrear },
+    }
+  })
   cliente.post.mockReset().mockImplementation(async (ruta, datos) => {
     const aporte = { ...datos, id: 'nuevo-aporte-ficticio', puedeEditar: true }
     lista = [aporte, ...lista]
@@ -288,7 +308,14 @@ describe('Crear y editar aportes de las seis secciones', () => {
 
   it('si falla la lectura no muestra aportes mock ni deja editar', async () => {
     cliente.get.mockImplementation(async (ruta) => {
-      if (ruta.endsWith('/aportes')) throw new Error('Sin conexión')
+      if (ruta.endsWith('/aportes')) {
+        throw new Error('Sin conexión')
+      }
+
+      if (ruta.endsWith('/miembros')) {
+        return { data: miembros }
+      }
+
       return { data: proyecto }
     })
     abrir()
