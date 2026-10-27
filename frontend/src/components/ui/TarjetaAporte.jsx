@@ -25,6 +25,7 @@ export default function TarjetaAporte({
   autor,
   alEditar,
   alArchivar,
+  alVerHistorial,
   archivando = false,
   resumen = false,
 }) {
@@ -44,6 +45,9 @@ export default function TarjetaAporte({
     aporte.visibilidad != null && aporte.visibilidad !== 'TODOS'
 
   const sustantivo = esNota ? 'nota' : 'aporte'
+
+  // Editar y archivar: solo el autor. Ver historial (3.2): cualquier miembro que ve el aporte
+  const puedeModificar = aporte.puedeEditar && (alEditar || alArchivar)
 
   return (
     <article className="flex gap-2 py-2 text-texto">
@@ -103,9 +107,9 @@ export default function TarjetaAporte({
           </div>
         )}
 
-        {aporte.puedeEditar && (alEditar || alArchivar) && (
+        {(puedeModificar || alVerHistorial) && (
           <div className="mt-2 flex flex-wrap items-center gap-4">
-            {alEditar && (
+            {puedeModificar && alEditar && (
               <button
                 type="button"
                 onClick={alEditar}
@@ -116,7 +120,7 @@ export default function TarjetaAporte({
                 Editar
               </button>
             )}
-            {alArchivar && (
+            {puedeModificar && alArchivar && (
               <button
                 type="button"
                 onClick={alArchivar}
@@ -125,6 +129,16 @@ export default function TarjetaAporte({
                 className="inline-flex min-h-11 items-center rounded-sm font-semibold text-secundario underline underline-offset-4 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-primario"
               >
                 {archivando ? 'Archivando…' : 'Archivar'}
+              </button>
+            )}
+            {alVerHistorial && (
+              <button
+                type="button"
+                onClick={alVerHistorial}
+                aria-label={`Ver historial del ${sustantivo}: ${aporte.titulo}`}
+                className="inline-flex min-h-11 items-center rounded-sm font-semibold text-secundario underline underline-offset-4 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-primario"
+              >
+                Ver historial
               </button>
             )}
           </div>
