@@ -1,4 +1,8 @@
-import { Lock } from '@phosphor-icons/react'
+import { FileImage, FilePdf, Lock } from '@phosphor-icons/react'
+import {
+  descargarArchivo,
+  obtenerUrlDescargaArchivo,
+} from '../../api/archivos.js'
 import { formatearFechaHora } from '../../utils/fechas.js'
 
 function obtenerAutor(aporte, autorProp) {
@@ -18,6 +22,12 @@ function obtenerAutor(aporte, autorProp) {
       .trim()
   }
   return null
+}
+
+function esArchivoPdf(archivo) {
+  const mime = (archivo?.tipoMime ?? '').toLowerCase()
+  const nombre = (archivo?.nombreOriginal ?? '').toLowerCase()
+  return mime === 'application/pdf' || nombre.endsWith('.pdf')
 }
 
 export default function TarjetaAporte({
@@ -44,6 +54,21 @@ export default function TarjetaAporte({
     aporte.visibilidad != null && aporte.visibilidad !== 'TODOS'
 
   const sustantivo = esNota ? 'nota' : 'aporte'
+  const adjuntos = Array.isArray(aporte.archivos) ? aporte.archivos : []
+
+  async function manejarClickAdjunto(evento, archivo) {
+    if (!aporte.proyectoId) return
+    evento.preventDefault()
+    try {
+      await descargarArchivo(
+        aporte.proyectoId,
+        archivo.id,
+        archivo.nombreOriginal,
+      )
+    } catch {
+      // Si falla la descarga programática, no interrumpe la vista
+    }
+  }
 
   return (
     <article className="flex gap-2 py-2 text-texto">
@@ -73,6 +98,41 @@ export default function TarjetaAporte({
           >
             {aporte.contenido}
           </p>
+        )}
+
+        {adjuntos.length > 0 && (
+          <ul
+            className="mt-2 flex flex-wrap gap-2"
+            aria-label="Archivos adjuntos"
+          >
+            {adjuntos.map((archivo) => {
+              const esPdf = esArchivoPdf(archivo)
+              const Icono = esPdf ? FilePdf : FileImage
+              const etiquetaTipo = esPdf ? 'PDF' : 'Imagen'
+              const nombre = archivo.nombreOriginal || 'Archivo adjunto'
+              return (
+                <li key={archivo.id}>
+                  <a
+                    href={obtenerUrlDescargaArchivo(
+                      aporte.proyectoId,
+                      archivo.id,
+                    )}
+                    download={nombre}
+                    onClick={(evento) => manejarClickAdjunto(evento, archivo)}
+                    className="inline-flex items-center gap-2 rounded-sm border border-borde bg-superficie px-3 py-1.5 text-sm font-semibold text-primario hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primario"
+                  >
+                    <Icono
+                      size={18}
+                      role="img"
+                      aria-label={`Ícono ${etiquetaTipo}`}
+                      className="shrink-0 text-primario"
+                    />
+                    <span>{nombre}</span>
+                  </a>
+                </li>
+              )
+            })}
+          </ul>
         )}
 
         {(nombreAutor || (!esNota && fechaCreacion)) && (
