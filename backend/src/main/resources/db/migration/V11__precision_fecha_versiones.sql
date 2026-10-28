@@ -1,6 +1,6 @@
 -- =====================================================================
--- TRAMA · V9 · Historial de versiones (3.2)
--- (V9 y no V8: la V8 es de la 1.9, especialidad multi-selección)
+-- TRAMA · V11 · Historial de versiones (3.2)
+-- (V11: en develop la V9 es especialidad multi-selección y la V10 el límite de archivos de 5 MB)
 -- aporte_version.creado_en pasa de DATETIME (segundos) a DATETIME(6) (microsegundos):
 -- si un aporte se edita dos veces en el mismo segundo, las versiones tienen que
 -- seguir ordenándose bien en el historial.
