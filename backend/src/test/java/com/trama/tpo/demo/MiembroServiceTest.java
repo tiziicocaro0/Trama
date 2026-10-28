@@ -24,6 +24,7 @@ import com.trama.tpo.demo.exceptions.ApiException;
 import com.trama.tpo.demo.repository.MembresiaRepository;
 import com.trama.tpo.demo.service.MiembroService;
 import com.trama.tpo.demo.service.PermisoService;
+import com.trama.tpo.demo.service.UsuarioActual;
 
 @ExtendWith(MockitoExtension.class)
 class MiembroServiceTest {
@@ -34,11 +35,14 @@ class MiembroServiceTest {
     @Mock
     private PermisoService permisoService;
 
+    @Mock
+    private UsuarioActual usuarioActual;
+
     private MiembroService miembroService;
 
     @BeforeEach
     void preparar() {
-        miembroService = new MiembroService(membresiaRepository, permisoService);
+        miembroService = new MiembroService(membresiaRepository, permisoService, usuarioActual);
     }
 
     @Test

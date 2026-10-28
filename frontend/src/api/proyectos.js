@@ -96,6 +96,31 @@ export async function obtenerProyecto(id, signal) {
   return data
 }
 
+export const PROYECTOS_MOCK = [
+  {
+    id: 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbb1',
+    nombre: 'Tomás',
+    apellido: 'González',
+    fechaNacimiento: '2016-03-15',
+    rol: 'Madre',
+    esAdmin: true,
+  },
+  {
+    id: 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbb2',
+    nombre: 'Martina',
+    apellido: 'López',
+    fechaNacimiento: '2017-08-22',
+    rol: 'Terapeuta',
+  },
+  {
+    id: 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbb3',
+    nombre: 'Joaquín',
+    apellido: 'Pérez',
+    fechaNacimiento: '2015-11-30',
+    rol: 'Docente',
+  },
+]
+
 export const MIEMBROS_MOCK = [
   {
     id: 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa1',
