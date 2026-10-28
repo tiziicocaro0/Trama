@@ -206,6 +206,21 @@ export default function EditorAporte({
           </select>
         </div>
       ))}
+      {seccion.tipo === 'FORTALEZA' && (
+        <CampoFormulario
+          id="ejemplo-aporte-FORTALEZA"
+          label="Ejemplo (opcional)"
+        >
+          <Campo
+            name="ejemplo"
+            value={extra.ejemplo ?? ''}
+            onChange={(event) =>
+              setExtra((actual) => ({ ...actual, ejemplo: event.target.value }))
+            }
+            disabled={enviando}
+          />
+        </CampoFormulario>
+      )}
       <SelectorVisibilidad
         id={`visibilidad-aporte-${seccion.tipo}`}
         value={visibilidad}

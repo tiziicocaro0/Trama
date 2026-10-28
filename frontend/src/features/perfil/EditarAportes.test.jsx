@@ -147,6 +147,45 @@ describe('Crear y editar aportes de las seis secciones', () => {
     )
   })
 
+  it('guarda y muestra el contexto y el ejemplo de una fortaleza, y permite editarlos', async () => {
+    abrir()
+    await userEvent.click(
+      await screen.findByRole('button', { name: 'Agregar aporte' }),
+    )
+    await userEvent.type(screen.getByRole('textbox', { name: 'Título' }), 'Arma rompecabezas')
+    await userEvent.selectOptions(
+      screen.getByRole('combobox', { name: '¿Dónde lo hace?' }),
+      'CASA',
+    )
+    await userEvent.type(
+      screen.getByRole('textbox', { name: 'Ejemplo (opcional)' }),
+      'Completó un rompecabezas de animales',
+    )
+    await userEvent.click(screen.getByRole('button', { name: 'Guardar aporte' }))
+    expect(cliente.post).toHaveBeenCalledWith(
+      `/proyectos/${id}/aportes`,
+      expect.objectContaining({
+        tipo: 'FORTALEZA',
+        datos: JSON.stringify({ contexto: 'CASA', ejemplo: 'Completó un rompecabezas de animales' }),
+      }),
+    )
+    expect(await screen.findByText('Contexto: Casa')).toBeInTheDocument()
+    expect(screen.getByText('Ejemplo: Completó un rompecabezas de animales')).toBeInTheDocument()
+    await userEvent.click(screen.getByRole('button', { name: 'Editar aporte: Arma rompecabezas' }))
+    const ejemplo = screen.getByRole('textbox', { name: 'Ejemplo (opcional)' })
+    expect(ejemplo).toHaveValue('Completó un rompecabezas de animales')
+    await userEvent.clear(ejemplo)
+    await userEvent.type(ejemplo, 'Armó otro rompecabezas')
+    await userEvent.click(screen.getByRole('button', { name: 'Guardar aporte' }))
+    expect(await screen.findByText('Ejemplo: Armó otro rompecabezas')).toBeInTheDocument()
+    expect(cliente.put).toHaveBeenCalledWith(
+      `/proyectos/${id}/aportes/nuevo-aporte-ficticio`,
+      expect.objectContaining({
+        datos: JSON.stringify({ contexto: 'CASA', ejemplo: 'Armó otro rompecabezas' }),
+      }),
+    )
+  })
+
   it('edita un aporte propio con sus datos actuales y guarda con PUT', async () => {
     lista = [aporteOriginal]
     abrir()

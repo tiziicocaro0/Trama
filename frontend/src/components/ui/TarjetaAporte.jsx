@@ -1,6 +1,26 @@
 import { Lock } from '@phosphor-icons/react'
 import { formatearFechaHora } from '../../utils/fechas.js'
 
+const contextosFortaleza = {
+  CASA: 'Casa',
+  ESCUELA: 'Escuela',
+  CONSULTORIO: 'Consultorio',
+  OTRO: 'Otro',
+}
+
+function leerFortaleza(aporte) {
+  if (aporte.tipo !== 'FORTALEZA') return {}
+  try {
+    const datos = JSON.parse(aporte.datos ?? '{}')
+    return {
+      contexto: contextosFortaleza[datos?.contexto],
+      ejemplo: typeof datos?.ejemplo === 'string' ? datos.ejemplo.trim() : '',
+    }
+  } catch {
+    return {}
+  }
+}
+
 function obtenerAutor(aporte, autorProp) {
   if (typeof autorProp === 'string' && autorProp.trim()) return autorProp.trim()
   if (typeof aporte?.autorNombre === 'string' && aporte.autorNombre.trim())
@@ -38,6 +58,7 @@ export default function TarjetaAporte({
       ? formatearFechaHora(aporte.actualizadoEn)
       : null
   const nombreAutor = obtenerAutor(aporte, autor)
+  const fortaleza = leerFortaleza(aporte)
 
   // 3.1: Identificar aportes con visibilidad restringida
   const esRestringido =
@@ -72,6 +93,17 @@ export default function TarjetaAporte({
             className={`mt-1 whitespace-pre-wrap break-words text-sm text-texto-suave ${resumen ? 'line-clamp-3' : ''}`}
           >
             {aporte.contenido}
+          </p>
+        )}
+
+        {fortaleza.contexto && (
+          <p className="mt-1 text-sm text-texto-suave">
+            Contexto: {fortaleza.contexto}
+          </p>
+        )}
+        {fortaleza.ejemplo && (
+          <p className="mt-1 whitespace-pre-wrap break-words text-sm text-texto-suave">
+            Ejemplo: {fortaleza.ejemplo}
           </p>
         )}
 
