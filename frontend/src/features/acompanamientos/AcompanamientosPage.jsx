@@ -2,8 +2,8 @@ import { useState } from 'react'
 import { MagnifyingGlass } from '@phosphor-icons/react'
 import { Link } from 'react-router-dom'
 import useAuth from '../../hooks/useAuth.js'
-import Button from '../../components/ui/Button.jsx'
-import Input from '../../components/ui/Input.jsx'
+import Boton from '../../components/ui/Boton.jsx'
+import Campo from '../../components/ui/Campo.jsx'
 import InicioSidebar from '../inicio/InicioSidebar.jsx'
 import TarjetaProyecto from './components/TarjetaProyecto.jsx'
 import useAcompanamientos from './hooks/useAcompanamientos.js'
@@ -43,16 +43,16 @@ export default function AcompanamientosPage() {
             <p className="mt-3 text-base text-texto-suave sm:text-subtitulo">
               Espacios compartidos para su bienestar.
             </p>
-            <Button to="/acompanamientos/nuevo" className="mt-5">
+            <Boton to="/acompanamientos/nuevo" className="mt-5">
               Nuevo acompañamiento
-            </Button>
+            </Boton>
           </header>
           {cargando ? (
             <p role="status">Cargando tus acompañamientos…</p>
           ) : error ? (
             <div className="space-y-4 rounded-lg bg-superficie p-6">
               <p role="alert">{error}</p>
-              <Button onClick={reintentar}>Reintentar</Button>
+              <Boton onClick={reintentar}>Reintentar</Boton>
             </div>
           ) : proyectos?.length === 0 ? (
             <section
@@ -72,7 +72,7 @@ export default function AcompanamientosPage() {
           ) : (
             <>
               <div className="mb-6">
-                <Input
+                <Campo
                   type="search"
                   aria-label="Buscar acompañamiento"
                   placeholder="Buscar acompañamiento…"

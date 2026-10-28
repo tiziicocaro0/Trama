@@ -1,5 +1,6 @@
 package com.trama.tpo.demo;
 
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -56,6 +57,8 @@ class ProyectoControllerTest {
     private Usuario familiar;
     private Usuario ajeno;
     private Proyecto proyecto;
+    private Membresia membresiaTutor;
+    private Membresia membresiaFamiliar;
 
     // Un niño con un tutor admin y un familiar; "ajeno" no es miembro
     @BeforeEach
@@ -74,8 +77,8 @@ class ProyectoControllerTest {
                 .consentimientoFecha(Instant.now())
                 .build());
 
-        crearMembresia(tutorAdmin, Rol.TUTOR, true);
-        crearMembresia(familiar, Rol.FAMILIAR, false);
+        membresiaTutor = crearMembresia(tutorAdmin, Rol.TUTOR, true);
+        membresiaFamiliar = crearMembresia(familiar, Rol.FAMILIAR, false);
     }
 
     // Borrar en orden: primero membresías, después proyecto y usuarios
@@ -188,6 +191,40 @@ class ProyectoControllerTest {
                 .andExpect(jsonPath("$.codigo").value("DATOS_INVALIDOS"));
     }
 
+    // 1.5: un miembro que no es admin no puede quitar acceso (403)
+    @Test
+    void miembroNoAdminNoPuedeQuitarAccesoRecibe403() throws Exception {
+
+        mockMvc.perform(delete("/api/proyectos/" + proyecto.getId() + "/miembros/" + membresiaFamiliar.getId())
+                .header("Authorization", token(familiar)))
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.codigo").value("ACCESO_DENEGADO"));
+    }
+
+    // 1.5: no se puede quitar el acceso al único administrador del proyecto (400)
+    @Test
+    void noSePuedeQuitarAlUnicoAdminRecibe400() throws Exception {
+
+        mockMvc.perform(delete("/api/proyectos/" + proyecto.getId() + "/miembros/" + membresiaTutor.getId())
+                .header("Authorization", token(tutorAdmin)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.codigo").value("ULTIMO_ADMIN"));
+    }
+
+    // 1.5: un tutor administrador quita el acceso a un miembro (200 OK) y el revocado pierde el acceso al instante (403)
+    @Test
+    void tutorAdminQuitaAccesoYRevocadoNoPuedeEntrarAlProyecto() throws Exception {
+
+        mockMvc.perform(delete("/api/proyectos/" + proyecto.getId() + "/miembros/" + membresiaFamiliar.getId())
+                .header("Authorization", token(tutorAdmin)))
+                .andExpect(status().isOk());
+
+        mockMvc.perform(get("/api/proyectos/" + proyecto.getId())
+                .header("Authorization", token(familiar)))
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.codigo").value("ACCESO_DENEGADO"));
+    }
+
     private Usuario crearUsuario(String nombre) {
 
         return usuarioRepository.save(Usuario.builder()
@@ -198,9 +235,9 @@ class ProyectoControllerTest {
                 .build());
     }
 
-    private void crearMembresia(Usuario usuario, Rol rol, boolean esAdmin) {
+    private Membresia crearMembresia(Usuario usuario, Rol rol, boolean esAdmin) {
 
-        membresiaRepository.save(Membresia.builder()
+        return membresiaRepository.save(Membresia.builder()
                 .usuario(usuario)
                 .proyecto(proyecto)
                 .rol(rol)

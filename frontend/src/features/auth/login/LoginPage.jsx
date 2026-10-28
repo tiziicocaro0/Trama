@@ -1,11 +1,11 @@
 import { useEffect, useRef, useState } from 'react'
 import { ArrowLeft, Envelope, SpinnerGap } from '@phosphor-icons/react'
 import { Link } from 'react-router-dom'
-import BrandLogo from '../../../components/ui/BrandLogo.jsx'
-import Button from '../../../components/ui/Button.jsx'
-import Input from '../../../components/ui/Input.jsx'
-import PasswordInput from '../../../components/ui/PasswordInput.jsx'
-import FormField from '../../../components/ui/FormField.jsx'
+import Logo from '../../../components/ui/Logo.jsx'
+import Boton from '../../../components/ui/Boton.jsx'
+import Campo from '../../../components/ui/Campo.jsx'
+import CampoContrasena from '../../../components/ui/CampoContrasena.jsx'
+import CampoFormulario from '../../../components/ui/CampoFormulario.jsx'
 import useAuth from '../../../hooks/useAuth.js'
 import { validarEmail } from '../../../utils/validaciones.js'
 
@@ -70,7 +70,7 @@ export default function LoginPage() {
           <ArrowLeft size={24} aria-hidden="true" />
         </Link>
         <div className="mx-auto w-32 pt-4">
-          <BrandLogo />
+          <Logo />
         </div>
         <svg
           viewBox="0 0 120 40"
@@ -99,8 +99,8 @@ export default function LoginPage() {
           aria-busy={enviando}
           className="mt-8 space-y-4"
         >
-          <FormField id="login-email" label="Email" error={errores.email}>
-            <Input
+          <CampoFormulario id="login-email" label="Email" error={errores.email}>
+            <Campo
               name="email"
               type="email"
               placeholder="Email"
@@ -111,13 +111,13 @@ export default function LoginPage() {
               required
               disabled={enviando}
             />
-          </FormField>
-          <FormField
+          </CampoFormulario>
+          <CampoFormulario
             id="login-password"
             label="Contraseña"
             error={errores.password}
           >
-            <PasswordInput
+            <CampoContrasena
               name="password"
               placeholder="Contraseña"
               autoComplete="current-password"
@@ -126,7 +126,7 @@ export default function LoginPage() {
               required
               disabled={enviando}
             />
-          </FormField>
+          </CampoFormulario>
           <p className="-mt-1 text-right">
             <Link
               to="/recuperar"
@@ -143,7 +143,7 @@ export default function LoginPage() {
               {mensaje || mensajeSesion}
             </p>
           )}
-          <Button
+          <Boton
             type="submit"
             disabled={enviando}
             className="w-full shadow-sm"
@@ -160,7 +160,7 @@ export default function LoginPage() {
             ) : (
               'Ingresar'
             )}
-          </Button>
+          </Boton>
         </form>
         <p className="mt-6 text-center text-texto-suave">
           ¿Todavía no tenés cuenta?{' '}

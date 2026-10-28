@@ -71,8 +71,8 @@ formas de fondo. `primario-hover` y `contorno-accion` son variantes de terracota
 El contorno tenue es decorativo: el texto terracota identifica el enlace secundario.
 Agua se utiliza solo en la frase grande (mínimo 28 px); no en texto pequeño.
 Las fuentes Handlee y Nunito Sans se cargan desde Google Fonts (requieren conexión).
-Los componentes reutilizables disponibles son `Button`, `BrandLogo`, `Input`,
-`PasswordInput`, `FormField` y `Stepper`. Los tokens `registro-portada`, `registro-etapa` y
+Los componentes reutilizables disponibles son `Boton`, `Logo`, `Campo`,
+`CampoContrasena`, `CampoFormulario` y `Pasos`. Los tokens `registro-portada`, `registro-etapa` y
 `registro-form` agregan tamaños específicos del mockup de registro, sin cambiar
 los selectores de bienvenida ni agregar colores.
 
@@ -133,7 +133,7 @@ desde el cliente compartido reciben el token Bearer conservado en memoria.
 ## Archivos del registro
 
 - `src/api/cliente.js`, `auth.js`, `auth.test.js`: Axios, sesión en memoria y contrato.
-- `src/components/ui/Input.jsx`, `FormField.jsx`, `Stepper.jsx`: controles compartidos.
+- `src/components/ui/Campo.jsx`, `CampoFormulario.jsx`, `Pasos.jsx`: controles compartidos.
 - `src/features/auth/registro/RegistroPage.jsx`, `components/RegistroPresentacion.jsx`
   y `components/RegistroFormulario.jsx`: composición y formulario.
 - `src/features/auth/registro/hooks/useRegistro.js` y su test: navegación y envío.
@@ -200,8 +200,8 @@ módulos, completar perfil y verificación de email.
 - `src/hooks/useAuth.js`, `src/routes/Acceso.jsx`, `AppRoutes.jsx` y `src/main.jsx`:
   consumo del contexto, rutas públicas/privadas y montaje.
 - `src/api/cliente.js`, `auth.js` y sus pruebas: login, registro, identidad, Bearer y 401.
-- `src/features/auth/login/LoginPage.jsx` y `src/components/ui/PasswordInput.jsx`:
-  login y visibilidad de contraseña; `Input.jsx` admite el control final reutilizable.
+- `src/features/auth/login/LoginPage.jsx` y `src/components/ui/CampoContrasena.jsx`:
+  login y visibilidad de contraseña; `Campo.jsx` admite el control final reutilizable.
 - `src/features/inicio/InicioPage.jsx`: saludo, cuenta, módulos futuros y logout.
 - `src/features/auth/registro/hooks/useRegistro.js`, `RegistroPage.jsx` y sus pruebas:
   acceso automático tras crear la cuenta, conservando el formulario por etapas.

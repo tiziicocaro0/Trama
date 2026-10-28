@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
-import Button from '../../../components/ui/Button.jsx'
-import Input from '../../../components/ui/Input.jsx'
-import FormField from '../../../components/ui/FormField.jsx'
+import Boton from '../../../components/ui/Boton.jsx'
+import Campo from '../../../components/ui/Campo.jsx'
+import CampoFormulario from '../../../components/ui/CampoFormulario.jsx'
 import SelectorVisibilidad from '../../../components/ui/SelectorVisibilidad.jsx'
 import { guardarAporte } from '../../../api/aportes.js'
 
@@ -144,12 +144,12 @@ export default function EditorAporte({
             ? 'Nueva nota'
             : 'Nuevo aporte'}
       </p>
-      <FormField
+      <CampoFormulario
         id={`titulo-aporte-${seccion.tipo}`}
         label="Título"
         hint="Título (obligatorio, hasta 150 caracteres)"
       >
-        <Input
+        <Campo
           name="titulo"
           placeholder="Título"
           value={titulo}
@@ -158,7 +158,7 @@ export default function EditorAporte({
           maxLength={150}
           disabled={enviando}
         />
-      </FormField>
+      </CampoFormulario>
       <div>
         <label
           htmlFor={`contenido-aporte-${seccion.tipo}`}
@@ -218,12 +218,12 @@ export default function EditorAporte({
         </p>
       )}
       <div className="flex flex-wrap gap-3">
-        <Button type="submit" disabled={enviando}>
+        <Boton type="submit" disabled={enviando}>
           {enviando ? 'Guardando…' : `Guardar ${sustantivo}`}
-        </Button>
-        <Button variant="secondary" onClick={alCancelar} disabled={enviando}>
+        </Boton>
+        <Boton variant="secondary" onClick={alCancelar} disabled={enviando}>
           Cancelar
-        </Button>
+        </Boton>
       </div>
     </form>
   )

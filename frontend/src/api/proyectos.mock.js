@@ -1,6 +1,5 @@
-import { USUARIO_MOCK } from '../hooks/useAuth.js';
 
-// Fixtures de ejemplo; las consultas reales no usan este catálogo como reemplazo de la API.
+// Fixtures de ejemplo para tests (los proyectos reales vienen de GET /api/proyectos).
 export const PROYECTOS_MOCK = [
   {
     id: '11111111-1111-1111-1111-111111111111',
@@ -10,10 +9,10 @@ export const PROYECTOS_MOCK = [
     iniciales: 'TO',
     tono: 'terracota',
     rol: 'Madre',
+    esAdmin: true,
     edad: '6 años',
     actualizado: 'Actualizado hoy',
     tieneActualizacionPendiente: true,
-    miembrosIds: [USUARIO_MOCK.id],
   },
   {
     id: '22222222-2222-2222-2222-222222222222',
@@ -23,10 +22,10 @@ export const PROYECTOS_MOCK = [
     iniciales: 'MA',
     tono: 'agua',
     rol: 'Terapeuta',
+    esAdmin: false,
     edad: '4 años',
     actualizado: 'Actualizado ayer',
     tieneActualizacionPendiente: false,
-    miembrosIds: [USUARIO_MOCK.id],
   },
   {
     id: '33333333-3333-3333-3333-333333333333',
@@ -36,10 +35,10 @@ export const PROYECTOS_MOCK = [
     iniciales: 'JO',
     tono: 'oliva',
     rol: 'Docente',
+    esAdmin: false,
     edad: '8 años',
     actualizado: 'Actualizado hace 3 días',
     tieneActualizacionPendiente: false,
-    miembrosIds: [USUARIO_MOCK.id],
   },
   {
     id: '44444444-4444-4444-4444-444444444444',
@@ -49,9 +48,9 @@ export const PROYECTOS_MOCK = [
     iniciales: 'LU',
     tono: 'miel',
     rol: 'Docente',
+    esAdmin: false,
     edad: '5 años',
     actualizado: 'Actualizado hace 5 días',
     tieneActualizacionPendiente: false,
-    miembrosIds: ['00000000-0000-0000-0000-000000000099'],
   },
 ];

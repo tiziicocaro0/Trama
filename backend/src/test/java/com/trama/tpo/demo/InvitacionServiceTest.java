@@ -77,7 +77,7 @@ class InvitacionServiceTest {
                 permisoService,
                 usuarioActual,
                 emailService,
-                "https://trama.example/aceptar-invitacion"
+                "https://trama.example/invitacion"
         );
     }
 
@@ -168,7 +168,7 @@ class InvitacionServiceTest {
         String enlace = enlaceCaptor.getValue();
 
         String prefijo =
-                "https://trama.example/aceptar-invitacion?token=";
+                "https://trama.example/invitacion/";
 
         assertTrue(enlace.startsWith(prefijo));
 

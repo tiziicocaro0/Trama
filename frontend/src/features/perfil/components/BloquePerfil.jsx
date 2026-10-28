@@ -4,14 +4,15 @@ import {
   ChatCircle,
   Ear,
   Lightbulb,
+  NotePencil,
   Palette,
   Star,
-  NotePencil,
 } from '@phosphor-icons/react'
-import { Link } from 'react-router-dom'
-import TarjetaAporte from '../../../components/ui/TarjetaAporte.jsx'
 import { useRef, useState } from 'react'
-import Button from '../../../components/ui/Button.jsx'
+import { Link } from 'react-router-dom'
+import { archivarAporte } from '../../../api/aportes.js'
+import Boton from '../../../components/ui/Boton.jsx'
+import TarjetaAporte from '../../../components/ui/TarjetaAporte.jsx'
 import EditorAporte from './EditorAporte.jsx'
 
 const iconos = {
@@ -33,18 +34,39 @@ export default function BloquePerfil({
   alGuardar,
 }) {
   const [editor, setEditor] = useState(null)
+  const [archivandoId, setArchivandoId] = useState(null)
+  const [errorArchivo, setErrorArchivo] = useState('')
   const disparador = useRef(null)
+
   function abrirEditor(event, aporte = {}) {
     disparador.current = event.currentTarget
+    setErrorArchivo('')
     setEditor(aporte)
   }
+
   function cancelar() {
     setEditor(null)
     disparador.current?.focus()
   }
+
+  async function archivar(aporte) {
+    if (archivandoId) return
+    setArchivandoId(aporte.id)
+    setErrorArchivo('')
+    try {
+      await archivarAporte(proyectoId, aporte.id)
+      alGuardar?.('archivado')
+    } catch (error) {
+      setErrorArchivo(error.message)
+    } finally {
+      setArchivandoId(null)
+    }
+  }
+
   const Icon = iconos[seccion.tipo]
   const esNota = seccion.tipo === 'NOTA_PROFESIONAL'
   const visibles = completo ? aportes : aportes.slice(0, 3)
+
   return (
     <section
       aria-labelledby={`titulo-${seccion.slug}`}
@@ -63,6 +85,11 @@ export default function BloquePerfil({
           {seccion.titulo}
         </h2>
       </div>
+      {errorArchivo && (
+        <p role="alert" className="mb-3 text-sm text-error">
+          {errorArchivo}
+        </p>
+      )}
       {visibles.length ? (
         <ul className="mb-4 flex-1 divide-y divide-borde/40">
           {visibles.map((aporte) => (
@@ -70,7 +97,9 @@ export default function BloquePerfil({
               <TarjetaAporte
                 aporte={aporte}
                 resumen={!completo}
+                archivando={archivandoId === aporte.id}
                 alEditar={(event) => abrirEditor(event, aporte)}
+                alArchivar={() => archivar(aporte)}
               />
             </li>
           ))}
@@ -89,9 +118,9 @@ export default function BloquePerfil({
         </div>
       )}
       {puedeCrear && !editor && (
-        <Button variant="secondary" onClick={abrirEditor} className="mb-4">
+        <Boton variant="secondary" onClick={abrirEditor} className="mb-4">
           {esNota ? 'Agregar nota' : 'Agregar aporte'}
-        </Button>
+        </Boton>
       )}
       {editor && (
         <EditorAporte
@@ -102,7 +131,7 @@ export default function BloquePerfil({
           alCancelar={cancelar}
           alGuardar={() => {
             setEditor(null)
-            alGuardar()
+            alGuardar?.('guardado')
           }}
         />
       )}

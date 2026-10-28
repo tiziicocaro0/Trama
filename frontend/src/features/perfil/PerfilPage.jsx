@@ -1,7 +1,7 @@
 import { Heart } from '@phosphor-icons/react'
 import { Link, useParams } from 'react-router-dom'
 import { useState } from 'react'
-import Button from '../../components/ui/Button.jsx'
+import Boton from '../../components/ui/Boton.jsx'
 import CabeceraPerfil from './components/CabeceraPerfil.jsx'
 import BloquePerfil from './components/BloquePerfil.jsx'
 import usePerfil from './hooks/usePerfil.js'
@@ -35,9 +35,9 @@ export default function PerfilPage() {
             <h1 className="font-display text-h1 text-secundario">
               Sección no encontrada
             </h1>
-            <Button to={`/proyectos/${id}`} variant="secondary">
+            <Boton to={`/proyectos/${id}`} variant="secondary">
               Volver al perfil
-            </Button>
+            </Boton>
           </div>
         ) : cargando ? (
           <p role="status" className="py-12 text-center">
@@ -50,10 +50,10 @@ export default function PerfilPage() {
             </h1>
             <p role="alert">{error}</p>
             <div className="flex flex-wrap gap-4">
-              <Button onClick={reintentar}>Reintentar</Button>
-              <Button to="/inicio" variant="secondary">
+              <Boton onClick={reintentar}>Reintentar</Boton>
+              <Boton to="/inicio" variant="secondary">
                 Volver al inicio
-              </Button>
+              </Boton>
             </div>
           </div>
         ) : proyecto ? (
@@ -102,11 +102,16 @@ export default function PerfilPage() {
                   proyectoId={id}
                   completo={Boolean(seccion)}
                   puedeCrear={proyecto.puedeCargar === true}
-                  alGuardar={() => {
+                  alGuardar={(accion) => {
+                    const esNota = item.tipo === 'NOTA_PROFESIONAL'
                     setMensajeGuardado(
-                      item.tipo === 'NOTA_PROFESIONAL'
-                        ? 'Nota guardada.'
-                        : 'Aporte guardado.',
+                      accion === 'archivado'
+                        ? esNota
+                          ? 'Nota archivada.'
+                          : 'Aporte archivado.'
+                        : esNota
+                          ? 'Nota guardada.'
+                          : 'Aporte guardado.',
                     )
                     reintentar()
                   }}

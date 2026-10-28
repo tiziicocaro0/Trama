@@ -1,6 +1,6 @@
 import { cloneElement } from 'react'
 
-export default function FormField({ id, label, error, hint, children }) {
+export default function CampoFormulario({ id, label, error, hint, children }) {
   const describedBy = [hint && `${id}-ayuda`, error && `${id}-error`]
     .filter(Boolean)
     .join(' ')

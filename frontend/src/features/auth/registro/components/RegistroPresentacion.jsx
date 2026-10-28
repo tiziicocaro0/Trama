@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom'
-import BrandLogo from '../../../../components/ui/BrandLogo.jsx'
+import Logo from '../../../../components/ui/Logo.jsx'
 
 export default function RegistroPresentacion() {
   return (
@@ -9,7 +9,7 @@ export default function RegistroPresentacion() {
         aria-label="TRAMA: volver a la bienvenida"
         className="ml-0 block w-36 rounded-sm focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-primario lg:ml-6"
       >
-        <BrandLogo />
+        <Logo />
       </Link>
       <div className="relative mt-8 lg:mt-40">
         <h1 className="font-display text-display leading-none text-primario lg:text-registro-portada">
