@@ -1,7 +1,7 @@
-
 package com.trama.tpo.demo;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
@@ -23,6 +23,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.http.MediaType;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.web.servlet.MockMvc;
@@ -119,6 +120,13 @@ class InvitacionAceptacionControllerTest {
     private String registrarInvitacion(
             EstadoInvitacion estado,
             Instant vencimiento) throws Exception {
+        return registrarInvitacionConRol(estado, vencimiento, Rol.EDUCACION);
+    }
+
+    private String registrarInvitacionConRol(
+            EstadoInvitacion estado,
+            Instant vencimiento,
+            Rol rol) throws Exception {
 
         String token = "token-" + UUID.randomUUID();
 
@@ -130,7 +138,7 @@ class InvitacionAceptacionControllerTest {
                         .proyecto(proyecto)
                         .invitadoPor(tutor)
                         .email(destinatario.getEmail())
-                        .rol(Rol.EDUCACION)
+                        .rol(rol)
                         .tokenHash(HexFormat.of().formatHex(hash))
                         .venceEn(vencimiento)
                         .estado(estado)
@@ -147,11 +155,16 @@ class InvitacionAceptacionControllerTest {
     @AfterEach
     void limpiarDatos() {
 
-        // Eliminar la invitacion sin importar si quedo PENDIENTE o ACEPTADA.
-        if (invitacionCreada != null) {
+        // Eliminar todas las invitaciones asociadas al proyecto.
+        invitacionRepository.deleteAll(
+                invitacionRepository.findByProyectoIdAndEstado(
+                        proyecto.getId(), EstadoInvitacion.PENDIENTE
+                )
+        );
+        if (invitacionCreada != null && invitacionRepository.existsById(invitacionCreada.getId())) {
             invitacionRepository.deleteById(invitacionCreada.getId());
-            invitacionRepository.flush();
         }
+        invitacionRepository.flush();
 
         // Eliminar tanto la membresia del tutor como la que pueda crear el POST.
         membresiaRepository.deleteAll(
@@ -312,5 +325,71 @@ class InvitacionAceptacionControllerTest {
 
         assertFalse(membresiaRepository.existsByUsuarioIdAndProyectoId(
                 destinatario.getId(), proyecto.getId()));
+    }
+
+    // TEST 7 (1.6): el co-tutor que acepta queda con esAdmin=true y puede invitar y revocar.
+    @Test
+    void coTutorQueAceptaQuedaComoAdminYPuedeInvitarYRevocar() throws Exception {
+
+        String token = registrarInvitacionConRol(
+                EstadoInvitacion.PENDIENTE,
+                Instant.now().plus(1, ChronoUnit.DAYS),
+                Rol.TUTOR
+        );
+
+        mockMvc.perform(post("/api/invitaciones/{token}/aceptar", token)
+                        .header("Authorization", tokenJwt(destinatario)))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.usuarioId")
+                        .value(destinatario.getId().toString()))
+                .andExpect(jsonPath("$.rol").value("TUTOR"))
+                .andExpect(jsonPath("$.esAdmin").value(true));
+
+        Membresia membresiaCoTutor = membresiaRepository
+                .findByUsuarioIdAndProyectoId(
+                        destinatario.getId(),
+                        proyecto.getId()
+                )
+                .orElseThrow();
+
+        assertEquals(Rol.TUTOR, membresiaCoTutor.getRol());
+        assertTrue(membresiaCoTutor.getEsAdmin());
+
+        // El co-tutor ahora puede invitar a un nuevo miembro.
+        String emailNuevo = "nuevo." + UUID.randomUUID() + "@example.com";
+        String requestInvitacion = """
+                {
+                  "email": "%s",
+                  "rol": "FAMILIAR"
+                }
+                """.formatted(emailNuevo);
+
+        mockMvc.perform(post("/api/proyectos/{proyectoId}/invitaciones", proyecto.getId())
+                        .header("Authorization", tokenJwt(destinatario))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(requestInvitacion))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.email").value(emailNuevo))
+                .andExpect(jsonPath("$.rol").value("FAMILIAR"));
+
+        // Y el co-tutor también puede revocar a un miembro existente.
+        Membresia membresiaFamiliar = membresiaRepository.saveAndFlush(
+                Membresia.builder()
+                        .usuario(otroUsuario)
+                        .proyecto(proyecto)
+                        .rol(Rol.FAMILIAR)
+                        .esAdmin(false)
+                        .build()
+        );
+
+        mockMvc.perform(delete(
+                        "/api/proyectos/{proyectoId}/miembros/{miembroId}",
+                        proyecto.getId(),
+                        membresiaFamiliar.getId())
+                        .header("Authorization", tokenJwt(destinatario)))
+                .andExpect(status().isOk());
+
+        assertFalse(membresiaRepository.existsByUsuarioIdAndProyectoId(
+                otroUsuario.getId(), proyecto.getId()));
     }
 }
