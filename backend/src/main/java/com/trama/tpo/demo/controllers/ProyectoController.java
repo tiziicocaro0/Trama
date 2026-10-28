@@ -5,7 +5,6 @@ import java.util.UUID;
 import java.net.URI;
 
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -55,8 +54,6 @@ public class ProyectoController {
         return ResponseEntity.ok(proyectoService.obtener(proyectoId));
     }
 
-
-
     // EDITAR DATOS PERSONALES DEL NIÑO
     @PutMapping("/{proyectoId}")
     public ResponseEntity<ProyectoResponse> actualizarDatos(
@@ -67,7 +64,6 @@ public class ProyectoController {
                 proyectoService.actualizarDatos(proyectoId, request));
     }
 
-
     // CONFIGURACIÓN DE LA FAMILIA
     @PutMapping("/{proyectoId}/configuracion")
     public ResponseEntity<ProyectoResponse> actualizarConfiguracion(
@@ -76,15 +72,5 @@ public class ProyectoController {
 
         return ResponseEntity.ok(
                 proyectoService.actualizarConfiguracion(proyectoId, request));
-    }
-
-    // QUITAR ACCESO A UN MIEMBRO (1.3)
-    @DeleteMapping("/{proyectoId}/miembros/{miembroId}")
-    public ResponseEntity<Void> quitarMiembro(
-            @PathVariable UUID proyectoId,
-            @PathVariable UUID miembroId) {
-
-        proyectoService.quitarMiembro(proyectoId, miembroId);
-        return ResponseEntity.ok().build();
     }
 }

@@ -55,3 +55,13 @@ export async function cambiarEspecialidades(proyectoId, especialidades) {
   )
   return data
 }
+
+// 1.5: quitar el acceso de un miembro (solo tutores administradores).
+// DELETE /api/proyectos/{id}/miembros/{miembroId}
+export async function quitarMiembro(proyectoId, miembroId) {
+  if (!cliente.defaults.baseURL)
+    throw new Error('Falta configurar la conexión con TRAMA.')
+  await cliente.delete(
+    `/proyectos/${encodeURIComponent(proyectoId)}/miembros/${encodeURIComponent(miembroId)}`,
+  )
+}

@@ -94,23 +94,33 @@ describe('Selector de proyecto y rol por niño (Tarea 1.7)', () => {
     const selector = await screen.findByLabelText('Niño o niña');
     expect(selector).toHaveValue(PROYECTOS_MOCK[0].id);
 
-    // En Tomás el usuario es Madre (tutora administradora): ve "Invitar", "Escuela" y "Terapias"
+    // En Tomás el usuario es Madre (tutora administradora): ve "Invitar", "Datos y notas" y "Bitácora"
     expect(screen.getByRole('link', { name: 'Invitar' })).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: 'Escuela' })).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: 'Terapias' })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Datos y notas' })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Bitácora' })).toBeInTheDocument();
 
-    // Cambia a Martina donde su rol es Terapeuta (SALUD, no admin): oculta "Invitar" y "Escuela", mantiene "Terapias"
+    // Cambia a Martina donde su rol es Terapeuta (SALUD, no admin): oculta "Invitar" y mantiene el resto
     await userEvent.selectOptions(selector, PROYECTOS_MOCK[1].id);
 
     expect(screen.queryByRole('link', { name: 'Invitar' })).not.toBeInTheDocument();
-    expect(screen.queryByRole('link', { name: 'Escuela' })).not.toBeInTheDocument();
-    expect(screen.getByRole('link', { name: 'Terapias' })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Datos y notas' })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Bitácora' })).toBeInTheDocument();
 
-    // Cambia a Joaquín donde su rol es Docente (EDUCACION, no admin): muestra "Escuela" y oculta "Terapias" e "Invitar"
+    // Cambia a Joaquín donde su rol es Docente (EDUCACION, no admin): tampoco ve "Invitar"
     await userEvent.selectOptions(selector, PROYECTOS_MOCK[2].id);
 
     expect(screen.queryByRole('link', { name: 'Invitar' })).not.toBeInTheDocument();
-    expect(screen.queryByRole('link', { name: 'Terapias' })).not.toBeInTheDocument();
-    expect(screen.getByRole('link', { name: 'Escuela' })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Bitácora' })).toBeInTheDocument();
+  });
+
+  it('no muestra datos de ejemplo si la API de proyectos falla', async () => {
+    clienteApi.get.mockReset().mockRejectedValue(new Error('Sin conexión'));
+    const { result } = renderHook(() => useProyectoActual(), {
+      wrapper: ({ children }) => <MemoryRouter>{children}</MemoryRouter>,
+    });
+
+    await waitFor(() => expect(result.current.cargando).toBe(false));
+    expect(result.current.proyectos).toEqual([]);
+    expect(result.current.proyectoActual).toBeNull();
   });
 });

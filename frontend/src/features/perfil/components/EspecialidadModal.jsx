@@ -2,36 +2,10 @@ import { useState } from 'react'
 import { Modal } from '../../../components/ui/Modal.jsx'
 import Boton from '../../../components/ui/Boton.jsx'
 import { Aviso } from '../../../components/ui/Aviso.jsx'
-
-const ESPECIALIDADES_EDUCACION = [
-  { valor: 'DOCENTE_PRIMARIO', etiqueta: 'Docente primario' },
-  { valor: 'DOCENTE_SECUNDARIO', etiqueta: 'Docente secundario' },
-  { valor: 'DOCENTE_EDUCACION_ESPECIAL', etiqueta: 'Docente de educación especial' },
-  { valor: 'MAESTRO_NIVEL_INICIAL', etiqueta: 'Maestro/a de nivel inicial' },
-  { valor: 'MAESTRA_INTEGRADORA', etiqueta: 'Maestra integradora' },
-  { valor: 'EQUIPO_ORIENTACION', etiqueta: 'Equipo de orientación' },
-  { valor: 'PRECEPTOR_ESCOLAR', etiqueta: 'Preceptor/a escolar' },
-  { valor: 'DIRECTOR_ESCUELA', etiqueta: 'Director/a de escuela' },
-  { valor: 'ASISTENTE_EDUCACIONAL', etiqueta: 'Asistente educacional' },
-  { valor: 'INSPECTOR', etiqueta: 'Inspector/a' },
-  { valor: 'OTRA_EDUCACION', etiqueta: 'Otra (educación)' },
-]
-
-const ESPECIALIDADES_SALUD = [
-  { valor: 'PSICOLOGIA', etiqueta: 'Psicología' },
-  { valor: 'PSICOPEDAGOGIA', etiqueta: 'Psicopedagogía' },
-  { valor: 'FONOAUDIOLOGIA', etiqueta: 'Fonoaudiología' },
-  { valor: 'LOGOPEDA', etiqueta: 'Logopeda' },
-  { valor: 'TERAPIA_OCUPACIONAL', etiqueta: 'Terapia ocupacional' },
-  { valor: 'ACOMPANANTE_TERAPEUTICO', etiqueta: 'Acompañante terapéutico' },
-  { valor: 'PSIQUIATRIA', etiqueta: 'Psiquiatría' },
-  { valor: 'PSIQUIATRIA_INFANTO_JUVENIL', etiqueta: 'Psiquiatría infanto-juvenil' },
-  { valor: 'PEDIATRIA', etiqueta: 'Pediatría' },
-  { valor: 'GENETISTA', etiqueta: 'Genetista' },
-  { valor: 'PSICOLOGO_SOCIAL', etiqueta: 'Psicólogo/a social' },
-  { valor: 'TRABAJADOR_SOCIAL', etiqueta: 'Trabajador/a social' },
-  { valor: 'OTRA_SALUD', etiqueta: 'Otra (salud)' },
-]
+import {
+  ESPECIALIDADES_EDUCACION,
+  ESPECIALIDADES_SALUD,
+} from '../especialidades.js'
 
 function esOtra(valor) {
   return valor === 'OTRA_EDUCACION' || valor === 'OTRA_SALUD'

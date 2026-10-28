@@ -142,29 +142,28 @@ public class PermisoService {
 
         Membresia membresia = obtenerMembresia(proyectoId);
 
-        Rol rol = membresia.getRol();
-
-        // Los tutores siempre pueden ver todos los aportes
-        if (rol == Rol.TUTOR) {
-            return;
-        }
-
-        boolean puedeVer = switch (visibilidad) {
-
-            case TODOS -> true;
-
-            case SOLO_TUTORES -> false;
-
-            case SOLO_SALUD -> rol == Rol.SALUD;
-
-            case SOLO_EDUCACION -> rol == Rol.EDUCACION;
-        };
-
-        if (!puedeVer) {
+        if (!visibilidadesPermitidas(membresia.getRol()).contains(visibilidad)) {
             throw new AccessDeniedException(
                     "No tenés permiso para ver este aporte"
             );
         }
+    }
+
+    // 6. VISIBILIDADES QUE PUEDE VER CADA ROL
+    // Única fuente de la regla: la usan este chequeo y el listado filtrado en la base.
+    public static List<Visibilidad> visibilidadesPermitidas(Rol rol) {
+
+        return switch (rol) {
+
+            // Los tutores siempre pueden ver todos los aportes
+            case TUTOR -> List.of(Visibilidad.values());
+
+            case SALUD -> List.of(Visibilidad.TODOS, Visibilidad.SOLO_SALUD);
+
+            case EDUCACION -> List.of(Visibilidad.TODOS, Visibilidad.SOLO_EDUCACION);
+
+            case FAMILIAR -> List.of(Visibilidad.TODOS);
+        };
     }
 
     // MÉTODO PRIVADO COMPARTIDO

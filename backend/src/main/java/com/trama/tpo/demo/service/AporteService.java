@@ -26,7 +26,6 @@ import java.util.Objects;
 import java.util.Comparator;
 import com.trama.tpo.demo.aporte.interes.DatosInteres;
 import com.trama.tpo.demo.aporte.fortaleza.DatosFortaleza;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
@@ -46,8 +45,9 @@ public class AporteService {
     private final PermisoService permisoService;
     private final UsuarioActual usuarioActual;
     private final ArchivoRepository archivoRepository;
+    // Lee el JSON "datos" de cada tipo de aporte (fechas incluidas).
+    private final ObjectMapper mapper = new ObjectMapper().findAndRegisterModules();
 
-    @Autowired
     public AporteService(
             AporteRepository aporteRepository,
             AporteVersionRepository aporteVersionRepository,
@@ -66,27 +66,6 @@ public class AporteService {
         this.permisoService = permisoService;
         this.usuarioActual = usuarioActual;
         this.archivoRepository = archivoRepository;
-    }
-
-    public AporteService(
-            AporteRepository aporteRepository,
-            AporteVersionRepository aporteVersionRepository,
-            ProyectoRepository proyectoRepository,
-            UsuarioRepository usuarioRepository,
-            MembresiaRepository membresiaRepository,
-            PermisoService permisoService,
-            UsuarioActual usuarioActual) {
-
-        this(
-                aporteRepository,
-                aporteVersionRepository,
-                proyectoRepository,
-                usuarioRepository,
-                membresiaRepository,
-                permisoService,
-                usuarioActual,
-                null
-        );
     }
 
     // CREAR APORTE
@@ -155,7 +134,7 @@ public class AporteService {
 
         // Determinar qué aportes puede ver el usuario según su rol
         List<Visibilidad> visibilidadesPermitidas =
-                obtenerVisibilidadesPermitidas(rol);
+                PermisoService.visibilidadesPermitidas(rol);
 
         // Filtrar directamente desde la base de datos
         List<Aporte> aportes = aporteRepository.buscarAportesVisibles(
@@ -169,9 +148,6 @@ public class AporteService {
         boolean puedeCargar = permisoService.puedeEditar(proyectoId);
 
         if (tipo == TipoAporte.OBSERVACION) {
-                ObjectMapper mapper = new ObjectMapper();
-                mapper.findAndRegisterModules();
-
                 aportes.sort(
                         Comparator.comparing(
                                 (Aporte aporte) -> {
@@ -301,14 +277,6 @@ public class AporteService {
             return new ArrayList<>();
         }
 
-        if (archivoRepository == null) {
-            throw new ApiException(
-                    "ARCHIVO_INVALIDO",
-                    "No se pudo verificar el archivo adjunto",
-                    HttpStatus.BAD_REQUEST
-            );
-        }
-
         List<Archivo> archivos = new ArrayList<>();
         for (UUID archivoId : archivoIds) {
             if (archivoId == null) {
@@ -336,34 +304,6 @@ public class AporteService {
         return switch (tipo) {
             case NOTA_PROFESIONAL -> Visibilidad.SOLO_SALUD;
             default -> Visibilidad.TODOS;
-        };
-    }
-
-    // DETERMINAR VISIBILIDADES PERMITIDAS SEGÚN EL ROL
-    private List<Visibilidad> obtenerVisibilidadesPermitidas(Rol rol) {
-
-        return switch (rol) {
-
-            case TUTOR -> List.of(
-                    Visibilidad.TODOS,
-                    Visibilidad.SOLO_TUTORES,
-                    Visibilidad.SOLO_SALUD,
-                    Visibilidad.SOLO_EDUCACION
-            );
-
-            case SALUD -> List.of(
-                    Visibilidad.TODOS,
-                    Visibilidad.SOLO_SALUD
-            );
-
-            case EDUCACION -> List.of(
-                    Visibilidad.TODOS,
-                    Visibilidad.SOLO_EDUCACION
-            );
-
-            default -> List.of(
-                    Visibilidad.TODOS
-            );
         };
     }
 
@@ -418,8 +358,6 @@ public class AporteService {
         }
 
         try {
-                ObjectMapper mapper = new ObjectMapper();
-
                 DatosInteres datos = mapper.readValue(
                         request.datos(),
                         DatosInteres.class
@@ -472,8 +410,6 @@ public class AporteService {
         }
 
         try {
-                ObjectMapper mapper = new ObjectMapper();
-
                 DatosFortaleza datos = mapper.readValue(
                         request.datos(),
                         DatosFortaleza.class
@@ -522,9 +458,6 @@ public class AporteService {
         }
 
         try {
-                ObjectMapper mapper = new ObjectMapper();
-                mapper.findAndRegisterModules();
-
                 DatosObservacion datos = mapper.readValue(
                         request.datos(),
                         DatosObservacion.class
