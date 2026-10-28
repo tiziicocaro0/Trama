@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.UUID;
 import java.net.URI;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -19,6 +20,8 @@ import com.trama.tpo.demo.entity.dto.ConfiguracionProyectoRequest;
 import com.trama.tpo.demo.entity.dto.CrearProyectoRequest;
 import com.trama.tpo.demo.entity.dto.MiProyectoDTO;
 import com.trama.tpo.demo.entity.dto.ProyectoResponse;
+import com.trama.tpo.demo.entity.dto.ResumenProyectoResponse;
+import com.trama.tpo.demo.service.AporteService;
 import com.trama.tpo.demo.service.ProyectoService;
 
 import jakarta.validation.Valid;
@@ -28,9 +31,18 @@ import jakarta.validation.Valid;
 public class ProyectoController {
 
     private final ProyectoService proyectoService;
+    private final AporteService aporteService;
+
+    @Autowired
+    public ProyectoController(
+            ProyectoService proyectoService,
+            AporteService aporteService) {
+        this.proyectoService = proyectoService;
+        this.aporteService = aporteService;
+    }
 
     public ProyectoController(ProyectoService proyectoService) {
-        this.proyectoService = proyectoService;
+        this(proyectoService, null);
     }
 
     @PostMapping
@@ -55,7 +67,13 @@ public class ProyectoController {
         return ResponseEntity.ok(proyectoService.obtener(proyectoId));
     }
 
+    // RESUMEN "CONOCELO EN 5 MINUTOS" (2.8)
+    @GetMapping("/{proyectoId}/resumen")
+    public ResponseEntity<ResumenProyectoResponse> obtenerResumen(
+            @PathVariable UUID proyectoId) {
 
+        return ResponseEntity.ok(aporteService.obtenerResumen(proyectoId));
+    }
 
     // EDITAR DATOS PERSONALES DEL NIÑO
     @PutMapping("/{proyectoId}")
@@ -66,7 +84,6 @@ public class ProyectoController {
         return ResponseEntity.ok(
                 proyectoService.actualizarDatos(proyectoId, request));
     }
-
 
     // CONFIGURACIÓN DE LA FAMILIA
     @PutMapping("/{proyectoId}/configuracion")

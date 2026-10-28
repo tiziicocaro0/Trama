@@ -189,6 +189,74 @@ class AporteVisibilidadPorRolTest {
                         .value("SOLO_TUTORES"));
     }
 
+    // 5. RESUMEN "CONOCELO EN 5 MINUTOS" (2.8)
+
+    @Test
+    void resumenFiltraVigentesYVisibilidadPorRolYRechazaAjenoCon403() throws Exception {
+        Usuario ajeno = crearUsuario("AjenoResumen");
+        try {
+            aporteRepository.saveAndFlush(Aporte.builder()
+                    .proyecto(proyecto)
+                    .autor(tutorAutor)
+                    .tipo(TipoAporte.INTERES)
+                    .titulo("Trenes")
+                    .datos("{\"categoria\":\"TEMA\",\"intensidad\":\"ALTA\"}")
+                    .visibilidad(Visibilidad.TODOS)
+                    .archivado(false)
+                    .build());
+
+            aporteRepository.saveAndFlush(Aporte.builder()
+                    .proyecto(proyecto)
+                    .autor(tutorAutor)
+                    .tipo(TipoAporte.COMUNICACION)
+                    .titulo("Usar frases breves")
+                    .visibilidad(Visibilidad.SOLO_EDUCACION)
+                    .archivado(false)
+                    .build());
+
+            aporteRepository.saveAndFlush(Aporte.builder()
+                    .proyecto(proyecto)
+                    .autor(tutorAutor)
+                    .tipo(TipoAporte.DESREGULACION)
+                    .titulo("Ofrecer auriculares y lugar silencioso")
+                    .visibilidad(Visibilidad.SOLO_SALUD)
+                    .archivado(false)
+                    .build());
+
+            aporteRepository.saveAndFlush(Aporte.builder()
+                    .proyecto(proyecto)
+                    .autor(tutorAutor)
+                    .tipo(TipoAporte.SENSORIAL)
+                    .titulo("Sensibilidad archivada")
+                    .visibilidad(Visibilidad.TODOS)
+                    .archivado(true)
+                    .build());
+
+            String rutaResumen = "/api/proyectos/" + proyecto.getId() + "/resumen";
+
+            mockMvc.perform(get(rutaResumen)
+                    .header("Authorization", token(tutorAutor)))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.intereses.length()").value(1))
+                    .andExpect(jsonPath("$.comunicacion.length()").value(1))
+                    .andExpect(jsonPath("$.desregulacion.length()").value(1))
+                    .andExpect(jsonPath("$.sensorial.length()").value(0));
+
+            mockMvc.perform(get(rutaResumen)
+                    .header("Authorization", token(profesionalEducacion)))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.intereses.length()").value(1))
+                    .andExpect(jsonPath("$.comunicacion.length()").value(1))
+                    .andExpect(jsonPath("$.desregulacion.length()").value(0));
+
+            mockMvc.perform(get(rutaResumen)
+                    .header("Authorization", token(ajeno)))
+                    .andExpect(status().isForbidden());
+        } finally {
+            usuarioRepository.delete(ajeno);
+        }
+    }
+
     // MÉTODOS AUXILIARES
 
     private Aporte crearAporteConVisibilidad(

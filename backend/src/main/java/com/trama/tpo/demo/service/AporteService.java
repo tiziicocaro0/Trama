@@ -8,6 +8,7 @@ import com.trama.tpo.demo.entity.archivo.Archivo;
 import com.trama.tpo.demo.entity.dto.AporteRequest;
 import com.trama.tpo.demo.entity.dto.AporteResponse;
 import com.trama.tpo.demo.entity.dto.ArchivoResponse;
+import com.trama.tpo.demo.entity.dto.ResumenProyectoResponse;
 import com.trama.tpo.demo.entity.membresia.Rol;
 import com.trama.tpo.demo.entity.proyecto.Proyecto;
 import com.trama.tpo.demo.entity.usuario.Usuario;
@@ -37,6 +38,15 @@ import java.util.UUID;
 
 @Service
 public class AporteService {
+
+    private static final List<TipoAporte> TIPOS_RESUMEN = List.of(
+            TipoAporte.INTERES,
+            TipoAporte.FORTALEZA,
+            TipoAporte.COMUNICACION,
+            TipoAporte.SENSORIAL,
+            TipoAporte.ESTRATEGIA,
+            TipoAporte.DESREGULACION
+    );
 
     private final AporteRepository aporteRepository;
     private final AporteVersionRepository aporteVersionRepository;
@@ -198,6 +208,75 @@ public class AporteService {
         return aportes.stream()
                 .map(aporte -> convertirRespuesta(aporte, puedeCargar))
                 .toList();
+    }
+
+    // RESUMEN "CONOCELO EN 5 MINUTOS" (2.8)
+    @Transactional(readOnly = true)
+    public ResumenProyectoResponse obtenerResumen(UUID proyectoId) {
+
+        permisoService.verificarMiembro(proyectoId);
+
+        UUID usuarioId = usuarioActual.obtenerId();
+
+        Rol rol = membresiaRepository
+                .findRol(usuarioId, proyectoId)
+                .orElseThrow(() -> new AccessDeniedException(
+                        "No tenés acceso a este proyecto"
+                ));
+
+        List<Visibilidad> visibilidadesPermitidas =
+                obtenerVisibilidadesPermitidas(rol);
+
+        List<Aporte> aportes = aporteRepository.buscarAportesVigentesPorTiposYVisibilidad(
+                proyectoId,
+                TIPOS_RESUMEN,
+                visibilidadesPermitidas
+        );
+
+        boolean puedeCargar = permisoService.puedeEditar(proyectoId);
+
+        List<AporteResponse> convertidos = aportes.stream()
+                .map(aporte -> convertirRespuesta(aporte, puedeCargar))
+                .toList();
+
+        List<AporteResponse> intereses = filtrarPorTipo(convertidos, TipoAporte.INTERES)
+                .stream()
+                .sorted(Comparator.comparingInt(this::pesoIntensidadInteres).reversed())
+                .toList();
+
+        return new ResumenProyectoResponse(
+                intereses,
+                filtrarPorTipo(convertidos, TipoAporte.FORTALEZA),
+                filtrarPorTipo(convertidos, TipoAporte.COMUNICACION),
+                filtrarPorTipo(convertidos, TipoAporte.SENSORIAL),
+                filtrarPorTipo(convertidos, TipoAporte.ESTRATEGIA),
+                filtrarPorTipo(convertidos, TipoAporte.DESREGULACION)
+        );
+    }
+
+    private List<AporteResponse> filtrarPorTipo(
+            List<AporteResponse> aportes,
+            TipoAporte tipo) {
+
+        return aportes.stream()
+                .filter(aporte -> aporte.tipo() == tipo)
+                .toList();
+    }
+
+    private int pesoIntensidadInteres(AporteResponse aporte) {
+        if (aporte.datos() == null || aporte.datos().isBlank()) {
+            return 0;
+        }
+        try {
+            ObjectMapper mapper = new ObjectMapper();
+            DatosInteres datos = mapper.readValue(aporte.datos(), DatosInteres.class);
+            if (datos.intensidad() == null) {
+                return 0;
+            }
+            return datos.intensidad().ordinal() + 1;
+        } catch (JsonProcessingException e) {
+            return 0;
+        }
     }
 
     // EDITAR APORTE
