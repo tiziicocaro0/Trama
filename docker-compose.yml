@@ -34,13 +34,17 @@ services:
     depends_on:
       mysql:
         condition: service_healthy
+      openbao:
+        condition: service_healthy
     environment:
       SPRING_PROFILES_ACTIVE: prod
       DB_URL: jdbc:mysql://mysql:3306/trama
       DB_USERNAME: trama
       DB_PASSWORD: ${MYSQL_PASSWORD}
       JWT_SECRET: ${JWT_SECRET}
-      TRAMA_CRYPTO_KEY: ${TRAMA_CRYPTO_KEY}
+      # KMS (0.3): TRAMA_CRYPTO_KEY ya no viene del .env, el backend la pide a OpenBao.
+      OPENBAO_URI: http://openbao:8200
+      OPENBAO_TOKEN: ${OPENBAO_TOKEN}
       SERVER_PORT: 8080
 
       # Configuración del correo
@@ -78,15 +82,43 @@ services:
     depends_on:
       mysql:
         condition: service_healthy
+      openbao:
+        condition: service_healthy
     environment:
       MYSQL_PASSWORD: ${MYSQL_PASSWORD}
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
-      TRAMA_BACKUP_KEY: ${TRAMA_BACKUP_KEY}
+      # KMS (0.3): la clave de los backups se pide a OpenBao.
+      OPENBAO_URI: http://openbao:8200
+      OPENBAO_TOKEN: ${OPENBAO_TOKEN}
     volumes:
       - ./backup:/scripts:ro
       - ./backups:/backups
       - trama-uploads:/uploads
     entrypoint: ["sh", "/scripts/backup.sh"]
+  # KMS de TRAMA (0.3): guarda TRAMA_CRYPTO_KEY y TRAMA_BACKUP_KEY. Ver docs/plan-openbao.md.
+  openbao:
+    image: openbao/openbao:2.7.2
+    container_name: trama-openbao
+    profiles: ["app", "backup"]
+    restart: unless-stopped
+    # La imagen ya agrega -config=/openbao/config al arrancar en modo servidor.
+    command: ["server"]
+    cap_add:
+      - IPC_LOCK
+    volumes:
+      - ./openbao/config.hcl:/openbao/config/config.hcl:ro
+      - trama-openbao-data:/openbao/file
+    ports:
+      - "127.0.0.1:8200:8200"
+    environment:
+      BAO_ADDR: http://127.0.0.1:8200
+    healthcheck:
+      # "bao status" devuelve 0 solo cuando está abierto: sellado cuenta como no saludable.
+      test: ["CMD", "bao", "status"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
 volumes:
   trama-mysql-data:
   trama-uploads:
+  trama-openbao-data:

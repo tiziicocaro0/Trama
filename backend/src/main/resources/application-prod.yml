@@ -7,6 +7,17 @@ spring:
   jpa:
     show-sql: false
 
+  # KMS (0.3): las claves de cifrado vienen de OpenBao (secret/trama), no de variables de entorno.
+  config:
+    import: vault://secret/trama
+  cloud:
+    vault:
+      enabled: true
+      uri: ${OPENBAO_URI}
+      authentication: TOKEN
+      token: ${OPENBAO_TOKEN}
+      fail-fast: true
+
 server:
   port: ${SERVER_PORT:8080}
 

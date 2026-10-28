@@ -257,9 +257,10 @@ MYSQL_PASSWORD=
 MYSQL_ROOT_PASSWORD=
 JWT_SECRET=
 TRAMA_CRYPTO_KEY=
+TRAMA_BACKUP_KEY=
 ```
 
-`TRAMA_CRYPTO_KEY` es la clave de cifrado (AES-256, en Base64). Se genera una vez con `openssl rand -base64 32`.
+`TRAMA_CRYPTO_KEY` y `TRAMA_BACKUP_KEY` son las claves de cifrado (AES-256, en Base64). Se generan una vez con `openssl rand -base64 32`, cada una por separado. Las variables `OPENBAO_*` las agrega solo `openbao/inicializar.sh` (ver la sección 9).
 
 Las contraseñas y claves deben mantenerse privadas. El archivo `.env` no debe subirse al repositorio.
 
@@ -272,6 +273,8 @@ docker compose --profile app up -d --build
 ```
 
 Este comando construye la imagen del backend e inicia MySQL y el backend.
+
+> **OpenBao:** el backend en Docker pide sus claves a OpenBao. La primera vez hay que inicializarlo, y después de cada reinicio hay que abrirlo: ver la [sección 9](#9-openbao-claves-de-cifrado). Mientras OpenBao esté sellado, el backend espera y no arranca.
 
 > `docker compose up -d` (sin `--profile app`) levanta **solo MySQL**, que es lo que se usa para desarrollar con el backend corriendo desde el IDE. Así no chocan en el puerto 4002.
 
@@ -346,7 +349,7 @@ Los contenedores se recrean con la configuración nueva y los datos de los volú
 
 ### 8. Backups cifrados
 
-Un backup guarda **juntos** la base y los archivos adjuntos, en un solo archivo cifrado con AES-256. Requiere `TRAMA_BACKUP_KEY` en el `.env` (se genera con `openssl rand -base64 32` y es distinta de `TRAMA_CRYPTO_KEY`).
+Un backup guarda **juntos** la base y los archivos adjuntos, en un solo archivo cifrado con AES-256. La clave (`TRAMA_BACKUP_KEY`) la pide a OpenBao, así que OpenBao tiene que estar abierto (ver la sección 9).
 
 Hacer un backup (MySQL tiene que estar levantado):
 
@@ -368,6 +371,40 @@ Para restaurar sobre la base y los archivos **reales**, agregar `--sobrescribir-
 ⚠️ Guardar las claves **fuera** de los backups:
 - Sin `TRAMA_BACKUP_KEY`, el backup no se puede abrir.
 - Sin `TRAMA_CRYPTO_KEY`, los campos sensibles de la base restaurada no se pueden leer.
+
+### 9. OpenBao (claves de cifrado)
+
+OpenBao es el KMS de TRAMA: guarda `TRAMA_CRYPTO_KEY` y `TRAMA_BACKUP_KEY` y se las entrega al backend en Docker y al backup. Cómo está armado y cómo funciona: [docs/plan-openbao.md](docs/plan-openbao.md).
+
+**La primera vez** (una sola vez por entorno):
+
+```bash
+docker compose --profile app up -d openbao
+sh openbao/inicializar.sh
+```
+
+Carga tus claves del `.env` en OpenBao y agrega al `.env` la clave de apertura y los tokens (`OPENBAO_*`).
+
+**Después de reiniciar la Mac, Docker o el contenedor**, OpenBao arranca sellado. Para abrirlo:
+
+```bash
+sh openbao/abrir.sh
+```
+
+También renueva el token del backend por 32 días. El backend arranca solo cuando OpenBao queda abierto.
+
+**Si `abrir.sh` avisa que el token venció** (pasó más de un mes sin abrirlo):
+
+```bash
+sh openbao/nuevo-token.sh
+docker compose --profile app up -d --force-recreate backend
+```
+
+⚠️ Para tener en cuenta:
+- Desde el IDE, con `./mvnw` y en los tests, OpenBao **no se usa**: las claves salen del `.env`.
+- `TRAMA_CRYPTO_KEY` **no se cambia nunca sola**: tiene que ser la misma en el `.env` y en OpenBao.
+- `docker compose down -v` borra el volumen de OpenBao. Las claves siguen en el `.env`: se recupera borrando las líneas `OPENBAO_*` del `.env` y volviendo a correr `inicializar.sh`.
+- El `.env` tiene la llave de todo: nunca se sube ni se comparte.
 
 **Estado actual:** el despliegue mediante Docker Compose incluye MySQL y Spring Boot. La incorporación del frontend con Nginx queda pendiente hasta que el equipo integre su estructura en `develop`.
 
@@ -487,7 +524,7 @@ private String contenido;
 
 ### Dónde está la clave
 
-- En la variable de entorno **`TRAMA_CRYPTO_KEY`**: 32 bytes en base64.
+- En la variable de entorno **`TRAMA_CRYPTO_KEY`** (32 bytes en base64) y, para el backend en Docker, en **OpenBao**, el KMS del proyecto (ver [docs/plan-openbao.md](docs/plan-openbao.md)).
 - **Nunca en el código ni en el repositorio.** En local va en el `.env`, que está ignorado por git. En el CI se genera una clave nueva en cada corrida.
 - **Distinta en cada entorno:** cada integrante genera la suya con `openssl rand -base64 32`, y producción tiene la propia.
 - Si falta o no tiene 32 bytes, la app no arranca.

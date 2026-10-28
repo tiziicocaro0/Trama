@@ -8,7 +8,7 @@
 set -eu
 
 : "${MYSQL_PASSWORD:?Falta MYSQL_PASSWORD}"
-: "${TRAMA_BACKUP_KEY:?Falta TRAMA_BACKUP_KEY}"
+. /scripts/clave.sh
 
 FECHA=$(date -u +%Y%m%d-%H%M%S)
 DESTINO="/backups/trama-$FECHA.tar.gz.gpg"
