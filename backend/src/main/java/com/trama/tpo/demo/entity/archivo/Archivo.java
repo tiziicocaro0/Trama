@@ -42,14 +42,13 @@ public class Archivo {
     @Column(name = "tipo_mime", nullable = false, length = 20)
     private String tipoMime;
 
-    @Column(name = "tamano_bytes", nullable = false)
+    @Column(name = "tamano_bytes", nullable = false, columnDefinition = "INT UNSIGNED")
     private Long tamanoBytes;
 
-    @Column(name = "ruta", nullable = false, length = 36, unique = true)
+    @Column(name = "ruta", nullable = false, unique = true, columnDefinition = "CHAR(36)")
     private String ruta;
 
     @CreationTimestamp
     @Column(name = "fecha", nullable = false, updatable = false)
     private Instant fecha;
 }
-
