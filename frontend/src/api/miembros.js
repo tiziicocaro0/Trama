@@ -25,6 +25,25 @@ export async function listarMiembros(proyectoId, signal) {
   return data
 }
 
+export async function invitarMiembro(proyectoId, { email, rol }) {
+  if (!cliente.defaults.baseURL)
+    throw new Error('Falta configurar la conexión con TRAMA.')
+  const { data } = await cliente.post(
+    `/proyectos/${encodeURIComponent(proyectoId)}/invitaciones`,
+    { email: email?.trim(), rol },
+  )
+  return data
+}
+
+export async function hacerCoTutor(proyectoId, miembroId) {
+  if (!cliente.defaults.baseURL)
+    throw new Error('Falta configurar la conexión con TRAMA.')
+  const { data } = await cliente.put(
+    `/proyectos/${encodeURIComponent(proyectoId)}/miembros/${encodeURIComponent(miembroId)}/co-tutor`,
+  )
+  return data
+}
+
 // 1.9: guardar las especialidades del miembro actual.
 // PUT /api/proyectos/{id}/miembros/me/especialidades
 export async function cambiarEspecialidades(proyectoId, especialidades) {

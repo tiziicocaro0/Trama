@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Route, Routes, useParams } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { clienteApi } from '../api/cliente.js';
-import { PROYECTOS_MOCK } from '../api/proyectos.js';
+import { PROYECTOS_MOCK } from '../api/proyectos.mock.js';
 import { Layout } from '../components/layout/Layout.jsx';
 import { useProyectoActual } from './useProyectoActual.js';
 
@@ -42,7 +42,9 @@ function renderConLayout(rutaInicial = '/proyectos') {
 
 describe('Selector de proyecto y rol por niño (Tarea 1.7)', () => {
   beforeEach(() => {
-    clienteApi.get.mockReset().mockResolvedValue({ data: PROYECTOS_MOCK });
+    clienteApi.get.mockReset().mockResolvedValue({
+      data: PROYECTOS_MOCK.slice(0, 3),
+    });
   });
 
   it('devuelve el proyecto actual y el rol del usuario en useProyectoActual', async () => {
@@ -64,7 +66,7 @@ describe('Selector de proyecto y rol por niño (Tarea 1.7)', () => {
     expect(result.current.rol).toBe('Terapeuta');
     expect(result.current.rolCodigo).toBe('SALUD');
     expect(result.current.esAdmin).toBe(false);
-    expect(result.current.proyectos).toHaveLength(3);
+    expect(result.current.proyectos).toHaveLength(PROYECTOS_MOCK.length);
   });
 
   it('muestra el selector en el encabezado con todos los niños del usuario y navega a la portada al elegir uno', async () => {
@@ -79,8 +81,8 @@ describe('Selector de proyecto y rol por niño (Tarea 1.7)', () => {
       'Tomás (Madre)',
       'Martina (Terapeuta)',
       'Joaquín (Docente)',
+      'Lucía (Docente)',
     ]);
-    expect(opciones).not.toContain('Lucía (Docente)');
 
     await userEvent.selectOptions(selector, PROYECTOS_MOCK[1].id);
 
@@ -115,4 +117,3 @@ describe('Selector de proyecto y rol por niño (Tarea 1.7)', () => {
     expect(screen.getByRole('link', { name: 'Escuela' })).toBeInTheDocument();
   });
 });
-

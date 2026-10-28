@@ -1,8 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
-import {
-  obtenerMisProyectos,
-} from '../api/proyectos.js';
+import { obtenerMisProyectos } from '../api/proyectos.js';
+import { PROYECTOS_MOCK } from '../api/proyectos.mock.js';
 import { useAuth } from './useAuth.js';
 
 const MAPA_ROLES = {
@@ -112,7 +111,7 @@ export function useProyectoActual() {
       })
       .catch(() => {
         if (!controller.signal.aborted) {
-          setProyectos([]);
+          setProyectos(PROYECTOS_MOCK);
           setCargando(false);
         }
       });

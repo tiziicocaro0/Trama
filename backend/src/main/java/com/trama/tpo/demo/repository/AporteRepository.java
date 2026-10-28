@@ -32,6 +32,11 @@ public interface AporteRepository extends JpaRepository<Aporte, UUID> {
             Boolean archivado
     );
 
+    List<Aporte> findByProyectoIdAndArchivosId(
+            UUID proyectoId,
+            UUID archivoId
+    );
+
     // Listar solamente los aportes visibles para el usuario
     @Query("""
             SELECT a

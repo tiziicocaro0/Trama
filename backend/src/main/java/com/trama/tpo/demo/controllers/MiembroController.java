@@ -1,4 +1,3 @@
-
 package com.trama.tpo.demo.controllers;
 
 import java.util.List;
@@ -35,6 +34,17 @@ public class MiembroController {
 
         return ResponseEntity.ok(
                 miembroService.listarMiembros(proyectoId)
+        );
+    }
+
+    // 1.6 - CONVERTIR UN FAMILIAR EN CO-TUTOR ADMINISTRADOR
+    @PutMapping("/{miembroId}/co-tutor")
+    public ResponseEntity<MiembroResponse> hacerCoTutor(
+            @PathVariable UUID proyectoId,
+            @PathVariable UUID miembroId) {
+
+        return ResponseEntity.ok(
+                miembroService.hacerCoTutor(proyectoId, miembroId)
         );
     }
 

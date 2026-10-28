@@ -1,13 +1,19 @@
 import { useState } from 'react'
 import { User, PencilSimple } from '@phosphor-icons/react'
 import { useParams } from 'react-router-dom'
-import { listarMiembros, cambiarEspecialidades } from '../../api/miembros.js'
+import {
+  cambiarEspecialidades,
+  hacerCoTutor,
+  invitarMiembro,
+  listarMiembros,
+} from '../../api/miembros.js'
 import { quitarMiembroProyecto } from '../../api/proyectos.js'
 import { Aviso } from '../../components/ui/Aviso.jsx'
 import Boton from '../../components/ui/Boton.jsx'
 import { Modal } from '../../components/ui/Modal.jsx'
 import useAuth from '../../hooks/useAuth.js'
 import CabeceraPerfil from './components/CabeceraPerfil.jsx'
+import ModalInvitarMiembro from './components/ModalInvitarMiembro.jsx'
 import usePerfil from './hooks/usePerfil.js'
 import NavegacionPerfil from './components/NavegacionPerfil.jsx'
 import EspecialidadModal from './components/EspecialidadModal.jsx'
@@ -67,10 +73,6 @@ export default function RedPage() {
   const auth = useAuth()
   const usuario = auth?.usuario ?? auth
   const rolUsuario = auth?.rol ?? usuario?.rol
-  const esAdmin =
-    rolUsuario === 'Admin' ||
-    rolUsuario === 'ADMIN' ||
-    Boolean(auth?.esAdmin ?? usuario?.esAdmin)
 
   const {
     proyecto,
@@ -80,19 +82,39 @@ export default function RedPage() {
     reintentar,
   } = usePerfil(id, listarMiembros)
 
+  const esAdmin =
+    rolUsuario === 'Admin' ||
+    rolUsuario === 'ADMIN' ||
+    Boolean(auth?.esAdmin ?? usuario?.esAdmin) ||
+    Boolean(
+      usuario?.id &&
+        (miembros ?? []).some(
+          (m) =>
+            (m.usuarioId === usuario.id || m.id === usuario.id) && m.esAdmin,
+        ),
+    )
+
   const [eliminadosIds, setEliminadosIds] = useState([])
+  const [coTutoresIds, setCoTutoresIds] = useState([])
   const [miembroSeleccionado, setMiembroSeleccionado] = useState(null)
   const [eliminando, setEliminando] = useState(false)
-  const [errorEliminacion, setErrorEliminacion] = useState('')
+  const [convirtiendoId, setConvirtiendoId] = useState(null)
+  const [modalInvitarAbierto, setModalInvitarAbierto] = useState(false)
+  const [mensajeExito, setMensajeExito] = useState('')
+  const [errorAccion, setErrorAccion] = useState('')
 
   // 1.9: estado del modal de especialidades
   const [modalEspecialidad, setModalEspecialidad] = useState(false)
   const [especialidadesLocales, setEspecialidadesLocales] = useState(null)
   const [exitoEspecialidad, setExitoEspecialidad] = useState('')
 
-  const miembrosVisibles = (miembros ?? []).filter(
-    (persona) => !eliminadosIds.includes(persona.id),
-  )
+  const miembrosVisibles = (miembros ?? [])
+    .filter((persona) => !eliminadosIds.includes(persona.id))
+    .map((persona) =>
+      coTutoresIds.includes(persona.id)
+        ? { ...persona, rol: 'TUTOR', esAdmin: true }
+        : persona,
+    )
 
   // Encontrar al miembro actual en la lista
   const miembroActual = miembrosVisibles.find(
@@ -106,7 +128,8 @@ export default function RedPage() {
   async function confirmarQuitarAcceso() {
     if (!miembroSeleccionado) return
     setEliminando(true)
-    setErrorEliminacion('')
+    setErrorAccion('')
+    setMensajeExito('')
     try {
       await quitarMiembroProyecto(id, miembroSeleccionado.id)
       setEliminadosIds((actuales) => [...actuales, miembroSeleccionado.id])
@@ -115,11 +138,35 @@ export default function RedPage() {
       const mensaje =
         err?.response?.data?.mensaje ||
         'No pudimos quitar el acceso a este miembro. Intentá nuevamente.'
-      setErrorEliminacion(mensaje)
+      setErrorAccion(mensaje)
       setMiembroSeleccionado(null)
     } finally {
       setEliminando(false)
     }
+  }
+
+  async function convertirEnCoTutor(persona) {
+    setConvirtiendoId(persona.id)
+    setErrorAccion('')
+    setMensajeExito('')
+    try {
+      await hacerCoTutor(id, persona.id)
+      setCoTutoresIds((actuales) => [...actuales, persona.id])
+    } catch (err) {
+      const mensaje =
+        err?.response?.data?.mensaje ||
+        'No pudimos convertir a este miembro en co-tutor. Intentá nuevamente.'
+      setErrorAccion(mensaje)
+    } finally {
+      setConvirtiendoId(null)
+    }
+  }
+
+  async function manejarInvitacion(datosInvitacion) {
+    setErrorAccion('')
+    setMensajeExito('')
+    await invitarMiembro(id, datosInvitacion)
+    setMensajeExito('Invitación enviada correctamente.')
   }
 
   async function guardarEspecialidades(lista) {
@@ -166,15 +213,31 @@ export default function RedPage() {
               <CabeceraPerfil proyecto={proyecto} seccion={{ titulo: 'Red' }} />
               <NavegacionPerfil proyectoId={id} />
               <section aria-labelledby="titulo-red">
-                <h2
-                  id="titulo-red"
-                  className="font-display text-h1 text-secundario"
-                >
-                  Red
-                </h2>
-                <p className="mt-2 mb-6 text-texto-suave">
-                  Personas que acompañan este proyecto.
-                </p>
+                <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
+                  <div>
+                    <h2
+                      id="titulo-red"
+                      className="font-display text-h1 text-secundario"
+                    >
+                      Red
+                    </h2>
+                    <p className="mt-2 text-texto-suave">
+                      Personas que acompañan este proyecto.
+                    </p>
+                  </div>
+
+                  {esAdmin && (
+                    <Boton
+                      onClick={() => {
+                        setErrorAccion('')
+                        setMensajeExito('')
+                        setModalInvitarAbierto(true)
+                      }}
+                    >
+                      Invitar miembro
+                    </Boton>
+                  )}
+                </div>
 
                 {exitoEspecialidad && (
                   <div className="mb-6">
@@ -182,9 +245,15 @@ export default function RedPage() {
                   </div>
                 )}
 
-                {errorEliminacion && (
+                {mensajeExito && (
                   <div className="mb-6">
-                    <Aviso tipo="error">{errorEliminacion}</Aviso>
+                    <Aviso tipo="exito">{mensajeExito}</Aviso>
+                  </div>
+                )}
+
+                {errorAccion && (
+                  <div className="mb-6">
+                    <Aviso tipo="error">{errorAccion}</Aviso>
                   </div>
                 )}
 
@@ -233,11 +302,20 @@ export default function RedPage() {
                           </div>
 
                           {esAdmin && (
-                            <div className="flex shrink-0 justify-end">
+                            <div className="flex shrink-0 flex-wrap justify-end gap-2">
+                              {persona.rol === 'FAMILIAR' && (
+                                <Boton
+                                  variante="secundario"
+                                  onClick={() => convertirEnCoTutor(persona)}
+                                  disabled={convirtiendoId === persona.id}
+                                >
+                                  Hacer co-tutor
+                                </Boton>
+                              )}
                               <Boton
                                 variante="peligro"
                                 onClick={() => {
-                                  setErrorEliminacion('')
+                                  setErrorAccion('')
                                   setMiembroSeleccionado(persona)
                                 }}
                                 aria-label={`Quitar acceso a ${nombre}`}
@@ -256,6 +334,12 @@ export default function RedPage() {
                   </p>
                 )}
               </section>
+
+              <ModalInvitarMiembro
+                abierto={modalInvitarAbierto}
+                onCerrar={() => setModalInvitarAbierto(false)}
+                onInvitar={manejarInvitacion}
+              />
 
               <Modal
                 abierto={Boolean(miembroSeleccionado)}
