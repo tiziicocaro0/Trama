@@ -99,6 +99,7 @@ public class InvitacionService {
     }
 
     // Aceptar una invitacion y crear la membresia.
+    // La especialidad se configura despues con PUT /miembros/me/especialidades.
     @Transactional
     public MiembroResponse aceptarInvitacion(String token) {
 

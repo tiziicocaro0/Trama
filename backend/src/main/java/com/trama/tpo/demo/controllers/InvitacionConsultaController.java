@@ -32,6 +32,7 @@ public class InvitacionConsultaController {
 
         return ResponseEntity.ok(respuesta);
     }
+
     // Aceptar una invitacion y crear la membresia.
     @PostMapping("/{token}/aceptar")
     public ResponseEntity<MiembroResponse> aceptarInvitacion(

@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.trama.tpo.demo.entity.dto.ActualizarDatosProyectoRequest;
 import com.trama.tpo.demo.entity.dto.ConfiguracionProyectoRequest;
 import com.trama.tpo.demo.entity.dto.CrearProyectoRequest;
 import com.trama.tpo.demo.entity.dto.MiProyectoDTO;
@@ -52,6 +53,18 @@ public class ProyectoController {
             @PathVariable UUID proyectoId) {
 
         return ResponseEntity.ok(proyectoService.obtener(proyectoId));
+    }
+
+
+
+    // EDITAR DATOS PERSONALES DEL NIÑO
+    @PutMapping("/{proyectoId}")
+    public ResponseEntity<ProyectoResponse> actualizarDatos(
+            @PathVariable UUID proyectoId,
+            @Valid @RequestBody ActualizarDatosProyectoRequest request) {
+
+        return ResponseEntity.ok(
+                proyectoService.actualizarDatos(proyectoId, request));
     }
 
 
