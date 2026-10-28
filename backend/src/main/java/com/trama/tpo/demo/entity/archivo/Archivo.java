@@ -42,9 +42,11 @@ public class Archivo {
     @Column(name = "tipo_mime", nullable = false, length = 20)
     private String tipoMime;
 
+    @JdbcTypeCode(SqlTypes.INTEGER)
     @Column(name = "tamano_bytes", nullable = false, columnDefinition = "INT UNSIGNED")
     private Long tamanoBytes;
 
+    @JdbcTypeCode(SqlTypes.CHAR)
     @Column(name = "ruta", nullable = false, unique = true, columnDefinition = "CHAR(36)")
     private String ruta;
 
