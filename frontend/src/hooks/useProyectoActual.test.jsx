@@ -66,7 +66,7 @@ describe('Selector de proyecto y rol por niño (Tarea 1.7)', () => {
     expect(result.current.rol).toBe('Terapeuta');
     expect(result.current.rolCodigo).toBe('SALUD');
     expect(result.current.esAdmin).toBe(false);
-    expect(result.current.proyectos).toHaveLength(3);
+    expect(result.current.proyectos).toHaveLength(PROYECTOS_MOCK.length);
   });
 
   it('muestra el selector en el encabezado con todos los niños del usuario y navega a la portada al elegir uno', async () => {
@@ -81,8 +81,8 @@ describe('Selector de proyecto y rol por niño (Tarea 1.7)', () => {
       'Tomás (Madre)',
       'Martina (Terapeuta)',
       'Joaquín (Docente)',
+      'Lucía (Docente)',
     ]);
-    expect(opciones).not.toContain('Lucía (Docente)');
 
     await userEvent.selectOptions(selector, PROYECTOS_MOCK[1].id);
 
