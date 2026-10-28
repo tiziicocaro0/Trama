@@ -43,7 +43,7 @@ function renderConLayout(rutaInicial = '/proyectos') {
 describe('Selector de proyecto y rol por niño (Tarea 1.7)', () => {
   beforeEach(() => {
     clienteApi.get.mockReset().mockResolvedValue({
-      data: PROYECTOS_MOCK.slice(0, 3),
+      data: PROYECTOS_MOCK,
     });
   });
 
@@ -77,12 +77,9 @@ describe('Selector de proyecto y rol por niño (Tarea 1.7)', () => {
       (opt) => opt.textContent,
     );
 
-    expect(opciones).toEqual([
-      'Tomás (Madre)',
-      'Martina (Terapeuta)',
-      'Joaquín (Docente)',
-      'Lucía (Docente)',
-    ]);
+    expect(opciones).toEqual(
+      PROYECTOS_MOCK.map((p) => `${p.nombre} (${p.rol})`),
+    );
 
     await userEvent.selectOptions(selector, PROYECTOS_MOCK[1].id);
 
