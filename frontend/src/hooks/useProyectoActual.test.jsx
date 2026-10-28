@@ -42,9 +42,7 @@ function renderConLayout(rutaInicial = '/proyectos') {
 
 describe('Selector de proyecto y rol por niño (Tarea 1.7)', () => {
   beforeEach(() => {
-    clienteApi.get.mockReset().mockResolvedValue({
-      data: PROYECTOS_MOCK.slice(0, 3),
-    });
+    clienteApi.get.mockReset().mockResolvedValue({ data: PROYECTOS_MOCK });
   });
 
   it('devuelve el proyecto actual y el rol del usuario en useProyectoActual', async () => {

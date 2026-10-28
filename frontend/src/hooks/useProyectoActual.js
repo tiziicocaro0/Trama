@@ -113,7 +113,7 @@ export function useProyectoActual() {
         if (!controller.signal.aborted) {
           setProyectos(PROYECTOS_MOCK);
           setCargando(false);
-          }
+        }
       });
 
     return () => controller.abort();
