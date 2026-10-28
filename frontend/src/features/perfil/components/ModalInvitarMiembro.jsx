@@ -102,7 +102,7 @@ export default function ModalInvitarMiembro({
         <div className="flex justify-end gap-3 pt-2">
           <Boton
             type="button"
-            variante="fantasma"
+            variant="secondary"
             onClick={cerrarModal}
             disabled={enviando}
           >

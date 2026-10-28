@@ -132,40 +132,6 @@ public class ProyectoService {
                 return ProyectoResponse.from(proyectoRepository.save(proyecto), true);
         }
 
-        // 1.5 Quitar acceso a un miembro: solo un tutor administrador, sin eliminar al
-        // único admin
-        @Transactional
-        public void quitarMiembro(UUID proyectoId, UUID miembroId) {
-
-                permisoService.verificarAdmin(proyectoId);
-
-                List<Membresia> miembros = membresiaRepository.findByProyectoId(proyectoId);
-
-                Membresia objetivo = miembros.stream()
-                                .filter(m -> miembroId.equals(m.getId())
-                                                || (m.getUsuario() != null && miembroId.equals(m.getUsuario().getId())))
-                                .findFirst()
-                                .orElseThrow(() -> new ApiException(
-                                                "MIEMBRO_NO_ENCONTRADO",
-                                                "No encontramos a este miembro en el proyecto",
-                                                HttpStatus.NOT_FOUND));
-
-                if (objetivo.getRol() == Rol.TUTOR && Boolean.TRUE.equals(objetivo.getEsAdmin())) {
-                        long cantidadAdmins = miembros.stream()
-                                        .filter(m -> m.getRol() == Rol.TUTOR && Boolean.TRUE.equals(m.getEsAdmin()))
-                                        .count();
-
-                        if (cantidadAdmins <= 1) {
-                                throw new ApiException(
-                                                "ULTIMO_ADMIN",
-                                                "No podés quitar el acceso al único administrador del proyecto",
-                                                HttpStatus.BAD_REQUEST);
-                        }
-                }
-
-                membresiaRepository.delete(objetivo);
-        }
-
         private Proyecto buscarProyecto(UUID proyectoId) {
 
                 return proyectoRepository.findById(proyectoId)

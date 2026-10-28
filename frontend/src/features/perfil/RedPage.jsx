@@ -1,13 +1,13 @@
 import { useState } from 'react'
 import { User, PencilSimple } from '@phosphor-icons/react'
-import { useParams } from 'react-router-dom'
+import { useParams, useSearchParams } from 'react-router-dom'
 import {
   cambiarEspecialidades,
   hacerCoTutor,
   invitarMiembro,
   listarMiembros,
+  quitarMiembro,
 } from '../../api/miembros.js'
-import { quitarMiembroProyecto } from '../../api/proyectos.js'
 import { Aviso } from '../../components/ui/Aviso.jsx'
 import Boton from '../../components/ui/Boton.jsx'
 import { Modal } from '../../components/ui/Modal.jsx'
@@ -17,39 +17,13 @@ import ModalInvitarMiembro from './components/ModalInvitarMiembro.jsx'
 import usePerfil from './hooks/usePerfil.js'
 import NavegacionPerfil from './components/NavegacionPerfil.jsx'
 import EspecialidadModal from './components/EspecialidadModal.jsx'
+import { etiquetaEspecialidad } from './especialidades.js'
 
 const etiquetasRol = {
   TUTOR: 'Tutor/a',
   FAMILIAR: 'Familiar',
   EDUCACION: 'Educación',
   SALUD: 'Salud',
-}
-
-const etiquetasEspecialidad = {
-  DOCENTE_PRIMARIO: 'Docente primario',
-  DOCENTE_SECUNDARIO: 'Docente secundario',
-  DOCENTE_EDUCACION_ESPECIAL: 'Docente de educación especial',
-  MAESTRO_NIVEL_INICIAL: 'Maestro/a de nivel inicial',
-  MAESTRA_INTEGRADORA: 'Maestra integradora',
-  EQUIPO_ORIENTACION: 'Equipo de orientación',
-  PRECEPTOR_ESCOLAR: 'Preceptor/a escolar',
-  DIRECTOR_ESCUELA: 'Director/a de escuela',
-  ASISTENTE_EDUCACIONAL: 'Asistente educacional',
-  INSPECTOR: 'Inspector/a',
-  OTRA_EDUCACION: 'Otra (educación)',
-  PSICOLOGIA: 'Psicología',
-  PSICOPEDAGOGIA: 'Psicopedagogía',
-  FONOAUDIOLOGIA: 'Fonoaudiología',
-  LOGOPEDA: 'Logopeda',
-  TERAPIA_OCUPACIONAL: 'Terapia ocupacional',
-  ACOMPANANTE_TERAPEUTICO: 'Acompañante terapéutico',
-  PSIQUIATRIA: 'Psiquiatría',
-  PSIQUIATRIA_INFANTO_JUVENIL: 'Psiquiatría infanto-juvenil',
-  PEDIATRIA: 'Pediatría',
-  GENETISTA: 'Genetista',
-  PSICOLOGO_SOCIAL: 'Psicólogo/a social',
-  TRABAJADOR_SOCIAL: 'Trabajador/a social',
-  OTRA_SALUD: 'Otra (salud)',
 }
 
 function esProfesional(rol) {
@@ -62,7 +36,7 @@ function formatearEspecialidades(especialidades) {
   }
   return especialidades
     .map((item) => {
-      const nombre = etiquetasEspecialidad[item.especialidad] ?? item.especialidad
+      const nombre = etiquetaEspecialidad(item.especialidad)
       return item.aclaracion ? `${nombre} · ${item.aclaracion}` : nombre
     })
     .join(' — ')
@@ -100,6 +74,16 @@ export default function RedPage() {
   const [eliminando, setEliminando] = useState(false)
   const [convirtiendoId, setConvirtiendoId] = useState(null)
   const [modalInvitarAbierto, setModalInvitarAbierto] = useState(false)
+  // El menú lateral lleva a /red?invitar=1 para abrir directo el modal de invitar.
+  const [parametros, setParametros] = useSearchParams()
+  const pidioInvitar = parametros.get('invitar') === '1'
+
+  const invitarAbierto = modalInvitarAbierto || (pidioInvitar && esAdmin)
+
+  function cerrarModalInvitar() {
+    setModalInvitarAbierto(false)
+    if (pidioInvitar) setParametros({}, { replace: true })
+  }
   const [mensajeExito, setMensajeExito] = useState('')
   const [errorAccion, setErrorAccion] = useState('')
 
@@ -131,7 +115,7 @@ export default function RedPage() {
     setErrorAccion('')
     setMensajeExito('')
     try {
-      await quitarMiembroProyecto(id, miembroSeleccionado.id)
+      await quitarMiembro(id, miembroSeleccionado.id)
       setEliminadosIds((actuales) => [...actuales, miembroSeleccionado.id])
       setMiembroSeleccionado(null)
     } catch (err) {
@@ -305,7 +289,7 @@ export default function RedPage() {
                             <div className="flex shrink-0 flex-wrap justify-end gap-2">
                               {persona.rol === 'FAMILIAR' && (
                                 <Boton
-                                  variante="secundario"
+                                  variant="secondary"
                                   onClick={() => convertirEnCoTutor(persona)}
                                   disabled={convirtiendoId === persona.id}
                                 >
@@ -313,7 +297,7 @@ export default function RedPage() {
                                 </Boton>
                               )}
                               <Boton
-                                variante="peligro"
+                                variant="danger"
                                 onClick={() => {
                                   setErrorAccion('')
                                   setMiembroSeleccionado(persona)
@@ -336,8 +320,8 @@ export default function RedPage() {
               </section>
 
               <ModalInvitarMiembro
-                abierto={modalInvitarAbierto}
-                onCerrar={() => setModalInvitarAbierto(false)}
+                abierto={invitarAbierto}
+                onCerrar={cerrarModalInvitar}
                 onInvitar={manejarInvitacion}
               />
 
@@ -355,14 +339,14 @@ export default function RedPage() {
                     </p>
                     <div className="flex justify-end gap-3">
                       <Boton
-                        variante="fantasma"
+                        variant="secondary"
                         onClick={() => setMiembroSeleccionado(null)}
                         disabled={eliminando}
                       >
                         Cancelar
                       </Boton>
                       <Boton
-                        variante="peligro"
+                        variant="danger"
                         onClick={confirmarQuitarAcceso}
                         disabled={eliminando}
                       >

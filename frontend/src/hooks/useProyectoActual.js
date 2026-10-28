@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { obtenerMisProyectos } from '../api/proyectos.js';
-import { PROYECTOS_MOCK } from '../api/proyectos.mock.js';
 import { useAuth } from './useAuth.js';
 
 const MAPA_ROLES = {
@@ -61,21 +60,11 @@ export function obtenerItemsMenuPorRol(proyectoActual, rolCodigo, esAdmin) {
     });
   }
 
-  if (['TUTOR', 'EDUCACION'].includes(rolCodigo)) {
-    items.push({
-      ruta: `${base}/secciones/ESCUELA`,
-      etiqueta: 'Escuela',
-      icono: 'recursos',
-    });
-  }
-
-  if (['TUTOR', 'SALUD'].includes(rolCodigo)) {
-    items.push({
-      ruta: `${base}/secciones/TERAPIAS`,
-      etiqueta: 'Terapias',
-      icono: 'calendario',
-    });
-  }
+  items.push({
+    ruta: `${base}/bitacora`,
+    etiqueta: 'Bitácora',
+    icono: 'calendario',
+  });
 
   return items;
 }
@@ -110,8 +99,9 @@ export function useProyectoActual() {
         }
       })
       .catch(() => {
+        // Sin datos de ejemplo: si la API falla, el selector queda vacío.
         if (!controller.signal.aborted) {
-          setProyectos(PROYECTOS_MOCK);
+          setProyectos([]);
           setCargando(false);
         }
       });

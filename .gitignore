@@ -10,3 +10,6 @@ coverage/
 
 # Backend (Java / Maven)
 target/
+
+# Archivos subidos en desarrollo (backend)
+backend/uploads/

@@ -203,4 +203,37 @@ describe('Red de profesionales', () => {
       screen.queryByRole('button', { name: 'Hacer co-tutor' }),
     ).not.toBeInTheDocument()
   })
+  it('abre el modal de invitar al llegar desde el menú con ?invitar=1', async () => {
+    abrir(`/proyectos/${id}/red?invitar=1`, true, { esAdmin: true })
+
+    expect(
+      await screen.findByRole('option', { name: 'Co-tutor (otro tutor legal)' }),
+    ).toBeInTheDocument()
+  })
+  it('no abre el modal de invitar con ?invitar=1 si el usuario no es administrador', async () => {
+    abrir(`/proyectos/${id}/red?invitar=1`, true, { esAdmin: false })
+
+    expect(
+      await screen.findByRole('heading', { name: 'Tutora ficticia Ejemplo' }),
+    ).toBeInTheDocument()
+    expect(screen.queryByLabelText('Correo electrónico')).not.toBeInTheDocument()
+  })
+  it('quita el acceso con confirmación usando el endpoint de miembros', async () => {
+    cliente.delete.mockResolvedValue({})
+    abrir(undefined, true, { esAdmin: true })
+
+    const botonQuitar = await screen.findByRole('button', {
+      name: 'Quitar acceso a Familiar ficticio Ejemplo',
+    })
+    expect(botonQuitar).toHaveClass('bg-error')
+    await userEvent.click(botonQuitar)
+    await userEvent.click(screen.getByRole('button', { name: 'Confirmar' }))
+
+    expect(cliente.delete).toHaveBeenCalledWith(
+      `/proyectos/${id}/miembros/membresia-familiar`,
+    )
+    expect(
+      screen.queryByRole('heading', { name: 'Familiar ficticio Ejemplo' }),
+    ).not.toBeInTheDocument()
+  })
 })

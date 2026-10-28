@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.UUID;
 
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -57,5 +58,15 @@ public class MiembroController {
         return ResponseEntity.ok(
                 miembroService.cambiarEspecialidades(proyectoId, request)
         );
+    }
+
+    // 1.5 - QUITAR EL ACCESO A UN MIEMBRO
+    @DeleteMapping("/{miembroId}")
+    public ResponseEntity<Void> quitarMiembro(
+            @PathVariable UUID proyectoId,
+            @PathVariable UUID miembroId) {
+
+        miembroService.quitarMiembro(proyectoId, miembroId);
+        return ResponseEntity.ok().build();
     }
 }

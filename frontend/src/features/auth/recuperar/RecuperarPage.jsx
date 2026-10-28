@@ -5,13 +5,13 @@ import {
   CheckCircle,
   Envelope,
   Key,
-  Lock,
   SpinnerGap,
 } from '@phosphor-icons/react'
 import { Link } from 'react-router-dom'
 import Logo from '../../../components/ui/Logo.jsx'
 import Boton from '../../../components/ui/Boton.jsx'
 import Campo from '../../../components/ui/Campo.jsx'
+import CampoContrasena from '../../../components/ui/CampoContrasena.jsx'
 import CampoFormulario from '../../../components/ui/CampoFormulario.jsx'
 import Pasos from '../../../components/ui/Pasos.jsx'
 import { validarEmail } from '../../../utils/validaciones.js'
@@ -297,11 +297,9 @@ export default function RecuperarPage() {
                     error={errores.password}
                     hint="Usá al menos 8 caracteres, una mayúscula (A–Z), un número y un carácter especial."
                   >
-                    <Campo
+                    <CampoContrasena
                       name="password"
-                      type="password"
                       placeholder="Contraseña nueva"
-                      icon={Lock}
                       value={valores.password}
                       onChange={cambiar}
                       autoComplete="new-password"
@@ -339,11 +337,9 @@ export default function RecuperarPage() {
                     label="Repetí la contraseña"
                     error={errores.confirmar}
                   >
-                    <Campo
+                    <CampoContrasena
                       name="confirmar"
-                      type="password"
                       placeholder="Repetí la contraseña"
-                      icon={Lock}
                       value={valores.confirmar}
                       onChange={cambiar}
                       autoComplete="new-password"
