@@ -16,15 +16,6 @@ const proyectos = [
   { id, nombre: 'Luz ficticia' },
   { id: otroId, nombre: 'Río ficticio' },
 ]
-const miembros = [
-  {
-    id: 'miembro-ficticio',
-    usuarioId: 'autor-ficticio',
-    nombre: 'María',
-    apellido: 'Díaz',
-    rol: 'EDUCACION',
-  },
-]
 const detalles = {
   [id]: { ...proyectos[0], fechaNacimiento: '2017-05-12' },
   [otroId]: { ...proyectos[1], fechaNacimiento: '2018-09-03' },
@@ -47,24 +38,14 @@ function abrir(ruta = '/acompanamientos', auth = sesion) {
 
 beforeEach(() => {
   cliente.defaults.baseURL = '/api'
-
-  cliente.get.mockReset().mockImplementation(async (ruta) => {
-    if (ruta === '/proyectos') {
-      return { data: proyectos }
-    }
-
-    if (ruta.endsWith('/aportes')) {
-      return { data: [] }
-    }
-
-    if (ruta.endsWith('/miembros')) {
-      return { data: miembros }
-    }
-
-    return {
-      data: detalles[ruta.split('/').at(-1)],
-    }
-  })
+  cliente.get.mockReset().mockImplementation(async (ruta) => ({
+    data:
+      ruta === '/proyectos'
+        ? proyectos
+        : ruta.endsWith('/aportes')
+          ? []
+          : detalles[ruta.split('/').at(-1)],
+  }))
 })
 
 describe('Recorrido Dashboard → Acompañamientos → Perfil', () => {

@@ -5,6 +5,8 @@ const variants = {
     'bg-primario text-superficie border-primario hover:bg-primario-hover hover:border-primario-hover',
   secondary:
     'bg-transparent text-primario border-contorno-accion hover:bg-decoracion',
+  danger:
+    'bg-error text-superficie border-error hover:opacity-90',
 }
 
 export default function Boton({

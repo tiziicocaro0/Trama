@@ -28,7 +28,6 @@ const iconos = {
 export default function BloquePerfil({
   seccion,
   aportes,
-  miembros = [],
   proyectoId,
   completo = false,
   puedeCrear = false,
@@ -93,32 +92,17 @@ export default function BloquePerfil({
       )}
       {visibles.length ? (
         <ul className="mb-4 flex-1 divide-y divide-borde/40">
-          {visibles.map((aporte) => {
-            const miembroAutor = miembros.find(
-              (miembro) => miembro.usuarioId === aporte.autorId,
-            )
-
-            
-
-            const nombreAutor = miembroAutor
-              ? [miembroAutor.nombre, miembroAutor.apellido]
-                  .filter(Boolean)
-                  .join(' ')
-              : null
-
-            return (
-              <li key={aporte.id}>
-                <TarjetaAporte
-                  aporte={aporte}
-                  autor={nombreAutor}
-                  resumen={!completo}
-                  archivando={archivandoId === aporte.id}
-                  alEditar={(event) => abrirEditor(event, aporte)}
-                  alArchivar={() => archivar(aporte)}
-                />
-              </li>
-            )
-          })}
+          {visibles.map((aporte) => (
+            <li key={aporte.id}>
+              <TarjetaAporte
+                aporte={aporte}
+                resumen={!completo}
+                archivando={archivandoId === aporte.id}
+                alEditar={(event) => abrirEditor(event, aporte)}
+                alArchivar={() => archivar(aporte)}
+              />
+            </li>
+          ))}
         </ul>
       ) : (
         <div className="mb-4 flex-1 py-3 text-texto-suave">

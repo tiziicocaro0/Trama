@@ -1,10 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
-import {
-  filtrarProyectosPorMiembro,
-  obtenerMisProyectos,
-  PROYECTOS_MOCK,
-} from '../api/proyectos.js';
+import { obtenerMisProyectos } from '../api/proyectos.js';
 import { useAuth } from './useAuth.js';
 
 const MAPA_ROLES = {
@@ -64,21 +60,11 @@ export function obtenerItemsMenuPorRol(proyectoActual, rolCodigo, esAdmin) {
     });
   }
 
-  if (['TUTOR', 'EDUCACION'].includes(rolCodigo)) {
-    items.push({
-      ruta: `${base}/secciones/ESCUELA`,
-      etiqueta: 'Escuela',
-      icono: 'recursos',
-    });
-  }
-
-  if (['TUTOR', 'SALUD'].includes(rolCodigo)) {
-    items.push({
-      ruta: `${base}/secciones/TERAPIAS`,
-      etiqueta: 'Terapias',
-      icono: 'calendario',
-    });
-  }
+  items.push({
+    ruta: `${base}/bitacora`,
+    etiqueta: 'Bitácora',
+    icono: 'calendario',
+  });
 
   return items;
 }
@@ -105,7 +91,7 @@ export function useProyectoActual() {
   useEffect(() => {
     const controller = new AbortController();
 
-    obtenerMisProyectos(usuario?.id, controller.signal)
+    obtenerMisProyectos(controller.signal)
       .then((lista) => {
         if (!controller.signal.aborted) {
           setProyectos(lista);
@@ -113,11 +99,9 @@ export function useProyectoActual() {
         }
       })
       .catch(() => {
+        // Sin datos de ejemplo: si la API falla, el selector queda vacío.
         if (!controller.signal.aborted) {
-          const fallback = usuario?.id
-            ? filtrarProyectosPorMiembro(PROYECTOS_MOCK, usuario.id)
-            : PROYECTOS_MOCK;
-          setProyectos(fallback);
+          setProyectos([]);
           setCargando(false);
         }
       });

@@ -19,12 +19,14 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.AccessDeniedException;
 
+import com.trama.tpo.demo.aporte.Visibilidad;
 import com.trama.tpo.demo.entity.membresia.Membresia;
 import com.trama.tpo.demo.entity.membresia.Rol;
 import com.trama.tpo.demo.exceptions.ApiException;
 import com.trama.tpo.demo.repository.MembresiaRepository;
 import com.trama.tpo.demo.repository.ProyectoRepository;
 import com.trama.tpo.demo.repository.UsuarioRepository;
+import com.trama.tpo.demo.service.MiembroService;
 import com.trama.tpo.demo.service.PermisoService;
 import com.trama.tpo.demo.service.ProyectoService;
 import com.trama.tpo.demo.service.UsuarioActual;
@@ -49,6 +51,8 @@ class PermisoServiceTest {
 
     private ProyectoService proyectoService;
 
+    private MiembroService miembroService;
+
     private final UUID usuarioId = UUID.randomUUID();
     private final UUID proyectoId = UUID.randomUUID();
 
@@ -61,6 +65,10 @@ class PermisoServiceTest {
                 usuarioActual,
                 membresiaRepository,
                 usuarioRepository);
+        miembroService = new MiembroService(
+                membresiaRepository,
+                permisoService,
+                usuarioActual);
     }
 
     @Test
@@ -150,7 +158,7 @@ class PermisoServiceTest {
                 .thenReturn(Optional.of(noAdmin));
 
         assertThrows(AccessDeniedException.class,
-                () -> proyectoService.quitarMiembro(proyectoId, miembroId));
+                () -> miembroService.quitarMiembro(proyectoId, miembroId));
     }
 
     // 1.5: Si se intenta eliminar al único admin del proyecto, lanza ApiException 400
@@ -169,7 +177,7 @@ class PermisoServiceTest {
                 .thenReturn(List.of(unicoAdmin));
 
         ApiException ex = assertThrows(ApiException.class,
-                () -> proyectoService.quitarMiembro(proyectoId, miembroAdminId));
+                () -> miembroService.quitarMiembro(proyectoId, miembroAdminId));
 
         assertEquals(HttpStatus.BAD_REQUEST, ex.getEstado());
         assertEquals("ULTIMO_ADMIN", ex.getCodigo());
@@ -198,7 +206,7 @@ class PermisoServiceTest {
         when(membresiaRepository.findByProyectoId(proyectoId))
                 .thenReturn(List.of(admin, docente));
 
-        assertDoesNotThrow(() -> proyectoService.quitarMiembro(proyectoId, miembroDocenteId));
+        assertDoesNotThrow(() -> miembroService.quitarMiembro(proyectoId, miembroDocenteId));
         verify(membresiaRepository).delete(docente);
 
         // Siguiente request del usuario revocado -> 403 Forbidden
@@ -207,5 +215,27 @@ class PermisoServiceTest {
                 .thenReturn(Optional.empty());
 
         assertThrows(AccessDeniedException.class, () -> proyectoService.obtener(proyectoId));
+    }
+
+    @Test
+    void saludNoPuedeVerAporteSoloEducacion() {
+        Membresia salud = Membresia.builder().rol(Rol.SALUD).build();
+        when(membresiaRepository.findByUsuarioIdAndProyectoId(usuarioId, proyectoId))
+                .thenReturn(Optional.of(salud));
+
+        assertDoesNotThrow(() -> permisoService.verificarPuedeVerAporte(proyectoId, Visibilidad.SOLO_SALUD));
+        assertThrows(AccessDeniedException.class,
+                () -> permisoService.verificarPuedeVerAporte(proyectoId, Visibilidad.SOLO_EDUCACION));
+    }
+
+    @Test
+    void familiarSoloVeAportesParaTodos() {
+        Membresia familiar = Membresia.builder().rol(Rol.FAMILIAR).build();
+        when(membresiaRepository.findByUsuarioIdAndProyectoId(usuarioId, proyectoId))
+                .thenReturn(Optional.of(familiar));
+
+        assertDoesNotThrow(() -> permisoService.verificarPuedeVerAporte(proyectoId, Visibilidad.TODOS));
+        assertThrows(AccessDeniedException.class,
+                () -> permisoService.verificarPuedeVerAporte(proyectoId, Visibilidad.SOLO_TUTORES));
     }
 }

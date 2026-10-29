@@ -3,7 +3,10 @@ import Boton from '../../../components/ui/Boton.jsx'
 import Campo from '../../../components/ui/Campo.jsx'
 import CampoFormulario from '../../../components/ui/CampoFormulario.jsx'
 import SelectorVisibilidad from '../../../components/ui/SelectorVisibilidad.jsx'
+import SubirArchivo from '../../../components/ui/SubirArchivo.jsx'
 import { guardarAporte } from '../../../api/aportes.js'
+
+const SECCIONES_CON_ADJUNTOS = ['NOTA_PROFESIONAL', 'COMUNICACION']
 
 // 2.1 y 2.2: campos propios que el back exige en "datos" para estos tipos.
 // Arrancan en un valor neutro para no frenar la carga; se pueden cambiar.
@@ -48,6 +51,14 @@ const camposPorTipo = {
   ],
 }
 
+// 2.2: textos propios del formulario según la sección; el resto usa los genéricos.
+const textosPorTipo = {
+  FORTALEZA: {
+    titulo: '¿Qué hace bien o disfruta?',
+    contenido: 'Un ejemplo (opcional)',
+  },
+}
+
 function leerDatos(texto) {
   try {
     const datos = JSON.parse(texto ?? '')
@@ -69,6 +80,9 @@ export default function EditorAporte({
   const [titulo, setTitulo] = useState(aporte?.titulo ?? '')
   const [contenido, setContenido] = useState(aporte?.contenido ?? '')
   const [visibilidad, setVisibilidad] = useState(aporte?.visibilidad ?? 'TODOS')
+  const [archivos, setArchivos] = useState(() =>
+    Array.isArray(aporte?.archivos) ? aporte.archivos : [],
+  )
   const campos = camposPorTipo[seccion.tipo] ?? []
   const [extra, setExtra] = useState(() => {
     const guardados = leerDatos(aporte?.datos)
@@ -88,7 +102,10 @@ export default function EditorAporte({
   const formulario = useRef(null)
   const alerta = useRef(null)
   const esNota = seccion.tipo === 'NOTA_PROFESIONAL'
+  const permiteAdjuntos = SECCIONES_CON_ADJUNTOS.includes(seccion.tipo)
   const sustantivo = esNota ? 'nota' : 'aporte'
+  const textos = textosPorTipo[seccion.tipo] ?? {}
+  const etiquetaTitulo = textos.titulo ?? 'Título'
   useEffect(() => {
     formulario.current?.querySelector('input')?.focus()
   }, [])
@@ -111,12 +128,21 @@ export default function EditorAporte({
     setEnviando(true)
     setError('')
     try {
+      const teniaArchivos =
+        (Array.isArray(aporte?.archivos) && aporte.archivos.length > 0) ||
+        (Array.isArray(aporte?.archivoIds) && aporte.archivoIds.length > 0)
+      const incluirArchivos =
+        permiteAdjuntos && (archivos.length > 0 || teniaArchivos)
+
       await guardarAporte(proyectoId, aporte?.id, {
         tipo: seccion.tipo,
         titulo: titulo.trim(),
         contenido: contenido.trim(),
         visibilidad,
         ...(campos.length ? { datos: JSON.stringify(extra) } : {}),
+        ...(incluirArchivos
+          ? { archivoIds: archivos.map((item) => item.id) }
+          : {}),
       })
       alGuardar()
     } catch (errorGuardado) {
@@ -146,12 +172,12 @@ export default function EditorAporte({
       </p>
       <CampoFormulario
         id={`titulo-aporte-${seccion.tipo}`}
-        label="Título"
-        hint="Título (obligatorio, hasta 150 caracteres)"
+        label={etiquetaTitulo}
+        hint="Obligatorio, hasta 150 caracteres"
       >
         <Campo
           name="titulo"
-          placeholder="Título"
+          placeholder={etiquetaTitulo}
           value={titulo}
           onChange={(event) => setTitulo(event.target.value)}
           required
@@ -164,7 +190,8 @@ export default function EditorAporte({
           htmlFor={`contenido-aporte-${seccion.tipo}`}
           className="mb-2 block font-semibold"
         >
-          {esNota ? 'Texto de la nota (opcional)' : 'Descripción (opcional)'}
+          {textos.contenido ??
+            (esNota ? 'Texto de la nota (opcional)' : 'Descripción (opcional)')}
         </label>
         <textarea
           id={`contenido-aporte-${seccion.tipo}`}
@@ -206,6 +233,14 @@ export default function EditorAporte({
           </select>
         </div>
       ))}
+      {permiteAdjuntos && (
+        <SubirArchivo
+          proyectoId={proyectoId}
+          archivos={archivos}
+          onChange={setArchivos}
+          disabled={enviando}
+        />
+      )}
       <SelectorVisibilidad
         id={`visibilidad-aporte-${seccion.tipo}`}
         value={visibilidad}

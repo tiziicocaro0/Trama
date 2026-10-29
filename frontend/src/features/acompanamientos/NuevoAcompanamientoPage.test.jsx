@@ -17,15 +17,6 @@ const proyecto = {
   apellido: 'Ejemplo',
   fechaNacimiento: '2018-05-12',
 }
-const miembros = [
-  {
-    id: 'miembro-ficticio',
-    usuarioId: 'autor-ficticio',
-    nombre: 'María',
-    apellido: 'Díaz',
-    rol: 'EDUCACION',
-  },
-]
 const sesion = {
   usuario: { nombre: 'Tutora ficticia' },
   estado: 'autenticado',
@@ -59,23 +50,14 @@ function completar() {
 
 beforeEach(() => {
   cliente.defaults.baseURL = '/api'
-
-  cliente.get.mockReset().mockImplementation(async (ruta) => {
-    if (ruta === '/proyectos') {
-      return { data: [] }
-    }
-
-    if (ruta.endsWith('/aportes')) {
-      return { data: [] }
-    }
-
-    if (ruta.endsWith('/miembros')) {
-      return { data: miembros }
-    }
-
-    return { data: proyecto }
-  })
-
+  cliente.get.mockReset().mockImplementation(async (ruta) => ({
+    data:
+      ruta === '/proyectos'
+        ? []
+        : ruta.endsWith('/aportes')
+          ? []
+          : proyecto,
+  }))
   cliente.post.mockReset().mockResolvedValue({ data: proyecto })
 })
 

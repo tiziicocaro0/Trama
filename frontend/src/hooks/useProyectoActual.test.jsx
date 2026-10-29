@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Route, Routes, useParams } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { clienteApi } from '../api/cliente.js';
-import { PROYECTOS_MOCK } from '../api/proyectos.js';
+import { PROYECTOS_MOCK } from '../api/proyectos.mock.js';
 import { Layout } from '../components/layout/Layout.jsx';
 import { useProyectoActual } from './useProyectoActual.js';
 
@@ -42,7 +42,9 @@ function renderConLayout(rutaInicial = '/proyectos') {
 
 describe('Selector de proyecto y rol por niño (Tarea 1.7)', () => {
   beforeEach(() => {
-    clienteApi.get.mockReset().mockResolvedValue({ data: PROYECTOS_MOCK });
+    clienteApi.get.mockReset().mockResolvedValue({
+      data: PROYECTOS_MOCK,
+    });
   });
 
   it('devuelve el proyecto actual y el rol del usuario en useProyectoActual', async () => {
@@ -64,7 +66,7 @@ describe('Selector de proyecto y rol por niño (Tarea 1.7)', () => {
     expect(result.current.rol).toBe('Terapeuta');
     expect(result.current.rolCodigo).toBe('SALUD');
     expect(result.current.esAdmin).toBe(false);
-    expect(result.current.proyectos).toHaveLength(3);
+    expect(result.current.proyectos).toHaveLength(PROYECTOS_MOCK.length);
   });
 
   it('muestra el selector en el encabezado con todos los niños del usuario y navega a la portada al elegir uno', async () => {
@@ -75,12 +77,9 @@ describe('Selector de proyecto y rol por niño (Tarea 1.7)', () => {
       (opt) => opt.textContent,
     );
 
-    expect(opciones).toEqual([
-      'Tomás (Madre)',
-      'Martina (Terapeuta)',
-      'Joaquín (Docente)',
-    ]);
-    expect(opciones).not.toContain('Lucía (Docente)');
+    expect(opciones).toEqual(
+      PROYECTOS_MOCK.map((p) => `${p.nombre} (${p.rol})`),
+    );
 
     await userEvent.selectOptions(selector, PROYECTOS_MOCK[1].id);
 
@@ -95,24 +94,33 @@ describe('Selector de proyecto y rol por niño (Tarea 1.7)', () => {
     const selector = await screen.findByLabelText('Niño o niña');
     expect(selector).toHaveValue(PROYECTOS_MOCK[0].id);
 
-    // En Tomás el usuario es Madre (tutora administradora): ve "Invitar", "Escuela" y "Terapias"
+    // En Tomás el usuario es Madre (tutora administradora): ve "Invitar", "Datos y notas" y "Bitácora"
     expect(screen.getByRole('link', { name: 'Invitar' })).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: 'Escuela' })).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: 'Terapias' })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Datos y notas' })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Bitácora' })).toBeInTheDocument();
 
-    // Cambia a Martina donde su rol es Terapeuta (SALUD, no admin): oculta "Invitar" y "Escuela", mantiene "Terapias"
+    // Cambia a Martina donde su rol es Terapeuta (SALUD, no admin): oculta "Invitar" y mantiene el resto
     await userEvent.selectOptions(selector, PROYECTOS_MOCK[1].id);
 
     expect(screen.queryByRole('link', { name: 'Invitar' })).not.toBeInTheDocument();
-    expect(screen.queryByRole('link', { name: 'Escuela' })).not.toBeInTheDocument();
-    expect(screen.getByRole('link', { name: 'Terapias' })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Datos y notas' })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Bitácora' })).toBeInTheDocument();
 
-    // Cambia a Joaquín donde su rol es Docente (EDUCACION, no admin): muestra "Escuela" y oculta "Terapias" e "Invitar"
+    // Cambia a Joaquín donde su rol es Docente (EDUCACION, no admin): tampoco ve "Invitar"
     await userEvent.selectOptions(selector, PROYECTOS_MOCK[2].id);
 
     expect(screen.queryByRole('link', { name: 'Invitar' })).not.toBeInTheDocument();
-    expect(screen.queryByRole('link', { name: 'Terapias' })).not.toBeInTheDocument();
-    expect(screen.getByRole('link', { name: 'Escuela' })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Bitácora' })).toBeInTheDocument();
+  });
+
+  it('no muestra datos de ejemplo si la API de proyectos falla', async () => {
+    clienteApi.get.mockReset().mockRejectedValue(new Error('Sin conexión'));
+    const { result } = renderHook(() => useProyectoActual(), {
+      wrapper: ({ children }) => <MemoryRouter>{children}</MemoryRouter>,
+    });
+
+    await waitFor(() => expect(result.current.cargando).toBe(false));
+    expect(result.current.proyectos).toEqual([]);
+    expect(result.current.proyectoActual).toBeNull();
   });
 });
-

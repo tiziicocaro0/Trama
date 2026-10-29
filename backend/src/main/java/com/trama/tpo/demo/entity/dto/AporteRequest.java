@@ -7,6 +7,9 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
+import java.util.List;
+import java.util.UUID;
+
 public record AporteRequest(
 
         @NotNull(message = "El tipo de aporte es obligatorio")
@@ -16,10 +19,22 @@ public record AporteRequest(
         @Size(max = 150, message = "El título no puede superar los 150 caracteres")
         String titulo,
 
+        @Size(max = 10000, message = "El texto no puede superar los 10.000 caracteres")
         String contenido,
 
         String datos,
 
-        Visibilidad visibilidad
+        Visibilidad visibilidad,
+
+        List<UUID> archivoIds
 ) {
+
+    public AporteRequest(
+            TipoAporte tipo,
+            String titulo,
+            String contenido,
+            String datos,
+            Visibilidad visibilidad) {
+        this(tipo, titulo, contenido, datos, visibilidad, null);
+    }
 }

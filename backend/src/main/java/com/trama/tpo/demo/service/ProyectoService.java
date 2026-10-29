@@ -9,6 +9,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.trama.tpo.demo.entity.dto.ConfiguracionProyectoRequest;
+import com.trama.tpo.demo.entity.dto.ActualizarDatosProyectoRequest;
 import com.trama.tpo.demo.entity.dto.CrearProyectoRequest;
 import com.trama.tpo.demo.entity.dto.MiProyectoDTO;
 import com.trama.tpo.demo.entity.dto.ProyectoResponse;
@@ -110,38 +111,25 @@ public class ProyectoService {
                 return ProyectoResponse.from(proyectoRepository.save(proyecto), true);
         }
 
-        // 1.5 Quitar acceso a un miembro: solo un tutor administrador, sin eliminar al
-        // único admin
+
+        // Editar datos personales del niño: solo el tutor administrador
         @Transactional
-        public void quitarMiembro(UUID proyectoId, UUID miembroId) {
+        public ProyectoResponse actualizarDatos(
+                        UUID proyectoId,
+                        ActualizarDatosProyectoRequest request) {
 
                 permisoService.verificarAdmin(proyectoId);
 
-                List<Membresia> miembros = membresiaRepository.findByProyectoId(proyectoId);
+                Proyecto proyecto = buscarProyecto(proyectoId);
 
-                Membresia objetivo = miembros.stream()
-                                .filter(m -> miembroId.equals(m.getId())
-                                                || (m.getUsuario() != null && miembroId.equals(m.getUsuario().getId())))
-                                .findFirst()
-                                .orElseThrow(() -> new ApiException(
-                                                "MIEMBRO_NO_ENCONTRADO",
-                                                "No encontramos a este miembro en el proyecto",
-                                                HttpStatus.NOT_FOUND));
+                proyecto.setNombre(request.nombre());
+                proyecto.setApellido(request.apellido());
+                proyecto.setApodo(request.apodo());
+                proyecto.setFechaNacimiento(request.fechaNacimiento());
+                proyecto.setEscuela(request.escuela());
+                proyecto.setGrado(request.grado());
 
-                if (objetivo.getRol() == Rol.TUTOR && Boolean.TRUE.equals(objetivo.getEsAdmin())) {
-                        long cantidadAdmins = miembros.stream()
-                                        .filter(m -> m.getRol() == Rol.TUTOR && Boolean.TRUE.equals(m.getEsAdmin()))
-                                        .count();
-
-                        if (cantidadAdmins <= 1) {
-                                throw new ApiException(
-                                                "ULTIMO_ADMIN",
-                                                "No podés quitar el acceso al único administrador del proyecto",
-                                                HttpStatus.BAD_REQUEST);
-                        }
-                }
-
-                membresiaRepository.delete(objetivo);
+                return ProyectoResponse.from(proyectoRepository.save(proyecto), true);
         }
 
         private Proyecto buscarProyecto(UUID proyectoId) {
