@@ -143,7 +143,11 @@ if [ "$correr_frontend" -eq 1 ]; then
             npm ci
         fi
         npm run lint
-        npm test -- --run
+        # Pocos workers en paralelo: en Windows, abrir muchos procesos de Node a la
+        # vez hace que Vitest corte por "Timeout waiting for worker to respond".
+        # Los tests son los mismos que en el CI; solo cambia cuántos corren a la vez.
+        # Se puede ajustar con VITEST_MAX_WORKERS (ej. VITEST_MAX_WORKERS=1).
+        npm test -- --run --maxWorkers="${VITEST_MAX_WORKERS:-2}"
     ) || fallar "El lint o los tests del frontend fallaron."
     echo "Frontend OK."
 fi
