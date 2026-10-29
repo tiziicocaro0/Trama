@@ -3,6 +3,7 @@ package com.trama.tpo.demo;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -28,6 +29,7 @@ import com.trama.tpo.demo.repository.ProyectoRepository;
 import com.trama.tpo.demo.repository.UsuarioRepository;
 import com.trama.tpo.demo.service.MiembroService;
 import com.trama.tpo.demo.service.PermisoService;
+import com.trama.tpo.demo.service.RegistroAccionService;
 import com.trama.tpo.demo.service.ProyectoService;
 import com.trama.tpo.demo.service.UsuarioActual;
 
@@ -68,7 +70,8 @@ class PermisoServiceTest {
         miembroService = new MiembroService(
                 membresiaRepository,
                 permisoService,
-                usuarioActual);
+                usuarioActual,
+                mock(RegistroAccionService.class));
     }
 
     @Test
