@@ -329,6 +329,7 @@ public class AporteService {
                 aporte.getId(),
                 aporte.getProyecto().getId(),
                 aporte.getAutor().getId(),
+                nombreCompleto(aporte.getAutor()),
                 aporte.getTipo(),
                 aporte.getTitulo(),
                 aporte.getContenido(),
@@ -341,6 +342,10 @@ public class AporteService {
                 archivoIds,
                 archivos
         );
+    }
+
+    private static String nombreCompleto(Usuario usuario) {
+        return (usuario.getNombre() + " " + usuario.getApellido()).trim();
     }
 
     private void validarInteres(AporteRequest request) {

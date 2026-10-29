@@ -118,6 +118,7 @@ class AporteControllerTest {
                 .andExpect(jsonPath("$.tipo").value("FORTALEZA"))
                 .andExpect(jsonPath("$.autorId")
                         .value(tutorAutor.getId().toString()))
+                .andExpect(jsonPath("$.autorNombre").value("Autor Prueba"))
                 .andExpect(jsonPath("$.archivado").value(false));
     }
 
@@ -189,7 +190,23 @@ class AporteControllerTest {
                 .andExpect(jsonPath("$.length()").value(1))
                 .andExpect(jsonPath("$[0].titulo").value("Le gusta dibujar"))
                 .andExpect(jsonPath("$[0].autorId")
-                        .value(tutorAutor.getId().toString()));
+                        .value(tutorAutor.getId().toString()))
+                // Otro miembro ve quién lo cargó (2.2)
+                .andExpect(jsonPath("$[0].autorNombre").value("Autor Prueba"));
+    }
+
+    // 1.5 y 2.2: si al autor le quitan el acceso, su aporte sigue mostrando su nombre
+    @Test
+    void elAporteConservaElNombreDelAutorAunqueYaNoSeaMiembro() throws Exception {
+        crearAporte();
+        membresiaRepository.delete(membresiaRepository
+                .findByUsuarioIdAndProyectoId(tutorAutor.getId(), proyecto.getId())
+                .orElseThrow());
+
+        mockMvc.perform(get(rutaAportes())
+                .header("Authorization", token(otroTutor)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].autorNombre").value("Autor Prueba"));
     }
 
     // CRITERIO 7: editar conserva una versión del contenido anterior

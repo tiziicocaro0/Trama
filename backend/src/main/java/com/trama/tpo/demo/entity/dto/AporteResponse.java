@@ -11,6 +11,8 @@ public record AporteResponse(
         UUID id,
         UUID proyectoId,
         UUID autorId,
+        // Nombre y apellido del autor: el aporte lo muestra aunque ya no sea miembro (1.5, 2.2)
+        String autorNombre,
         TipoAporte tipo,
         String titulo,
         String contenido,
@@ -42,6 +44,7 @@ public record AporteResponse(
                 id,
                 proyectoId,
                 autorId,
+                null,
                 tipo,
                 titulo,
                 contenido,
