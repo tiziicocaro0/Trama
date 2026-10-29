@@ -177,7 +177,7 @@ class ArchivoServiceTest {
     }
 
     @Test
-    void subirArchivoMayorA20MbDevuelve400() {
+    void subirArchivoMayorA5MbDevuelve400() {
         UUID proyectoId = UUID.randomUUID();
 
         MultipartFile archivoGrande = mock(MultipartFile.class);

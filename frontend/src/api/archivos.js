@@ -1,6 +1,9 @@
 import cliente from './cliente.js'
 
-export const TAMANO_MAXIMO_ARCHIVO = 20 * 1024 * 1024 // 20 MB
+// Límite único de un archivo adjunto: tiene que coincidir con ArchivoService.TAMANO_MAXIMO_BYTES
+// del backend (lo verifica LimiteTamanoArchivoTest).
+export const TAMANO_MAXIMO_ARCHIVO = 5 * 1024 * 1024
+export const TAMANO_MAXIMO_MB = TAMANO_MAXIMO_ARCHIVO / (1024 * 1024)
 
 const EXTENSIONES_VALIDAS = ['pdf', 'jpg', 'jpeg', 'png']
 const MIMES_VALIDOS = [
@@ -38,7 +41,7 @@ export function validarArchivoAdjunto(archivo) {
   }
 
   if (typeof archivo.size === 'number' && archivo.size > TAMANO_MAXIMO_ARCHIVO) {
-    return 'El archivo supera el tamaño máximo permitido de 20 MB.'
+    return `El archivo supera el tamaño máximo permitido de ${TAMANO_MAXIMO_MB} MB.`
   }
 
   return null
@@ -82,7 +85,7 @@ export async function subirArchivo(proyectoId, archivo) {
     if (error.response?.status === 400) {
       throw new Error(
         error.response.data?.mensaje ||
-          'El archivo no es válido. Solo podés adjuntar PDF, JPG o PNG de hasta 20 MB.',
+          `El archivo no es válido. Solo podés adjuntar PDF, JPG o PNG de hasta ${TAMANO_MAXIMO_MB} MB.`,
         { cause: error },
       )
     }

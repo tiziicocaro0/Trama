@@ -101,7 +101,7 @@ describe('SubirArchivo y adjuntos en aportes (Tarea 4.3)', () => {
     expect(onChange).not.toHaveBeenCalled()
   })
 
-  it('rechaza un archivo mayor a 20 MB e informa el motivo', async () => {
+  it('rechaza un archivo mayor a 5 MB e informa el motivo', async () => {
     const onChange = vi.fn()
     render(
       <SubirArchivo
@@ -115,7 +115,7 @@ describe('SubirArchivo y adjuntos en aportes (Tarea 4.3)', () => {
       type: 'application/pdf',
     })
     Object.defineProperty(archivoGrande, 'size', {
-      value: 20 * 1024 * 1024 + 100,
+      value: 5 * 1024 * 1024 + 100,
     })
 
     fireEvent.drop(screen.getByTestId('zona-soltar-archivo'), {
@@ -123,7 +123,7 @@ describe('SubirArchivo y adjuntos en aportes (Tarea 4.3)', () => {
     })
 
     expect(await screen.findByRole('alert')).toHaveTextContent(
-      'El archivo supera el tamaño máximo permitido de 20 MB.',
+      'El archivo supera el tamaño máximo permitido de 5 MB.',
     )
     expect(cliente.post).not.toHaveBeenCalled()
     expect(onChange).not.toHaveBeenCalled()

@@ -1,4 +1,6 @@
 package com.trama.tpo.demo.exceptions;
+
+import com.trama.tpo.demo.service.ArchivoService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
@@ -83,7 +85,8 @@ public class GlobalExceptionHandler {
                 .status(HttpStatus.BAD_REQUEST)
                 .body(new ErrorResponse(
                         "ARCHIVO_DEMASIADO_GRANDE",
-                        "El archivo supera el tamaño máximo permitido de 20 MB"
+                        "El archivo supera el tamaño máximo permitido de "
+                                + ArchivoService.TAMANO_MAXIMO_MB + " MB"
                 ));
     }
 

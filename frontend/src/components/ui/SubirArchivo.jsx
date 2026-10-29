@@ -1,6 +1,10 @@
 import { FileImage, FilePdf, Trash, UploadSimple } from '@phosphor-icons/react'
 import { useId, useRef, useState } from 'react'
-import { subirArchivo, validarArchivoAdjunto } from '../../api/archivos.js'
+import {
+  TAMANO_MAXIMO_MB,
+  subirArchivo,
+  validarArchivoAdjunto,
+} from '../../api/archivos.js'
 import Boton from './Boton.jsx'
 
 function esPdf(archivo) {
@@ -108,7 +112,7 @@ export default function SubirArchivo({
         />
         <p className="text-sm text-texto-suave">
           Arrastrá y soltá un archivo acá o elegilo desde tu dispositivo (PDF,
-          JPG o PNG de hasta 20 MB).
+          JPG o PNG de hasta {TAMANO_MAXIMO_MB} MB).
         </p>
         <input
           ref={inputRef}
