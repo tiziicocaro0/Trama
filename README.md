@@ -215,7 +215,7 @@ Los comandos definitivos se verificarán cuando esté disponible el proyecto fro
 
 ### Configuración de Git Hooks
 
-Trama utiliza un hook local `pre-push` para verificar los tests del backend antes de subir modificaciones a GitHub.
+Trama usa un hook local `pre-push` que corre **los mismos pasos que el CI** antes de subir cambios, para no enterarse recién en el Pull Request de que algo falla.
 
 #### Activación
 
@@ -225,20 +225,113 @@ Cada integrante debe activarlo **una vez** por cada copia local del repositorio.
 git config core.hooksPath .githooks
 ```
 
-#### Requisitos para pushear cambios del backend
+#### Requisitos
 
 - MySQL levantado: `docker compose up -d`
-- Archivo `.env` en la raíz (copiado de `.env.example` y completado). El hook lo lee solo.
+- Archivo `.env` en la raíz (copiado de `.env.example` y completado), con `MYSQL_PASSWORD`, `MYSQL_ROOT_PASSWORD` y `JWT_SECRET`. El hook lo lee solo.
+- Java 21 y Node 22, las mismas versiones del CI (si no coinciden, el hook avisa).
 
 #### Funcionamiento
 
-- Si entre los commits que se suben hay cambios en `backend/`, corre `./mvnw -B clean test`.
-- Si los tests pasan, el push sigue. Si fallan, el push se cancela.
-- Si no hay cambios en `backend/`, el push sigue sin correr Maven.
+El hook mira qué cambió entre los commits que se suben y llama a `scripts/verificar-ci.sh`:
 
-El hook está en `.githooks/pre-push`.
+| Si cambia… | Se corre |
+| --- | --- |
+| `backend/` | Se recrea la base `trama_test` **vacía** (como en el CI) y se corre `./mvnw -B clean test` |
+| `frontend/` | `npm run lint` (ESLint + `check:estilos`) y `npm test -- --run` |
+| `frontend/package.json` o `package-lock.json` | Además, `npm ci`, que falla si el lock no coincide con `package.json` |
+| `.github/` | Backend y frontend |
 
-**Nota:** los hooks se ejecutan localmente y complementan las verificaciones de GitHub Actions. No reemplazan los checks obligatorios de los Pull Requests.
+En todos los casos se buscan marcadores de conflicto (`<<<<<<<` / `>>>>>>>`) olvidados. Si algo falla, el push se cancela.
+
+También se puede correr a mano en cualquier momento:
+
+```bash
+sh scripts/verificar-ci.sh              # todo
+sh scripts/verificar-ci.sh --backend    # solo backend
+sh scripts/verificar-ci.sh --frontend   # solo frontend
+```
+
+**Nota:** el hook verifica tu copia de trabajo, así que conviene pushear con todo commiteado. Complementa los checks obligatorios de los Pull Requests, no los reemplaza.
+
+## Despliegue local con Docker Compose
+
+El proyecto cuenta con un entorno de prueba que permite levantar MySQL y el backend Spring Boot mediante Docker Compose, sin necesidad de iniciar manualmente cada servicio.
+
+### 1. Requisitos
+
+- Tener Docker Desktop instalado y en funcionamiento.
+- Estar ubicado en la carpeta raíz del repositorio.
+- Contar con el archivo `.env` configurado.
+
+Si todavía no existe `.env`, copiar `.env.example` y completar las variables:
+
+```env
+MYSQL_PASSWORD=
+MYSQL_ROOT_PASSWORD=
+JWT_SECRET=
+TRAMA_CRYPTO_KEY=
+```
+
+`TRAMA_CRYPTO_KEY` es la clave de cifrado (AES-256, en Base64). Se genera una vez con `openssl rand -base64 32`.
+
+Las contraseñas y claves deben mantenerse privadas. El archivo `.env` no debe subirse al repositorio.
+
+### 2. Levantar los servicios
+
+Desde la raíz del proyecto, ejecutar:
+
+```bash
+docker compose --profile app up -d --build
+```
+
+Este comando construye la imagen del backend e inicia MySQL y el backend.
+
+> `docker compose up -d` (sin `--profile app`) levanta **solo MySQL**, que es lo que se usa para desarrollar con el backend corriendo desde el IDE. Así no chocan en el puerto 4002.
+
+### 3. Comprobar el funcionamiento
+
+Para consultar el estado de los contenedores:
+
+```bash
+docker compose ps
+```
+
+Para comprobar que Spring Boot está funcionando, acceder a:
+
+http://localhost:4002/actuator/health
+
+El resultado esperado es una respuesta HTTP 200:
+
+```json
+{"status":"UP"}
+```
+
+También se pueden consultar los registros del backend:
+
+```bash
+docker compose logs --tail=80 backend
+```
+
+### 4. Accesos del entorno local
+
+| Servicio | Dirección |
+|---|---|
+| Backend | http://localhost:4002 |
+| Estado del backend | http://localhost:4002/actuator/health |
+| MySQL | localhost:3307 |
+
+### 5. Detener los servicios
+
+```bash
+docker compose --profile app stop
+```
+
+Este comando detiene los contenedores sin eliminar los datos persistentes de MySQL.
+
+No utilizar `docker compose down -v`, ya que elimina también los volúmenes de datos.
+
+**Estado actual:** el despliegue mediante Docker Compose incluye MySQL y Spring Boot. La incorporación del frontend con Nginx queda pendiente hasta que el equipo integre su estructura en `develop`.
 
 ## Ejecución local
 
@@ -261,16 +354,20 @@ Copiar `.env.example` como `.env` en la raíz del repo y completar los valores:
 MYSQL_PASSWORD=...
 MYSQL_ROOT_PASSWORD=...
 JWT_SECRET=...
+TRAMA_CRYPTO_KEY=...
 ```
 
-`JWT_SECRET` tiene que tener al menos 32 caracteres. Se puede generar con `openssl rand -base64 48`. El `.env` nunca se sube al repo.
+- `JWT_SECRET`: al menos 32 caracteres. Se genera con `openssl rand -base64 48`.
+- `TRAMA_CRYPTO_KEY`: exactamente 32 bytes en base64. Se genera con `openssl rand -base64 32`. Ver [Seguridad de los datos](#seguridad-de-los-datos).
+
+El `.env` nunca se sube al repo.
 
 #### 2. Levantar MySQL
 
 Con Docker Desktop abierto, desde la raíz:
 
 ```bash
-docker compose up -d
+docker compose up -d mysql
 ```
 
 Conexión: `jdbc:mysql://localhost:3307/trama`, usuario `trama`, contraseña la de `MYSQL_PASSWORD`.
@@ -309,6 +406,54 @@ Para volver a cargar los datos desde cero, vaciar las tablas y levantar la app d
 ### Frontend
 
 Los comandos de instalación y ejecución se documentarán cuando se incorpore la estructura base del frontend.
+
+## Seguridad de los datos
+
+TRAMA guarda información sobre niños. Aunque hoy todos los datos son ficticios, el código se escribe como si fueran reales.
+
+### Qué se cifra
+
+Todo el texto libre que se carga sobre el niño se guarda cifrado en la base:
+
+| Tabla | Columnas |
+|---|---|
+| `aporte` | `contenido`, `datos` |
+| `aporte_version` | `contenido`, `datos` |
+| `comentario` | `texto` |
+| `evento` | `descripcion`, `acta` (actas de reunión) |
+| `solicitud_revision` | `motivo` |
+
+Los archivos adjuntos también se guardan cifrados en disco.
+
+**No se cifran** los títulos de los aportes y eventos, porque se muestran en listados. Por eso un título nunca debe tener información sensible.
+
+### Cómo se cifra
+
+- **Algoritmo:** AES-256-GCM, con `CryptoService`.
+- **Un IV aleatorio por valor:** el mismo texto cifrado dos veces da resultados distintos. El IV (12 bytes) se guarda adelante del texto cifrado, en la misma columna: `[IV][texto cifrado + tag]`.
+- **Integridad:** GCM agrega un tag de autenticación. Si alguien modifica un dato en la base, no se puede descifrar.
+- **En las entidades:** las columnas cifradas usan el convertidor `CifradoConverter`. Cifra al guardar y descifra al leer, así que el resto del código trabaja con texto normal.
+
+```java
+@Convert(converter = CifradoConverter.class)
+@Column(name = "contenido", columnDefinition = "MEDIUMBLOB")
+private String contenido;
+```
+
+### Dónde está la clave
+
+- En la variable de entorno **`TRAMA_CRYPTO_KEY`**: 32 bytes en base64.
+- **Nunca en el código ni en el repositorio.** En local va en el `.env`, que está ignorado por git. En el CI se genera una clave nueva en cada corrida.
+- **Distinta en cada entorno:** cada integrante genera la suya con `openssl rand -base64 32`, y producción tiene la propia.
+- Si falta o no tiene 32 bytes, la app no arranca.
+- ⚠️ **Si se pierde o se cambia la clave, lo cifrado con ella ya no se puede leer.** En local alcanza con vaciar las tablas y dejar que el `DataSeeder` vuelva a cargar los datos. En producción, la clave se guarda y se respalda aparte.
+
+### Reglas para el equipo
+
+- Toda columna nueva con texto libre sobre el niño lleva `@Convert(converter = CifradoConverter.class)` y es de tipo `VARBINARY` o `MEDIUMBLOB`.
+- No se filtra ni se busca con SQL sobre columnas cifradas (por ejemplo, los filtros de la bitácora y la búsqueda). Se leen los aportes del niño y se filtra en el service.
+- En `VARBINARY(4096)` el texto puede tener hasta unos 4000 bytes, porque el IV y el tag ocupan 28. Validarlo con `@Size` en el DTO.
+- Nunca se escribe contenido cifrado ni descifrado en los logs.
 
 ## Estado del proyecto
 

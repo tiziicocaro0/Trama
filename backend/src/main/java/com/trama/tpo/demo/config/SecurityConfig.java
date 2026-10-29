@@ -10,6 +10,7 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.http.HttpMethod;
 
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
@@ -44,7 +45,13 @@ public class SecurityConfig {
             .authorizeHttpRequests(req -> req
 
                 // AUTENTICACION
-                .requestMatchers("/api/auth/registro", "/api/auth/login").permitAll()
+                .requestMatchers(
+                        "/api/auth/registro",
+                        "/api/auth/login",
+                        "/api/auth/recuperar",
+                        "/api/auth/verificar-codigo",
+                        "/api/auth/restablecer"
+                ).permitAll()
                 .requestMatchers("/api/auth/yo").authenticated()
 
                 // USUARIOS
@@ -57,6 +64,10 @@ public class SecurityConfig {
                 .requestMatchers("/api/membresias/**").authenticated()
 
                 // INVITACIONES
+                // Consultar una invitacion no requiere iniciar sesion.
+                .requestMatchers(HttpMethod.GET, "/api/invitaciones/*").permitAll()
+
+                // Aceptar una invitacion y cualquier otra operacion requieren autenticacion.
                 .requestMatchers("/api/invitaciones/**").authenticated()
 
                 // APORTES
@@ -79,6 +90,9 @@ public class SecurityConfig {
 
                 // Proteger el resto de la API
                 .requestMatchers("/api/**").authenticated()
+
+                // Permitir consultar el estado del servidor
+                .requestMatchers("/actuator/health").permitAll()
 
                 // Denegar rutas no declaradas
                 .anyRequest().denyAll()

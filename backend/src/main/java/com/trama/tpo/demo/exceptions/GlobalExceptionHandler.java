@@ -1,13 +1,19 @@
 package com.trama.tpo.demo.exceptions;
+
+import com.trama.tpo.demo.service.ArchivoService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
+import org.springframework.web.multipart.MaxUploadSizeExceededException;
+import org.springframework.web.multipart.support.MissingServletRequestPartException;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 
 
 @RestControllerAdvice
@@ -70,6 +76,20 @@ public class GlobalExceptionHandler {
                 ));
     }
 
+    // TAMAÑO MÁXIMO DE ARCHIVO SUPERADO
+    @ExceptionHandler(MaxUploadSizeExceededException.class)
+    public ResponseEntity<ErrorResponse> handleMaxUploadSize(
+            MaxUploadSizeExceededException e) {
+
+        return ResponseEntity
+                .status(HttpStatus.BAD_REQUEST)
+                .body(new ErrorResponse(
+                        "ARCHIVO_DEMASIADO_GRANDE",
+                        "El archivo supera el tamaño máximo permitido de "
+                                + ArchivoService.TAMANO_MAXIMO_MB + " MB"
+                ));
+    }
+
     // VALIDACIONES DE DTO
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ErrorResponse> handleValidation(
@@ -84,9 +104,14 @@ public class GlobalExceptionHandler {
     }
     
     // PARÁMETROS CON FORMATO INVÁLIDO (ej. un id que no es UUID)
-    @ExceptionHandler(MethodArgumentTypeMismatchException.class)
+    @ExceptionHandler({
+            MethodArgumentTypeMismatchException.class,
+            HttpMessageNotReadableException.class,
+            MissingServletRequestPartException.class,
+            MissingServletRequestParameterException.class
+    })
     public ResponseEntity<ErrorResponse> handleTypeMismatch(
-            MethodArgumentTypeMismatchException e) {
+            Exception e) {
 
         return ResponseEntity
                 .status(HttpStatus.BAD_REQUEST)

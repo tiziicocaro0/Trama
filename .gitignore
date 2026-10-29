@@ -1,2 +1,15 @@
 .env
 .DS_Store
+Thumbs.db
+
+# Frontend (Node / React)
+node_modules/
+dist/
+build/
+coverage/
+
+# Backend (Java / Maven)
+target/
+
+# Archivos subidos en desarrollo (backend)
+backend/uploads/

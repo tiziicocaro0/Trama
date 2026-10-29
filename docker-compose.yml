@@ -17,6 +17,52 @@ services:
     volumes:
       - trama-mysql-data:/var/lib/mysql
       - ./bd/init:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: ["CMD-SHELL", "mysql -h 127.0.0.1 -u trama -p\"$${MYSQL_PASSWORD}\" trama -e 'SELECT 1' >/dev/null 2>&1"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 30s
+  # Backend de Trama
+  backend:
+    profiles: ["app"]
+    build:
+      context: ./backend
+    image: trama-backend:local
+    container_name: trama-backend
+    restart: unless-stopped
+    depends_on:
+      mysql:
+        condition: service_healthy
+    environment:
+      SPRING_PROFILES_ACTIVE: prod
+      DB_URL: jdbc:mysql://mysql:3306/trama
+      DB_USERNAME: trama
+      DB_PASSWORD: ${MYSQL_PASSWORD}
+      JWT_SECRET: ${JWT_SECRET}
+      TRAMA_CRYPTO_KEY: ${TRAMA_CRYPTO_KEY}
+      SERVER_PORT: 8080
 
+      # Configuración del correo
+      MAIL_FROM: ${MAIL_FROM:-}
+      INVITACION_URL_BASE: ${INVITACION_URL_BASE:-}
+      SPRING_MAIL_HOST: ${SPRING_MAIL_HOST:-}
+      SPRING_MAIL_PORT: ${SPRING_MAIL_PORT:-587}
+      SPRING_MAIL_USERNAME: ${SPRING_MAIL_USERNAME:-}
+      SPRING_MAIL_PASSWORD: ${SPRING_MAIL_PASSWORD:-}
+      SPRING_MAIL_SMTP_AUTH: ${SPRING_MAIL_SMTP_AUTH:-false}
+      SPRING_MAIL_SMTP_STARTTLS: ${SPRING_MAIL_SMTP_STARTTLS:-false}
+
+    ports:
+      - "4002:8080"
+  # Servidor de correo local para desarrollo
+  mailpit:
+    image: axllent/mailpit:latest
+    container_name: trama-mailpit
+    profiles: ["mail"]
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:1025:1025"
+      - "127.0.0.1:8025:8025"
 volumes:
   trama-mysql-data:

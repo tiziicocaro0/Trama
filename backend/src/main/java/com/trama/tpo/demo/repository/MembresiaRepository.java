@@ -24,6 +24,9 @@ public interface MembresiaRepository extends JpaRepository<Membresia, UUID> {
 
     List<Membresia> findByProyectoId(UUID proyectoId);
 
+    // Miembros del proyecto en orden alfabetico (pagina Red, card 1.3)
+    List<Membresia> findByProyectoIdOrderByUsuarioNombreAscUsuarioApellidoAsc(UUID proyectoId);
+
     Optional<Membresia> findByUsuarioIdAndProyectoId(
             UUID usuarioId,
             UUID proyectoId

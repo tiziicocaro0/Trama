@@ -9,6 +9,7 @@ import org.springframework.stereotype.Service;
 
 import com.trama.tpo.demo.entity.membresia.Membresia;
 import com.trama.tpo.demo.entity.membresia.Rol;
+import com.trama.tpo.demo.aporte.Visibilidad;
 import com.trama.tpo.demo.repository.MembresiaRepository;
 
 @Service
@@ -23,6 +24,12 @@ public class PermisoService {
 
         this.usuarioActual = usuarioActual;
         this.membresiaRepository = membresiaRepository;
+    }
+
+    // Al crear todavía no existe proyecto ni membresía: cualquier usuario autenticado
+    // puede crear uno y queda como su tutor administrador.
+    public UUID verificarPuedeCrearProyecto() {
+        return usuarioActual.obtenerId();
     }
 
     // 1. VERIFICAR QUE PERTENECE AL PROYECTO
@@ -103,6 +110,18 @@ public class PermisoService {
         );
     }
 
+    // Igual que verificarPuedeEditar, pero devuelve true/false en vez de lanzar
+    // (lo usa el front para mostrar u ocultar los botones de cargar y editar).
+    public boolean puedeEditar(UUID proyectoId) {
+        verificarMiembro(proyectoId);
+        try {
+            verificarPuedeEditar(proyectoId);
+            return true;
+        } catch (AccessDeniedException sinPermisoDeEdicion) {
+            return false;
+        }
+    }
+
     // 4. VERIFICAR AUTORÍA DE UN APORTE
     public void verificarAutor(UUID autorId) {
 
@@ -114,6 +133,37 @@ public class PermisoService {
                     "Solo el autor puede modificar este aporte"
             );
         }
+    }
+
+    // 5. VERIFICAR VISIBILIDAD DE UN APORTE
+    public void verificarPuedeVerAporte(
+            UUID proyectoId,
+            Visibilidad visibilidad) {
+
+        Membresia membresia = obtenerMembresia(proyectoId);
+
+        if (!visibilidadesPermitidas(membresia.getRol()).contains(visibilidad)) {
+            throw new AccessDeniedException(
+                    "No tenés permiso para ver este aporte"
+            );
+        }
+    }
+
+    // 6. VISIBILIDADES QUE PUEDE VER CADA ROL
+    // Única fuente de la regla: la usan este chequeo y el listado filtrado en la base.
+    public static List<Visibilidad> visibilidadesPermitidas(Rol rol) {
+
+        return switch (rol) {
+
+            // Los tutores siempre pueden ver todos los aportes
+            case TUTOR -> List.of(Visibilidad.values());
+
+            case SALUD -> List.of(Visibilidad.TODOS, Visibilidad.SOLO_SALUD);
+
+            case EDUCACION -> List.of(Visibilidad.TODOS, Visibilidad.SOLO_EDUCACION);
+
+            case FAMILIAR -> List.of(Visibilidad.TODOS);
+        };
     }
 
     // MÉTODO PRIVADO COMPARTIDO

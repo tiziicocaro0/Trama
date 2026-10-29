@@ -2,6 +2,7 @@ package com.trama.tpo.demo.config;
 
 import java.time.Instant;
 import java.time.LocalDate;
+import java.util.List;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -10,7 +11,9 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 
+import com.trama.tpo.demo.entity.membresia.Especialidad;
 import com.trama.tpo.demo.entity.membresia.Membresia;
+import com.trama.tpo.demo.entity.membresia.MembresiaEspecialidad;
 import com.trama.tpo.demo.entity.membresia.Rol;
 import com.trama.tpo.demo.entity.proyecto.Proyecto;
 import com.trama.tpo.demo.entity.usuario.Usuario;
@@ -72,18 +75,24 @@ public class DataSeeder implements CommandLineRunner {
         crearMembresia(tutor, tomi, Rol.TUTOR, true, null, null);
         crearMembresia(cotutor, tomi, Rol.TUTOR, true, null, null);
         crearMembresia(familiar, tomi, Rol.FAMILIAR, false, null, null);
-        crearMembresia(docente, tomi, Rol.EDUCACION, false, "DOCENTE", null);
-        crearMembresia(psico, tomi, Rol.SALUD, false, "PSICOLOGIA", "MN 12345");
+        crearMembresia(docente, tomi, Rol.EDUCACION, false,
+                Especialidad.DOCENTE_PRIMARIO, null);
+        crearMembresia(psico, tomi, Rol.SALUD, false,
+                Especialidad.PSICOLOGIA, "MN 12345");
 
         crearMembresia(tutoraValen, valen, Rol.TUTOR, true, null, null);
         crearMembresia(familiar, valen, Rol.FAMILIAR, false, null, null);
-        crearMembresia(docente, valen, Rol.EDUCACION, false, "DOCENTE", null);
-        crearMembresia(psico, valen, Rol.SALUD, false, "PSICOLOGIA", "MN 12345");
+        crearMembresia(docente, valen, Rol.EDUCACION, false,
+                Especialidad.DOCENTE_PRIMARIO, null);
+        crearMembresia(psico, valen, Rol.SALUD, false,
+                Especialidad.PSICOLOGIA, "MN 12345");
 
         crearMembresia(tutorJuli, juli, Rol.TUTOR, true, null, null);
         crearMembresia(familiar, juli, Rol.FAMILIAR, false, null, null);
-        crearMembresia(docente, juli, Rol.EDUCACION, false, "DOCENTE", null);
-        crearMembresia(psico, juli, Rol.SALUD, false, "PSICOLOGIA", "MN 12345");
+        crearMembresia(docente, juli, Rol.EDUCACION, false,
+                Especialidad.DOCENTE_PRIMARIO, null);
+        crearMembresia(psico, juli, Rol.SALUD, false,
+                Especialidad.PSICOLOGIA, "MN 12345");
 
         log.info("DataSeeder: datos mock cargados");
     }
@@ -126,7 +135,7 @@ public class DataSeeder implements CommandLineRunner {
             Proyecto proyecto,
             Rol rol,
             boolean esAdmin,
-            String especialidad,
+            Especialidad especialidad,
             String matricula) {
 
         Membresia membresia = Membresia.builder()
@@ -134,10 +143,20 @@ public class DataSeeder implements CommandLineRunner {
                 .proyecto(proyecto)
                 .rol(rol)
                 .esAdmin(esAdmin)
-                .especialidad(especialidad)
                 .matricula(matricula)
                 .build();
 
-        membresiaRepository.save(membresia);
+        membresia = membresiaRepository.save(membresia);
+
+        // Si tiene especialidad, agregar a la tabla de especialidades.
+        if (especialidad != null) {
+            MembresiaEspecialidad me = MembresiaEspecialidad.builder()
+                    .membresia(membresia)
+                    .especialidad(especialidad)
+                    .build();
+
+            membresia.getEspecialidades().add(me);
+            membresiaRepository.save(membresia);
+        }
     }
 }
