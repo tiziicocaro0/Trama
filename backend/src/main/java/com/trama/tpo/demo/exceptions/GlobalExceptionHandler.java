@@ -9,7 +9,7 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import org.springframework.http.converter.HttpMessageNotReadableException;
-
+import org.springframework.web.multipart.MaxUploadSizeExceededException;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
@@ -94,6 +94,18 @@ public class GlobalExceptionHandler {
                 .body(new ErrorResponse(
                         "DATOS_INVALIDOS",
                         "Los datos enviados no son válidos"
+                ));
+    }
+     // ARCHIVOS QUE SUPERAN EL LIMITE DE SPRING BOOT
+    @ExceptionHandler(MaxUploadSizeExceededException.class)
+    public ResponseEntity<ErrorResponse> handleArchivoDemasiadoGrande(
+            MaxUploadSizeExceededException e) {
+
+        return ResponseEntity
+                .status(HttpStatus.BAD_REQUEST)
+                .body(new ErrorResponse(
+                        "ARCHIVO_DEMASIADO_GRANDE",
+                        "El archivo supera el tamaño máximo permitido"
                 ));
     }
 

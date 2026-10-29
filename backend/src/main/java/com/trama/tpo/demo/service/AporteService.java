@@ -4,6 +4,8 @@ import com.trama.tpo.demo.aporte.Aporte;
 import com.trama.tpo.demo.aporte.AporteVersion;
 import com.trama.tpo.demo.aporte.TipoAporte;
 import com.trama.tpo.demo.aporte.Visibilidad;
+import com.trama.tpo.demo.archivo.Archivo;
+import com.trama.tpo.demo.archivo.ArchivoRepository;
 import com.trama.tpo.demo.entity.dto.AporteRequest;
 import com.trama.tpo.demo.entity.dto.AporteResponse;
 import com.trama.tpo.demo.entity.membresia.Rol;
@@ -27,7 +29,9 @@ import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 @Service
@@ -40,6 +44,7 @@ public class AporteService {
     private final MembresiaRepository membresiaRepository;
     private final PermisoService permisoService;
     private final UsuarioActual usuarioActual;
+    private final ArchivoRepository archivoRepository;
 
     public AporteService(
             AporteRepository aporteRepository,
@@ -48,7 +53,8 @@ public class AporteService {
             UsuarioRepository usuarioRepository,
             MembresiaRepository membresiaRepository,
             PermisoService permisoService,
-            UsuarioActual usuarioActual) {
+            UsuarioActual usuarioActual,
+            ArchivoRepository archivoRepository) {
 
         this.aporteRepository = aporteRepository;
         this.aporteVersionRepository = aporteVersionRepository;
@@ -57,6 +63,7 @@ public class AporteService {
         this.membresiaRepository = membresiaRepository;
         this.permisoService = permisoService;
         this.usuarioActual = usuarioActual;
+        this.archivoRepository = archivoRepository;
     }
 
     // CREAR APORTE
@@ -97,6 +104,40 @@ public class AporteService {
                         : obtenerVisibilidadPorDefecto(request.tipo()))
                 .archivado(false)
                 .build();
+
+        // Vincular únicamente archivos que pertenezcan a este proyecto.
+        List<UUID> archivoIds = request.archivoIds() != null
+                ? request.archivoIds()
+                : List.of();
+
+        Set<Archivo> adjuntos = new LinkedHashSet<>();
+
+        for (UUID archivoId : archivoIds) {
+            if (archivoId == null) {
+                throw new ApiException(
+                        "ARCHIVO_INVALIDO",
+                        "El identificador del archivo no es válido",
+                        HttpStatus.BAD_REQUEST);
+            }
+
+                Archivo archivo = archivoRepository
+                        .findByIdAndProyecto_Id(archivoId, proyectoId)
+                        .orElseThrow(() -> new ApiException(
+                                "ARCHIVO_INVALIDO",
+                                "El archivo no existe o no pertenece a este proyecto",
+                                HttpStatus.BAD_REQUEST));
+
+                // Solo se pueden adjuntar archivos subidos por el usuario actual.
+                if (!archivo.getAutor().getId().equals(usuarioId)) {
+                throw new AccessDeniedException(
+                        "Solo podés adjuntar archivos que subiste vos");
+                }
+
+                adjuntos.add(archivo);
+
+        }
+
+        aporte.getArchivos().addAll(adjuntos);
 
         return convertirRespuesta(aporteRepository.saveAndFlush(aporte), true);
     }
@@ -217,6 +258,40 @@ public class AporteService {
         if (request.visibilidad() != null) {
                 aporte.setVisibilidad(request.visibilidad());
         }
+        // Actualizar adjuntos solamente si se envió archivoIds.
+        if (request.archivoIds() != null) {
+
+            Set<Archivo> adjuntosActualizados = new LinkedHashSet<>();
+
+            for (UUID archivoId : request.archivoIds()) {
+
+                if (archivoId == null) {
+                    throw new ApiException(
+                            "ARCHIVO_INVALIDO",
+                            "El identificador del archivo no es válido",
+                            HttpStatus.BAD_REQUEST);
+                }
+
+                Archivo archivo = archivoRepository
+                        .findByIdAndProyecto_Id(archivoId, proyectoId)
+                        .orElseThrow(() -> new ApiException(
+                                "ARCHIVO_INVALIDO",
+                                "El archivo no existe o no pertenece a este proyecto",
+                                HttpStatus.BAD_REQUEST));
+
+                if (!archivo.getAutor().getId()
+                        .equals(usuarioActual.obtenerId())) {
+                    throw new AccessDeniedException(
+                            "Solo podés adjuntar archivos que subiste vos");
+                }
+
+                adjuntosActualizados.add(archivo);
+            }
+
+            aporte.getArchivos().clear();
+            aporte.getArchivos().addAll(adjuntosActualizados);
+        }
+
 
         return convertirRespuesta(aporteRepository.saveAndFlush(aporte), true);
     }
@@ -302,6 +377,10 @@ public class AporteService {
         boolean esAutor = aporte.getAutor().getId()
                 .equals(usuarioActual.obtenerId());
 
+        List<UUID> archivoIds = aporte.getArchivos().stream()
+                .map(Archivo::getId)
+                .toList();
+
         return new AporteResponse(
                 aporte.getId(),
                 aporte.getProyecto().getId(),
@@ -314,7 +393,8 @@ public class AporteService {
                 aporte.getArchivado(),
                 aporte.getCreadoEn(),
                 aporte.getActualizadoEn(),
-                puedeCargar && esAutor
+                puedeCargar && esAutor,
+                archivoIds
         );
     }
     private void validarInteres(AporteRequest request) {

@@ -7,6 +7,9 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
+import java.util.List;
+import java.util.UUID;
+
 public record AporteRequest(
 
         @NotNull(message = "El tipo de aporte es obligatorio")
@@ -20,6 +23,19 @@ public record AporteRequest(
 
         String datos,
 
-        Visibilidad visibilidad
+        Visibilidad visibilidad,
+
+        List<UUID> archivoIds
+
 ) {
+
+    // Mantiene la compatibilidad con los aportes existentes.
+    public AporteRequest(
+            TipoAporte tipo,
+            String titulo,
+            String contenido,
+            String datos,
+            Visibilidad visibilidad) {
+        this(tipo, titulo, contenido, datos, visibilidad, null);
+        }
 }
