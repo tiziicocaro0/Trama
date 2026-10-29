@@ -215,7 +215,7 @@ Los comandos definitivos se verificarán cuando esté disponible el proyecto fro
 
 ### Configuración de Git Hooks
 
-Trama utiliza un hook local `pre-push` para verificar los tests del backend antes de subir modificaciones a GitHub.
+Trama usa un hook local `pre-push` que corre **los mismos pasos que el CI** antes de subir cambios, para no enterarse recién en el Pull Request de que algo falla.
 
 #### Activación
 
@@ -225,20 +225,34 @@ Cada integrante debe activarlo **una vez** por cada copia local del repositorio.
 git config core.hooksPath .githooks
 ```
 
-#### Requisitos para pushear cambios del backend
+#### Requisitos
 
 - MySQL levantado: `docker compose up -d`
-- Archivo `.env` en la raíz (copiado de `.env.example` y completado). El hook lo lee solo.
+- Archivo `.env` en la raíz (copiado de `.env.example` y completado), con `MYSQL_PASSWORD`, `MYSQL_ROOT_PASSWORD` y `JWT_SECRET`. El hook lo lee solo.
+- Java 21 y Node 22, las mismas versiones del CI (si no coinciden, el hook avisa).
 
 #### Funcionamiento
 
-- Si entre los commits que se suben hay cambios en `backend/`, corre `./mvnw -B clean test`.
-- Si los tests pasan, el push sigue. Si fallan, el push se cancela.
-- Si no hay cambios en `backend/`, el push sigue sin correr Maven.
+El hook mira qué cambió entre los commits que se suben y llama a `scripts/verificar-ci.sh`:
 
-El hook está en `.githooks/pre-push`.
+| Si cambia… | Se corre |
+| --- | --- |
+| `backend/` | Se recrea la base `trama_test` **vacía** (como en el CI) y se corre `./mvnw -B clean test` |
+| `frontend/` | `npm run lint` (ESLint + `check:estilos`) y `npm test -- --run` |
+| `frontend/package.json` o `package-lock.json` | Además, `npm ci`, que falla si el lock no coincide con `package.json` |
+| `.github/` | Backend y frontend |
 
-**Nota:** los hooks se ejecutan localmente y complementan las verificaciones de GitHub Actions. No reemplazan los checks obligatorios de los Pull Requests.
+En todos los casos se buscan marcadores de conflicto (`<<<<<<<` / `>>>>>>>`) olvidados. Si algo falla, el push se cancela.
+
+También se puede correr a mano en cualquier momento:
+
+```bash
+sh scripts/verificar-ci.sh              # todo
+sh scripts/verificar-ci.sh --backend    # solo backend
+sh scripts/verificar-ci.sh --frontend   # solo frontend
+```
+
+**Nota:** el hook verifica tu copia de trabajo, así que conviene pushear con todo commiteado. Complementa los checks obligatorios de los Pull Requests, no los reemplaza.
 
 ## Despliegue local con Docker Compose
 

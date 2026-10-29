@@ -31,15 +31,18 @@ import java.util.UUID;
 @Service
 public class ArchivoService {
 
-    public static final long TAMANO_MAXIMO_BYTES = 20L * 1024L * 1024L; // 20 MB
+    // Límite único de un archivo adjunto. Lo verifica LimiteTamanoArchivoTest contra la
+    // migración, el multipart de Spring y el frontend.
+    public static final long TAMANO_MAXIMO_MB = 5L;
+    public static final long TAMANO_MAXIMO_BYTES = TAMANO_MAXIMO_MB * 1024L * 1024L;
 
-    private static final Set<String> MIMES_PERMITIDOS = Set.of(
+    public static final Set<String> MIMES_PERMITIDOS = Set.of(
             "application/pdf",
             "image/jpeg",
             "image/png"
     );
 
-    private static final Map<String, String> EXTENSION_A_MIME = Map.of(
+    public static final Map<String, String> EXTENSION_A_MIME = Map.of(
             "pdf", "application/pdf",
             "jpg", "image/jpeg",
             "jpeg", "image/jpeg",
@@ -107,7 +110,8 @@ public class ArchivoService {
         if (tamano > TAMANO_MAXIMO_BYTES) {
             throw new ApiException(
                     "ARCHIVO_DEMASIADO_GRANDE",
-                    "El archivo supera el tamaño máximo permitido de 20 MB",
+                    "El archivo supera el tamaño máximo permitido de "
+                            + TAMANO_MAXIMO_MB + " MB",
                     HttpStatus.BAD_REQUEST
             );
         }
