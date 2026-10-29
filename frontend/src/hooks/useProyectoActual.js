@@ -38,6 +38,11 @@ export function obtenerItemsMenuPorRol(proyectoActual, rolCodigo, esAdmin) {
   const base = `/proyectos/${proyectoActual.id}`;
   const items = [
     {
+      ruta: `${base}/conocelo`,
+      etiqueta: 'Conocelo en 5 minutos',
+      icono: 'recursos',
+    },
+    {
       ruta: `${base}/red`,
       etiqueta: 'Red de acompañamiento',
       icono: 'acompanamientos',

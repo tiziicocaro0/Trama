@@ -95,7 +95,8 @@ class ContratoFrontendTest {
         assertEquals(nombres(IntensidadInteres.class),
                 valoresEnMayusculas(entre(editor, "nombre: 'intensidad'", "FORTALEZA:")));
         assertEquals(nombres(ContextoFortaleza.class),
-                valoresEnMayusculas(entre(editor, "nombre: 'contexto'", "function leerDatos")));
+                // Corta en el cierre de su lista de opciones, sin depender de lo que viene después.
+                valoresEnMayusculas(entre(editor, "nombre: 'contexto'", "],\n    },")));
     }
 
     @Test

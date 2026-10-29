@@ -65,3 +65,15 @@ export function calcularEdad(fechaNacimiento, hoy = new Date()) {
     (hoy.getMonth() === mes - 1 && hoy.getDate() >= dia)
   return hoy.getFullYear() - anio - (cumplio ? 0 : 1)
 }
+
+// Campos propios de un aporte (el JSON "datos"). Si falta o no es un objeto, devuelve {}.
+export function leerDatosAporte(texto) {
+  try {
+    const datos = JSON.parse(texto ?? '')
+    return datos && typeof datos === 'object' && !Array.isArray(datos)
+      ? datos
+      : {}
+  } catch {
+    return {}
+  }
+}

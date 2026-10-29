@@ -7,7 +7,7 @@ export default function CabeceraPerfil({ proyecto, seccion }) {
   const edad = calcularEdad(proyecto.fechaNacimiento)
   return (
     <header className="mb-8">
-      <div className="mb-4">
+      <div className="mb-4 print:hidden">
         <Link
           to="/inicio"
           aria-label="TRAMA · Inicio"
@@ -18,7 +18,7 @@ export default function CabeceraPerfil({ proyecto, seccion }) {
       </div>
       <Link
         to={seccion ? `/proyectos/${proyecto.id}` : '/acompanamientos'}
-        className="mb-6 inline-flex min-h-11 items-center gap-2 rounded-md text-secundario hover:underline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-primario"
+        className="mb-6 inline-flex min-h-11 items-center gap-2 rounded-md text-secundario hover:underline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-primario print:hidden"
       >
         <ArrowLeft size={20} aria-hidden="true" className="text-primario" />
         {seccion ? 'Volver al perfil' : 'Volver a acompañamientos'}

@@ -5,6 +5,7 @@ import CampoFormulario from '../../../components/ui/CampoFormulario.jsx'
 import SelectorVisibilidad from '../../../components/ui/SelectorVisibilidad.jsx'
 import SubirArchivo from '../../../components/ui/SubirArchivo.jsx'
 import { guardarAporte } from '../../../api/aportes.js'
+import { leerDatosAporte } from '../perfil.js'
 
 const SECCIONES_CON_ADJUNTOS = ['NOTA_PROFESIONAL', 'COMUNICACION']
 
@@ -59,17 +60,6 @@ const textosPorTipo = {
   },
 }
 
-function leerDatos(texto) {
-  try {
-    const datos = JSON.parse(texto ?? '')
-    return datos && typeof datos === 'object' && !Array.isArray(datos)
-      ? datos
-      : {}
-  } catch {
-    return {}
-  }
-}
-
 export default function EditorAporte({
   seccion,
   proyectoId,
@@ -85,7 +75,7 @@ export default function EditorAporte({
   )
   const campos = camposPorTipo[seccion.tipo] ?? []
   const [extra, setExtra] = useState(() => {
-    const guardados = leerDatos(aporte?.datos)
+    const guardados = leerDatosAporte(aporte?.datos)
     return {
       ...guardados,
       ...Object.fromEntries(

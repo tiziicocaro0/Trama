@@ -13,6 +13,7 @@ import AcompanamientosPage from '../features/acompanamientos/AcompanamientosPage
 import NuevoAcompanamientoPage from '../features/acompanamientos/NuevoAcompanamientoPage.jsx'
 import RedPage from '../features/perfil/RedPage.jsx'
 import DatosPersonalesPage from '../features/perfil/DatosPersonalesPage.jsx'
+import ConoceloPage from '../features/perfil/ConoceloPage.jsx'
 import BitacoraPage from '../features/bitacora/BitacoraPage.jsx'
 import { Layout } from '../components/layout/Layout.jsx'
 import { Tarjeta } from '../components/ui/Tarjeta.jsx'
@@ -43,6 +44,7 @@ export default function AppRoutes() {
     const perfil = /^\/proyectos\/[^/]+(?:\/([^/]+))?\/?$/.exec(pathname)
     const seccion = seccionesPerfil.find((item) => item.slug === perfil?.[1])
     const espaciosPerfil = {
+      conocelo: 'Conocelo en 5 minutos',
       red: 'Red',
       miembros: 'Red',
       'datos-personales': 'Datos personales',
@@ -123,6 +125,14 @@ export default function AppRoutes() {
         element={
           <Acceso privado>
             <PerfilPage />
+          </Acceso>
+        }
+      />
+      <Route
+        path="/proyectos/:id/conocelo"
+        element={
+          <Acceso privado>
+            <ConoceloPage />
           </Acceso>
         }
       />

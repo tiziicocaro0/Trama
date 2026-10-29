@@ -18,7 +18,9 @@ import com.trama.tpo.demo.entity.dto.ConfiguracionProyectoRequest;
 import com.trama.tpo.demo.entity.dto.CrearProyectoRequest;
 import com.trama.tpo.demo.entity.dto.MiProyectoDTO;
 import com.trama.tpo.demo.entity.dto.ProyectoResponse;
+import com.trama.tpo.demo.entity.dto.ResumenProyectoResponse;
 import com.trama.tpo.demo.service.ProyectoService;
+import com.trama.tpo.demo.service.ResumenService;
 
 import jakarta.validation.Valid;
 
@@ -27,9 +29,13 @@ import jakarta.validation.Valid;
 public class ProyectoController {
 
     private final ProyectoService proyectoService;
+    private final ResumenService resumenService;
 
-    public ProyectoController(ProyectoService proyectoService) {
+    public ProyectoController(
+            ProyectoService proyectoService,
+            ResumenService resumenService) {
         this.proyectoService = proyectoService;
+        this.resumenService = resumenService;
     }
 
     @PostMapping
@@ -52,6 +58,14 @@ public class ProyectoController {
             @PathVariable UUID proyectoId) {
 
         return ResponseEntity.ok(proyectoService.obtener(proyectoId));
+    }
+
+    // RESUMEN "CONOCELO EN 5 MINUTOS" (2.8)
+    @GetMapping("/{proyectoId}/resumen")
+    public ResponseEntity<ResumenProyectoResponse> obtenerResumen(
+            @PathVariable UUID proyectoId) {
+
+        return ResponseEntity.ok(resumenService.obtener(proyectoId));
     }
 
     // EDITAR DATOS PERSONALES DEL NIÑO
