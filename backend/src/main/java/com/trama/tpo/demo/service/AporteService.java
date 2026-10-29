@@ -8,7 +8,6 @@ import com.trama.tpo.demo.entity.archivo.Archivo;
 import com.trama.tpo.demo.entity.dto.AporteRequest;
 import com.trama.tpo.demo.entity.dto.AporteResponse;
 import com.trama.tpo.demo.entity.dto.ArchivoResponse;
-import com.trama.tpo.demo.entity.dto.ResumenProyectoResponse;
 import com.trama.tpo.demo.entity.membresia.Rol;
 import com.trama.tpo.demo.entity.proyecto.Proyecto;
 import com.trama.tpo.demo.entity.usuario.Usuario;
@@ -27,7 +26,6 @@ import java.util.Objects;
 import java.util.Comparator;
 import com.trama.tpo.demo.aporte.interes.DatosInteres;
 import com.trama.tpo.demo.aporte.fortaleza.DatosFortaleza;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
@@ -39,15 +37,6 @@ import java.util.UUID;
 @Service
 public class AporteService {
 
-    private static final List<TipoAporte> TIPOS_RESUMEN = List.of(
-            TipoAporte.INTERES,
-            TipoAporte.FORTALEZA,
-            TipoAporte.COMUNICACION,
-            TipoAporte.SENSORIAL,
-            TipoAporte.ESTRATEGIA,
-            TipoAporte.DESREGULACION
-    );
-
     private final AporteRepository aporteRepository;
     private final AporteVersionRepository aporteVersionRepository;
     private final ProyectoRepository proyectoRepository;
@@ -56,8 +45,9 @@ public class AporteService {
     private final PermisoService permisoService;
     private final UsuarioActual usuarioActual;
     private final ArchivoRepository archivoRepository;
+    // Lee el JSON "datos" de cada tipo de aporte (fechas incluidas).
+    private final ObjectMapper mapper = new ObjectMapper().findAndRegisterModules();
 
-    @Autowired
     public AporteService(
             AporteRepository aporteRepository,
             AporteVersionRepository aporteVersionRepository,
@@ -76,27 +66,6 @@ public class AporteService {
         this.permisoService = permisoService;
         this.usuarioActual = usuarioActual;
         this.archivoRepository = archivoRepository;
-    }
-
-    public AporteService(
-            AporteRepository aporteRepository,
-            AporteVersionRepository aporteVersionRepository,
-            ProyectoRepository proyectoRepository,
-            UsuarioRepository usuarioRepository,
-            MembresiaRepository membresiaRepository,
-            PermisoService permisoService,
-            UsuarioActual usuarioActual) {
-
-        this(
-                aporteRepository,
-                aporteVersionRepository,
-                proyectoRepository,
-                usuarioRepository,
-                membresiaRepository,
-                permisoService,
-                usuarioActual,
-                null
-        );
     }
 
     // CREAR APORTE
@@ -165,7 +134,7 @@ public class AporteService {
 
         // Determinar qué aportes puede ver el usuario según su rol
         List<Visibilidad> visibilidadesPermitidas =
-                obtenerVisibilidadesPermitidas(rol);
+                PermisoService.visibilidadesPermitidas(rol);
 
         // Filtrar directamente desde la base de datos
         List<Aporte> aportes = aporteRepository.buscarAportesVisibles(
@@ -179,9 +148,6 @@ public class AporteService {
         boolean puedeCargar = permisoService.puedeEditar(proyectoId);
 
         if (tipo == TipoAporte.OBSERVACION) {
-                ObjectMapper mapper = new ObjectMapper();
-                mapper.findAndRegisterModules();
-
                 aportes.sort(
                         Comparator.comparing(
                                 (Aporte aporte) -> {
@@ -208,75 +174,6 @@ public class AporteService {
         return aportes.stream()
                 .map(aporte -> convertirRespuesta(aporte, puedeCargar))
                 .toList();
-    }
-
-    // RESUMEN "CONOCELO EN 5 MINUTOS" (2.8)
-    @Transactional(readOnly = true)
-    public ResumenProyectoResponse obtenerResumen(UUID proyectoId) {
-
-        permisoService.verificarMiembro(proyectoId);
-
-        UUID usuarioId = usuarioActual.obtenerId();
-
-        Rol rol = membresiaRepository
-                .findRol(usuarioId, proyectoId)
-                .orElseThrow(() -> new AccessDeniedException(
-                        "No tenés acceso a este proyecto"
-                ));
-
-        List<Visibilidad> visibilidadesPermitidas =
-                obtenerVisibilidadesPermitidas(rol);
-
-        List<Aporte> aportes = aporteRepository.buscarAportesVigentesPorTiposYVisibilidad(
-                proyectoId,
-                TIPOS_RESUMEN,
-                visibilidadesPermitidas
-        );
-
-        boolean puedeCargar = permisoService.puedeEditar(proyectoId);
-
-        List<AporteResponse> convertidos = aportes.stream()
-                .map(aporte -> convertirRespuesta(aporte, puedeCargar))
-                .toList();
-
-        List<AporteResponse> intereses = filtrarPorTipo(convertidos, TipoAporte.INTERES)
-                .stream()
-                .sorted(Comparator.comparingInt(this::pesoIntensidadInteres).reversed())
-                .toList();
-
-        return new ResumenProyectoResponse(
-                intereses,
-                filtrarPorTipo(convertidos, TipoAporte.FORTALEZA),
-                filtrarPorTipo(convertidos, TipoAporte.COMUNICACION),
-                filtrarPorTipo(convertidos, TipoAporte.SENSORIAL),
-                filtrarPorTipo(convertidos, TipoAporte.ESTRATEGIA),
-                filtrarPorTipo(convertidos, TipoAporte.DESREGULACION)
-        );
-    }
-
-    private List<AporteResponse> filtrarPorTipo(
-            List<AporteResponse> aportes,
-            TipoAporte tipo) {
-
-        return aportes.stream()
-                .filter(aporte -> aporte.tipo() == tipo)
-                .toList();
-    }
-
-    private int pesoIntensidadInteres(AporteResponse aporte) {
-        if (aporte.datos() == null || aporte.datos().isBlank()) {
-            return 0;
-        }
-        try {
-            ObjectMapper mapper = new ObjectMapper();
-            DatosInteres datos = mapper.readValue(aporte.datos(), DatosInteres.class);
-            if (datos.intensidad() == null) {
-                return 0;
-            }
-            return datos.intensidad().ordinal() + 1;
-        } catch (JsonProcessingException e) {
-            return 0;
-        }
     }
 
     // EDITAR APORTE
@@ -380,14 +277,6 @@ public class AporteService {
             return new ArrayList<>();
         }
 
-        if (archivoRepository == null) {
-            throw new ApiException(
-                    "ARCHIVO_INVALIDO",
-                    "No se pudo verificar el archivo adjunto",
-                    HttpStatus.BAD_REQUEST
-            );
-        }
-
         List<Archivo> archivos = new ArrayList<>();
         for (UUID archivoId : archivoIds) {
             if (archivoId == null) {
@@ -418,34 +307,6 @@ public class AporteService {
         };
     }
 
-    // DETERMINAR VISIBILIDADES PERMITIDAS SEGÚN EL ROL
-    private List<Visibilidad> obtenerVisibilidadesPermitidas(Rol rol) {
-
-        return switch (rol) {
-
-            case TUTOR -> List.of(
-                    Visibilidad.TODOS,
-                    Visibilidad.SOLO_TUTORES,
-                    Visibilidad.SOLO_SALUD,
-                    Visibilidad.SOLO_EDUCACION
-            );
-
-            case SALUD -> List.of(
-                    Visibilidad.TODOS,
-                    Visibilidad.SOLO_SALUD
-            );
-
-            case EDUCACION -> List.of(
-                    Visibilidad.TODOS,
-                    Visibilidad.SOLO_EDUCACION
-            );
-
-            default -> List.of(
-                    Visibilidad.TODOS
-            );
-        };
-    }
-
     // CONVERTIR ENTIDAD A DTO
     private AporteResponse convertirRespuesta(Aporte aporte, boolean puedeCargar) {
 
@@ -468,6 +329,7 @@ public class AporteService {
                 aporte.getId(),
                 aporte.getProyecto().getId(),
                 aporte.getAutor().getId(),
+                nombreCompleto(aporte.getAutor()),
                 aporte.getTipo(),
                 aporte.getTitulo(),
                 aporte.getContenido(),
@@ -480,6 +342,10 @@ public class AporteService {
                 archivoIds,
                 archivos
         );
+    }
+
+    private static String nombreCompleto(Usuario usuario) {
+        return (usuario.getNombre() + " " + usuario.getApellido()).trim();
     }
 
     private void validarInteres(AporteRequest request) {
@@ -497,8 +363,6 @@ public class AporteService {
         }
 
         try {
-                ObjectMapper mapper = new ObjectMapper();
-
                 DatosInteres datos = mapper.readValue(
                         request.datos(),
                         DatosInteres.class
@@ -551,8 +415,6 @@ public class AporteService {
         }
 
         try {
-                ObjectMapper mapper = new ObjectMapper();
-
                 DatosFortaleza datos = mapper.readValue(
                         request.datos(),
                         DatosFortaleza.class
@@ -601,9 +463,6 @@ public class AporteService {
         }
 
         try {
-                ObjectMapper mapper = new ObjectMapper();
-                mapper.findAndRegisterModules();
-
                 DatosObservacion datos = mapper.readValue(
                         request.datos(),
                         DatosObservacion.class

@@ -5,6 +5,7 @@ import CampoFormulario from '../../../components/ui/CampoFormulario.jsx'
 import SelectorVisibilidad from '../../../components/ui/SelectorVisibilidad.jsx'
 import SubirArchivo from '../../../components/ui/SubirArchivo.jsx'
 import { guardarAporte } from '../../../api/aportes.js'
+import { leerDatosAporte } from '../perfil.js'
 
 const SECCIONES_CON_ADJUNTOS = ['NOTA_PROFESIONAL', 'COMUNICACION']
 
@@ -51,15 +52,12 @@ const camposPorTipo = {
   ],
 }
 
-function leerDatos(texto) {
-  try {
-    const datos = JSON.parse(texto ?? '')
-    return datos && typeof datos === 'object' && !Array.isArray(datos)
-      ? datos
-      : {}
-  } catch {
-    return {}
-  }
+// 2.2: textos propios del formulario según la sección; el resto usa los genéricos.
+const textosPorTipo = {
+  FORTALEZA: {
+    titulo: '¿Qué hace bien o disfruta?',
+    contenido: 'Un ejemplo (opcional)',
+  },
 }
 
 export default function EditorAporte({
@@ -77,7 +75,7 @@ export default function EditorAporte({
   )
   const campos = camposPorTipo[seccion.tipo] ?? []
   const [extra, setExtra] = useState(() => {
-    const guardados = leerDatos(aporte?.datos)
+    const guardados = leerDatosAporte(aporte?.datos)
     return {
       ...guardados,
       ...Object.fromEntries(
@@ -96,6 +94,8 @@ export default function EditorAporte({
   const esNota = seccion.tipo === 'NOTA_PROFESIONAL'
   const permiteAdjuntos = SECCIONES_CON_ADJUNTOS.includes(seccion.tipo)
   const sustantivo = esNota ? 'nota' : 'aporte'
+  const textos = textosPorTipo[seccion.tipo] ?? {}
+  const etiquetaTitulo = textos.titulo ?? 'Título'
   useEffect(() => {
     formulario.current?.querySelector('input')?.focus()
   }, [])
@@ -162,12 +162,12 @@ export default function EditorAporte({
       </p>
       <CampoFormulario
         id={`titulo-aporte-${seccion.tipo}`}
-        label="Título"
-        hint="Título (obligatorio, hasta 150 caracteres)"
+        label={etiquetaTitulo}
+        hint="Obligatorio, hasta 150 caracteres"
       >
         <Campo
           name="titulo"
-          placeholder="Título"
+          placeholder={etiquetaTitulo}
           value={titulo}
           onChange={(event) => setTitulo(event.target.value)}
           required
@@ -180,7 +180,8 @@ export default function EditorAporte({
           htmlFor={`contenido-aporte-${seccion.tipo}`}
           className="mb-2 block font-semibold"
         >
-          {esNota ? 'Texto de la nota (opcional)' : 'Descripción (opcional)'}
+          {textos.contenido ??
+            (esNota ? 'Texto de la nota (opcional)' : 'Descripción (opcional)')}
         </label>
         <textarea
           id={`contenido-aporte-${seccion.tipo}`}

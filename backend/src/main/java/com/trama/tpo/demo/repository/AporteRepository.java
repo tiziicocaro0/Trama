@@ -53,19 +53,4 @@ public interface AporteRepository extends JpaRepository<Aporte, UUID> {
             @Param("tipo") TipoAporte tipo,
             @Param("visibilidades") List<Visibilidad> visibilidades
     );
-
-    @Query("""
-            SELECT a
-            FROM Aporte a
-            WHERE a.proyecto.id = :proyectoId
-              AND a.archivado = false
-              AND a.tipo IN :tipos
-              AND a.visibilidad IN :visibilidades
-            ORDER BY a.creadoEn DESC
-            """)
-    List<Aporte> buscarAportesVigentesPorTiposYVisibilidad(
-            @Param("proyectoId") UUID proyectoId,
-            @Param("tipos") List<TipoAporte> tipos,
-            @Param("visibilidades") List<Visibilidad> visibilidades
-    );
 }

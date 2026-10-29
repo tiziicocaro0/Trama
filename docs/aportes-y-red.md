@@ -43,7 +43,7 @@ permisos con `PermisoService`.
 Intereses exigen `datos.categoria` y `datos.intensidad`; fortalezas exigen `datos.contexto`.
 La sección «Notas» usa el tipo `NOTA_PROFESIONAL`.
 
-`AporteResponse` incluye `id`, `proyectoId`, `autorId`, `tipo`, `titulo`, `contenido`, `datos`,
+`AporteResponse` incluye `id`, `proyectoId`, `autorId`, `autorNombre` (nombre y apellido del autor, se mantiene aunque ya no sea miembro), `tipo`, `titulo`, `contenido`, `datos`,
 `visibilidad`, `archivado`, `creadoEn`, `actualizadoEn` y `puedeEditar`
 (true si el usuario es el autor y puede cargar en el proyecto).
 

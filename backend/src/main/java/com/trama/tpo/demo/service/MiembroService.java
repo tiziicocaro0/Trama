@@ -57,16 +57,10 @@ public class MiembroService {
         permisoService.verificarAdmin(proyectoId);
 
         // 2. Buscar la membresia en el proyecto (por id de membresia o id de usuario).
-        Membresia membresia = membresiaRepository.findByProyectoId(proyectoId)
-                .stream()
-                .filter(m -> miembroId.equals(m.getId())
-                        || (m.getUsuario() != null && miembroId.equals(m.getUsuario().getId())))
-                .findFirst()
-                .orElseThrow(() -> new ApiException(
-                        "MIEMBRO_NO_ENCONTRADO",
-                        "No encontramos a este miembro en el proyecto",
-                        HttpStatus.NOT_FOUND
-                ));
+        Membresia membresia = buscarMiembro(
+                membresiaRepository.findByProyectoId(proyectoId),
+                miembroId
+        );
 
         // 3. Solo un miembro con rol FAMILIAR puede convertirse en co-tutor.
         if (membresia.getRol() != Rol.FAMILIAR) {
@@ -147,5 +141,54 @@ public class MiembroService {
         membresia = membresiaRepository.saveAndFlush(membresia);
 
         return MiembroResponse.from(membresia);
+    }
+
+    // 1.5 - QUITAR EL ACCESO A UN MIEMBRO (sin dejar al proyecto sin administrador)
+    @Transactional
+    public void quitarMiembro(UUID proyectoId, UUID miembroId) {
+
+        // 1. Solo un tutor administrador puede quitar accesos.
+        permisoService.verificarAdmin(proyectoId);
+
+        List<Membresia> miembros = membresiaRepository.findByProyectoId(proyectoId);
+
+        // 2. Buscar la membresia en el proyecto (por id de membresia o id de usuario).
+        Membresia objetivo = buscarMiembro(miembros, miembroId);
+
+        // 3. No se puede quitar al único administrador.
+        if (esAdministrador(objetivo)) {
+            long cantidadAdmins = miembros.stream()
+                    .filter(MiembroService::esAdministrador)
+                    .count();
+
+            if (cantidadAdmins <= 1) {
+                throw new ApiException(
+                        "ULTIMO_ADMIN",
+                        "No podés quitar el acceso al único administrador del proyecto",
+                        HttpStatus.BAD_REQUEST
+                );
+            }
+        }
+
+        // 4. Se borra la membresia; sus aportes quedan en el proyecto con su nombre.
+        membresiaRepository.delete(objetivo);
+    }
+
+    // Busca un miembro del proyecto por id de membresia o por id de usuario.
+    private Membresia buscarMiembro(List<Membresia> miembros, UUID miembroId) {
+
+        return miembros.stream()
+                .filter(m -> miembroId.equals(m.getId())
+                        || (m.getUsuario() != null && miembroId.equals(m.getUsuario().getId())))
+                .findFirst()
+                .orElseThrow(() -> new ApiException(
+                        "MIEMBRO_NO_ENCONTRADO",
+                        "No encontramos a este miembro en el proyecto",
+                        HttpStatus.NOT_FOUND
+                ));
+    }
+
+    private static boolean esAdministrador(Membresia membresia) {
+        return membresia.getRol() == Rol.TUTOR && Boolean.TRUE.equals(membresia.getEsAdmin());
     }
 }

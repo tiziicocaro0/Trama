@@ -232,7 +232,7 @@ export default function DatosPersonalesPage() {
                       </Boton>
                       <Boton
                         type="button"
-                        variante="fantasma"
+                        variant="secondary"
                         onClick={cancelarEdicion}
                         disabled={guardando}
                       >

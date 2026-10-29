@@ -19,6 +19,7 @@ public record AporteRequest(
         @Size(max = 150, message = "El título no puede superar los 150 caracteres")
         String titulo,
 
+        @Size(max = 10000, message = "El texto no puede superar los 10.000 caracteres")
         String contenido,
 
         String datos,

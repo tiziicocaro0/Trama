@@ -4,9 +4,7 @@ import java.util.List;
 import java.util.UUID;
 import java.net.URI;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -21,8 +19,8 @@ import com.trama.tpo.demo.entity.dto.CrearProyectoRequest;
 import com.trama.tpo.demo.entity.dto.MiProyectoDTO;
 import com.trama.tpo.demo.entity.dto.ProyectoResponse;
 import com.trama.tpo.demo.entity.dto.ResumenProyectoResponse;
-import com.trama.tpo.demo.service.AporteService;
 import com.trama.tpo.demo.service.ProyectoService;
+import com.trama.tpo.demo.service.ResumenService;
 
 import jakarta.validation.Valid;
 
@@ -31,18 +29,13 @@ import jakarta.validation.Valid;
 public class ProyectoController {
 
     private final ProyectoService proyectoService;
-    private final AporteService aporteService;
+    private final ResumenService resumenService;
 
-    @Autowired
     public ProyectoController(
             ProyectoService proyectoService,
-            AporteService aporteService) {
+            ResumenService resumenService) {
         this.proyectoService = proyectoService;
-        this.aporteService = aporteService;
-    }
-
-    public ProyectoController(ProyectoService proyectoService) {
-        this(proyectoService, null);
+        this.resumenService = resumenService;
     }
 
     @PostMapping
@@ -72,7 +65,7 @@ public class ProyectoController {
     public ResponseEntity<ResumenProyectoResponse> obtenerResumen(
             @PathVariable UUID proyectoId) {
 
-        return ResponseEntity.ok(aporteService.obtenerResumen(proyectoId));
+        return ResponseEntity.ok(resumenService.obtener(proyectoId));
     }
 
     // EDITAR DATOS PERSONALES DEL NIÑO
@@ -93,15 +86,5 @@ public class ProyectoController {
 
         return ResponseEntity.ok(
                 proyectoService.actualizarConfiguracion(proyectoId, request));
-    }
-
-    // QUITAR ACCESO A UN MIEMBRO (1.3)
-    @DeleteMapping("/{proyectoId}/miembros/{miembroId}")
-    public ResponseEntity<Void> quitarMiembro(
-            @PathVariable UUID proyectoId,
-            @PathVariable UUID miembroId) {
-
-        proyectoService.quitarMiembro(proyectoId, miembroId);
-        return ResponseEntity.ok().build();
     }
 }

@@ -12,22 +12,12 @@ import Boton from '../../components/ui/Boton.jsx'
 import CabeceraPerfil from './components/CabeceraPerfil.jsx'
 import NavegacionPerfil from './components/NavegacionPerfil.jsx'
 import usePerfil from './hooks/usePerfil.js'
+import { leerDatosAporte } from './perfil.js'
 
 const ETIQUETAS_INTENSIDAD = {
   ALTA: 'Intensidad alta',
   MEDIA: 'Intensidad media',
   BAJA: 'Intensidad baja',
-}
-
-function leerDatosJson(texto) {
-  try {
-    const parsed = JSON.parse(texto ?? '')
-    return parsed && typeof parsed === 'object' && !Array.isArray(parsed)
-      ? parsed
-      : {}
-  } catch {
-    return {}
-  }
 }
 
 function SeccionResumen({
@@ -68,7 +58,7 @@ function SeccionResumen({
       {items.length > 0 ? (
         <ul className="divide-y divide-borde/40">
           {items.map((item) => {
-            const extra = leerDatosJson(item.datos)
+            const extra = leerDatosAporte(item.datos)
             const etiquetaIntensidad =
               item.tipo === 'INTERES'
                 ? ETIQUETAS_INTENSIDAD[extra.intensidad]
