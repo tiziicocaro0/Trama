@@ -29,19 +29,22 @@ public class ProyectoService {
         private final UsuarioActual usuarioActual;
         private final MembresiaRepository membresiaRepository;
         private final UsuarioRepository usuarioRepository;
+        private final RegistroAccionService registroAccionService;
 
         public ProyectoService(
                         ProyectoRepository proyectoRepository,
                         PermisoService permisoService,
                         UsuarioActual usuarioActual,
                         MembresiaRepository membresiaRepository,
-                        UsuarioRepository usuarioRepository) {
+                        UsuarioRepository usuarioRepository,
+                        RegistroAccionService registroAccionService) {
 
                 this.proyectoRepository = proyectoRepository;
                 this.permisoService = permisoService;
                 this.usuarioActual = usuarioActual;
                 this.membresiaRepository = membresiaRepository;
                 this.usuarioRepository = usuarioRepository;
+                this.registroAccionService = registroAccionService;
         }
 
         @Transactional
@@ -84,10 +87,14 @@ public class ProyectoService {
         }
 
         // Ver los datos de un niño: solo sus miembros
-        @Transactional(readOnly = true)
+        // Ya no es readOnly: también guarda el registro de quién consultó el perfil (8.0)
+        @Transactional
         public ProyectoResponse obtener(UUID proyectoId) {
 
                 permisoService.verificarMiembro(proyectoId);
+
+                // 8.0: registro de quién consultó el perfil (una vez por día)
+                registroAccionService.registrarVista(usuarioActual.obtenerId(), proyectoId);
 
                 return ProyectoResponse.from(
                                 buscarProyecto(proyectoId),
