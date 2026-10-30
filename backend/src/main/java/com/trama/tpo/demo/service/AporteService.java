@@ -21,9 +21,12 @@ import com.trama.tpo.demo.repository.UsuarioRepository;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.trama.tpo.demo.aporte.observacion.DatosObservacion;
+import com.fasterxml.jackson.databind.JsonNode;
 import java.util.ArrayList;
 import java.util.Objects;
 import java.util.Comparator;
+import java.time.LocalDate;
+import java.time.format.DateTimeParseException;
 import com.trama.tpo.demo.aporte.interes.DatosInteres;
 import com.trama.tpo.demo.aporte.fortaleza.DatosFortaleza;
 import org.springframework.http.HttpStatus;
@@ -68,15 +71,21 @@ public class AporteService {
         this.archivoRepository = archivoRepository;
     }
 
-    // CREAR APORTE
-    @Transactional
-    public AporteResponse crear(UUID proyectoId, AporteRequest request) {
+  // CREAR APORTE
+        @Transactional
+        public AporteResponse crear(UUID proyectoId, AporteRequest request) {
 
         permisoService.verificarMiembro(proyectoId);
         permisoService.verificarPuedeEditar(proyectoId);
+
+        if (request.tipo() == TipoAporte.NOTA_PROFESIONAL) {
+                permisoService.verificarPuedeCrearNotaProfesional(proyectoId);
+        }
+
         validarInteres(request);
         validarFortaleza(request);
         validarObservacion(request);
+        validarNotaProfesional(request);
 
         UUID usuarioId = usuarioActual.obtenerId();
 
@@ -205,6 +214,7 @@ public class AporteService {
         validarInteres(request);
         validarFortaleza(request);
         validarObservacion(request);
+        validarNotaProfesional(request);
 
         // Guardar la versión anterior antes de editar
         AporteVersion version = AporteVersion.builder()
@@ -487,6 +497,51 @@ public class AporteService {
                         "Los datos de la observación no son válidos",
                         HttpStatus.BAD_REQUEST
                 );
+        }
+    }
+     // VALIDAR DATOS DE UNA NOTA PROFESIONAL
+    private void validarNotaProfesional(AporteRequest request) {
+
+        if (request.tipo() != TipoAporte.NOTA_PROFESIONAL) {
+            return;
+        }
+
+        if (request.datos() == null || request.datos().isBlank()) {
+            throw new ApiException(
+                    "DATOS_NOTA_PROFESIONAL_INVALIDOS",
+                    "El tipo de nota y la fecha son obligatorios",
+                    HttpStatus.BAD_REQUEST
+            );
+        }
+
+        try {
+            JsonNode datos = mapper.readTree(request.datos());
+
+            JsonNode tipoNota = datos == null ? null : datos.get("tipoNota");
+            JsonNode fecha = datos == null ? null : datos.get("fecha");
+
+            if (datos == null || !datos.isObject()
+                    || tipoNota == null || !tipoNota.isTextual()
+                    || !(tipoNota.asText().equals("ORIENTACION")
+                        || tipoNota.asText().equals("OBSERVACION")
+                        || tipoNota.asText().equals("INFORME_BREVE"))
+                    || fecha == null || !fecha.isTextual()) {
+
+                throw new ApiException(
+                        "DATOS_NOTA_PROFESIONAL_INVALIDOS",
+                        "El tipo de nota o la fecha no son válidos",
+                        HttpStatus.BAD_REQUEST
+                );
+            }
+
+            LocalDate.parse(fecha.asText());
+
+        } catch (JsonProcessingException | DateTimeParseException e) {
+            throw new ApiException(
+                    "DATOS_NOTA_PROFESIONAL_INVALIDOS",
+                    "Los datos de la nota profesional no son válidos",
+                    HttpStatus.BAD_REQUEST
+            );
         }
     }
 }

@@ -238,4 +238,20 @@ class PermisoServiceTest {
         assertThrows(AccessDeniedException.class,
                 () -> permisoService.verificarPuedeVerAporte(proyectoId, Visibilidad.SOLO_TUTORES));
     }
+        @Test
+        void familiarNoPuedeCrearNotaProfesional() {
+
+            Membresia membresia = Membresia.builder()
+                    .rol(Rol.FAMILIAR)
+                    .build();
+
+            when(membresiaRepository.findByUsuarioIdAndProyectoId(
+                    usuarioId, proyectoId))
+                    .thenReturn(Optional.of(membresia));
+
+            assertThrows(AccessDeniedException.class,
+                    () -> permisoService.verificarPuedeCrearNotaProfesional(
+                            proyectoId));
+        }
+
 }

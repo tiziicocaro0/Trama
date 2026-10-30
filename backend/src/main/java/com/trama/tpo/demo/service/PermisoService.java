@@ -37,6 +37,18 @@ public class PermisoService {
         obtenerMembresia(proyectoId);
     }
 
+     // Solo Salud y Educación pueden crear notas profesionales
+    public void verificarPuedeCrearNotaProfesional(UUID proyectoId) {
+
+        Rol rol = obtenerMembresia(proyectoId).getRol();
+
+        if (rol != Rol.SALUD && rol != Rol.EDUCACION) {
+            throw new AccessDeniedException(
+                    "Solo los profesionales de Salud o Educación pueden crear notas profesionales"
+            );
+        }
+    }
+
     // 2. VERIFICAR QUE ES TUTOR ADMINISTRADOR
     public void verificarAdmin(UUID proyectoId) {
 
