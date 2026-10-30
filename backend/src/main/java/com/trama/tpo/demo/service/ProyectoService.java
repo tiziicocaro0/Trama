@@ -99,7 +99,8 @@ public class ProyectoService {
                 return ProyectoResponse.from(
                                 buscarProyecto(proyectoId),
                                 permisoService.puedeEditar(proyectoId),
-                                permisoService.puedeCargarNotas(proyectoId));
+                                permisoService.puedeCargarNotas(proyectoId),
+                                permisoService.soloLecturaPorPlan(proyectoId));
         }
 
         // Cambiar qué puede hacer la familia: solo el tutor administrador
