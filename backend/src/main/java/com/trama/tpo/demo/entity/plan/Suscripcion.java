@@ -35,6 +35,12 @@ public class Suscripcion {
     @Column(name = "desde", nullable = false)
     private LocalDate desde;
 
+    /** 9.1: mensual o semestral. */
+    @Builder.Default
+    @Enumerated(EnumType.STRING)
+    @Column(name = "periodo", nullable = false, length = 10)
+    private PeriodoSuscripcion periodo = PeriodoSuscripcion.MENSUAL;
+
     /** Hasta cuándo está pagada; null = sin vencimiento. */
     @Column(name = "hasta")
     private LocalDate hasta;

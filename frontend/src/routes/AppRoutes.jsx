@@ -15,6 +15,7 @@ import RedPage from '../features/perfil/RedPage.jsx'
 import DatosPersonalesPage from '../features/perfil/DatosPersonalesPage.jsx'
 import ConoceloPage from '../features/perfil/ConoceloPage.jsx'
 import BitacoraPage from '../features/bitacora/BitacoraPage.jsx'
+import PlanPage from '../features/plan/PlanPage.jsx'
 import { Layout } from '../components/layout/Layout.jsx'
 import { Tarjeta } from '../components/ui/Tarjeta.jsx'
 import { Componentes } from '../pages/Componentes.jsx'
@@ -30,6 +31,7 @@ const titles = {
   '/recursos': 'Recursos',
   '/calendario': 'Calendario',
   '/perfil': 'Mi perfil',
+  '/cuenta/plan': 'Mi plan',
   '/componentes': 'Componentes',
 }
 
@@ -117,6 +119,14 @@ export default function AppRoutes() {
         element={
           <Acceso privado>
             <NuevoAcompanamientoPage />
+          </Acceso>
+        }
+      />
+      <Route
+        path="/cuenta/plan"
+        element={
+          <Acceso privado>
+            <PlanPage />
           </Acceso>
         }
       />

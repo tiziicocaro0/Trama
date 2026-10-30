@@ -1,5 +1,5 @@
-import { BookOpen, CalendarBlank, User, Users } from '@phosphor-icons/react'
-import { Link, NavLink, useSearchParams } from 'react-router-dom'
+import { BookOpen, CalendarBlank, CreditCard, User, Users } from '@phosphor-icons/react'
+import { Link, NavLink, useLocation, useSearchParams } from 'react-router-dom'
 import Logo from '../../components/ui/Logo.jsx'
 import HiloInicio from './HiloInicio.jsx'
 
@@ -8,10 +8,13 @@ const navegacion = [
   { id: 'recursos', titulo: 'Recursos', icon: BookOpen },
   { id: 'calendario', titulo: 'Calendario', icon: CalendarBlank },
   { id: 'perfil', titulo: 'Mi perfil', icon: User },
+  // 9.1: página propia (no es una sección de Inicio)
+  { id: 'plan', titulo: 'Mi plan', icon: CreditCard, to: '/cuenta/plan' },
 ]
 
 export default function InicioSidebar({ cerrarSesion }) {
   const [params] = useSearchParams()
+  const { pathname } = useLocation()
   const seleccion = params.get('seccion') ?? ''
   const actual = ['guias', 'estrategias', 'comunidad'].includes(seleccion)
     ? 'recursos'
@@ -31,16 +34,19 @@ export default function InicioSidebar({ cerrarSesion }) {
         aria-label="Navegación principal"
         className="mt-8 px-5 lg:mt-10 lg:px-6 xl:px-7"
       >
-        <ul className="grid grid-cols-2 gap-2 sm:grid-cols-4 lg:grid-cols-1 lg:gap-1 xl:gap-1.5">
+        <ul className="grid grid-cols-2 gap-2 sm:grid-cols-5 lg:grid-cols-1 lg:gap-1 xl:gap-1.5">
           {navegacion.map((item) => {
-            const { id, titulo, icon: Icon } = item
-            const seleccionada = id
-              ? actual === id
-              : !navegacion.some((item) => item.id && item.id === actual)
+            const { id, titulo, icon: Icon, to } = item
+            const seleccionada = to
+              ? pathname === to
+              : id
+                ? actual === id
+                : pathname !== '/cuenta/plan' &&
+                  !navegacion.some((item) => item.id && item.id === actual)
             return (
               <li key={titulo}>
                 <Link
-                  to={id ? `/inicio?seccion=${id}` : '/acompanamientos'}
+                  to={to ?? (id ? `/inicio?seccion=${id}` : '/acompanamientos')}
                   aria-current={seleccionada ? 'page' : false}
                   className={`flex min-h-12 flex-col items-center gap-1 rounded-md px-2 py-3 text-xs focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primario sm:justify-center sm:text-sm lg:flex-row lg:justify-start lg:gap-3 lg:px-3 xl:min-h-13 xl:px-4 xl:text-base ${seleccionada ? 'bg-decoracion font-semibold text-primario' : 'text-texto-suave hover:bg-decoracion/60'}`}
                 >

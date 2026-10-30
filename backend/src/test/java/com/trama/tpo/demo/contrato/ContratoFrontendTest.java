@@ -38,6 +38,7 @@ import com.trama.tpo.demo.entity.dto.RegisterRequest;
 import com.trama.tpo.demo.entity.dto.RestablecerContrasenaRequest;
 import com.trama.tpo.demo.entity.membresia.Especialidad;
 import com.trama.tpo.demo.entity.membresia.Rol;
+import com.trama.tpo.demo.entity.plan.PeriodoSuscripcion;
 import com.trama.tpo.demo.service.ArchivoService;
 import com.trama.tpo.demo.service.BitacoraService;
 
@@ -104,6 +105,16 @@ class ContratoFrontendTest {
     void tiposDeNota() {
         assertEquals(nombres(TipoNota.class), valoresEnMayusculas(
                 entre(leer("features/perfil/perfil.js"), "export const TIPOS_NOTA = [", "\n]")));
+    }
+
+    @Test
+    void planesDeSuscripcion() {
+        // 9.1: el front nombra cada plan que devuelve el back (GRATUITO + los períodos pagos)
+        Set<String> periodos = new java.util.LinkedHashSet<>(Set.of("GRATUITO"));
+        periodos.addAll(nombres(PeriodoSuscripcion.class));
+        assertEquals(periodos, valoresEnMayusculas(entre(leer("api/planes.js"), "const PLANES = [", "]")));
+        assertEquals(periodos, todasLasCoincidencias(Pattern.compile("([A-Z]+):"),
+                entre(leer("features/plan/planes.js"), "NOMBRES_PLAN = {", "}")));
     }
 
     @Test

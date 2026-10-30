@@ -31,6 +31,9 @@ public interface MembresiaRepository extends JpaRepository<Membresia, UUID> {
             UUID usuarioId,
             UUID proyectoId
     );
+    /** 9.1: si el usuario es profesional (educación o salud) en algún niño. */
+    boolean existsByUsuarioIdAndRolIn(UUID usuarioId, Collection<Rol> roles);
+
     List<Membresia> findByUsuarioIdAndRolInOrderByFechaAltaAscIdAsc(
             UUID usuarioId,
             Collection<Rol> roles

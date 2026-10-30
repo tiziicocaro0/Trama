@@ -21,3 +21,17 @@ pantallas del niño. Los botones de carga ya se ocultaban con `puedeCargar`.
 
 No hay endpoint `mi-acceso`: siguiendo el AGENTS.md, el dato se agregó al endpoint del
 proyecto que el front ya consulta.
+
+## 9.1 · Suscripción del profesional
+
+| Método | Ruta | Qué hace |
+|---|---|---|
+| GET | `/api/suscripcion` | Plan del usuario: `esProfesional`, `plan` (`GRATUITO`, `MENSUAL`, `SEMESTRAL`), `desde`, `hasta`, `proyectosGratuitos` y los precios (`planes`) |
+| POST | `/api/suscripcion` | `{ "periodo": "MENSUAL" \| "SEMESTRAL" }`: activa el plan sin pasarela (pago simulado). `409 YA_SUSCRIPTO` si ya hay uno vigente |
+| DELETE | `/api/suscripcion` | Cancela en el momento: vuelve al límite de 2 niños. `404 SIN_SUSCRIPCION` si no había |
+
+- Precios: mensual **$4.500** y semestral **$24.000** (`PeriodoSuscripcion`). El front los muestra desde la API, no los repite.
+- `hasta` = hoy + 1 o 6 meses. Al vencer, `PlanService` deja de considerarla vigente y vuelve el límite. No hay renovación automática (no hay cobro real).
+- Migración `V202610301130__suscripcion_periodo.sql`: columna `periodo` con su `CHECK` (cubierto por `ContratoBaseDeDatosTest`).
+- Front: página `/cuenta/plan` (link «Mi plan» en el menú lateral). Las familias ven «Trama es gratis para las familias, siempre» y ningún precio. El pago pasa por `PagoSimulado`: muestra concepto, total y «Mercado Pago (simulado)» con la leyenda «Pago de prueba»; no pide tarjeta.
+- El aviso de la 9.0 suma el link «Ver planes».

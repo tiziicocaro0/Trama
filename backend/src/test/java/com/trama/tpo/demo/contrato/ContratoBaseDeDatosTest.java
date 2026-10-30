@@ -25,6 +25,7 @@ import com.trama.tpo.demo.entity.dto.RegisterRequest;
 import com.trama.tpo.demo.entity.invitacion.EstadoInvitacion;
 import com.trama.tpo.demo.entity.membresia.Especialidad;
 import com.trama.tpo.demo.entity.membresia.Rol;
+import com.trama.tpo.demo.entity.plan.PeriodoSuscripcion;
 import com.trama.tpo.demo.entity.registro.AccionRegistro;
 import com.trama.tpo.demo.service.ArchivoService;
 
@@ -76,6 +77,11 @@ class ContratoBaseDeDatosTest {
     @Test
     void accionesDelRegistro() {
         assertEquals(nombres(AccionRegistro.class), valoresDelCheck("ck_registro_accion"));
+    }
+
+    @Test
+    void periodosDeSuscripcion() {
+        assertEquals(nombres(PeriodoSuscripcion.class), valoresDelCheck("ck_suscripcion_periodo"));
     }
 
     @Test
