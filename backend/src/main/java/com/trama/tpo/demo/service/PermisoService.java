@@ -217,4 +217,29 @@ public class PermisoService {
                         )
                 );
     }
+    // 7. VERIFICAR QUE PUEDE EDITAR O ELIMINAR UN EVENTO
+    // El autor puede modificar su evento.
+    // Cualquier tutor del proyecto puede modificar cualquier evento.
+    public void verificarPuedeModificarEvento(
+            UUID proyectoId,
+            UUID autorId) {
+
+        Membresia membresia = obtenerMembresia(proyectoId);
+
+        UUID usuarioId = usuarioActual.obtenerId();
+
+        // El autor puede modificar su propio evento
+        if (autorId != null && usuarioId.equals(autorId)) {
+            return;
+        }
+
+        // Los tutores pueden modificar cualquier evento
+        if (membresia.getRol() == Rol.TUTOR) {
+            return;
+        }
+
+        throw new AccessDeniedException(
+                "Solo el autor o un tutor pueden modificar este evento"
+        );
+    }
 }
