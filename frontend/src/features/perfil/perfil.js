@@ -44,6 +44,16 @@ export const seccionNotas = {
   tono: 'bg-secundario text-superficie',
 }
 
+// 4.2: leyenda fija de la sección y tipos de nota (iguales al enum TipoNota del back)
+export const LEYENDA_NOTAS =
+  'Las notas no reemplazan la historia clínica ni los informes de cada profesional.'
+
+export const TIPOS_NOTA = [
+  ['ORIENTACION', 'Orientación'],
+  ['OBSERVACION', 'Observación'],
+  ['INFORME_BREVE', 'Informe breve'],
+]
+
 export function calcularEdad(fechaNacimiento, hoy = new Date()) {
   if (
     typeof fechaNacimiento !== 'string' ||

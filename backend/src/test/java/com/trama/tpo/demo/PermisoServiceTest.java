@@ -66,7 +66,8 @@ class PermisoServiceTest {
                 permisoService,
                 usuarioActual,
                 membresiaRepository,
-                usuarioRepository);
+                usuarioRepository,
+                mock(RegistroAccionService.class));
         miembroService = new MiembroService(
                 membresiaRepository,
                 permisoService,

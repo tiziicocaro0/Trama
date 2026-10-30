@@ -29,19 +29,22 @@ public class ProyectoService {
         private final UsuarioActual usuarioActual;
         private final MembresiaRepository membresiaRepository;
         private final UsuarioRepository usuarioRepository;
+        private final RegistroAccionService registroAccionService;
 
         public ProyectoService(
                         ProyectoRepository proyectoRepository,
                         PermisoService permisoService,
                         UsuarioActual usuarioActual,
                         MembresiaRepository membresiaRepository,
-                        UsuarioRepository usuarioRepository) {
+                        UsuarioRepository usuarioRepository,
+                        RegistroAccionService registroAccionService) {
 
                 this.proyectoRepository = proyectoRepository;
                 this.permisoService = permisoService;
                 this.usuarioActual = usuarioActual;
                 this.membresiaRepository = membresiaRepository;
                 this.usuarioRepository = usuarioRepository;
+                this.registroAccionService = registroAccionService;
         }
 
         @Transactional
@@ -72,8 +75,8 @@ public class ProyectoService {
                                 .rol(Rol.TUTOR)
                                 .esAdmin(true)
                                 .build());
-                // Quien crea el proyecto queda como tutor administrador
-                return ProyectoResponse.from(proyecto, true);
+                // Quien crea el proyecto queda como tutor administrador (no carga notas)
+                return ProyectoResponse.from(proyecto, true, false);
         }
 
         // 1.10 Mis proyectos: solo los niños donde el usuario logueado es miembro
@@ -84,14 +87,19 @@ public class ProyectoService {
         }
 
         // Ver los datos de un niño: solo sus miembros
-        @Transactional(readOnly = true)
+        // Ya no es readOnly: también guarda el registro de quién consultó el perfil (8.0)
+        @Transactional
         public ProyectoResponse obtener(UUID proyectoId) {
 
                 permisoService.verificarMiembro(proyectoId);
 
+                // 8.0: registro de quién consultó el perfil (una vez por día)
+                registroAccionService.registrarVista(usuarioActual.obtenerId(), proyectoId);
+
                 return ProyectoResponse.from(
                                 buscarProyecto(proyectoId),
-                                permisoService.puedeEditar(proyectoId));
+                                permisoService.puedeEditar(proyectoId),
+                                permisoService.puedeCargarNotas(proyectoId));
         }
 
         // Cambiar qué puede hacer la familia: solo el tutor administrador
@@ -108,7 +116,7 @@ public class ProyectoService {
                 proyecto.setFamiliarVeNotas(request.familiarVeNotas());
 
                 // Solo el tutor administrador llega hasta aca
-                return ProyectoResponse.from(proyectoRepository.save(proyecto), true);
+                return ProyectoResponse.from(proyectoRepository.save(proyecto), true, false);
         }
 
 
@@ -129,7 +137,7 @@ public class ProyectoService {
                 proyecto.setEscuela(request.escuela());
                 proyecto.setGrado(request.grado());
 
-                return ProyectoResponse.from(proyectoRepository.save(proyecto), true);
+                return ProyectoResponse.from(proyectoRepository.save(proyecto), true, false);
         }
 
         private Proyecto buscarProyecto(UUID proyectoId) {

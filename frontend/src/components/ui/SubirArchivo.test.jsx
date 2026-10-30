@@ -23,6 +23,8 @@ const proyecto = {
   nombre: 'Mateo ficticio',
   fechaNacimiento: '2018-04-10',
   puedeCargar: true,
+  // 4.2: el usuario de estos tests es profesional y puede cargar notas
+  puedeCargarNotas: true,
 }
 
 beforeEach(() => {
