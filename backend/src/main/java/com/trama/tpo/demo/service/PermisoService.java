@@ -2,7 +2,6 @@ package com.trama.tpo.demo.service;
 
 import java.util.UUID;
 import java.util.List;
-import java.util.Set;
 
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
@@ -106,7 +105,7 @@ public class PermisoService {
                     membresiaRepository
                             .findByUsuarioIdAndRolInOrderByFechaAltaAscIdAsc(
                                     usuarioId,
-                                    Set.of(Rol.SALUD, Rol.EDUCACION)
+                                    PlanService.ROLES_PROFESIONALES
                             );
 
             boolean puedeEditar = membresiasProfesionales.stream()

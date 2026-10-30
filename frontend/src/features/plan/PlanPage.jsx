@@ -68,6 +68,13 @@ export default function PlanPage() {
             <Tarjeta titulo="Tu cuenta es gratuita">
               <p>Trama es gratis para las familias, siempre.</p>
             </Tarjeta>
+          ) : plan.plan === 'INSTITUCIONAL' ? (
+            <Tarjeta titulo={NOMBRES_PLAN.INSTITUCIONAL}>
+              <p>
+                La licencia de {plan.institucion} te cubre: editás en todos tus
+                niños.
+              </p>
+            </Tarjeta>
           ) : (
             <>
               <Tarjeta titulo={NOMBRES_PLAN[plan.plan]}>
@@ -113,6 +120,18 @@ export default function PlanPage() {
                 </section>
               )}
             </>
+          )}
+          {plan && (plan.esProfesional || plan.esResponsable) && (
+            <p>
+              <Link
+                to="/institucion"
+                className="font-semibold text-primario underline underline-offset-4 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-primario"
+              >
+                {plan.esResponsable
+                  ? 'Administrar mi institución'
+                  : '¿Representás a una institución? Conocé los paquetes'}
+              </Link>
+            </p>
           )}
           <Link
             to="/acompanamientos"

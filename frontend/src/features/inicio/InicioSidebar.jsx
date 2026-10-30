@@ -11,6 +11,8 @@ const navegacion = [
   // 9.1: página propia (no es una sección de Inicio)
   { id: 'plan', titulo: 'Mi plan', icon: CreditCard, to: '/cuenta/plan' },
 ]
+// 9.2: la página de la institución se abre desde Mi plan
+const RUTAS_PLAN = ['/cuenta/plan', '/institucion']
 
 export default function InicioSidebar({ cerrarSesion }) {
   const [params] = useSearchParams()
@@ -37,11 +39,12 @@ export default function InicioSidebar({ cerrarSesion }) {
         <ul className="grid grid-cols-2 gap-2 sm:grid-cols-5 lg:grid-cols-1 lg:gap-1 xl:gap-1.5">
           {navegacion.map((item) => {
             const { id, titulo, icon: Icon, to } = item
+            const enPlan = RUTAS_PLAN.includes(pathname)
             const seleccionada = to
-              ? pathname === to
+              ? enPlan
               : id
-                ? actual === id
-                : pathname !== '/cuenta/plan' &&
+                ? !enPlan && actual === id
+                : !enPlan &&
                   !navegacion.some((item) => item.id && item.id === actual)
             return (
               <li key={titulo}>

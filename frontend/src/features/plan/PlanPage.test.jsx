@@ -21,6 +21,8 @@ const planes = [
 ]
 const gratuito = {
   esProfesional: true,
+  esResponsable: false,
+  institucion: null,
   plan: 'GRATUITO',
   desde: null,
   hasta: null,
@@ -104,6 +106,27 @@ describe('9.1: Mi plan', () => {
     expect(cliente.delete).toHaveBeenCalledWith('/suscripcion')
     expect(await screen.findByText(/Volviste al plan gratuito/)).toBeVisible()
     expect(screen.getByRole('heading', { name: 'Plan gratuito' })).toBeVisible()
+  })
+
+  it('con licencia institucional muestra qué institución lo cubre', async () => {
+    cliente.get.mockResolvedValue({
+      data: { ...gratuito, plan: 'INSTITUCIONAL', institucion: 'Escuela Ficticia' },
+    })
+    abrir()
+    expect(await screen.findByText(/La licencia de Escuela Ficticia te cubre/)).toBeVisible()
+    expect(screen.queryByRole('button', { name: 'Suscribirme' })).not.toBeInTheDocument()
+  })
+
+  it('ofrece los paquetes institucionales al profesional y la administración al responsable', async () => {
+    cliente.get.mockResolvedValue({ data: gratuito })
+    const { unmount } = abrir()
+    expect(
+      await screen.findByRole('link', { name: '¿Representás a una institución? Conocé los paquetes' }),
+    ).toHaveAttribute('href', '/institucion')
+    unmount()
+    cliente.get.mockResolvedValue({ data: { ...gratuito, esProfesional: false, esResponsable: true } })
+    abrir()
+    expect(await screen.findByRole('link', { name: 'Administrar mi institución' })).toBeVisible()
   })
 
   it('el menú lateral marca «Mi plan» como página actual', async () => {

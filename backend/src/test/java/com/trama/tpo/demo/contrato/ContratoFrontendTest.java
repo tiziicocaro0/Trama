@@ -109,9 +109,11 @@ class ContratoFrontendTest {
 
     @Test
     void planesDeSuscripcion() {
-        // 9.1: el front nombra cada plan que devuelve el back (GRATUITO + los períodos pagos)
+        // 9.1 y 9.2: el front nombra cada plan que devuelve el back
+        // (GRATUITO, los períodos pagos e INSTITUCIONAL, ver SuscripcionService)
         Set<String> periodos = new java.util.LinkedHashSet<>(Set.of("GRATUITO"));
         periodos.addAll(nombres(PeriodoSuscripcion.class));
+        periodos.add("INSTITUCIONAL");
         assertEquals(periodos, valoresEnMayusculas(entre(leer("api/planes.js"), "const PLANES = [", "]")));
         assertEquals(periodos, todasLasCoincidencias(Pattern.compile("([A-Z]+):"),
                 entre(leer("features/plan/planes.js"), "NOMBRES_PLAN = {", "}")));

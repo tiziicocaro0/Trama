@@ -35,3 +35,28 @@ proyecto que el front ya consulta.
 - Migración `V202610301130__suscripcion_periodo.sql`: columna `periodo` con su `CHECK` (cubierto por `ContratoBaseDeDatosTest`).
 - Front: página `/cuenta/plan` (link «Mi plan» en el menú lateral). Las familias ven «Trama es gratis para las familias, siempre» y ningún precio. El pago pasa por `PagoSimulado`: muestra concepto, total y «Mercado Pago (simulado)» con la leyenda «Pago de prueba»; no pide tarjeta.
 - El aviso de la 9.0 suma el link «Ver planes».
+
+## 9.2 · Paquete institucional
+
+Cualquier usuario puede contratar un paquete desde `/institucion` y queda como **responsable**
+(uno por usuario). El responsable asocia y quita profesionales por email; **no tiene acceso a
+ningún proyecto**: la respuesta solo trae cupos y la lista de profesionales.
+
+| Método | Ruta | Qué hace |
+|---|---|---|
+| GET | `/api/institucion` | `{ institucion, paquetes }`: la institución del usuario (o `null`) y los paquetes de menor a mayor |
+| POST | `/api/institucion` | `{ nombre, paqueteId }`: contrata con pago simulado. `409 YA_ES_RESPONSABLE`, `404 PAQUETE_NO_ENCONTRADO` |
+| POST | `/api/institucion/profesionales` | `{ email }`: asocia. `404 EMAIL_NO_REGISTRADO` (tiene que crear su cuenta primero), `409 YA_ASOCIADO`, `409 CUPO_LLENO` |
+| DELETE | `/api/institucion/profesionales/{licenciaId}` | Quita la licencia. `404 LICENCIA_NO_ENCONTRADA` si no es de tu institución |
+
+| Paquete | Niños | Profesionales | Precio por mes |
+|---|---|---|---|
+| Inicial | 15 | 5 | $18.000 |
+| Intermedio | 40 | 15 | $45.000 |
+| Red | sin límite | sin límite | $90.000 |
+
+- **La licencia cubre todos los niños del profesional**: `PlanService.editaSinLimite` devuelve `true` con licencia vigente, igual que con suscripción.
+- **Niños cubiertos** = proyectos distintos donde un profesional con licencia trabaja como educación o salud.
+- `GET /api/suscripcion` suma `esResponsable`, `institucion` y el plan `INSTITUCIONAL`.
+- Migración `V202610301200__paquetes_institucionales.sql`: cupos nullables (null = sin límite), un responsable por institución y los 3 paquetes.
+- Front: `/institucion` (contratar con `PagoSimulado`, panel con cupos y profesionales). Se llega desde «Mi plan».

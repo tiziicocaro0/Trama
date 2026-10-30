@@ -16,6 +16,7 @@ import DatosPersonalesPage from '../features/perfil/DatosPersonalesPage.jsx'
 import ConoceloPage from '../features/perfil/ConoceloPage.jsx'
 import BitacoraPage from '../features/bitacora/BitacoraPage.jsx'
 import PlanPage from '../features/plan/PlanPage.jsx'
+import InstitucionPage from '../features/institucion/InstitucionPage.jsx'
 import { Layout } from '../components/layout/Layout.jsx'
 import { Tarjeta } from '../components/ui/Tarjeta.jsx'
 import { Componentes } from '../pages/Componentes.jsx'
@@ -32,6 +33,7 @@ const titles = {
   '/calendario': 'Calendario',
   '/perfil': 'Mi perfil',
   '/cuenta/plan': 'Mi plan',
+  '/institucion': 'Institución',
   '/componentes': 'Componentes',
 }
 
@@ -127,6 +129,14 @@ export default function AppRoutes() {
         element={
           <Acceso privado>
             <PlanPage />
+          </Acceso>
+        }
+      />
+      <Route
+        path="/institucion"
+        element={
+          <Acceso privado>
+            <InstitucionPage />
           </Acceso>
         }
       />

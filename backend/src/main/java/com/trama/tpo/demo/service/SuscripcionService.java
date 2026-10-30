@@ -1,7 +1,6 @@
 package com.trama.tpo.demo.service;
 
 import java.time.LocalDate;
-import java.util.Set;
 import java.util.UUID;
 
 import org.springframework.http.HttpStatus;
@@ -10,9 +9,10 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.trama.tpo.demo.entity.dto.MiPlanResponse;
 import com.trama.tpo.demo.entity.dto.SuscribirseRequest;
-import com.trama.tpo.demo.entity.membresia.Rol;
+import com.trama.tpo.demo.entity.plan.Institucion;
 import com.trama.tpo.demo.entity.plan.Suscripcion;
 import com.trama.tpo.demo.exceptions.ApiException;
+import com.trama.tpo.demo.repository.InstitucionRepository;
 import com.trama.tpo.demo.repository.MembresiaRepository;
 import com.trama.tpo.demo.repository.SuscripcionRepository;
 
@@ -24,18 +24,22 @@ import com.trama.tpo.demo.repository.SuscripcionRepository;
 @Service
 public class SuscripcionService {
 
-    private static final Set<Rol> ROLES_PROFESIONALES = Set.of(Rol.EDUCACION, Rol.SALUD);
-
     private final SuscripcionRepository suscripcionRepository;
     private final MembresiaRepository membresiaRepository;
+    private final InstitucionRepository institucionRepository;
+    private final PlanService planService;
     private final UsuarioActual usuarioActual;
 
     public SuscripcionService(
             SuscripcionRepository suscripcionRepository,
             MembresiaRepository membresiaRepository,
+            InstitucionRepository institucionRepository,
+            PlanService planService,
             UsuarioActual usuarioActual) {
         this.suscripcionRepository = suscripcionRepository;
         this.membresiaRepository = membresiaRepository;
+        this.institucionRepository = institucionRepository;
+        this.planService = planService;
         this.usuarioActual = usuarioActual;
     }
 
@@ -83,11 +87,19 @@ public class SuscripcionService {
         return respuesta(usuarioId);
     }
 
+    // Orden: suscripción propia vigente → licencia institucional (9.2) → plan gratuito.
     private MiPlanResponse respuesta(UUID usuarioId) {
-        boolean esProfesional = membresiaRepository.existsByUsuarioIdAndRolIn(usuarioId, ROLES_PROFESIONALES);
+        boolean esProfesional = membresiaRepository.existsByUsuarioIdAndRolIn(
+                usuarioId, PlanService.ROLES_PROFESIONALES);
+        boolean esResponsable = institucionRepository.existsByResponsableId(usuarioId);
+        String institucion = planService.institucionQueLoCubre(usuarioId)
+                .map(Institucion::getNombre).orElse(null);
+
         return suscripcionRepository.findById(usuarioId)
                 .filter(s -> s.vigenteEn(LocalDate.now()))
-                .map(s -> MiPlanResponse.de(esProfesional, s.getPeriodo().name(), s.getDesde(), s.getHasta()))
-                .orElseGet(() -> MiPlanResponse.de(esProfesional, "GRATUITO", null, null));
+                .map(s -> MiPlanResponse.de(esProfesional, esResponsable, s.getPeriodo().name(),
+                        s.getDesde(), s.getHasta(), institucion))
+                .orElseGet(() -> MiPlanResponse.de(esProfesional, esResponsable,
+                        institucion != null ? "INSTITUCIONAL" : "GRATUITO", null, null, institucion));
     }
 }

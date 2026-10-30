@@ -1,7 +1,7 @@
 import cliente from './cliente.js'
 
 // 9.1: plan del usuario logueado. El pago es simulado: nunca viajan datos de tarjeta.
-const PLANES = ['GRATUITO', 'MENSUAL', 'SEMESTRAL']
+const PLANES = ['GRATUITO', 'MENSUAL', 'SEMESTRAL', 'INSTITUCIONAL']
 
 function verificarConexion() {
   if (!cliente.defaults.baseURL)
