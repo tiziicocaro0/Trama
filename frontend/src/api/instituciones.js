@@ -6,7 +6,6 @@ const MENSAJES = {
   PAQUETE_NO_ENCONTRADO: 'No encontramos ese paquete. Recargá la página.',
   EMAIL_NO_REGISTRADO: 'Ese email no está registrado en Trama: pedile que cree su cuenta primero.',
   YA_ASOCIADO: 'Ese profesional ya está asociado a la institución.',
-  CUPO_LLENO: 'El paquete no tiene más cupo.',
   LICENCIA_NO_ENCONTRADA: 'Ese profesional ya no está asociado.',
   SIN_INSTITUCION: 'Todavía no contrataste un paquete.',
 }
@@ -60,5 +59,16 @@ export async function quitarProfesional(licenciaId) {
     return data
   } catch (error) {
     throw traducir(error, 'No pudimos quitar al profesional. Intentá de nuevo.')
+  }
+}
+
+// 9.3: el responsable cierra el aviso de cambio automático de paquete.
+export async function cerrarAvisoCambioPaquete() {
+  verificarConexion()
+  try {
+    const { data } = await cliente.put('/institucion/aviso')
+    return data
+  } catch (error) {
+    throw traducir(error, 'No pudimos cerrar el aviso. Intentá de nuevo.')
   }
 }

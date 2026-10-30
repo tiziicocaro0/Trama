@@ -47,6 +47,7 @@ public class InvitacionService {
     private final UsuarioActual usuarioActual;
     private final EmailService emailService;
     private final RegistroAccionService registroAccionService;
+    private final InstitucionService institucionService;
     private final String urlBaseInvitacion;
 
     public InvitacionService(
@@ -58,6 +59,7 @@ public class InvitacionService {
             UsuarioActual usuarioActual,
             EmailService emailService,
             RegistroAccionService registroAccionService,
+            InstitucionService institucionService,
             @Value("${trama.invitaciones.url-base:}") String urlBaseInvitacion) {
 
         this.invitacionRepository = invitacionRepository;
@@ -68,6 +70,7 @@ public class InvitacionService {
         this.usuarioActual = usuarioActual;
         this.emailService = emailService;
         this.registroAccionService = registroAccionService;
+        this.institucionService = institucionService;
         this.urlBaseInvitacion = urlBaseInvitacion;
     }
 
@@ -178,6 +181,11 @@ public class InvitacionService {
         // 7. Marcar la invitacion como utilizada.
         invitacion.setEstado(EstadoInvitacion.ACEPTADA);
         invitacionRepository.saveAndFlush(invitacion);
+
+        // 9.3: un profesional con licencia suma un niño: puede cambiar el paquete de su institución.
+        if (PlanService.ROLES_PROFESIONALES.contains(membresia.getRol())) {
+            institucionService.revisarCuposDe(usuarioId);
+        }
 
         // 8. Devolver los datos de la nueva membresia.
         return MiembroResponse.from(membresia);

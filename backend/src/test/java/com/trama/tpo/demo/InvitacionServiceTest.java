@@ -35,6 +35,7 @@ import com.trama.tpo.demo.repository.MembresiaRepository;
 import com.trama.tpo.demo.repository.ProyectoRepository;
 import com.trama.tpo.demo.repository.UsuarioRepository;
 import com.trama.tpo.demo.service.EmailService;
+import com.trama.tpo.demo.service.InstitucionService;
 import com.trama.tpo.demo.service.InvitacionService;
 import com.trama.tpo.demo.service.PermisoService;
 import com.trama.tpo.demo.service.RegistroAccionService;
@@ -78,6 +79,7 @@ class InvitacionServiceTest {
                 usuarioActual,
                 emailService,
                 mock(RegistroAccionService.class),
+                mock(InstitucionService.class),
                 "https://trama.example/invitacion"
         );
     }

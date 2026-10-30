@@ -11,6 +11,7 @@ vi.mock('../../api/cliente.js', () => ({
     defaults: { baseURL: '/api' },
     get: vi.fn(),
     post: vi.fn(),
+    put: vi.fn(),
     delete: vi.fn(),
   },
 }))
@@ -27,6 +28,7 @@ const institucion = {
   ninosUsados: 0,
   profesionalesUsados: 0,
   profesionales: [],
+  aviso: null,
 }
 const conProfesional = {
   ...institucion,
@@ -132,5 +134,23 @@ describe('9.2: paquete institucional', () => {
     cliente.get.mockResolvedValue({ data: { institucion, paquetes } })
     abrir()
     expect(await screen.findByText(/no ves los perfiles de los niños/)).toBeVisible()
+  })
+
+  it('9.3: muestra el cartel flotante de cambio de paquete y lo cierra', async () => {
+    const user = userEvent.setup()
+    const cambiada = {
+      ...conProfesional,
+      paquete: paquetes[1],
+      aviso: { paqueteAnterior: 'Inicial', motivo: 'PROFESIONALES' },
+    }
+    cliente.get.mockResolvedValue({ data: { institucion: cambiada, paquetes } })
+    cliente.put.mockResolvedValue({ data: { ...cambiada, aviso: null } })
+    abrir()
+    const cartel = await screen.findByRole('status', { name: 'Pasaste al paquete Intermedio' })
+    expect(within(cartel).getByText('Aviso de prueba')).toBeVisible()
+    expect(within(cartel).getByText(/Superaste el cupo de profesionales del paquete Inicial/)).toBeVisible()
+    await user.click(within(cartel).getByRole('button', { name: 'Entendido' }))
+    expect(cliente.put).toHaveBeenCalledWith('/institucion/aviso')
+    expect(screen.queryByText('Aviso de prueba')).not.toBeInTheDocument()
   })
 })

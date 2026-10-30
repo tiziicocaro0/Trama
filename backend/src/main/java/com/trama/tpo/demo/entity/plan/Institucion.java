@@ -37,4 +37,13 @@ public class Institucion {
 
     @Column(name = "nombre", nullable = false, length = 120)
     private String nombre;
+
+    /** 9.3: paquete del que pasó automáticamente (null = no hay aviso pendiente). */
+    @Column(name = "aviso_paquete_anterior", length = 40)
+    private String avisoPaqueteAnterior;
+
+    /** 9.3: qué cupo se superó. */
+    @Enumerated(EnumType.STRING)
+    @Column(name = "aviso_motivo", length = 14)
+    private MotivoCambioPaquete avisoMotivo;
 }

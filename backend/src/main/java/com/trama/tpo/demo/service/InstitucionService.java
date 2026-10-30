@@ -16,6 +16,7 @@ import com.trama.tpo.demo.entity.dto.PaginaInstitucionResponse;
 import com.trama.tpo.demo.entity.dto.PaqueteResponse;
 import com.trama.tpo.demo.entity.plan.Institucion;
 import com.trama.tpo.demo.entity.plan.LicenciaProfesional;
+import com.trama.tpo.demo.entity.plan.MotivoCambioPaquete;
 import com.trama.tpo.demo.entity.plan.Paquete;
 import com.trama.tpo.demo.entity.usuario.Usuario;
 import com.trama.tpo.demo.exceptions.ApiException;
@@ -102,7 +103,7 @@ public class InstitucionService {
                 .desde(LocalDate.now())
                 .build());
 
-        verificarCupos(institucion);
+        revisarCupos(institucion);
         return respuesta(institucion);
     }
 
@@ -117,15 +118,68 @@ public class InstitucionService {
         return respuesta(institucion);
     }
 
-    // 9.2: si al asociar se supera un cupo, se rechaza (la transacción vuelve atrás).
-    private void verificarCupos(Institucion institucion) {
-        Paquete paquete = institucion.getPaquete();
+    // 9.3: el responsable cerró el aviso de cambio de paquete.
+    @Transactional
+    public InstitucionResponse cerrarAviso() {
+        Institucion institucion = miInstitucion();
+        institucion.setAvisoPaqueteAnterior(null);
+        institucion.setAvisoMotivo(null);
+        return respuesta(institucionRepository.save(institucion));
+    }
+
+    // 9.3: un profesional con licencia sumó un niño (aceptó una invitación): se revisan los
+    // cupos de cada institución que lo cubre.
+    @Transactional
+    public void revisarCuposDe(UUID profesionalId) {
+        licenciaRepository.vigentesDe(profesionalId, LocalDate.now())
+                .forEach(licencia -> revisarCupos(licencia.getInstitucion()));
+    }
+
+    // 9.3: si se supera el cupo de niños o de profesionales, la institución pasa sola al
+    // paquete siguiente (por precio) hasta que entre. El último paquete no tiene límite.
+    private void revisarCupos(Institucion institucion) {
         LocalDate hoy = LocalDate.now();
-        if (Paquete.supera(paquete.getCupoProfesionales(), licenciaRepository.contarProfesionales(institucion.getId(), hoy))
-                || Paquete.supera(paquete.getCupoNinos(), contarNinos(institucion.getId(), hoy))) {
-            throw new ApiException("CUPO_LLENO",
-                    "El paquete " + paquete.getNombre() + " no tiene más cupo", HttpStatus.CONFLICT);
+        long profesionales = licenciaRepository.contarProfesionales(institucion.getId(), hoy);
+        long ninos = contarNinos(institucion.getId(), hoy);
+        Paquete original = institucion.getPaquete();
+        MotivoCambioPaquete motivo = motivo(original, ninos, profesionales);
+        if (motivo == null) {
+            return;
         }
+
+        List<Paquete> paquetes = paqueteRepository.findAllByOrderByPrecioAsc();
+        Paquete paquete = original;
+        while (motivo(paquete, ninos, profesionales) != null) {
+            int siguiente = indiceDe(paquetes, paquete) + 1;
+            if (siguiente >= paquetes.size()) {
+                break;
+            }
+            paquete = paquetes.get(siguiente);
+        }
+
+        institucion.setPaquete(paquete);
+        institucion.setAvisoPaqueteAnterior(original.getNombre());
+        institucion.setAvisoMotivo(motivo);
+        institucionRepository.save(institucion);
+    }
+
+    private static MotivoCambioPaquete motivo(Paquete paquete, long ninos, long profesionales) {
+        if (Paquete.supera(paquete.getCupoProfesionales(), profesionales)) {
+            return MotivoCambioPaquete.PROFESIONALES;
+        }
+        if (Paquete.supera(paquete.getCupoNinos(), ninos)) {
+            return MotivoCambioPaquete.NINOS;
+        }
+        return null;
+    }
+
+    private static int indiceDe(List<Paquete> paquetes, Paquete paquete) {
+        for (int i = 0; i < paquetes.size(); i++) {
+            if (paquetes.get(i).getId().equals(paquete.getId())) {
+                return i;
+            }
+        }
+        return paquetes.size();
     }
 
     private Institucion miInstitucion() {
@@ -150,6 +204,9 @@ public class InstitucionService {
                 PaqueteResponse.from(institucion.getPaquete()),
                 contarNinos(institucion.getId(), hoy),
                 licenciaRepository.contarProfesionales(institucion.getId(), hoy),
-                profesionales);
+                profesionales,
+                institucion.getAvisoMotivo() == null ? null
+                        : new InstitucionResponse.AvisoCambioPaquete(
+                                institucion.getAvisoPaqueteAnterior(), institucion.getAvisoMotivo()));
     }
 }

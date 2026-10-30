@@ -46,7 +46,7 @@ ningún proyecto**: la respuesta solo trae cupos y la lista de profesionales.
 |---|---|---|
 | GET | `/api/institucion` | `{ institucion, paquetes }`: la institución del usuario (o `null`) y los paquetes de menor a mayor |
 | POST | `/api/institucion` | `{ nombre, paqueteId }`: contrata con pago simulado. `409 YA_ES_RESPONSABLE`, `404 PAQUETE_NO_ENCONTRADO` |
-| POST | `/api/institucion/profesionales` | `{ email }`: asocia. `404 EMAIL_NO_REGISTRADO` (tiene que crear su cuenta primero), `409 YA_ASOCIADO`, `409 CUPO_LLENO` |
+| POST | `/api/institucion/profesionales` | `{ email }`: asocia. `404 EMAIL_NO_REGISTRADO` (tiene que crear su cuenta primero), `409 YA_ASOCIADO`. Si supera un cupo, cambia de paquete (9.3) |
 | DELETE | `/api/institucion/profesionales/{licenciaId}` | Quita la licencia. `404 LICENCIA_NO_ENCONTRADA` si no es de tu institución |
 
 | Paquete | Niños | Profesionales | Precio por mes |
@@ -60,3 +60,22 @@ ningún proyecto**: la respuesta solo trae cupos y la lista de profesionales.
 - `GET /api/suscripcion` suma `esResponsable`, `institucion` y el plan `INSTITUCIONAL`.
 - Migración `V202610301200__paquetes_institucionales.sql`: cupos nullables (null = sin límite), un responsable por institución y los 3 paquetes.
 - Front: `/institucion` (contratar con `PagoSimulado`, panel con cupos y profesionales). Se llega desde «Mi plan».
+
+## 9.3 · Cambio automático de paquete
+
+Cuando una institución supera el cupo de niños o de profesionales, **pasa sola al paquete
+siguiente** (por precio) hasta que entre. El último (Red) no tiene límite, así que nunca se
+bloquea a nadie.
+
+| Cuándo se revisa | Dónde |
+|---|---|
+| Al asociar un profesional | `InstitucionService.asociar` |
+| Cuando un profesional con licencia acepta la invitación a un niño nuevo | `InvitacionService.aceptarInvitacion` → `InstitucionService.revisarCuposDe` |
+
+- El aviso queda guardado en la institución (`aviso_paquete_anterior`, `aviso_motivo` = `NINOS` o `PROFESIONALES`) y viaja en `InstitucionResponse.aviso`.
+- `PUT /api/institucion/aviso` lo cierra.
+- Front: cartel flotante en `/institucion` con la etiqueta **«Aviso de prueba»**.
+- Migración `V202610301530__aviso_cambio_paquete.sql` (su `CHECK` está cubierto por `ContratoBaseDeDatosTest`).
+
+> **Pendiente para cuando se mergee la 6.0:** reemplazar el cartel de prueba por una notificación
+> real (`NotificacionService.notificar(...)`) al responsable y sacar el cartel.

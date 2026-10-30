@@ -8,6 +8,7 @@ import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -44,6 +45,12 @@ public class InstitucionController {
     @PostMapping("/profesionales")
     public ResponseEntity<InstitucionResponse> asociar(@Valid @RequestBody AsociarProfesionalRequest request) {
         return ResponseEntity.ok(institucionService.asociar(request));
+    }
+
+    // 9.3: cerrar el aviso de cambio automático de paquete
+    @PutMapping("/aviso")
+    public ResponseEntity<InstitucionResponse> cerrarAviso() {
+        return ResponseEntity.ok(institucionService.cerrarAviso());
     }
 
     @DeleteMapping("/profesionales/{licenciaId}")

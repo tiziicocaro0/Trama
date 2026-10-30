@@ -5,6 +5,7 @@ import Campo from '../../../components/ui/Campo.jsx'
 import { Tarjeta } from '../../../components/ui/Tarjeta.jsx'
 import { asociarProfesional, quitarProfesional } from '../../../api/instituciones.js'
 import { formatearPesos } from '../../plan/planes.js'
+import AvisoCambioPaquete from './AvisoCambioPaquete.jsx'
 
 function uso(usados, cupo) {
   return cupo === null || cupo === undefined ? `${usados} (sin límite)` : `${usados} de ${cupo}`
@@ -121,6 +122,13 @@ export default function PanelInstitucion({ institucion, onActualizar }) {
           </ul>
         )}
       </section>
+      {institucion.aviso && (
+        <AvisoCambioPaquete
+          aviso={institucion.aviso}
+          paqueteActual={paquete.nombre}
+          onCerrado={onActualizar}
+        />
+      )}
     </div>
   )
 }
