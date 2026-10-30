@@ -12,6 +12,7 @@ import com.trama.tpo.demo.entity.dto.MiembroResponse;
 import com.trama.tpo.demo.entity.dto.MiembroResponse.EspecialidadItemResponse;
 import com.trama.tpo.demo.entity.membresia.Rol;
 import com.trama.tpo.demo.entity.proyecto.Proyecto;
+import com.trama.tpo.demo.entity.registro.AccionRegistro;
 import com.trama.tpo.demo.entity.usuario.Usuario;
 import com.trama.tpo.demo.exceptions.ApiException;
 import com.trama.tpo.demo.repository.AporteRepository;
@@ -50,6 +51,7 @@ public class AporteService {
     private final PermisoService permisoService;
     private final UsuarioActual usuarioActual;
     private final ArchivoRepository archivoRepository;
+    private final RegistroAccionService registroAccionService;
     // Lee el JSON "datos" de cada tipo de aporte (fechas incluidas).
     private final ObjectMapper mapper = new ObjectMapper().findAndRegisterModules();
 
@@ -61,7 +63,8 @@ public class AporteService {
             MembresiaRepository membresiaRepository,
             PermisoService permisoService,
             UsuarioActual usuarioActual,
-            ArchivoRepository archivoRepository) {
+            ArchivoRepository archivoRepository,
+            RegistroAccionService registroAccionService) {
 
         this.aporteRepository = aporteRepository;
         this.aporteVersionRepository = aporteVersionRepository;
@@ -71,6 +74,7 @@ public class AporteService {
         this.permisoService = permisoService;
         this.usuarioActual = usuarioActual;
         this.archivoRepository = archivoRepository;
+        this.registroAccionService = registroAccionService;
     }
 
     // CREAR APORTE
@@ -120,8 +124,13 @@ public class AporteService {
                 .archivos(archivosAdjuntos)
                 .build();
 
-        return convertirRespuesta(
-                aporteRepository.saveAndFlush(aporte), true, especialidadesPorAutor(proyectoId));
+        Aporte guardado = aporteRepository.saveAndFlush(aporte);
+
+        // 0.2: auditoría (la sección es el tipo de aporte, nunca el contenido)
+        registroAccionService.registrar(
+                usuarioId, proyectoId, AccionRegistro.CREAR, guardado.getTipo().name());
+
+        return convertirRespuesta(guardado, true, especialidadesPorAutor(proyectoId));
     }
 
     // LISTAR APORTES
@@ -245,8 +254,13 @@ public class AporteService {
             aporte.setArchivos(resolverArchivos(proyectoId, request.archivoIds()));
         }
 
-        return convertirRespuesta(
-                aporteRepository.saveAndFlush(aporte), true, especialidadesPorAutor(proyectoId));
+        Aporte guardado = aporteRepository.saveAndFlush(aporte);
+
+        // 0.2: auditoría
+        registroAccionService.registrar(
+                usuarioActual.obtenerId(), proyectoId, AccionRegistro.EDITAR, guardado.getTipo().name());
+
+        return convertirRespuesta(guardado, true, especialidadesPorAutor(proyectoId));
     }
 
     // OBTENER APORTE PARA EDITAR
@@ -285,6 +299,10 @@ public class AporteService {
         aporte.setArchivado(true);
 
         aporteRepository.save(aporte);
+
+        // 0.2: auditoría
+        registroAccionService.registrar(
+                usuarioActual.obtenerId(), proyectoId, AccionRegistro.ARCHIVAR, aporte.getTipo().name());
     }
 
     private List<Archivo> resolverArchivos(UUID proyectoId, List<UUID> archivoIds) {

@@ -51,6 +51,18 @@ public class PermisoService {
         }
     }
 
+    // 2b. VERIFICAR QUE ES TUTOR (administrador o co-tutor, 8.0)
+    public void verificarTutor(UUID proyectoId) {
+
+        Membresia membresia = obtenerMembresia(proyectoId);
+
+        if (membresia.getRol() != Rol.TUTOR) {
+            throw new AccessDeniedException(
+                    "Solo los tutores pueden ver el registro de accesos"
+            );
+        }
+    }
+
     // 3. VERIFICAR QUE PUEDE EDITAR
     public void verificarPuedeEditar(UUID proyectoId) {
 

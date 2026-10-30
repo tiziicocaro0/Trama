@@ -26,6 +26,7 @@ import com.trama.tpo.demo.entity.invitacion.Invitacion;
 import com.trama.tpo.demo.entity.membresia.Membresia;
 import com.trama.tpo.demo.entity.membresia.Rol;
 import com.trama.tpo.demo.entity.proyecto.Proyecto;
+import com.trama.tpo.demo.entity.registro.AccionRegistro;
 import com.trama.tpo.demo.entity.usuario.Usuario;
 import com.trama.tpo.demo.exceptions.ApiException;
 import com.trama.tpo.demo.repository.InvitacionRepository;
@@ -45,6 +46,7 @@ public class InvitacionService {
     private final PermisoService permisoService;
     private final UsuarioActual usuarioActual;
     private final EmailService emailService;
+    private final RegistroAccionService registroAccionService;
     private final String urlBaseInvitacion;
 
     public InvitacionService(
@@ -55,6 +57,7 @@ public class InvitacionService {
             PermisoService permisoService,
             UsuarioActual usuarioActual,
             EmailService emailService,
+            RegistroAccionService registroAccionService,
             @Value("${trama.invitaciones.url-base:}") String urlBaseInvitacion) {
 
         this.invitacionRepository = invitacionRepository;
@@ -64,6 +67,7 @@ public class InvitacionService {
         this.permisoService = permisoService;
         this.usuarioActual = usuarioActual;
         this.emailService = emailService;
+        this.registroAccionService = registroAccionService;
         this.urlBaseInvitacion = urlBaseInvitacion;
     }
 
@@ -280,6 +284,10 @@ public class InvitacionService {
                 .build();
 
         invitacion = invitacionRepository.saveAndFlush(invitacion);
+
+        // 0.2: auditoría (sin el email del invitado: es dato personal)
+        registroAccionService.registrar(
+                usuarioId, proyectoId, AccionRegistro.INVITAR, "MIEMBROS");
 
         // 10. Enviar el enlace por correo.
         // Evitamos incluir datos personales del niño en el email.
