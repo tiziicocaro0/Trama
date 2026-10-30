@@ -8,5 +8,7 @@ public enum AccionRegistro {
     VER,
     INVITAR,
     REVOCAR,
-    ELIMINAR
+    ELIMINAR,
+    CONFIRMAR,
+    QUITAR_CONFIRMACION
 }

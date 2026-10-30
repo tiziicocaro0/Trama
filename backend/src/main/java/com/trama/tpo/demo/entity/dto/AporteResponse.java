@@ -26,7 +26,11 @@ public record AporteResponse(
         List<UUID> archivoIds,
         List<ArchivoResponse> archivos,
         // 4.2: especialidades declaradas por el autor en este proyecto (vacía si no tiene)
-        List<MiembroResponse.EspecialidadItemResponse> autorEspecialidades
+        List<MiembroResponse.EspecialidadItemResponse> autorEspecialidades,
+        // 3.3: cuántos confirmaron, si el usuario actual ya confirmó y los nombres (para el hover)
+        Integer confirmaciones,
+        Boolean yoConfirme,
+        List<String> confirmadoPor
 ) {
 
     public AporteResponse(
@@ -58,6 +62,9 @@ public record AporteResponse(
                 puedeEditar,
                 List.of(),
                 List.of(),
+                List.of(),
+                0,
+                false,
                 List.of()
         );
     }

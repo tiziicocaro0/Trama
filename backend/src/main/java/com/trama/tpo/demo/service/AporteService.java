@@ -52,6 +52,7 @@ public class AporteService {
     private final UsuarioActual usuarioActual;
     private final ArchivoRepository archivoRepository;
     private final RegistroAccionService registroAccionService;
+    private final ConfirmacionAporteService confirmacionAporteService;
     // Lee el JSON "datos" de cada tipo de aporte (fechas incluidas).
     private final ObjectMapper mapper = new ObjectMapper().findAndRegisterModules();
 
@@ -64,7 +65,8 @@ public class AporteService {
             PermisoService permisoService,
             UsuarioActual usuarioActual,
             ArchivoRepository archivoRepository,
-            RegistroAccionService registroAccionService) {
+            RegistroAccionService registroAccionService,
+            ConfirmacionAporteService confirmacionAporteService) {
 
         this.aporteRepository = aporteRepository;
         this.aporteVersionRepository = aporteVersionRepository;
@@ -75,6 +77,7 @@ public class AporteService {
         this.usuarioActual = usuarioActual;
         this.archivoRepository = archivoRepository;
         this.registroAccionService = registroAccionService;
+        this.confirmacionAporteService = confirmacionAporteService;
     }
 
     // CREAR APORTE
@@ -130,7 +133,8 @@ public class AporteService {
         registroAccionService.registrar(
                 usuarioId, proyectoId, AccionRegistro.CREAR, guardado.getTipo().name());
 
-        return convertirRespuesta(guardado, true, especialidadesPorAutor(proyectoId));
+        // Un aporte recién creado todavía no tiene confirmaciones (3.3)
+        return convertirRespuesta(guardado, true, especialidadesPorAutor(proyectoId), List.of());
     }
 
     // LISTAR APORTES
@@ -193,8 +197,13 @@ public class AporteService {
                 );
         }
 
+        // 3.3: las confirmaciones de todos los aportes del listado, en una sola búsqueda
+        Map<UUID, List<ConfirmacionAporteService.Confirmante>> confirmantes =
+                confirmacionAporteService.confirmantesPorAporte(aportes.stream().map(Aporte::getId).toList());
+
         return aportes.stream()
-                .map(aporte -> convertirRespuesta(aporte, puedeCargar, especialidades))
+                .map(aporte -> convertirRespuesta(aporte, puedeCargar, especialidades,
+                        confirmantes.getOrDefault(aporte.getId(), List.of())))
                 .toList();
     }
 
@@ -260,7 +269,10 @@ public class AporteService {
         registroAccionService.registrar(
                 usuarioActual.obtenerId(), proyectoId, AccionRegistro.EDITAR, guardado.getTipo().name());
 
-        return convertirRespuesta(guardado, true, especialidadesPorAutor(proyectoId));
+        // Editar no borra las confirmaciones: se devuelven las que ya tenía (3.3)
+        return convertirRespuesta(guardado, true, especialidadesPorAutor(proyectoId),
+                confirmacionAporteService.confirmantesPorAporte(List.of(guardado.getId()))
+                        .getOrDefault(guardado.getId(), List.of()));
     }
 
     // OBTENER APORTE PARA EDITAR
@@ -364,7 +376,8 @@ public class AporteService {
     private AporteResponse convertirRespuesta(
             Aporte aporte,
             boolean puedeCargar,
-            Map<UUID, List<EspecialidadItemResponse>> especialidades) {
+            Map<UUID, List<EspecialidadItemResponse>> especialidades,
+            List<ConfirmacionAporteService.Confirmante> confirmantes) {
 
         boolean esAutor = aporte.getAutor().getId()
                 .equals(usuarioActual.obtenerId());
@@ -397,7 +410,10 @@ public class AporteService {
                 puedeCargar && esAutor,
                 archivoIds,
                 archivos,
-                especialidades.getOrDefault(aporte.getAutor().getId(), List.of())
+                especialidades.getOrDefault(aporte.getAutor().getId(), List.of()),
+                confirmantes.size(),
+                confirmantes.stream().anyMatch(c -> c.usuarioId().equals(usuarioActual.obtenerId())),
+                confirmantes.stream().map(ConfirmacionAporteService.Confirmante::nombre).toList()
         );
     }
 
