@@ -32,7 +32,8 @@ final class FuenteFrontend {
     static String leer(String rutaRelativa) {
         Path archivo = RAIZ.resolve(rutaRelativa);
         try {
-            return Files.readString(archivo, StandardCharsets.UTF_8);
+            return Files.readString(archivo, StandardCharsets.UTF_8)
+        .replace("\r\n", "\n");
         } catch (IOException e) {
             throw new UncheckedIOException("No se pudo leer " + archivo, e);
         }
