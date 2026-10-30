@@ -12,6 +12,12 @@ function rutaBitacora(proyectoId) {
   return `/proyectos/${encodeURIComponent(proyectoId)}/bitacora`
 }
 
+function rutaResumen(proyectoId) {
+  if (!cliente.defaults.baseURL)
+    throw new Error('Falta configurar la conexión con TRAMA.')
+  return `/proyectos/${encodeURIComponent(proyectoId)}/resumen`
+}
+
 function traducirErrorAporte(error, accion = 'guardar') {
   if (error.response?.status === 403) {
     return new Error(
@@ -72,6 +78,24 @@ export async function listarAportes(proyectoId, signalOrOpciones) {
     throw new Error('No pudimos verificar los aportes del perfil.')
   }
   return { aportes: data }
+}
+
+export async function obtenerResumenProyecto(proyectoId, signal) {
+  const { data } = await cliente.get(
+    rutaResumen(proyectoId),
+    ...(signal ? [{ signal }] : []),
+  )
+  if (!data || typeof data !== 'object' || Array.isArray(data)) {
+    throw new Error('No pudimos verificar el resumen del perfil.')
+  }
+  return {
+    intereses: Array.isArray(data.intereses) ? data.intereses : [],
+    fortalezas: Array.isArray(data.fortalezas) ? data.fortalezas : [],
+    comunicacion: Array.isArray(data.comunicacion) ? data.comunicacion : [],
+    sensorial: Array.isArray(data.sensorial) ? data.sensorial : [],
+    estrategias: Array.isArray(data.estrategias) ? data.estrategias : [],
+    desregulacion: Array.isArray(data.desregulacion) ? data.desregulacion : [],
+  }
 }
 
 export async function listarBitacora(proyectoId, signalOrOpciones) {

@@ -1,6 +1,7 @@
 package com.trama.tpo.demo.aporte;
 
 import com.trama.tpo.demo.config.CifradoConverter;
+import com.trama.tpo.demo.entity.archivo.Archivo;
 import com.trama.tpo.demo.entity.proyecto.Proyecto;
 import com.trama.tpo.demo.entity.usuario.Usuario;
 
@@ -13,6 +14,8 @@ import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
 
 import java.time.Instant;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 @Entity
@@ -63,6 +66,15 @@ public class Aporte {
     @Builder.Default
     @Column(name = "archivado", nullable = false)
     private Boolean archivado = false;
+
+    @Builder.Default
+    @ManyToMany(fetch = FetchType.LAZY)
+    @JoinTable(
+            name = "aporte_archivo",
+            joinColumns = @JoinColumn(name = "aporte_id"),
+            inverseJoinColumns = @JoinColumn(name = "archivo_id")
+    )
+    private List<Archivo> archivos = new ArrayList<>();
 
     @CreationTimestamp
     @Column(name = "creado_en", nullable = false, updatable = false)

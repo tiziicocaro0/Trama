@@ -1,4 +1,3 @@
-
 package com.trama.tpo.demo.service;
 
 import java.net.URI;
@@ -18,10 +17,13 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.trama.tpo.demo.entity.dto.InvitacionDetalleResponse;
 import com.trama.tpo.demo.entity.dto.InvitacionRequest;
 import com.trama.tpo.demo.entity.dto.InvitacionResponse;
+import com.trama.tpo.demo.entity.dto.MiembroResponse;
 import com.trama.tpo.demo.entity.invitacion.EstadoInvitacion;
 import com.trama.tpo.demo.entity.invitacion.Invitacion;
+import com.trama.tpo.demo.entity.membresia.Membresia;
 import com.trama.tpo.demo.entity.membresia.Rol;
 import com.trama.tpo.demo.entity.proyecto.Proyecto;
 import com.trama.tpo.demo.entity.usuario.Usuario;
@@ -30,9 +32,6 @@ import com.trama.tpo.demo.repository.InvitacionRepository;
 import com.trama.tpo.demo.repository.MembresiaRepository;
 import com.trama.tpo.demo.repository.ProyectoRepository;
 import com.trama.tpo.demo.repository.UsuarioRepository;
-import com.trama.tpo.demo.entity.dto.InvitacionDetalleResponse;
-import com.trama.tpo.demo.entity.membresia.Membresia;
-import com.trama.tpo.demo.entity.dto.MiembroResponse;
 
 @Service
 public class InvitacionService {
@@ -67,7 +66,8 @@ public class InvitacionService {
         this.emailService = emailService;
         this.urlBaseInvitacion = urlBaseInvitacion;
     }
-     // 1.4 - Consultar una invitacion mediante su token.
+
+    // 1.4 - Consultar una invitacion mediante su token.
     @Transactional(readOnly = true)
     public InvitacionDetalleResponse consultarInvitacion(String token) {
 
@@ -99,6 +99,7 @@ public class InvitacionService {
     }
 
     // Aceptar una invitacion y crear la membresia.
+    // La especialidad se configura despues con PUT /miembros/me/especialidades.
     @Transactional
     public MiembroResponse aceptarInvitacion(String token) {
 
@@ -160,11 +161,12 @@ public class InvitacionService {
         }
 
         // 6. Crear la membresia con el rol indicado en la invitacion.
+        // 1.6: Si la invitacion es para rol TUTOR (co-tutor), queda con esAdmin = true.
         Membresia membresia = Membresia.builder()
                 .usuario(usuario)
                 .proyecto(invitacion.getProyecto())
                 .rol(invitacion.getRol())
-                .esAdmin(false)
+                .esAdmin(invitacion.getRol() == Rol.TUTOR)
                 .build();
 
         membresia = membresiaRepository.saveAndFlush(membresia);
@@ -176,6 +178,7 @@ public class InvitacionService {
         // 8. Devolver los datos de la nueva membresia.
         return MiembroResponse.from(membresia);
     }
+
     @Transactional
     public InvitacionResponse crearInvitacion(
             UUID proyectoId,
@@ -184,13 +187,13 @@ public class InvitacionService {
         // 1. Solo un tutor administrador puede invitar miembros.
         permisoService.verificarAdmin(proyectoId);
 
-        // 2. Validar el rol solicitado.
+        // 2. Validar el rol solicitado (incluye TUTOR para co-tutor en 1.6).
         Rol rol = request.getRol();
 
-        if (rol == null || rol == Rol.TUTOR) {
+        if (rol == null) {
             throw new ApiException(
                     "ROL_INVALIDO",
-                    "Solo se puede invitar con los roles FAMILIAR, EDUCACION o SALUD",
+                    "El rol es obligatorio",
                     HttpStatus.BAD_REQUEST
             );
         }

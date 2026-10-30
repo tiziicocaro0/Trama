@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { calcularEdad, seccionesPerfil } from './perfil.js'
+import { calcularEdad, leerDatosAporte, seccionesPerfil } from './perfil.js'
 import { obtenerAportesEjemplo } from './perfil.mock.js'
 
 describe('Edad por fecha de calendario', () => {
@@ -47,5 +47,17 @@ describe('Secciones y ejemplos del perfil', () => {
     aportes[0].titulo = 'Modificado'
     expect(obtenerAportesEjemplo('FORTALEZA')[0].titulo).toBe('Creatividad')
     expect(obtenerAportesEjemplo('SENSORIAL')).toEqual([])
+  })
+})
+
+describe('Datos propios de un aporte', () => {
+  it('lee el JSON de datos de un aporte', () => {
+    expect(leerDatosAporte('{"intensidad":"ALTA"}')).toEqual({ intensidad: 'ALTA' })
+  })
+
+  it('devuelve un objeto vacío si falta, es inválido o no es un objeto', () => {
+    expect(leerDatosAporte(null)).toEqual({})
+    expect(leerDatosAporte('no es json')).toEqual({})
+    expect(leerDatosAporte('[1, 2]')).toEqual({})
   })
 })

@@ -1,5 +1,22 @@
-import { Lock } from '@phosphor-icons/react'
-import { formatearFechaHora } from '../../utils/fechas.js'
+import { FileImage, FilePdf, Lock } from '@phosphor-icons/react'
+import {
+  descargarArchivo,
+  obtenerUrlDescargaArchivo,
+} from '../../api/archivos.js'
+import { formatearFechaCalendario, formatearFechaHora } from '../../utils/fechas.js'
+import { etiquetaEspecialidad } from '../../features/perfil/especialidades.js'
+import { leerDatosAporte, TIPOS_NOTA } from '../../features/perfil/perfil.js'
+
+const ETIQUETAS_TIPO_NOTA = Object.fromEntries(TIPOS_NOTA)
+
+// 4.2: especialidades que declaró el autor en el proyecto, para mostrarlas a su lado
+function obtenerEspecialidades(aporte) {
+  if (!Array.isArray(aporte?.autorEspecialidades)) return null
+  const nombres = aporte.autorEspecialidades
+    .map((item) => etiquetaEspecialidad(item?.especialidad))
+    .filter(Boolean)
+  return nombres.length ? nombres.join(', ') : null
+}
 
 function obtenerAutor(aporte, autorProp) {
   if (typeof autorProp === 'string' && autorProp.trim()) return autorProp.trim()
@@ -18,6 +35,12 @@ function obtenerAutor(aporte, autorProp) {
       .trim()
   }
   return null
+}
+
+function esArchivoPdf(archivo) {
+  const mime = (archivo?.tipoMime ?? '').toLowerCase()
+  const nombre = (archivo?.nombreOriginal ?? '').toLowerCase()
+  return mime === 'application/pdf' || nombre.endsWith('.pdf')
 }
 
 export default function TarjetaAporte({
@@ -39,12 +62,31 @@ export default function TarjetaAporte({
       ? formatearFechaHora(aporte.actualizadoEn)
       : null
   const nombreAutor = obtenerAutor(aporte, autor)
+  const especialidades = obtenerEspecialidades(aporte)
+  const datosNota = esNota ? leerDatosAporte(aporte.datos) : {}
+  const tipoNota = ETIQUETAS_TIPO_NOTA[datosNota.tipoNota] ?? null
+  const fechaNota = formatearFechaCalendario(datosNota.fecha)
 
   // 3.1: Identificar aportes con visibilidad restringida
   const esRestringido =
     aporte.visibilidad != null && aporte.visibilidad !== 'TODOS'
 
   const sustantivo = esNota ? 'nota' : 'aporte'
+  const adjuntos = Array.isArray(aporte.archivos) ? aporte.archivos : []
+
+  async function manejarClickAdjunto(evento, archivo) {
+    if (!aporte.proyectoId) return
+    evento.preventDefault()
+    try {
+      await descargarArchivo(
+        aporte.proyectoId,
+        archivo.id,
+        archivo.nombreOriginal,
+      )
+    } catch {
+      // Si falla la descarga programática, no interrumpe la vista
+    }
+  }
 
   // Editar y archivar: solo el autor. Ver historial (3.2): cualquier miembro que ve el aporte
   const puedeModificar = aporte.puedeEditar && (alEditar || alArchivar)
@@ -79,9 +121,50 @@ export default function TarjetaAporte({
           </p>
         )}
 
+        {adjuntos.length > 0 && (
+          <ul
+            className="mt-2 flex flex-wrap gap-2"
+            aria-label="Archivos adjuntos"
+          >
+            {adjuntos.map((archivo) => {
+              const esPdf = esArchivoPdf(archivo)
+              const Icono = esPdf ? FilePdf : FileImage
+              const etiquetaTipo = esPdf ? 'PDF' : 'Imagen'
+              const nombre = archivo.nombreOriginal || 'Archivo adjunto'
+              return (
+                <li key={archivo.id}>
+                  <a
+                    href={obtenerUrlDescargaArchivo(
+                      aporte.proyectoId,
+                      archivo.id,
+                    )}
+                    download={nombre}
+                    onClick={(evento) => manejarClickAdjunto(evento, archivo)}
+                    className="inline-flex items-center gap-2 rounded-sm border border-borde bg-superficie px-3 py-1.5 text-sm font-semibold text-primario hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primario"
+                  >
+                    <Icono
+                      size={18}
+                      role="img"
+                      aria-label={`Ícono ${etiquetaTipo}`}
+                      className="shrink-0 text-primario"
+                    />
+                    <span>{nombre}</span>
+                  </a>
+                </li>
+              )
+            })}
+          </ul>
+        )}
+
         {(nombreAutor || (!esNota && fechaCreacion)) && (
           <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-texto-suave">
-            {nombreAutor && <span>{`Cargado por: ${nombreAutor}`}</span>}
+            {nombreAutor && (
+              <span>
+                {especialidades
+                  ? `Cargado por: ${nombreAutor} · ${especialidades}`
+                  : `Cargado por: ${nombreAutor}`}
+              </span>
+            )}
             {!esNota && fechaCreacion && (
               <time dateTime={fechaBase}>{fechaCreacion}</time>
             )}
@@ -90,6 +173,13 @@ export default function TarjetaAporte({
 
         {esNota && (
           <div className="mt-3 space-y-1 text-sm text-texto-suave">
+            {(tipoNota || fechaNota) && (
+              <p className="font-semibold text-secundario">
+                {[tipoNota, fechaNota && `Fecha: ${fechaNota}`]
+                  .filter(Boolean)
+                  .join(' · ')}
+              </p>
+            )}
             <p>
               Creada:{' '}
               {fechaCreacion ? (

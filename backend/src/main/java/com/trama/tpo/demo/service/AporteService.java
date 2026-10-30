@@ -4,24 +4,33 @@ import com.trama.tpo.demo.aporte.Aporte;
 import com.trama.tpo.demo.aporte.AporteVersion;
 import com.trama.tpo.demo.aporte.TipoAporte;
 import com.trama.tpo.demo.aporte.Visibilidad;
+import com.trama.tpo.demo.entity.archivo.Archivo;
 import com.trama.tpo.demo.entity.dto.AporteRequest;
 import com.trama.tpo.demo.entity.dto.AporteResponse;
+import com.trama.tpo.demo.entity.dto.ArchivoResponse;
+import com.trama.tpo.demo.entity.dto.MiembroResponse;
+import com.trama.tpo.demo.entity.dto.MiembroResponse.EspecialidadItemResponse;
 import com.trama.tpo.demo.entity.membresia.Rol;
 import com.trama.tpo.demo.entity.proyecto.Proyecto;
 import com.trama.tpo.demo.entity.usuario.Usuario;
 import com.trama.tpo.demo.exceptions.ApiException;
 import com.trama.tpo.demo.repository.AporteRepository;
 import com.trama.tpo.demo.repository.AporteVersionRepository;
+import com.trama.tpo.demo.repository.ArchivoRepository;
 import com.trama.tpo.demo.repository.MembresiaRepository;
 import com.trama.tpo.demo.repository.ProyectoRepository;
 import com.trama.tpo.demo.repository.UsuarioRepository;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.trama.tpo.demo.aporte.observacion.DatosObservacion;
+import java.util.ArrayList;
 import java.util.Objects;
 import java.util.Comparator;
 import com.trama.tpo.demo.aporte.interes.DatosInteres;
 import com.trama.tpo.demo.aporte.fortaleza.DatosFortaleza;
+import com.trama.tpo.demo.aporte.nota.DatosNota;
+import java.util.Map;
+import java.util.stream.Collectors;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
@@ -40,6 +49,9 @@ public class AporteService {
     private final MembresiaRepository membresiaRepository;
     private final PermisoService permisoService;
     private final UsuarioActual usuarioActual;
+    private final ArchivoRepository archivoRepository;
+    // Lee el JSON "datos" de cada tipo de aporte (fechas incluidas).
+    private final ObjectMapper mapper = new ObjectMapper().findAndRegisterModules();
 
     public AporteService(
             AporteRepository aporteRepository,
@@ -48,7 +60,8 @@ public class AporteService {
             UsuarioRepository usuarioRepository,
             MembresiaRepository membresiaRepository,
             PermisoService permisoService,
-            UsuarioActual usuarioActual) {
+            UsuarioActual usuarioActual,
+            ArchivoRepository archivoRepository) {
 
         this.aporteRepository = aporteRepository;
         this.aporteVersionRepository = aporteVersionRepository;
@@ -57,6 +70,7 @@ public class AporteService {
         this.membresiaRepository = membresiaRepository;
         this.permisoService = permisoService;
         this.usuarioActual = usuarioActual;
+        this.archivoRepository = archivoRepository;
     }
 
     // CREAR APORTE
@@ -65,9 +79,14 @@ public class AporteService {
 
         permisoService.verificarMiembro(proyectoId);
         permisoService.verificarPuedeEditar(proyectoId);
+        // 4.2: las notas profesionales solo las cargan educación y salud
+        if (request.tipo() == TipoAporte.NOTA_PROFESIONAL) {
+            permisoService.verificarPuedeCargarNotas(proyectoId);
+        }
         validarInteres(request);
         validarFortaleza(request);
         validarObservacion(request);
+        validarNota(request);
 
         UUID usuarioId = usuarioActual.obtenerId();
 
@@ -85,6 +104,8 @@ public class AporteService {
                         HttpStatus.NOT_FOUND
                 ));
 
+        List<Archivo> archivosAdjuntos = resolverArchivos(proyectoId, request.archivoIds());
+
         Aporte aporte = Aporte.builder()
                 .proyecto(proyecto)
                 .autor(autor)
@@ -94,11 +115,13 @@ public class AporteService {
                 .datos(request.datos())
                 .visibilidad(request.visibilidad() != null
                         ? request.visibilidad()
-                        : obtenerVisibilidadPorDefecto(request.tipo()))
+                        : obtenerVisibilidadPorDefecto(request.tipo(), proyectoId, usuarioId))
                 .archivado(false)
+                .archivos(archivosAdjuntos)
                 .build();
 
-        return convertirRespuesta(aporteRepository.saveAndFlush(aporte), true);
+        return convertirRespuesta(
+                aporteRepository.saveAndFlush(aporte), true, especialidadesPorAutor(proyectoId));
     }
 
     // LISTAR APORTES
@@ -122,7 +145,7 @@ public class AporteService {
 
         // Determinar qué aportes puede ver el usuario según su rol
         List<Visibilidad> visibilidadesPermitidas =
-                obtenerVisibilidadesPermitidas(rol);
+                PermisoService.visibilidadesPermitidas(rol);
 
         // Filtrar directamente desde la base de datos
         List<Aporte> aportes = aporteRepository.buscarAportesVisibles(
@@ -134,11 +157,10 @@ public class AporteService {
 
         // Se calcula una sola vez: si el usuario puede cargar en este proyecto
         boolean puedeCargar = permisoService.puedeEditar(proyectoId);
+        Map<UUID, List<EspecialidadItemResponse>> especialidades =
+                especialidadesPorAutor(proyectoId);
 
         if (tipo == TipoAporte.OBSERVACION) {
-                ObjectMapper mapper = new ObjectMapper();
-                mapper.findAndRegisterModules();
-
                 aportes.sort(
                         Comparator.comparing(
                                 (Aporte aporte) -> {
@@ -160,11 +182,11 @@ public class AporteService {
                                 }
                         ).reversed()
                 );
-                }
+        }
 
-                return aportes.stream()
-                        .map(aporte -> convertirRespuesta(aporte, puedeCargar))
-                        .toList();
+        return aportes.stream()
+                .map(aporte -> convertirRespuesta(aporte, puedeCargar, especialidades))
+                .toList();
     }
 
     // EDITAR APORTE
@@ -185,17 +207,18 @@ public class AporteService {
         }
         // No permitir cambiar el tipo de aporte
         if (aporte.getTipo() != request.tipo()) {
-        throw new ApiException(
-                "TIPO_APORTE_INVALIDO",
-                "No se puede cambiar el tipo de un aporte",
-                HttpStatus.BAD_REQUEST
-        );
+            throw new ApiException(
+                    "TIPO_APORTE_INVALIDO",
+                    "No se puede cambiar el tipo de un aporte",
+                    HttpStatus.BAD_REQUEST
+            );
         }
 
         // Validar los datos específicos del aporte
         validarInteres(request);
         validarFortaleza(request);
         validarObservacion(request);
+        validarNota(request);
 
         // Guardar la versión anterior antes de editar
         AporteVersion version = AporteVersion.builder()
@@ -215,10 +238,15 @@ public class AporteService {
         aporte.setDatos(request.datos());
 
         if (request.visibilidad() != null) {
-                aporte.setVisibilidad(request.visibilidad());
+            aporte.setVisibilidad(request.visibilidad());
         }
 
-        return convertirRespuesta(aporteRepository.saveAndFlush(aporte), true);
+        if (request.archivoIds() != null) {
+            aporte.setArchivos(resolverArchivos(proyectoId, request.archivoIds()));
+        }
+
+        return convertirRespuesta(
+                aporteRepository.saveAndFlush(aporte), true, especialidadesPorAutor(proyectoId));
     }
 
     // OBTENER APORTE PARA EDITAR
@@ -259,53 +287,87 @@ public class AporteService {
         aporteRepository.save(aporte);
     }
 
+    private List<Archivo> resolverArchivos(UUID proyectoId, List<UUID> archivoIds) {
+        if (archivoIds == null || archivoIds.isEmpty()) {
+            return new ArrayList<>();
+        }
+
+        List<Archivo> archivos = new ArrayList<>();
+        for (UUID archivoId : archivoIds) {
+            if (archivoId == null) {
+                throw new ApiException(
+                        "ARCHIVO_INVALIDO",
+                        "El identificador del archivo no es válido",
+                        HttpStatus.BAD_REQUEST
+                );
+            }
+            Archivo archivo = archivoRepository
+                    .findByIdAndProyectoId(archivoId, proyectoId)
+                    .orElseThrow(() -> new ApiException(
+                            "ARCHIVO_INVALIDO",
+                            "El archivo adjunto no pertenece a este proyecto o no existe",
+                            HttpStatus.BAD_REQUEST
+                    ));
+            archivos.add(archivo);
+        }
+        return archivos;
+    }
+
     // VISIBILIDAD PREDETERMINADA SEGÚN EL TIPO
-    private Visibilidad obtenerVisibilidadPorDefecto(TipoAporte tipo) {
+    // Una nota queda visible para el área de quien la escribe (y los tutores, que ven todo).
+    private Visibilidad obtenerVisibilidadPorDefecto(
+            TipoAporte tipo,
+            UUID proyectoId,
+            UUID autorId) {
 
-        return switch (tipo) {
-            case NOTA_PROFESIONAL -> Visibilidad.SOLO_SALUD;
-            default -> Visibilidad.TODOS;
-        };
+        if (tipo != TipoAporte.NOTA_PROFESIONAL) {
+            return Visibilidad.TODOS;
+        }
+
+        return membresiaRepository.findRol(autorId, proyectoId)
+                .filter(rol -> rol == Rol.EDUCACION)
+                .map(rol -> Visibilidad.SOLO_EDUCACION)
+                .orElse(Visibilidad.SOLO_SALUD);
     }
 
-    // DETERMINAR VISIBILIDADES PERMITIDAS SEGÚN EL ROL
-    private List<Visibilidad> obtenerVisibilidadesPermitidas(Rol rol) {
+    // 4.2: especialidades de cada miembro del proyecto, para mostrarlas junto al autor
+    private Map<UUID, List<EspecialidadItemResponse>> especialidadesPorAutor(UUID proyectoId) {
 
-        return switch (rol) {
-
-            case TUTOR -> List.of(
-                    Visibilidad.TODOS,
-                    Visibilidad.SOLO_TUTORES,
-                    Visibilidad.SOLO_SALUD,
-                    Visibilidad.SOLO_EDUCACION
-            );
-
-            case SALUD -> List.of(
-                    Visibilidad.TODOS,
-                    Visibilidad.SOLO_SALUD
-            );
-
-            case EDUCACION -> List.of(
-                    Visibilidad.TODOS,
-                    Visibilidad.SOLO_EDUCACION
-            );
-
-            default -> List.of(
-                    Visibilidad.TODOS
-            );
-        };
+        return membresiaRepository.findByProyectoId(proyectoId).stream()
+                .filter(m -> m.getUsuario() != null)
+                .collect(Collectors.toMap(
+                        m -> m.getUsuario().getId(),
+                        MiembroResponse::especialidadesDe,
+                        (primera, segunda) -> primera));
     }
+
 
     // CONVERTIR ENTIDAD A DTO
-    private AporteResponse convertirRespuesta(Aporte aporte, boolean puedeCargar) {
+    private AporteResponse convertirRespuesta(
+            Aporte aporte,
+            boolean puedeCargar,
+            Map<UUID, List<EspecialidadItemResponse>> especialidades) {
 
         boolean esAutor = aporte.getAutor().getId()
                 .equals(usuarioActual.obtenerId());
+
+        List<Archivo> listaArchivos = aporte.getArchivos() != null
+                ? aporte.getArchivos()
+                : List.of();
+
+        List<UUID> archivoIds = listaArchivos.stream()
+                .map(Archivo::getId)
+                .toList();
+
+        List<ArchivoResponse> archivos = listaArchivos.stream()
+                .map(ArchivoResponse::from)
+                .toList();
 
         return new AporteResponse(
                 aporte.getId(),
                 aporte.getProyecto().getId(),
                 aporte.getAutor().getId(),
+                nombreCompleto(aporte.getAutor()),
                 aporte.getTipo(),
                 aporte.getTitulo(),
                 aporte.getContenido(),
@@ -314,9 +376,46 @@ public class AporteService {
                 aporte.getArchivado(),
                 aporte.getCreadoEn(),
                 aporte.getActualizadoEn(),
-                puedeCargar && esAutor
+                puedeCargar && esAutor,
+                archivoIds,
+                archivos,
+                especialidades.getOrDefault(aporte.getAutor().getId(), List.of())
         );
     }
+
+    private static String nombreCompleto(Usuario usuario) {
+        return (usuario.getNombre() + " " + usuario.getApellido()).trim();
+    }
+
+    // 4.2: una nota profesional necesita su tipo y su fecha dentro de "datos"
+    private void validarNota(AporteRequest request) {
+
+        if (request.tipo() != TipoAporte.NOTA_PROFESIONAL) {
+            return;
+        }
+
+        try {
+            DatosNota datos = request.datos() == null || request.datos().isBlank()
+                    ? null
+                    : mapper.readValue(request.datos(), DatosNota.class);
+
+            if (datos == null || datos.tipoNota() == null || datos.fecha() == null) {
+                throw new ApiException(
+                        "DATOS_NOTA_INVALIDOS",
+                        "El tipo de nota y la fecha son obligatorios",
+                        HttpStatus.BAD_REQUEST
+                );
+            }
+
+        } catch (JsonProcessingException e) {
+            throw new ApiException(
+                    "DATOS_NOTA_INVALIDOS",
+                    "Los datos de la nota no son válidos",
+                    HttpStatus.BAD_REQUEST
+            );
+        }
+    }
+
     private void validarInteres(AporteRequest request) {
 
         if (request.tipo() != TipoAporte.INTERES) {
@@ -332,8 +431,6 @@ public class AporteService {
         }
 
         try {
-                ObjectMapper mapper = new ObjectMapper();
-
                 DatosInteres datos = mapper.readValue(
                         request.datos(),
                         DatosInteres.class
@@ -357,9 +454,9 @@ public class AporteService {
                         HttpStatus.BAD_REQUEST
                 );
         }
-        }
+    }
 
-        private void validarFortaleza(AporteRequest request) {
+    private void validarFortaleza(AporteRequest request) {
 
         if (request.tipo() != TipoAporte.FORTALEZA) {
                 return;
@@ -386,8 +483,6 @@ public class AporteService {
         }
 
         try {
-                ObjectMapper mapper = new ObjectMapper();
-
                 DatosFortaleza datos = mapper.readValue(
                         request.datos(),
                         DatosFortaleza.class
@@ -409,59 +504,57 @@ public class AporteService {
                         HttpStatus.BAD_REQUEST
                 );
         }
+    }
+
+    private void validarObservacion(AporteRequest request) {
+
+        if (request.tipo() != TipoAporte.OBSERVACION) {
+                return;
         }
-        private void validarObservacion(AporteRequest request) {
 
-                if (request.tipo() != TipoAporte.OBSERVACION) {
-                        return;
+        if (request.contenido() == null ||
+                request.contenido().isBlank()) {
+                throw new ApiException(
+                        "OBSERVACION_INVALIDA",
+                        "El texto de la observación es obligatorio",
+                        HttpStatus.BAD_REQUEST
+                );
+        }
+
+        if (request.datos() == null ||
+                request.datos().isBlank()) {
+                throw new ApiException(
+                        "DATOS_OBSERVACION_INVALIDOS",
+                        "La fecha, el contexto y las etiquetas son obligatorios",
+                        HttpStatus.BAD_REQUEST
+                );
+        }
+
+        try {
+                DatosObservacion datos = mapper.readValue(
+                        request.datos(),
+                        DatosObservacion.class
+                );
+
+                if (datos.fecha() == null ||
+                        datos.contexto() == null ||
+                        datos.etiquetas() == null ||
+                        datos.etiquetas().isEmpty() ||
+                        datos.etiquetas().stream().anyMatch(Objects::isNull)) {
+
+                throw new ApiException(
+                        "DATOS_OBSERVACION_INVALIDOS",
+                        "La fecha, el contexto y al menos una etiqueta son obligatorios",
+                        HttpStatus.BAD_REQUEST
+                );
                 }
 
-                if (request.contenido() == null ||
-                        request.contenido().isBlank()) {
-                        throw new ApiException(
-                                "OBSERVACION_INVALIDA",
-                                "El texto de la observación es obligatorio",
-                                HttpStatus.BAD_REQUEST
-                        );
-                }
-
-                if (request.datos() == null ||
-                        request.datos().isBlank()) {
-                        throw new ApiException(
-                                "DATOS_OBSERVACION_INVALIDOS",
-                                "La fecha, el contexto y las etiquetas son obligatorios",
-                                HttpStatus.BAD_REQUEST
-                        );
-                }
-
-                try {
-                        ObjectMapper mapper = new ObjectMapper();
-                        mapper.findAndRegisterModules();
-
-                        DatosObservacion datos = mapper.readValue(
-                                request.datos(),
-                                DatosObservacion.class
-                        );
-
-                        if (datos.fecha() == null ||
-                                datos.contexto() == null ||
-                                datos.etiquetas() == null ||
-                                datos.etiquetas().isEmpty() ||
-                                datos.etiquetas().stream().anyMatch(Objects::isNull)) {
-
-                        throw new ApiException(
-                                "DATOS_OBSERVACION_INVALIDOS",
-                                "La fecha, el contexto y al menos una etiqueta son obligatorios",
-                                HttpStatus.BAD_REQUEST
-                        );
-                        }
-
-                } catch (JsonProcessingException e) {
-                        throw new ApiException(
-                                "DATOS_OBSERVACION_INVALIDOS",
-                                "Los datos de la observación no son válidos",
-                                HttpStatus.BAD_REQUEST
-                        );
-                }
-                }
+        } catch (JsonProcessingException e) {
+                throw new ApiException(
+                        "DATOS_OBSERVACION_INVALIDOS",
+                        "Los datos de la observación no son válidos",
+                        HttpStatus.BAD_REQUEST
+                );
+        }
+    }
 }

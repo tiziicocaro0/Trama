@@ -20,7 +20,7 @@ import java.util.UUID;
 @Service
 public class BitacoraService {
 
-    private static final int TAMANIO_PAGINA = 20;
+    public static final int TAMANIO_PAGINA = 20;
 
     private final AporteService aporteService;
     private final ObjectMapper mapper;

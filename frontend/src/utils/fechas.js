@@ -31,3 +31,10 @@ export function formatearFechaHora(valor, zonaHoraria) {
     ...(zonaHoraria ? { timeZone: zonaHoraria } : {}),
   }).format(fecha)
 }
+
+// Fecha de hoy en formato AAAA-MM-DD, en la zona horaria del navegador.
+export function hoyIso(hoy = new Date()) {
+  const mes = String(hoy.getMonth() + 1).padStart(2, '0')
+  const dia = String(hoy.getDate()).padStart(2, '0')
+  return `${hoy.getFullYear()}-${mes}-${dia}`
+}
