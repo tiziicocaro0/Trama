@@ -233,7 +233,9 @@ git config core.hooksPath .githooks
 
 #### Funcionamiento
 
-El hook mira qué cambió entre los commits que se suben y llama a `scripts/verificar-ci.sh`:
+Primero hace `git fetch origin develop` y revisa que la rama que se sube **contenga todo el develop actual**. Si le faltan commits, cancela el push y pide `git merge origin/develop`. Así los tests prueban la rama tal como va a quedar después del merge, y no contra un develop viejo. Con varios PR abiertos, cada vez que se mergea uno, los demás tienen que traer develop antes de volver a pushear. Los push directos a `develop` o `main` no pasan por este chequeo, y si no hay conexión solo se avisa.
+
+Después mira qué cambió entre los commits que se suben y llama a `scripts/verificar-ci.sh`:
 
 | Si cambia… | Se corre |
 | --- | --- |

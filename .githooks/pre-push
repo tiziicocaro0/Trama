@@ -10,6 +10,20 @@ zero=0000000000000000000000000000000000000000
 cambia_backend=0
 cambia_frontend=0
 cambian_dependencias=0
+desactualizadas=""
+
+# Traer el develop actual del remoto: los tests tienen que probar la rama
+# tal como quedaría al mergearse, no contra un develop viejo.
+# Sin conexión no se bloquea el push (el CI lo va a revisar igual).
+develop_al_dia=1
+if command -v timeout >/dev/null 2>&1; then
+    timeout 60 git fetch --quiet origin develop || develop_al_dia=0
+else
+    git fetch --quiet origin develop || develop_al_dia=0
+fi
+if [ "$develop_al_dia" -eq 0 ]; then
+    echo "Aviso: no se pudo traer origin/develop; se verifica contra la última copia local."
+fi
 
 # Revisar todas las referencias que se intentan subir.
 while read -r local_ref local_sha remote_ref remote_sha
@@ -18,6 +32,19 @@ do
     if [ "$local_sha" = "$zero" ]; then
         continue
     fi
+
+    # Una rama de trabajo tiene que incluir todo develop. Si no, sus tests
+    # no prueban lo que va a quedar después del merge.
+    case "$remote_ref" in
+        refs/heads/develop|refs/heads/main) ;;
+        *)
+            if ! git merge-base --is-ancestor origin/develop "$local_sha"; then
+                atrasados=$(git rev-list --count "$local_sha..origin/develop")
+                desactualizadas="$desactualizadas
+  - ${remote_ref#refs/heads/}: le faltan $atrasados commit(s) de develop"
+            fi
+            ;;
+    esac
 
     # Determinar los commits que se van a subir.
     if [ "$remote_sha" = "$zero" ]; then
@@ -45,6 +72,14 @@ do
         cambian_dependencias=1
     fi
 done
+
+if [ -n "$desactualizadas" ]; then
+    echo "Push cancelado: la rama no está al día con develop.$desactualizadas"
+    echo ""
+    echo "Traé develop, resolvé los conflictos si hay y volvé a pushear:"
+    echo "  git merge origin/develop"
+    exit 1
+fi
 
 if [ "$cambia_backend" -eq 0 ] && [ "$cambia_frontend" -eq 0 ]; then
     echo "No hay cambios de backend ni de frontend pendientes de push."
