@@ -3,7 +3,9 @@ package com.trama.tpo.demo.controllers;
 import com.trama.tpo.demo.aporte.TipoAporte;
 import com.trama.tpo.demo.entity.dto.AporteRequest;
 import com.trama.tpo.demo.entity.dto.AporteResponse;
+import com.trama.tpo.demo.entity.dto.AporteVersionResponse;
 import com.trama.tpo.demo.service.AporteService;
+import com.trama.tpo.demo.service.AporteVersionService;
 
 import jakarta.validation.Valid;
 
@@ -19,9 +21,14 @@ import java.util.UUID;
 public class AporteController {
 
     private final AporteService aporteService;
+    private final AporteVersionService aporteVersionService;
 
-    public AporteController(AporteService aporteService) {
+    public AporteController(
+            AporteService aporteService,
+            AporteVersionService aporteVersionService) {
+
         this.aporteService = aporteService;
+        this.aporteVersionService = aporteVersionService;
     }
 
     // CREAR APORTE
@@ -58,6 +65,17 @@ public class AporteController {
 
         return ResponseEntity.ok(
                 aporteService.editar(proyectoId, aporteId, request)
+        );
+    }
+
+    // HISTORIAL DE VERSIONES (3.2)
+    @GetMapping("/{aporteId}/versiones")
+    public ResponseEntity<List<AporteVersionResponse>> listarVersiones(
+            @PathVariable UUID proyectoId,
+            @PathVariable UUID aporteId) {
+
+        return ResponseEntity.ok(
+                aporteVersionService.listarVersiones(proyectoId, aporteId)
         );
     }
 
