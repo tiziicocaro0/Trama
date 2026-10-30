@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { formatearFechaCalendario, formatearFechaHora } from './fechas.js'
+import { formatearFechaCalendario, formatearFechaHora, hoyIso } from './fechas.js'
 
 describe('Fechas de calendario y notas', () => {
   it('muestra la fecha de nacimiento sin desplazarla por UTC', () => {
@@ -29,4 +29,10 @@ describe('Fechas de calendario y notas', () => {
       expect(formatearFechaHora(valor)).toBeNull()
     },
   )
+})
+
+describe('Fecha de hoy en AAAA-MM-DD', () => {
+  it('arma la fecha local con ceros a la izquierda', () => {
+    expect(hoyIso(new Date(2026, 0, 5))).toBe('2026-01-05')
+  })
 })

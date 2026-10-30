@@ -32,6 +32,7 @@ import com.trama.tpo.demo.repository.UsuarioRepository;
 import com.trama.tpo.demo.service.EmailService;
 import com.trama.tpo.demo.service.InvitacionService;
 import com.trama.tpo.demo.service.PermisoService;
+import com.trama.tpo.demo.service.RegistroAccionService;
 import com.trama.tpo.demo.service.UsuarioActual;
 
 @ExtendWith(MockitoExtension.class)
@@ -73,6 +74,7 @@ class InvitacionAceptacionServiceTest {
                 permisoService,
                 usuarioActual,
                 emailService,
+                mock(RegistroAccionService.class),
                 "https://trama.example/invitacion"
         );
     }

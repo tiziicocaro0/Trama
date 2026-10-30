@@ -24,7 +24,9 @@ public record AporteResponse(
         // true si el usuario actual es el autor y puede cargar en el proyecto
         Boolean puedeEditar,
         List<UUID> archivoIds,
-        List<ArchivoResponse> archivos
+        List<ArchivoResponse> archivos,
+        // 4.2: especialidades declaradas por el autor en este proyecto (vacía si no tiene)
+        List<MiembroResponse.EspecialidadItemResponse> autorEspecialidades
 ) {
 
     public AporteResponse(
@@ -54,6 +56,7 @@ public record AporteResponse(
                 creadoEn,
                 actualizadoEn,
                 puedeEditar,
+                List.of(),
                 List.of(),
                 List.of()
         );

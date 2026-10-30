@@ -14,6 +14,7 @@ import com.trama.tpo.demo.entity.membresia.Especialidad;
 import com.trama.tpo.demo.entity.membresia.Membresia;
 import com.trama.tpo.demo.entity.membresia.MembresiaEspecialidad;
 import com.trama.tpo.demo.entity.membresia.Rol;
+import com.trama.tpo.demo.entity.registro.AccionRegistro;
 import com.trama.tpo.demo.exceptions.ApiException;
 import com.trama.tpo.demo.repository.MembresiaRepository;
 
@@ -23,15 +24,18 @@ public class MiembroService {
     private final MembresiaRepository membresiaRepository;
     private final PermisoService permisoService;
     private final UsuarioActual usuarioActual;
+    private final RegistroAccionService registroAccionService;
 
     public MiembroService(
             MembresiaRepository membresiaRepository,
             PermisoService permisoService,
-            UsuarioActual usuarioActual) {
+            UsuarioActual usuarioActual,
+            RegistroAccionService registroAccionService) {
 
         this.membresiaRepository = membresiaRepository;
         this.permisoService = permisoService;
         this.usuarioActual = usuarioActual;
+        this.registroAccionService = registroAccionService;
     }
 
     // 1.3 - LISTAR LOS INTEGRANTES DE UN PROYECTO
@@ -172,6 +176,10 @@ public class MiembroService {
 
         // 4. Se borra la membresia; sus aportes quedan en el proyecto con su nombre.
         membresiaRepository.delete(objetivo);
+
+        // 0.2: auditoría
+        registroAccionService.registrar(
+                usuarioActual.obtenerId(), proyectoId, AccionRegistro.REVOCAR, "MIEMBROS");
     }
 
     // Busca un miembro del proyecto por id de membresia o por id de usuario.

@@ -8,8 +8,11 @@ import com.trama.tpo.demo.entity.archivo.Archivo;
 import com.trama.tpo.demo.entity.dto.AporteRequest;
 import com.trama.tpo.demo.entity.dto.AporteResponse;
 import com.trama.tpo.demo.entity.dto.ArchivoResponse;
+import com.trama.tpo.demo.entity.dto.MiembroResponse;
+import com.trama.tpo.demo.entity.dto.MiembroResponse.EspecialidadItemResponse;
 import com.trama.tpo.demo.entity.membresia.Rol;
 import com.trama.tpo.demo.entity.proyecto.Proyecto;
+import com.trama.tpo.demo.entity.registro.AccionRegistro;
 import com.trama.tpo.demo.entity.usuario.Usuario;
 import com.trama.tpo.demo.exceptions.ApiException;
 import com.trama.tpo.demo.repository.AporteRepository;
@@ -21,14 +24,14 @@ import com.trama.tpo.demo.repository.UsuarioRepository;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.trama.tpo.demo.aporte.observacion.DatosObservacion;
-import com.fasterxml.jackson.databind.JsonNode;
 import java.util.ArrayList;
 import java.util.Objects;
 import java.util.Comparator;
-import java.time.LocalDate;
-import java.time.format.DateTimeParseException;
 import com.trama.tpo.demo.aporte.interes.DatosInteres;
 import com.trama.tpo.demo.aporte.fortaleza.DatosFortaleza;
+import com.trama.tpo.demo.aporte.nota.DatosNota;
+import java.util.Map;
+import java.util.stream.Collectors;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
@@ -48,6 +51,7 @@ public class AporteService {
     private final PermisoService permisoService;
     private final UsuarioActual usuarioActual;
     private final ArchivoRepository archivoRepository;
+    private final RegistroAccionService registroAccionService;
     // Lee el JSON "datos" de cada tipo de aporte (fechas incluidas).
     private final ObjectMapper mapper = new ObjectMapper().findAndRegisterModules();
 
@@ -59,7 +63,8 @@ public class AporteService {
             MembresiaRepository membresiaRepository,
             PermisoService permisoService,
             UsuarioActual usuarioActual,
-            ArchivoRepository archivoRepository) {
+            ArchivoRepository archivoRepository,
+            RegistroAccionService registroAccionService) {
 
         this.aporteRepository = aporteRepository;
         this.aporteVersionRepository = aporteVersionRepository;
@@ -69,23 +74,23 @@ public class AporteService {
         this.permisoService = permisoService;
         this.usuarioActual = usuarioActual;
         this.archivoRepository = archivoRepository;
+        this.registroAccionService = registroAccionService;
     }
 
-  // CREAR APORTE
-        @Transactional
-        public AporteResponse crear(UUID proyectoId, AporteRequest request) {
+    // CREAR APORTE
+    @Transactional
+    public AporteResponse crear(UUID proyectoId, AporteRequest request) {
 
         permisoService.verificarMiembro(proyectoId);
         permisoService.verificarPuedeEditar(proyectoId);
-
+        // 4.2: las notas profesionales solo las cargan educación y salud
         if (request.tipo() == TipoAporte.NOTA_PROFESIONAL) {
-                permisoService.verificarPuedeCrearNotaProfesional(proyectoId);
+            permisoService.verificarPuedeCargarNotas(proyectoId);
         }
-
         validarInteres(request);
         validarFortaleza(request);
         validarObservacion(request);
-        validarNotaProfesional(request);
+        validarNota(request);
 
         UUID usuarioId = usuarioActual.obtenerId();
 
@@ -114,12 +119,18 @@ public class AporteService {
                 .datos(request.datos())
                 .visibilidad(request.visibilidad() != null
                         ? request.visibilidad()
-                        : obtenerVisibilidadPorDefecto(request.tipo()))
+                        : obtenerVisibilidadPorDefecto(request.tipo(), proyectoId, usuarioId))
                 .archivado(false)
                 .archivos(archivosAdjuntos)
                 .build();
 
-        return convertirRespuesta(aporteRepository.saveAndFlush(aporte), true);
+        Aporte guardado = aporteRepository.saveAndFlush(aporte);
+
+        // 0.2: auditoría (la sección es el tipo de aporte, nunca el contenido)
+        registroAccionService.registrar(
+                usuarioId, proyectoId, AccionRegistro.CREAR, guardado.getTipo().name());
+
+        return convertirRespuesta(guardado, true, especialidadesPorAutor(proyectoId));
     }
 
     // LISTAR APORTES
@@ -155,6 +166,8 @@ public class AporteService {
 
         // Se calcula una sola vez: si el usuario puede cargar en este proyecto
         boolean puedeCargar = permisoService.puedeEditar(proyectoId);
+        Map<UUID, List<EspecialidadItemResponse>> especialidades =
+                especialidadesPorAutor(proyectoId);
 
         if (tipo == TipoAporte.OBSERVACION) {
                 aportes.sort(
@@ -181,7 +194,7 @@ public class AporteService {
         }
 
         return aportes.stream()
-                .map(aporte -> convertirRespuesta(aporte, puedeCargar))
+                .map(aporte -> convertirRespuesta(aporte, puedeCargar, especialidades))
                 .toList();
     }
 
@@ -214,7 +227,7 @@ public class AporteService {
         validarInteres(request);
         validarFortaleza(request);
         validarObservacion(request);
-        validarNotaProfesional(request);
+        validarNota(request);
 
         // Guardar la versión anterior antes de editar
         AporteVersion version = AporteVersion.builder()
@@ -241,7 +254,13 @@ public class AporteService {
             aporte.setArchivos(resolverArchivos(proyectoId, request.archivoIds()));
         }
 
-        return convertirRespuesta(aporteRepository.saveAndFlush(aporte), true);
+        Aporte guardado = aporteRepository.saveAndFlush(aporte);
+
+        // 0.2: auditoría
+        registroAccionService.registrar(
+                usuarioActual.obtenerId(), proyectoId, AccionRegistro.EDITAR, guardado.getTipo().name());
+
+        return convertirRespuesta(guardado, true, especialidadesPorAutor(proyectoId));
     }
 
     // OBTENER APORTE PARA EDITAR
@@ -280,6 +299,10 @@ public class AporteService {
         aporte.setArchivado(true);
 
         aporteRepository.save(aporte);
+
+        // 0.2: auditoría
+        registroAccionService.registrar(
+                usuarioActual.obtenerId(), proyectoId, AccionRegistro.ARCHIVAR, aporte.getTipo().name());
     }
 
     private List<Archivo> resolverArchivos(UUID proyectoId, List<UUID> archivoIds) {
@@ -309,16 +332,39 @@ public class AporteService {
     }
 
     // VISIBILIDAD PREDETERMINADA SEGÚN EL TIPO
-    private Visibilidad obtenerVisibilidadPorDefecto(TipoAporte tipo) {
+    // Una nota queda visible para el área de quien la escribe (y los tutores, que ven todo).
+    private Visibilidad obtenerVisibilidadPorDefecto(
+            TipoAporte tipo,
+            UUID proyectoId,
+            UUID autorId) {
 
-        return switch (tipo) {
-            case NOTA_PROFESIONAL -> Visibilidad.SOLO_SALUD;
-            default -> Visibilidad.TODOS;
-        };
+        if (tipo != TipoAporte.NOTA_PROFESIONAL) {
+            return Visibilidad.TODOS;
+        }
+
+        return membresiaRepository.findRol(autorId, proyectoId)
+                .filter(rol -> rol == Rol.EDUCACION)
+                .map(rol -> Visibilidad.SOLO_EDUCACION)
+                .orElse(Visibilidad.SOLO_SALUD);
     }
 
+    // 4.2: especialidades de cada miembro del proyecto, para mostrarlas junto al autor
+    private Map<UUID, List<EspecialidadItemResponse>> especialidadesPorAutor(UUID proyectoId) {
+
+        return membresiaRepository.findByProyectoId(proyectoId).stream()
+                .filter(m -> m.getUsuario() != null)
+                .collect(Collectors.toMap(
+                        m -> m.getUsuario().getId(),
+                        MiembroResponse::especialidadesDe,
+                        (primera, segunda) -> primera));
+    }
+
+
     // CONVERTIR ENTIDAD A DTO
-    private AporteResponse convertirRespuesta(Aporte aporte, boolean puedeCargar) {
+    private AporteResponse convertirRespuesta(
+            Aporte aporte,
+            boolean puedeCargar,
+            Map<UUID, List<EspecialidadItemResponse>> especialidades) {
 
         boolean esAutor = aporte.getAutor().getId()
                 .equals(usuarioActual.obtenerId());
@@ -350,12 +396,42 @@ public class AporteService {
                 aporte.getActualizadoEn(),
                 puedeCargar && esAutor,
                 archivoIds,
-                archivos
+                archivos,
+                especialidades.getOrDefault(aporte.getAutor().getId(), List.of())
         );
     }
 
     private static String nombreCompleto(Usuario usuario) {
         return (usuario.getNombre() + " " + usuario.getApellido()).trim();
+    }
+
+    // 4.2: una nota profesional necesita su tipo y su fecha dentro de "datos"
+    private void validarNota(AporteRequest request) {
+
+        if (request.tipo() != TipoAporte.NOTA_PROFESIONAL) {
+            return;
+        }
+
+        try {
+            DatosNota datos = request.datos() == null || request.datos().isBlank()
+                    ? null
+                    : mapper.readValue(request.datos(), DatosNota.class);
+
+            if (datos == null || datos.tipoNota() == null || datos.fecha() == null) {
+                throw new ApiException(
+                        "DATOS_NOTA_INVALIDOS",
+                        "El tipo de nota y la fecha son obligatorios",
+                        HttpStatus.BAD_REQUEST
+                );
+            }
+
+        } catch (JsonProcessingException e) {
+            throw new ApiException(
+                    "DATOS_NOTA_INVALIDOS",
+                    "Los datos de la nota no son válidos",
+                    HttpStatus.BAD_REQUEST
+            );
+        }
     }
 
     private void validarInteres(AporteRequest request) {
@@ -497,51 +573,6 @@ public class AporteService {
                         "Los datos de la observación no son válidos",
                         HttpStatus.BAD_REQUEST
                 );
-        }
-    }
-     // VALIDAR DATOS DE UNA NOTA PROFESIONAL
-    private void validarNotaProfesional(AporteRequest request) {
-
-        if (request.tipo() != TipoAporte.NOTA_PROFESIONAL) {
-            return;
-        }
-
-        if (request.datos() == null || request.datos().isBlank()) {
-            throw new ApiException(
-                    "DATOS_NOTA_PROFESIONAL_INVALIDOS",
-                    "El tipo de nota y la fecha son obligatorios",
-                    HttpStatus.BAD_REQUEST
-            );
-        }
-
-        try {
-            JsonNode datos = mapper.readTree(request.datos());
-
-            JsonNode tipoNota = datos == null ? null : datos.get("tipoNota");
-            JsonNode fecha = datos == null ? null : datos.get("fecha");
-
-            if (datos == null || !datos.isObject()
-                    || tipoNota == null || !tipoNota.isTextual()
-                    || !(tipoNota.asText().equals("ORIENTACION")
-                        || tipoNota.asText().equals("OBSERVACION")
-                        || tipoNota.asText().equals("INFORME_BREVE"))
-                    || fecha == null || !fecha.isTextual()) {
-
-                throw new ApiException(
-                        "DATOS_NOTA_PROFESIONAL_INVALIDOS",
-                        "El tipo de nota o la fecha no son válidos",
-                        HttpStatus.BAD_REQUEST
-                );
-            }
-
-            LocalDate.parse(fecha.asText());
-
-        } catch (JsonProcessingException | DateTimeParseException e) {
-            throw new ApiException(
-                    "DATOS_NOTA_PROFESIONAL_INVALIDOS",
-                    "Los datos de la nota profesional no son válidos",
-                    HttpStatus.BAD_REQUEST
-            );
         }
     }
 }

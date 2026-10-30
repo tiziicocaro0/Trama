@@ -44,7 +44,6 @@ class AporteVisibilidadPorRolTest {
     private Usuario tutorAutor;
     private Usuario profesionalSalud;
     private Usuario profesionalEducacion;
-    private Usuario familiar;
     private Proyecto proyecto;
 
     @BeforeEach
@@ -52,7 +51,6 @@ class AporteVisibilidadPorRolTest {
         tutorAutor = crearUsuario("Autor");
         profesionalSalud = crearUsuario("Salud");
         profesionalEducacion = crearUsuario("Educacion");
-        familiar = crearUsuario("Familiar");
 
         proyecto = proyectoRepository.save(Proyecto.builder()
                 .nombre("Niño")
@@ -61,13 +59,11 @@ class AporteVisibilidadPorRolTest {
                 .escuela("Escuela de prueba")
                 .grado("3.º grado")
                 .consentimientoFecha(Instant.now())
-                .familiarPuedeCargar(true)
                 .build());
 
         crearMembresia(tutorAutor, Rol.TUTOR, true);
         crearMembresia(profesionalSalud, Rol.SALUD, false);
         crearMembresia(profesionalEducacion, Rol.EDUCACION, false);
-        crearMembresia(familiar, Rol.FAMILIAR, false);
     }
 
     @AfterEach
@@ -88,8 +84,8 @@ class AporteVisibilidadPorRolTest {
         proyectoRepository.delete(proyecto);
 
         usuarioRepository.deleteAll(List.of(
-        tutorAutor, profesionalSalud, profesionalEducacion, familiar));
-        }
+                tutorAutor, profesionalSalud, profesionalEducacion));
+    }
 
     // 1. VISIBILIDAD SEGÚN EL ROL
 
@@ -127,45 +123,26 @@ class AporteVisibilidadPorRolTest {
     // 2. NOTA PROFESIONAL: VISIBILIDAD POR DEFECTO
 
     @Test
-void notaProfesionalTieneVisibilidadSoloSaludPorDefecto()
-        throws Exception {
-
-    String request = """
-            {
-              "tipo": "NOTA_PROFESIONAL",
-              "titulo": "Nota de seguimiento",
-              "contenido": "Observación profesional",
-              "datos": "{\\"tipoNota\\":\\"OBSERVACION\\",\\"fecha\\":\\"2026-10-29\\"}"
-            }
-            """;
-
-    mockMvc.perform(post(rutaAportes())
-            .header("Authorization", token(profesionalSalud))
-            .contentType(MediaType.APPLICATION_JSON)
-            .content(request))
-            .andExpect(status().isCreated())
-            .andExpect(jsonPath("$.visibilidad")
-                    .value("SOLO_SALUD"));
-}
-
-        @Test
-        void familiarNoPuedeCrearNotaProfesional() throws Exception {
-
+    void notaProfesionalTieneVisibilidadSoloSaludPorDefecto()
+            throws Exception {
+        // 4.2: las notas las cargan profesionales; una de salud queda SOLO_SALUD por defecto
         String request = """
                 {
-                "tipo": "NOTA_PROFESIONAL",
-                "titulo": "Nota de seguimiento",
-                "contenido": "Observación profesional",
-                "datos": "{\\"tipoNota\\":\\"OBSERVACION\\",\\"fecha\\":\\"2026-10-29\\"}"
+                  "tipo": "NOTA_PROFESIONAL",
+                  "titulo": "Nota de seguimiento",
+                  "contenido": "Observación profesional",
+                  "datos": "{\\"tipoNota\\":\\"OBSERVACION\\",\\"fecha\\":\\"2026-10-29\\"}"
                 }
                 """;
 
         mockMvc.perform(post(rutaAportes())
-                .header("Authorization", token(familiar))
+                .header("Authorization", token(profesionalSalud))
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(request))
-                .andExpect(status().isForbidden());
-        }
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.visibilidad")
+                        .value("SOLO_SALUD"));
+    }
 
     // 3. APORTE COMÚN: VISIBILIDAD POR DEFECTO
 

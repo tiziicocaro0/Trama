@@ -37,18 +37,6 @@ public class PermisoService {
         obtenerMembresia(proyectoId);
     }
 
-     // Solo Salud y Educación pueden crear notas profesionales
-    public void verificarPuedeCrearNotaProfesional(UUID proyectoId) {
-
-        Rol rol = obtenerMembresia(proyectoId).getRol();
-
-        if (rol != Rol.SALUD && rol != Rol.EDUCACION) {
-            throw new AccessDeniedException(
-                    "Solo los profesionales de Salud o Educación pueden crear notas profesionales"
-            );
-        }
-    }
-
     // 2. VERIFICAR QUE ES TUTOR ADMINISTRADOR
     public void verificarAdmin(UUID proyectoId) {
 
@@ -59,6 +47,18 @@ public class PermisoService {
 
             throw new AccessDeniedException(
                     "No tenés permisos de administrador"
+            );
+        }
+    }
+
+    // 2b. VERIFICAR QUE ES TUTOR (administrador o co-tutor, 8.0)
+    public void verificarTutor(UUID proyectoId) {
+
+        Membresia membresia = obtenerMembresia(proyectoId);
+
+        if (membresia.getRol() != Rol.TUTOR) {
+            throw new AccessDeniedException(
+                    "Solo los tutores pueden ver el registro de accesos"
             );
         }
     }
@@ -130,6 +130,32 @@ public class PermisoService {
             verificarPuedeEditar(proyectoId);
             return true;
         } catch (AccessDeniedException sinPermisoDeEdicion) {
+            return false;
+        }
+    }
+
+    // 3b. VERIFICAR QUE PUEDE CARGAR NOTAS PROFESIONALES (4.2)
+    // Solo los profesionales de educación y salud, y solo donde pueden editar (freemium).
+    public void verificarPuedeCargarNotas(UUID proyectoId) {
+
+        verificarPuedeEditar(proyectoId);
+
+        Rol rol = obtenerMembresia(proyectoId).getRol();
+
+        if (rol != Rol.EDUCACION && rol != Rol.SALUD) {
+            throw new AccessDeniedException(
+                    "Solo los profesionales de educación o salud pueden cargar notas"
+            );
+        }
+    }
+
+    // Igual que verificarPuedeCargarNotas, pero devuelve true/false (lo usa el front).
+    public boolean puedeCargarNotas(UUID proyectoId) {
+        verificarMiembro(proyectoId);
+        try {
+            verificarPuedeCargarNotas(proyectoId);
+            return true;
+        } catch (AccessDeniedException sinPermisoParaNotas) {
             return false;
         }
     }
