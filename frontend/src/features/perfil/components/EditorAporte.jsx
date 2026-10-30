@@ -1,11 +1,13 @@
 import { useEffect, useRef, useState } from 'react'
 import Boton from '../../../components/ui/Boton.jsx'
 import Campo from '../../../components/ui/Campo.jsx'
+import CampoFecha from '../../../components/ui/CampoFecha.jsx'
 import CampoFormulario from '../../../components/ui/CampoFormulario.jsx'
 import SelectorVisibilidad from '../../../components/ui/SelectorVisibilidad.jsx'
 import SubirArchivo from '../../../components/ui/SubirArchivo.jsx'
 import { guardarAporte } from '../../../api/aportes.js'
-import { leerDatosAporte } from '../perfil.js'
+import { leerDatosAporte, TIPOS_NOTA } from '../perfil.js'
+import { hoyIso } from '../../../utils/fechas.js'
 
 const SECCIONES_CON_ADJUNTOS = ['NOTA_PROFESIONAL', 'COMUNICACION']
 
@@ -50,6 +52,16 @@ const camposPorTipo = {
       ],
     },
   ],
+  // 4.2: tipo de nota y fecha (hoy por defecto)
+  NOTA_PROFESIONAL: [
+    {
+      nombre: 'tipoNota',
+      etiqueta: 'Tipo de nota',
+      inicial: 'ORIENTACION',
+      opciones: TIPOS_NOTA,
+    },
+    { nombre: 'fecha', etiqueta: 'Fecha', tipo: 'fecha', inicial: hoyIso },
+  ],
 }
 
 // 2.2: textos propios del formulario según la sección; el resto usa los genéricos.
@@ -81,7 +93,8 @@ export default function EditorAporte({
       ...Object.fromEntries(
         campos.map(({ nombre, inicial }) => [
           nombre,
-          guardados[nombre] ?? inicial,
+          guardados[nombre] ??
+            (typeof inicial === 'function' ? inicial() : inicial),
         ]),
       ),
     }
@@ -194,7 +207,7 @@ export default function EditorAporte({
           className="w-full rounded-md border border-borde bg-superficie p-4 text-texto focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primario"
         />
       </div>
-      {campos.map(({ nombre, etiqueta, opciones }) => (
+      {campos.map(({ nombre, etiqueta, opciones, tipo }) => (
         <div key={nombre}>
           <label
             htmlFor={`${nombre}-aporte-${seccion.tipo}`}
@@ -202,25 +215,42 @@ export default function EditorAporte({
           >
             {etiqueta}
           </label>
-          <select
-            id={`${nombre}-aporte-${seccion.tipo}`}
-            name={nombre}
-            value={extra[nombre]}
-            onChange={(event) =>
-              setExtra((actual) => ({
-                ...actual,
-                [nombre]: event.target.value,
-              }))
-            }
-            disabled={enviando}
-            className="min-h-14 w-full rounded-md border border-borde bg-superficie px-4 py-3 text-texto focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primario"
-          >
-            {opciones.map(([valor, texto]) => (
-              <option key={valor} value={valor}>
-                {texto}
-              </option>
-            ))}
-          </select>
+          {tipo === 'fecha' ? (
+            <CampoFecha
+              id={`${nombre}-aporte-${seccion.tipo}`}
+              name={nombre}
+              value={extra[nombre]}
+              max={hoyIso()}
+              onChange={(event) =>
+                setExtra((actual) => ({
+                  ...actual,
+                  [nombre]: event.target.value,
+                }))
+              }
+              disabled={enviando}
+              required
+            />
+          ) : (
+            <select
+              id={`${nombre}-aporte-${seccion.tipo}`}
+              name={nombre}
+              value={extra[nombre]}
+              onChange={(event) =>
+                setExtra((actual) => ({
+                  ...actual,
+                  [nombre]: event.target.value,
+                }))
+              }
+              disabled={enviando}
+              className="min-h-14 w-full rounded-md border border-borde bg-superficie px-4 py-3 text-texto focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primario"
+            >
+              {opciones.map(([valor, texto]) => (
+                <option key={valor} value={valor}>
+                  {texto}
+                </option>
+              ))}
+            </select>
+          )}
         </div>
       ))}
       {permiteAdjuntos && (

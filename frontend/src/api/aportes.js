@@ -170,6 +170,31 @@ export async function archivarAporte(proyectoId, aporteId) {
   }
 }
 
+// 3.2: todas las versiones del aporte, de la más nueva a la más vieja
+export async function listarVersiones(proyectoId, aporteId) {
+  try {
+    const url = `${ruta(proyectoId)}/${encodeURIComponent(aporteId)}/versiones`
+    const { data } = await cliente.get(url)
+    if (!Array.isArray(data)) throw new Error('Respuesta incompleta')
+    return data
+  } catch (error) {
+    if (error.message === 'Falta configurar la conexión con TRAMA.') throw error
+    if (error.response?.status === 403)
+      throw new Error('No tenés permiso para ver el historial de este aporte.', {
+        cause: error,
+      })
+    if (error.response?.status === 401)
+      throw new Error('Tu sesión venció. Ingresá nuevamente.', { cause: error })
+    if (error.response?.status === 404)
+      throw new Error('No encontramos este aporte. Volvé a cargar el perfil.', {
+        cause: error,
+      })
+    throw new Error('No pudimos cargar el historial. Intentá nuevamente.', {
+      cause: error,
+    })
+  }
+}
+
 export async function guardarAporte(proyectoId, aporteId, datos) {
   return aporteId
     ? editarAporte(proyectoId, aporteId, datos)

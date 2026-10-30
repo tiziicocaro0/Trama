@@ -28,11 +28,15 @@ final class FuenteFrontend {
     private FuenteFrontend() {
     }
 
-    /** Contenido de un archivo del front, relativo a frontend/src. */
+    /**
+     * Contenido de un archivo del front, relativo a frontend/src.
+     * Normaliza los saltos de línea: en Windows Git puede bajar los archivos con CRLF
+     * y las marcas de los tests ("\n") no coincidirían (aporte de Tiziana en el #48).
+     */
     static String leer(String rutaRelativa) {
         Path archivo = RAIZ.resolve(rutaRelativa);
         try {
-            return Files.readString(archivo, StandardCharsets.UTF_8);
+            return sinCrlf(Files.readString(archivo, StandardCharsets.UTF_8));
         } catch (IOException e) {
             throw new UncheckedIOException("No se pudo leer " + archivo, e);
         }
@@ -46,7 +50,7 @@ final class FuenteFrontend {
                     .filter(p -> !p.toString().contains(".test."))
                     .map(p -> {
                         try {
-                            return Files.readString(p, StandardCharsets.UTF_8);
+                            return sinCrlf(Files.readString(p, StandardCharsets.UTF_8));
                         } catch (IOException e) {
                             throw new UncheckedIOException(e);
                         }
@@ -55,6 +59,10 @@ final class FuenteFrontend {
         } catch (IOException e) {
             throw new UncheckedIOException(e);
         }
+    }
+
+    private static String sinCrlf(String texto) {
+        return texto.replace("\r\n", "\n");
     }
 
     /** Texto entre dos marcas (la primera aparición de cada una). */

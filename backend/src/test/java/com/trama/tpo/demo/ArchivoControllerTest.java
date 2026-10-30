@@ -51,12 +51,14 @@ class ArchivoControllerTest {
     private final ObjectMapper mapper = new ObjectMapper();
 
     private Usuario tutorMiembro;
+    private Usuario familiarMiembro;
     private Usuario usuarioAjeno;
     private Proyecto proyecto;
 
     @BeforeEach
     void prepararDatos() {
         tutorMiembro = crearUsuario("TutorArchivo");
+        familiarMiembro = crearUsuario("FamiliarArchivo");
         usuarioAjeno = crearUsuario("AjenoArchivo");
 
         proyecto = proyectoRepository.save(Proyecto.builder()
@@ -74,6 +76,13 @@ class ArchivoControllerTest {
                 .rol(Rol.TUTOR)
                 .esAdmin(true)
                 .build());
+
+        membresiaRepository.save(Membresia.builder()
+                .usuario(familiarMiembro)
+                .proyecto(proyecto)
+                .rol(Rol.FAMILIAR)
+                .esAdmin(false)
+                .build());
     }
 
     @AfterEach
@@ -84,7 +93,7 @@ class ArchivoControllerTest {
         archivoRepository.deleteAll(archivoRepository.findByProyectoId(proyecto.getId()));
         membresiaRepository.deleteAll(membresiaRepository.findByProyectoId(proyecto.getId()));
         proyectoRepository.delete(proyecto);
-        usuarioRepository.deleteAll(List.of(tutorMiembro, usuarioAjeno));
+        usuarioRepository.deleteAll(List.of(tutorMiembro, familiarMiembro, usuarioAjeno));
     }
 
     @Test
@@ -168,6 +177,45 @@ class ArchivoControllerTest {
                         .header("Authorization", token(tutorMiembro)))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.codigo").value("FORMATO_NO_PERMITIDO"));
+    }
+
+    // 4.3: un miembro que no puede ver el aporte tampoco puede descargar su adjunto,
+    // aunque tenga el link
+    @Test
+    void elAdjuntoDeUnAporteRestringidoSoloLoDescargaQuienPuedeVerlo() throws Exception {
+        MockMultipartFile pdf = new MockMultipartFile(
+                "archivo", "informe-privado.pdf", "application/pdf",
+                "%PDF-1.4 Informe ficticio".getBytes(StandardCharsets.UTF_8));
+
+        String respuestaJson = mockMvc.perform(multipart(
+                        "/api/proyectos/{id}/archivos", proyecto.getId())
+                        .file(pdf)
+                        .header("Authorization", token(tutorMiembro)))
+                .andExpect(status().isCreated())
+                .andReturn().getResponse().getContentAsString();
+        String archivoId = mapper.readTree(respuestaJson).get("id").asText();
+
+        mockMvc.perform(post("/api/proyectos/{id}/aportes", proyecto.getId())
+                        .header("Authorization", token(tutorMiembro))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "tipo": "COMUNICACION",
+                                  "titulo": "Informe solo para tutores",
+                                  "visibilidad": "SOLO_TUTORES",
+                                  "archivoIds": ["%s"]
+                                }
+                                """.formatted(archivoId)))
+                .andExpect(status().isCreated());
+
+        String rutaDescarga = "/api/proyectos/" + proyecto.getId() + "/archivos/" + archivoId;
+
+        mockMvc.perform(get(rutaDescarga).header("Authorization", token(familiarMiembro)))
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.codigo").value("ACCESO_DENEGADO"));
+
+        mockMvc.perform(get(rutaDescarga).header("Authorization", token(tutorMiembro)))
+                .andExpect(status().isOk());
     }
 
     private Usuario crearUsuario(String nombre) {

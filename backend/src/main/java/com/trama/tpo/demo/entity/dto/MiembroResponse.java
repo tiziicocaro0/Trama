@@ -31,15 +31,7 @@ public class MiembroResponse {
 
     public static MiembroResponse from(Membresia membresia) {
 
-        List<EspecialidadItemResponse> items = List.of();
-
-        if (membresia.getEspecialidades() != null) {
-            items = membresia.getEspecialidades().stream()
-                    .map(me -> new EspecialidadItemResponse(
-                            me.getEspecialidad().name(),
-                            me.getAclaracion()))
-                    .toList();
-        }
+        List<EspecialidadItemResponse> items = especialidadesDe(membresia);
 
         return MiembroResponse.builder()
                 .id(membresia.getId())
@@ -52,6 +44,20 @@ public class MiembroResponse {
                 .matricula(membresia.getMatricula())
                 .fechaAlta(membresia.getFechaAlta())
                 .build();
+    }
+
+    /** Especialidades declaradas en la membresía (también las muestra cada aporte, 4.2). */
+    public static List<EspecialidadItemResponse> especialidadesDe(Membresia membresia) {
+
+        if (membresia.getEspecialidades() == null) {
+            return List.of();
+        }
+
+        return membresia.getEspecialidades().stream()
+                .map(me -> new EspecialidadItemResponse(
+                        me.getEspecialidad().name(),
+                        me.getAclaracion()))
+                .toList();
     }
 
     /**

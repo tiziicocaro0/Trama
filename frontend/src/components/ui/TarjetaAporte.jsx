@@ -3,7 +3,20 @@ import {
   descargarArchivo,
   obtenerUrlDescargaArchivo,
 } from '../../api/archivos.js'
-import { formatearFechaHora } from '../../utils/fechas.js'
+import { formatearFechaCalendario, formatearFechaHora } from '../../utils/fechas.js'
+import { etiquetaEspecialidad } from '../../features/perfil/especialidades.js'
+import { leerDatosAporte, TIPOS_NOTA } from '../../features/perfil/perfil.js'
+
+const ETIQUETAS_TIPO_NOTA = Object.fromEntries(TIPOS_NOTA)
+
+// 4.2: especialidades que declaró el autor en el proyecto, para mostrarlas a su lado
+function obtenerEspecialidades(aporte) {
+  if (!Array.isArray(aporte?.autorEspecialidades)) return null
+  const nombres = aporte.autorEspecialidades
+    .map((item) => etiquetaEspecialidad(item?.especialidad))
+    .filter(Boolean)
+  return nombres.length ? nombres.join(', ') : null
+}
 
 function obtenerAutor(aporte, autorProp) {
   if (typeof autorProp === 'string' && autorProp.trim()) return autorProp.trim()
@@ -35,6 +48,7 @@ export default function TarjetaAporte({
   autor,
   alEditar,
   alArchivar,
+  alVerHistorial,
   archivando = false,
   resumen = false,
 }) {
@@ -48,6 +62,10 @@ export default function TarjetaAporte({
       ? formatearFechaHora(aporte.actualizadoEn)
       : null
   const nombreAutor = obtenerAutor(aporte, autor)
+  const especialidades = obtenerEspecialidades(aporte)
+  const datosNota = esNota ? leerDatosAporte(aporte.datos) : {}
+  const tipoNota = ETIQUETAS_TIPO_NOTA[datosNota.tipoNota] ?? null
+  const fechaNota = formatearFechaCalendario(datosNota.fecha)
 
   // 3.1: Identificar aportes con visibilidad restringida
   const esRestringido =
@@ -69,6 +87,9 @@ export default function TarjetaAporte({
       // Si falla la descarga programática, no interrumpe la vista
     }
   }
+
+  // Editar y archivar: solo el autor. Ver historial (3.2): cualquier miembro que ve el aporte
+  const puedeModificar = aporte.puedeEditar && (alEditar || alArchivar)
 
   return (
     <article className="flex gap-2 py-2 text-texto">
@@ -137,7 +158,13 @@ export default function TarjetaAporte({
 
         {(nombreAutor || (!esNota && fechaCreacion)) && (
           <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-texto-suave">
-            {nombreAutor && <span>{`Cargado por: ${nombreAutor}`}</span>}
+            {nombreAutor && (
+              <span>
+                {especialidades
+                  ? `Cargado por: ${nombreAutor} · ${especialidades}`
+                  : `Cargado por: ${nombreAutor}`}
+              </span>
+            )}
             {!esNota && fechaCreacion && (
               <time dateTime={fechaBase}>{fechaCreacion}</time>
             )}
@@ -146,6 +173,13 @@ export default function TarjetaAporte({
 
         {esNota && (
           <div className="mt-3 space-y-1 text-sm text-texto-suave">
+            {(tipoNota || fechaNota) && (
+              <p className="font-semibold text-secundario">
+                {[tipoNota, fechaNota && `Fecha: ${fechaNota}`]
+                  .filter(Boolean)
+                  .join(' · ')}
+              </p>
+            )}
             <p>
               Creada:{' '}
               {fechaCreacion ? (
@@ -163,9 +197,9 @@ export default function TarjetaAporte({
           </div>
         )}
 
-        {aporte.puedeEditar && (alEditar || alArchivar) && (
+        {(puedeModificar || alVerHistorial) && (
           <div className="mt-2 flex flex-wrap items-center gap-4">
-            {alEditar && (
+            {puedeModificar && alEditar && (
               <button
                 type="button"
                 onClick={alEditar}
@@ -176,7 +210,7 @@ export default function TarjetaAporte({
                 Editar
               </button>
             )}
-            {alArchivar && (
+            {puedeModificar && alArchivar && (
               <button
                 type="button"
                 onClick={alArchivar}
@@ -185,6 +219,16 @@ export default function TarjetaAporte({
                 className="inline-flex min-h-11 items-center rounded-sm font-semibold text-secundario underline underline-offset-4 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-primario"
               >
                 {archivando ? 'Archivando…' : 'Archivar'}
+              </button>
+            )}
+            {alVerHistorial && (
+              <button
+                type="button"
+                onClick={alVerHistorial}
+                aria-label={`Ver historial del ${sustantivo}: ${aporte.titulo}`}
+                className="inline-flex min-h-11 items-center rounded-sm font-semibold text-secundario underline underline-offset-4 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-primario"
+              >
+                Ver historial
               </button>
             )}
           </div>

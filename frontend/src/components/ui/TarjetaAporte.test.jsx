@@ -111,4 +111,56 @@ describe('TarjetaAporte - RF-06 y Tarea 3.0', () => {
       }),
     ).not.toBeInTheDocument()
   })
+
+  // 3.2: Historial de versiones
+  it('muestra Ver historial a cualquier miembro y avisa al hacer clic', async () => {
+    const alVerHistorial = vi.fn()
+    const user = userEvent.setup()
+
+    render(
+      <TarjetaAporte
+        aporte={{ ...aporteBase, puedeEditar: false }}
+        alVerHistorial={alVerHistorial}
+      />,
+    )
+
+    await user.click(
+      screen.getByRole('button', {
+        name: 'Ver historial del aporte: Le gusta dibujar',
+      }),
+    )
+
+    expect(alVerHistorial).toHaveBeenCalledTimes(1)
+  })
+
+  it('no muestra Ver historial si no se pasa alVerHistorial', () => {
+    render(<TarjetaAporte aporte={aporteBase} alEditar={vi.fn()} />)
+
+    expect(
+      screen.queryByRole('button', { name: /Ver historial/ }),
+    ).not.toBeInTheDocument()
+  })
+
+  it('con historial disponible, quien no es autor sigue sin ver Editar ni Archivar', () => {
+    render(
+      <TarjetaAporte
+        aporte={{ ...aporteBase, puedeEditar: false }}
+        alEditar={vi.fn()}
+        alArchivar={vi.fn()}
+        alVerHistorial={vi.fn()}
+      />,
+    )
+
+    expect(
+      screen.queryByRole('button', { name: 'Editar aporte: Le gusta dibujar' }),
+    ).not.toBeInTheDocument()
+    expect(
+      screen.queryByRole('button', { name: 'Archivar aporte: Le gusta dibujar' }),
+    ).not.toBeInTheDocument()
+    expect(
+      screen.getByRole('button', {
+        name: 'Ver historial del aporte: Le gusta dibujar',
+      }),
+    ).toBeInTheDocument()
+  })
 })

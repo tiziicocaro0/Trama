@@ -3,6 +3,9 @@ package com.trama.tpo.demo;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.ArgumentMatchers.anySet;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -22,12 +25,14 @@ import org.springframework.security.access.AccessDeniedException;
 import com.trama.tpo.demo.aporte.Visibilidad;
 import com.trama.tpo.demo.entity.membresia.Membresia;
 import com.trama.tpo.demo.entity.membresia.Rol;
+import com.trama.tpo.demo.entity.proyecto.Proyecto;
 import com.trama.tpo.demo.exceptions.ApiException;
 import com.trama.tpo.demo.repository.MembresiaRepository;
 import com.trama.tpo.demo.repository.ProyectoRepository;
 import com.trama.tpo.demo.repository.UsuarioRepository;
 import com.trama.tpo.demo.service.MiembroService;
 import com.trama.tpo.demo.service.PermisoService;
+import com.trama.tpo.demo.service.RegistroAccionService;
 import com.trama.tpo.demo.service.ProyectoService;
 import com.trama.tpo.demo.service.UsuarioActual;
 
@@ -64,11 +69,13 @@ class PermisoServiceTest {
                 permisoService,
                 usuarioActual,
                 membresiaRepository,
-                usuarioRepository);
+                usuarioRepository,
+                mock(RegistroAccionService.class));
         miembroService = new MiembroService(
                 membresiaRepository,
                 permisoService,
-                usuarioActual);
+                usuarioActual,
+                mock(RegistroAccionService.class));
     }
 
     @Test
@@ -237,5 +244,45 @@ class PermisoServiceTest {
         assertDoesNotThrow(() -> permisoService.verificarPuedeVerAporte(proyectoId, Visibilidad.TODOS));
         assertThrows(AccessDeniedException.class,
                 () -> permisoService.verificarPuedeVerAporte(proyectoId, Visibilidad.SOLO_TUTORES));
+    }
+
+    // 4.2: notas profesionales (aporte de Tiziana en el #48, adaptado al método de develop)
+
+    @Test
+    void familiarNoPuedeCargarNotasAunqueTengaPermisoDeEdicion() {
+        Membresia familiar = Membresia.builder()
+                .rol(Rol.FAMILIAR)
+                .proyecto(Proyecto.builder().id(proyectoId).familiarPuedeCargar(true).build())
+                .build();
+        when(membresiaRepository.findByUsuarioIdAndProyectoId(usuarioId, proyectoId))
+                .thenReturn(Optional.of(familiar));
+
+        assertThrows(AccessDeniedException.class,
+                () -> permisoService.verificarPuedeCargarNotas(proyectoId));
+    }
+
+    @Test
+    void tutorNoPuedeCargarNotas() {
+        Membresia tutor = Membresia.builder().rol(Rol.TUTOR).build();
+        when(membresiaRepository.findByUsuarioIdAndProyectoId(usuarioId, proyectoId))
+                .thenReturn(Optional.of(tutor));
+
+        assertThrows(AccessDeniedException.class,
+                () -> permisoService.verificarPuedeCargarNotas(proyectoId));
+    }
+
+    @Test
+    void profesionalDeSaludPuedeCargarNotasEnUnProyectoGratuito() {
+        Membresia salud = Membresia.builder()
+                .rol(Rol.SALUD)
+                .proyecto(Proyecto.builder().id(proyectoId).build())
+                .build();
+        when(membresiaRepository.findByUsuarioIdAndProyectoId(usuarioId, proyectoId))
+                .thenReturn(Optional.of(salud));
+        when(membresiaRepository.findByUsuarioIdAndRolInOrderByFechaAltaAscIdAsc(
+                eq(usuarioId), anySet()))
+                .thenReturn(List.of(salud));
+
+        assertDoesNotThrow(() -> permisoService.verificarPuedeCargarNotas(proyectoId));
     }
 }

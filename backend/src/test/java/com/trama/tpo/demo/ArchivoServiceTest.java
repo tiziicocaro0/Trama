@@ -25,6 +25,7 @@ import com.trama.tpo.demo.service.ArchivoService;
 import com.trama.tpo.demo.service.ArchivoService.ArchivoDescargado;
 import com.trama.tpo.demo.service.CryptoService;
 import com.trama.tpo.demo.service.PermisoService;
+import com.trama.tpo.demo.service.RegistroAccionService;
 import com.trama.tpo.demo.service.UsuarioActual;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -238,7 +239,8 @@ class ArchivoServiceTest {
                 membresiaRepository,
                 permisoService,
                 usuarioActual,
-                archivoRepository
+                archivoRepository,
+                mock(RegistroAccionService.class)
         );
 
         when(usuarioActual.obtenerId()).thenReturn(usuarioId);
