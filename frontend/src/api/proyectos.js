@@ -95,3 +95,15 @@ export async function obtenerProyecto(id, signal) {
   }
   return data
 }
+
+// Editar los datos del niño (DatosPersonalesPage). PUT /api/proyectos/{id}, solo el tutor administrador.
+// Devuelve el error de Axios tal cual: la pantalla arma el mensaje según el estado.
+export async function actualizarProyecto(id, datos) {
+  if (!cliente.defaults.baseURL) {
+    throw new Error(
+      'Falta configurar la conexión con TRAMA. Revisá VITE_API_URL.',
+    )
+  }
+  const { data } = await cliente.put(`/proyectos/${encodeURIComponent(id)}`, datos)
+  return data
+}
