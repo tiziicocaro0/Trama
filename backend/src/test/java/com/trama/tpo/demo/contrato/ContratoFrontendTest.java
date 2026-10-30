@@ -28,6 +28,7 @@ import com.trama.tpo.demo.aporte.Visibilidad;
 import com.trama.tpo.demo.aporte.fortaleza.ContextoFortaleza;
 import com.trama.tpo.demo.aporte.interes.CategoriaInteres;
 import com.trama.tpo.demo.aporte.interes.IntensidadInteres;
+import com.trama.tpo.demo.aporte.nota.TipoNota;
 import com.trama.tpo.demo.aporte.observacion.ContextoObservacion;
 import com.trama.tpo.demo.aporte.observacion.EtiquetaObservacion;
 import com.trama.tpo.demo.entity.dto.AporteRequest;
@@ -97,6 +98,12 @@ class ContratoFrontendTest {
         assertEquals(nombres(ContextoFortaleza.class),
                 // Corta en el cierre de su lista de opciones, sin depender de lo que viene después.
                 valoresEnMayusculas(entre(editor, "nombre: 'contexto'", "],\n    },")));
+    }
+
+    @Test
+    void tiposDeNota() {
+        assertEquals(nombres(TipoNota.class), valoresEnMayusculas(
+                entre(leer("features/perfil/perfil.js"), "export const TIPOS_NOTA = [", "\n]")));
     }
 
     @Test

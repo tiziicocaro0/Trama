@@ -5,6 +5,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import AppRoutes from '../../routes/AppRoutes.jsx'
 import AuthContext from '../auth/AuthContext.js'
 import cliente from '../../api/cliente.js'
+import { hoyIso } from '../../utils/fechas.js'
 
 vi.mock('../../api/cliente.js', () => ({
   default: {
@@ -61,7 +62,7 @@ beforeEach(() => {
       ? aportes
       : ruta.endsWith('/miembros')
         ? []
-        : { ...proyecto, puedeCargar: puedeCrear },
+        : { ...proyecto, puedeCargar: puedeCrear, puedeCargarNotas: puedeCrear },
   }))
   cliente.post.mockReset().mockImplementation(async (ruta, datos) => {
     const creada = { ...nota, ...datos }
@@ -182,6 +183,8 @@ describe('Notas con fecha y hora', () => {
         titulo: 'Nota ficticia nueva',
         contenido: 'Texto ficticio nuevo',
         visibilidad: 'TODOS',
+        // 4.2: tipo de nota y fecha de hoy por defecto
+        datos: JSON.stringify({ tipoNota: 'ORIENTACION', fecha: hoyIso() }),
       },
     )
     expect(document.title).toBe('TRAMA · Notas')

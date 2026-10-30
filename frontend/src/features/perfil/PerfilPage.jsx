@@ -2,10 +2,11 @@ import { Heart, Sparkle } from '@phosphor-icons/react'
 import { Link, useParams } from 'react-router-dom'
 import { useState } from 'react'
 import Boton from '../../components/ui/Boton.jsx'
+import { Aviso } from '../../components/ui/Aviso.jsx'
 import CabeceraPerfil from './components/CabeceraPerfil.jsx'
 import BloquePerfil from './components/BloquePerfil.jsx'
 import usePerfil from './hooks/usePerfil.js'
-import { seccionesPerfil, seccionNotas } from './perfil.js'
+import { LEYENDA_NOTAS, seccionesPerfil, seccionNotas } from './perfil.js'
 import NavegacionPerfil from './components/NavegacionPerfil.jsx'
 import { listarAportes } from '../../api/aportes.js'
 
@@ -99,6 +100,16 @@ export default function PerfilPage() {
                 {mensajeGuardado}
               </p>
             )}
+            {seccion?.tipo === 'NOTA_PROFESIONAL' && (
+              <div className="mb-4 space-y-2">
+                <Aviso>{LEYENDA_NOTAS}</Aviso>
+                {proyecto.puedeCargarNotas !== true && (
+                  <p className="text-sm text-texto-suave">
+                    Las notas las cargan los profesionales de educación y salud.
+                  </p>
+                )}
+              </div>
+            )}
             {proyecto.puedeCargar !== true && (
               <p className="mb-4 text-sm text-texto-suave">
                 Podés consultar este perfil en modo de solo lectura.
@@ -118,7 +129,11 @@ export default function PerfilPage() {
                   )}
                   proyectoId={id}
                   completo={Boolean(seccion)}
-                  puedeCrear={proyecto.puedeCargar === true}
+                  puedeCrear={
+                    item.tipo === 'NOTA_PROFESIONAL'
+                      ? proyecto.puedeCargarNotas === true
+                      : proyecto.puedeCargar === true
+                  }
                   alGuardar={(accion) => {
                     const esNota = item.tipo === 'NOTA_PROFESIONAL'
                     setMensajeGuardado(

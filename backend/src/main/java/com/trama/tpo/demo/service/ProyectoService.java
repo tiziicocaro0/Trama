@@ -72,8 +72,8 @@ public class ProyectoService {
                                 .rol(Rol.TUTOR)
                                 .esAdmin(true)
                                 .build());
-                // Quien crea el proyecto queda como tutor administrador
-                return ProyectoResponse.from(proyecto, true);
+                // Quien crea el proyecto queda como tutor administrador (no carga notas)
+                return ProyectoResponse.from(proyecto, true, false);
         }
 
         // 1.10 Mis proyectos: solo los niños donde el usuario logueado es miembro
@@ -91,7 +91,8 @@ public class ProyectoService {
 
                 return ProyectoResponse.from(
                                 buscarProyecto(proyectoId),
-                                permisoService.puedeEditar(proyectoId));
+                                permisoService.puedeEditar(proyectoId),
+                                permisoService.puedeCargarNotas(proyectoId));
         }
 
         // Cambiar qué puede hacer la familia: solo el tutor administrador
@@ -108,7 +109,7 @@ public class ProyectoService {
                 proyecto.setFamiliarVeNotas(request.familiarVeNotas());
 
                 // Solo el tutor administrador llega hasta aca
-                return ProyectoResponse.from(proyectoRepository.save(proyecto), true);
+                return ProyectoResponse.from(proyectoRepository.save(proyecto), true, false);
         }
 
 
@@ -129,7 +130,7 @@ public class ProyectoService {
                 proyecto.setEscuela(request.escuela());
                 proyecto.setGrado(request.grado());
 
-                return ProyectoResponse.from(proyectoRepository.save(proyecto), true);
+                return ProyectoResponse.from(proyectoRepository.save(proyecto), true, false);
         }
 
         private Proyecto buscarProyecto(UUID proyectoId) {
