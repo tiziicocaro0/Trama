@@ -1,4 +1,3 @@
-
 package com.trama.tpo.demo;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -33,6 +32,7 @@ import com.trama.tpo.demo.repository.UsuarioRepository;
 import com.trama.tpo.demo.service.EmailService;
 import com.trama.tpo.demo.service.InvitacionService;
 import com.trama.tpo.demo.service.PermisoService;
+import com.trama.tpo.demo.service.RegistroAccionService;
 import com.trama.tpo.demo.service.UsuarioActual;
 
 @ExtendWith(MockitoExtension.class)
@@ -74,6 +74,7 @@ class InvitacionAceptacionServiceTest {
                 permisoService,
                 usuarioActual,
                 emailService,
+                mock(RegistroAccionService.class),
                 "https://trama.example/invitacion"
         );
     }
@@ -252,5 +253,55 @@ class InvitacionAceptacionServiceTest {
                 .saveAndFlush(any(Invitacion.class));
 
         assertEquals(EstadoInvitacion.PENDIENTE, invitacion.getEstado());
+    }
+
+    // TEST 5 (1.6): aceptar invitacion con rol TUTOR crea membresia con esAdmin=true.
+    @Test
+    void aceptarInvitacionTutorCreaMembresiaComoAdmin() {
+
+        Invitacion invitacion = crearInvitacionVigente();
+        invitacion.setRol(Rol.TUTOR);
+        invitacion.setEmail("cotutor@ejemplo.test");
+
+        UUID usuarioId = UUID.randomUUID();
+        UUID membresiaId = UUID.randomUUID();
+
+        Usuario usuario = Usuario.builder()
+                .id(usuarioId)
+                .nombre("Carlos")
+                .apellido("Gomez")
+                .email("cotutor@ejemplo.test")
+                .build();
+
+        when(invitacionRepository.findByTokenHashForUpdate(anyString()))
+                .thenReturn(Optional.of(invitacion));
+
+        when(usuarioActual.obtenerId())
+                .thenReturn(usuarioId);
+
+        when(usuarioRepository.findById(usuarioId))
+                .thenReturn(Optional.of(usuario));
+
+        when(membresiaRepository.saveAndFlush(any(Membresia.class)))
+                .thenAnswer(invocacion -> {
+                    Membresia membresia = invocacion.getArgument(0);
+                    membresia.setId(membresiaId);
+                    return membresia;
+                });
+
+        MiembroResponse respuesta =
+                invitacionService.aceptarInvitacion(TOKEN);
+
+        assertEquals(Rol.TUTOR, respuesta.getRol());
+        assertTrue(respuesta.getEsAdmin());
+
+        ArgumentCaptor<Membresia> captor =
+                ArgumentCaptor.forClass(Membresia.class);
+
+        verify(membresiaRepository).saveAndFlush(captor.capture());
+
+        Membresia membresiaCreada = captor.getValue();
+        assertEquals(Rol.TUTOR, membresiaCreada.getRol());
+        assertTrue(membresiaCreada.getEsAdmin());
     }
 }

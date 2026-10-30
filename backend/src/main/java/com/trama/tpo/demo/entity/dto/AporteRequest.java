@@ -19,6 +19,7 @@ public record AporteRequest(
         @Size(max = 150, message = "El título no puede superar los 150 caracteres")
         String titulo,
 
+        @Size(max = 10000, message = "El texto no puede superar los 10.000 caracteres")
         String contenido,
 
         String datos,
@@ -26,10 +27,8 @@ public record AporteRequest(
         Visibilidad visibilidad,
 
         List<UUID> archivoIds
-
 ) {
 
-    // Mantiene la compatibilidad con los aportes existentes.
     public AporteRequest(
             TipoAporte tipo,
             String titulo,
@@ -37,5 +36,5 @@ public record AporteRequest(
             String datos,
             Visibilidad visibilidad) {
         this(tipo, titulo, contenido, datos, visibilidad, null);
-        }
+    }
 }

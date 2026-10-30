@@ -1,15 +1,23 @@
 import { useState } from 'react'
-import { User } from '@phosphor-icons/react'
-import { useParams } from 'react-router-dom'
-import { listarMiembros } from '../../api/miembros.js'
-import { quitarMiembroProyecto } from '../../api/proyectos.js'
+import { User, PencilSimple } from '@phosphor-icons/react'
+import { useParams, useSearchParams } from 'react-router-dom'
+import {
+  cambiarEspecialidades,
+  hacerCoTutor,
+  invitarMiembro,
+  listarMiembros,
+  quitarMiembro,
+} from '../../api/miembros.js'
 import { Aviso } from '../../components/ui/Aviso.jsx'
 import Boton from '../../components/ui/Boton.jsx'
 import { Modal } from '../../components/ui/Modal.jsx'
 import useAuth from '../../hooks/useAuth.js'
 import CabeceraPerfil from './components/CabeceraPerfil.jsx'
+import ModalInvitarMiembro from './components/ModalInvitarMiembro.jsx'
 import usePerfil from './hooks/usePerfil.js'
 import NavegacionPerfil from './components/NavegacionPerfil.jsx'
+import EspecialidadModal from './components/EspecialidadModal.jsx'
+import { etiquetaEspecialidad } from './especialidades.js'
 
 const etiquetasRol = {
   TUTOR: 'Tutor/a',
@@ -22,15 +30,23 @@ function esProfesional(rol) {
   return rol === 'EDUCACION' || rol === 'SALUD'
 }
 
+function formatearEspecialidades(especialidades) {
+  if (!Array.isArray(especialidades) || especialidades.length === 0) {
+    return 'Especialidad no informada'
+  }
+  return especialidades
+    .map((item) => {
+      const nombre = etiquetaEspecialidad(item.especialidad)
+      return item.aclaracion ? `${nombre} · ${item.aclaracion}` : nombre
+    })
+    .join(' — ')
+}
+
 export default function RedPage() {
   const { id } = useParams()
   const auth = useAuth()
   const usuario = auth?.usuario ?? auth
   const rolUsuario = auth?.rol ?? usuario?.rol
-  const esAdmin =
-    rolUsuario === 'Admin' ||
-    rolUsuario === 'ADMIN' ||
-    Boolean(auth?.esAdmin ?? usuario?.esAdmin)
 
   const {
     proyecto,
@@ -40,13 +56,53 @@ export default function RedPage() {
     reintentar,
   } = usePerfil(id, listarMiembros)
 
+  const esAdmin =
+    rolUsuario === 'Admin' ||
+    rolUsuario === 'ADMIN' ||
+    Boolean(auth?.esAdmin ?? usuario?.esAdmin) ||
+    Boolean(
+      usuario?.id &&
+        (miembros ?? []).some(
+          (m) =>
+            (m.usuarioId === usuario.id || m.id === usuario.id) && m.esAdmin,
+        ),
+    )
+
   const [eliminadosIds, setEliminadosIds] = useState([])
+  const [coTutoresIds, setCoTutoresIds] = useState([])
   const [miembroSeleccionado, setMiembroSeleccionado] = useState(null)
   const [eliminando, setEliminando] = useState(false)
-  const [errorEliminacion, setErrorEliminacion] = useState('')
+  const [convirtiendoId, setConvirtiendoId] = useState(null)
+  const [modalInvitarAbierto, setModalInvitarAbierto] = useState(false)
+  // El menú lateral lleva a /red?invitar=1 para abrir directo el modal de invitar.
+  const [parametros, setParametros] = useSearchParams()
+  const pidioInvitar = parametros.get('invitar') === '1'
 
-  const miembrosVisibles = (miembros ?? []).filter(
-    (persona) => !eliminadosIds.includes(persona.id),
+  const invitarAbierto = modalInvitarAbierto || (pidioInvitar && esAdmin)
+
+  function cerrarModalInvitar() {
+    setModalInvitarAbierto(false)
+    if (pidioInvitar) setParametros({}, { replace: true })
+  }
+  const [mensajeExito, setMensajeExito] = useState('')
+  const [errorAccion, setErrorAccion] = useState('')
+
+  // 1.9: estado del modal de especialidades
+  const [modalEspecialidad, setModalEspecialidad] = useState(false)
+  const [especialidadesLocales, setEspecialidadesLocales] = useState(null)
+  const [exitoEspecialidad, setExitoEspecialidad] = useState('')
+
+  const miembrosVisibles = (miembros ?? [])
+    .filter((persona) => !eliminadosIds.includes(persona.id))
+    .map((persona) =>
+      coTutoresIds.includes(persona.id)
+        ? { ...persona, rol: 'TUTOR', esAdmin: true }
+        : persona,
+    )
+
+  // Encontrar al miembro actual en la lista
+  const miembroActual = miembrosVisibles.find(
+    (persona) => persona.usuarioId === usuario?.id,
   )
 
   function nombreCompleto(persona) {
@@ -56,20 +112,64 @@ export default function RedPage() {
   async function confirmarQuitarAcceso() {
     if (!miembroSeleccionado) return
     setEliminando(true)
-    setErrorEliminacion('')
+    setErrorAccion('')
+    setMensajeExito('')
     try {
-      await quitarMiembroProyecto(id, miembroSeleccionado.id)
+      await quitarMiembro(id, miembroSeleccionado.id)
       setEliminadosIds((actuales) => [...actuales, miembroSeleccionado.id])
       setMiembroSeleccionado(null)
     } catch (err) {
       const mensaje =
         err?.response?.data?.mensaje ||
         'No pudimos quitar el acceso a este miembro. Intentá nuevamente.'
-      setErrorEliminacion(mensaje)
+      setErrorAccion(mensaje)
       setMiembroSeleccionado(null)
     } finally {
       setEliminando(false)
     }
+  }
+
+  async function convertirEnCoTutor(persona) {
+    setConvirtiendoId(persona.id)
+    setErrorAccion('')
+    setMensajeExito('')
+    try {
+      await hacerCoTutor(id, persona.id)
+      setCoTutoresIds((actuales) => [...actuales, persona.id])
+    } catch (err) {
+      const mensaje =
+        err?.response?.data?.mensaje ||
+        'No pudimos convertir a este miembro en co-tutor. Intentá nuevamente.'
+      setErrorAccion(mensaje)
+    } finally {
+      setConvirtiendoId(null)
+    }
+  }
+
+  async function manejarInvitacion(datosInvitacion) {
+    setErrorAccion('')
+    setMensajeExito('')
+    await invitarMiembro(id, datosInvitacion)
+    setMensajeExito('Invitación enviada correctamente.')
+  }
+
+  async function guardarEspecialidades(lista) {
+    const respuesta = await cambiarEspecialidades(id, lista)
+    setEspecialidadesLocales(respuesta.especialidades ?? lista)
+    setModalEspecialidad(false)
+    setExitoEspecialidad('Especialidades actualizadas correctamente.')
+    setTimeout(() => setExitoEspecialidad(''), 4000)
+  }
+
+  // Las especialidades del miembro actual (priorizando las actualizadas localmente)
+  function obtenerEspecialidades(persona) {
+    if (
+      especialidadesLocales &&
+      persona.usuarioId === usuario?.id
+    ) {
+      return especialidadesLocales
+    }
+    return persona.especialidades ?? []
   }
 
   return (
@@ -97,19 +197,47 @@ export default function RedPage() {
               <CabeceraPerfil proyecto={proyecto} seccion={{ titulo: 'Red' }} />
               <NavegacionPerfil proyectoId={id} />
               <section aria-labelledby="titulo-red">
-                <h2
-                  id="titulo-red"
-                  className="font-display text-h1 text-secundario"
-                >
-                  Red
-                </h2>
-                <p className="mt-2 mb-6 text-texto-suave">
-                  Personas que acompañan este proyecto.
-                </p>
+                <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
+                  <div>
+                    <h2
+                      id="titulo-red"
+                      className="font-display text-h1 text-secundario"
+                    >
+                      Red
+                    </h2>
+                    <p className="mt-2 text-texto-suave">
+                      Personas que acompañan este proyecto.
+                    </p>
+                  </div>
 
-                {errorEliminacion && (
+                  {esAdmin && (
+                    <Boton
+                      onClick={() => {
+                        setErrorAccion('')
+                        setMensajeExito('')
+                        setModalInvitarAbierto(true)
+                      }}
+                    >
+                      Invitar miembro
+                    </Boton>
+                  )}
+                </div>
+
+                {exitoEspecialidad && (
                   <div className="mb-6">
-                    <Aviso tipo="error">{errorEliminacion}</Aviso>
+                    <Aviso tipo="exito">{exitoEspecialidad}</Aviso>
+                  </div>
+                )}
+
+                {mensajeExito && (
+                  <div className="mb-6">
+                    <Aviso tipo="exito">{mensajeExito}</Aviso>
+                  </div>
+                )}
+
+                {errorAccion && (
+                  <div className="mb-6">
+                    <Aviso tipo="error">{errorAccion}</Aviso>
                   </div>
                 )}
 
@@ -117,6 +245,8 @@ export default function RedPage() {
                   <ul className="grid gap-4 md:grid-cols-2">
                     {miembrosVisibles.map((persona) => {
                       const nombre = nombreCompleto(persona)
+                      const esMiPerfil = persona.usuarioId === usuario?.id
+                      const especialidades = obtenerEspecialidades(persona)
                       return (
                         <li
                           key={persona.id}
@@ -135,20 +265,41 @@ export default function RedPage() {
                                 {persona.esAdmin && ' · Administrador'}
                               </p>
                               {esProfesional(persona.rol) && (
-                                <p className="mt-1 break-words text-texto-suave">
-                                  {persona.especialidad?.trim() ||
-                                    'Especialidad no informada'}
-                                </p>
+                                <div className="mt-1">
+                                  <p className="break-words text-texto-suave">
+                                    {formatearEspecialidades(especialidades)}
+                                  </p>
+                                  {esMiPerfil && (
+                                    <button
+                                      type="button"
+                                      onClick={() => setModalEspecialidad(true)}
+                                      className="mt-2 inline-flex items-center gap-1.5 text-sm font-semibold text-primario hover:text-primario-hover"
+                                      aria-label="Editar mis especialidades"
+                                    >
+                                      <PencilSimple size={16} aria-hidden="true" />
+                                      Editar especialidades
+                                    </button>
+                                  )}
+                                </div>
                               )}
                             </div>
                           </div>
 
                           {esAdmin && (
-                            <div className="flex shrink-0 justify-end">
+                            <div className="flex shrink-0 flex-wrap justify-end gap-2">
+                              {persona.rol === 'FAMILIAR' && (
+                                <Boton
+                                  variant="secondary"
+                                  onClick={() => convertirEnCoTutor(persona)}
+                                  disabled={convirtiendoId === persona.id}
+                                >
+                                  Hacer co-tutor
+                                </Boton>
+                              )}
                               <Boton
-                                variante="peligro"
+                                variant="danger"
                                 onClick={() => {
-                                  setErrorEliminacion('')
+                                  setErrorAccion('')
                                   setMiembroSeleccionado(persona)
                                 }}
                                 aria-label={`Quitar acceso a ${nombre}`}
@@ -168,6 +319,12 @@ export default function RedPage() {
                 )}
               </section>
 
+              <ModalInvitarMiembro
+                abierto={invitarAbierto}
+                onCerrar={cerrarModalInvitar}
+                onInvitar={manejarInvitacion}
+              />
+
               <Modal
                 abierto={Boolean(miembroSeleccionado)}
                 titulo="Confirmar acción"
@@ -182,14 +339,14 @@ export default function RedPage() {
                     </p>
                     <div className="flex justify-end gap-3">
                       <Boton
-                        variante="fantasma"
+                        variant="secondary"
                         onClick={() => setMiembroSeleccionado(null)}
                         disabled={eliminando}
                       >
                         Cancelar
                       </Boton>
                       <Boton
-                        variante="peligro"
+                        variant="danger"
                         onClick={confirmarQuitarAcceso}
                         disabled={eliminando}
                       >
@@ -199,6 +356,16 @@ export default function RedPage() {
                   </div>
                 )}
               </Modal>
+
+              {miembroActual && esProfesional(miembroActual.rol) && (
+                <EspecialidadModal
+                  abierto={modalEspecialidad}
+                  onCerrar={() => setModalEspecialidad(false)}
+                  onGuardar={guardarEspecialidades}
+                  rol={miembroActual.rol}
+                  especialidadesActuales={obtenerEspecialidades(miembroActual)}
+                />
+              )}
             </>
           )
         )}

@@ -14,6 +14,7 @@ import { archivarAporte } from '../../../api/aportes.js'
 import Boton from '../../../components/ui/Boton.jsx'
 import TarjetaAporte from '../../../components/ui/TarjetaAporte.jsx'
 import EditorAporte from './EditorAporte.jsx'
+import HistorialAporte from './HistorialAporte.jsx'
 
 const iconos = {
   FORTALEZA: Star,
@@ -36,6 +37,8 @@ export default function BloquePerfil({
   const [editor, setEditor] = useState(null)
   const [archivandoId, setArchivandoId] = useState(null)
   const [errorArchivo, setErrorArchivo] = useState('')
+  // 3.2: aporte cuyo historial está abierto
+  const [historialDe, setHistorialDe] = useState(null)
   const disparador = useRef(null)
 
   function abrirEditor(event, aporte = {}) {
@@ -100,6 +103,10 @@ export default function BloquePerfil({
                 archivando={archivandoId === aporte.id}
                 alEditar={(event) => abrirEditor(event, aporte)}
                 alArchivar={() => archivar(aporte)}
+                alVerHistorial={(event) => {
+                  disparador.current = event.currentTarget
+                  setHistorialDe(aporte)
+                }}
               />
             </li>
           ))}
@@ -121,6 +128,17 @@ export default function BloquePerfil({
         <Boton variant="secondary" onClick={abrirEditor} className="mb-4">
           {esNota ? 'Agregar nota' : 'Agregar aporte'}
         </Boton>
+      )}
+      {historialDe && (
+        <HistorialAporte
+          key={historialDe.id}
+          proyectoId={proyectoId}
+          aporte={historialDe}
+          onCerrar={() => {
+            setHistorialDe(null)
+            disparador.current?.focus()
+          }}
+        />
       )}
       {editor && (
         <EditorAporte

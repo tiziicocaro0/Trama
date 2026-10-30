@@ -1,9 +1,9 @@
 package com.trama.tpo.demo.aporte;
 
 import com.trama.tpo.demo.config.CifradoConverter;
+import com.trama.tpo.demo.entity.archivo.Archivo;
 import com.trama.tpo.demo.entity.proyecto.Proyecto;
 import com.trama.tpo.demo.entity.usuario.Usuario;
-import com.trama.tpo.demo.archivo.Archivo;
 
 import jakarta.persistence.*;
 import lombok.*;
@@ -14,9 +14,9 @@ import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
 
 import java.time.Instant;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
-import java.util.LinkedHashSet;
-import java.util.Set;
 
 @Entity
 @Table(name = "aporte")
@@ -67,6 +67,15 @@ public class Aporte {
     @Column(name = "archivado", nullable = false)
     private Boolean archivado = false;
 
+    @Builder.Default
+    @ManyToMany(fetch = FetchType.LAZY)
+    @JoinTable(
+            name = "aporte_archivo",
+            joinColumns = @JoinColumn(name = "aporte_id"),
+            inverseJoinColumns = @JoinColumn(name = "archivo_id")
+    )
+    private List<Archivo> archivos = new ArrayList<>();
+
     @CreationTimestamp
     @Column(name = "creado_en", nullable = false, updatable = false)
     private Instant creadoEn;
@@ -74,15 +83,4 @@ public class Aporte {
     @UpdateTimestamp
     @Column(name = "actualizado_en", nullable = false)
     private Instant actualizadoEn;
-
-    // Archivos adjuntos al aporte (historia 4.3)
-    @ManyToMany(fetch = FetchType.LAZY)
-    @JoinTable(
-            name = "aporte_archivo",
-            joinColumns = @JoinColumn(name = "aporte_id"),
-            inverseJoinColumns = @JoinColumn(name = "archivo_id")
-    )
-    @Builder.Default
-    private Set<Archivo> archivos = new LinkedHashSet<>();
-
 }

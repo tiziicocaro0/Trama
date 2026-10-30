@@ -32,6 +32,11 @@ public interface AporteRepository extends JpaRepository<Aporte, UUID> {
             Boolean archivado
     );
 
+    List<Aporte> findByProyectoIdAndArchivosId(
+            UUID proyectoId,
+            UUID archivoId
+    );
+
     // Listar solamente los aportes visibles para el usuario
     @Query("""
             SELECT a
@@ -47,17 +52,5 @@ public interface AporteRepository extends JpaRepository<Aporte, UUID> {
             @Param("archivado") Boolean archivado,
             @Param("tipo") TipoAporte tipo,
             @Param("visibilidades") List<Visibilidad> visibilidades
-    );
-      // Buscar los aportes a los que está vinculado un archivo.
-    @Query("""
-            SELECT DISTINCT a
-            FROM Aporte a
-            JOIN a.archivos archivo
-            WHERE archivo.id = :archivoId
-              AND a.proyecto.id = :proyectoId
-            """)
-    List<Aporte> buscarAportesPorArchivo(
-            @Param("proyectoId") UUID proyectoId,
-            @Param("archivoId") UUID archivoId
     );
 }

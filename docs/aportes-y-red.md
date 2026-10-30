@@ -36,15 +36,20 @@ permisos con `PermisoService`.
 | POST | `/api/proyectos/{proyectoId}/aportes` | Recibe `AporteRequest`; devuelve `201` con `AporteResponse` |
 | PUT | `/api/proyectos/{proyectoId}/aportes/{aporteId}` | Recibe `AporteRequest`; solo el autor (403 si no) |
 | POST | `/api/proyectos/{proyectoId}/aportes/{aporteId}/archivar` | Solo el autor; el perfil todavía no tiene botón de archivar |
+| GET | `/api/proyectos/{proyectoId}/aportes/{aporteId}/versiones` | Historial (3.2): todas las versiones, la actual incluida, de la más nueva a la más vieja. Cualquier miembro que puede ver el aporte; las versiones no se modifican |
 | GET | `/api/proyectos/{proyectoId}/miembros` | Lista de `{ id, usuarioId, nombre, apellido, rol, esAdmin, especialidad, fechaAlta }` (card 1.3); `id` corresponde a la membresía |
 
 `AporteRequest` contiene `tipo`, `titulo` (obligatorio, hasta 150 caracteres), `contenido`,
 `datos` (JSON con los campos propios del tipo) y `visibilidad` (si falta, se usa la del tipo).
 Intereses exigen `datos.categoria` y `datos.intensidad`; fortalezas exigen `datos.contexto`.
-La sección «Notas» usa el tipo `NOTA_PROFESIONAL`.
+La sección «Notas» usa el tipo `NOTA_PROFESIONAL` (4.2): solo la cargan miembros `EDUCACION` o `SALUD`
+(el resto recibe `403`), y su `datos` exige `tipoNota` (`ORIENTACION`, `OBSERVACION`, `INFORME_BREVE`)
+y `fecha` (`AAAA-MM-DD`). Si no se elige visibilidad, queda `SOLO_SALUD` o `SOLO_EDUCACION` según el área
+de quien la escribe. `GET /api/proyectos/{id}` incluye `puedeCargarNotas` para mostrar u ocultar «Agregar nota».
 
-`AporteResponse` incluye `id`, `proyectoId`, `autorId`, `tipo`, `titulo`, `contenido`, `datos`,
-`visibilidad`, `archivado`, `creadoEn`, `actualizadoEn` y `puedeEditar`
+`AporteResponse` incluye `id`, `proyectoId`, `autorId`, `autorNombre` (nombre y apellido del autor, se mantiene aunque ya no sea miembro), `tipo`, `titulo`, `contenido`, `datos`,
+`visibilidad`, `archivado`, `creadoEn`, `actualizadoEn`, `puedeEditar`, `archivoIds`, `archivos` y
+`autorEspecialidades` (las especialidades que el autor declaró en el proyecto)
 (true si el usuario es el autor y puede cargar en el proyecto).
 
 ## Configuración de cifrado

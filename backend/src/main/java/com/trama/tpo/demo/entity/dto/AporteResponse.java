@@ -11,6 +11,8 @@ public record AporteResponse(
         UUID id,
         UUID proyectoId,
         UUID autorId,
+        // Nombre y apellido del autor: el aporte lo muestra aunque ya no sea miembro (1.5, 2.2)
+        String autorNombre,
         TipoAporte tipo,
         String titulo,
         String contenido,
@@ -21,10 +23,12 @@ public record AporteResponse(
         Instant actualizadoEn,
         // true si el usuario actual es el autor y puede cargar en el proyecto
         Boolean puedeEditar,
-        List<UUID> archivoIds
+        List<UUID> archivoIds,
+        List<ArchivoResponse> archivos,
+        // 4.2: especialidades declaradas por el autor en este proyecto (vacía si no tiene)
+        List<MiembroResponse.EspecialidadItemResponse> autorEspecialidades
 ) {
 
-    // Mantiene la compatibilidad con las respuestas existentes.
     public AporteResponse(
             UUID id,
             UUID proyectoId,
@@ -38,11 +42,11 @@ public record AporteResponse(
             Instant creadoEn,
             Instant actualizadoEn,
             Boolean puedeEditar) {
-
         this(
                 id,
                 proyectoId,
                 autorId,
+                null,
                 tipo,
                 titulo,
                 contenido,
@@ -52,6 +56,8 @@ public record AporteResponse(
                 creadoEn,
                 actualizadoEn,
                 puedeEditar,
+                List.of(),
+                List.of(),
                 List.of()
         );
     }

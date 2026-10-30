@@ -1,7 +1,7 @@
-
 package com.trama.tpo.demo.entity.dto;
 
 import java.time.Instant;
+import java.util.List;
 import java.util.UUID;
 
 import com.trama.tpo.demo.entity.membresia.Membresia;
@@ -24,11 +24,14 @@ public class MiembroResponse {
     private String apellido;
     private Rol rol;
     private Boolean esAdmin;
-    // 1.9: solo EDUCACION o SALUD; null para el resto
-    private String especialidad;
+    /** 1.9: lista de especialidades declaradas (solo EDUCACION / SALUD). */
+    private List<EspecialidadItemResponse> especialidades;
+    private String matricula;
     private Instant fechaAlta;
 
     public static MiembroResponse from(Membresia membresia) {
+
+        List<EspecialidadItemResponse> items = especialidadesDe(membresia);
 
         return MiembroResponse.builder()
                 .id(membresia.getId())
@@ -37,8 +40,31 @@ public class MiembroResponse {
                 .apellido(membresia.getUsuario().getApellido())
                 .rol(membresia.getRol())
                 .esAdmin(membresia.getEsAdmin())
-                .especialidad(membresia.getEspecialidad())
+                .especialidades(items)
+                .matricula(membresia.getMatricula())
                 .fechaAlta(membresia.getFechaAlta())
                 .build();
     }
+
+    /** Especialidades declaradas en la membresía (también las muestra cada aporte, 4.2). */
+    public static List<EspecialidadItemResponse> especialidadesDe(Membresia membresia) {
+
+        if (membresia.getEspecialidades() == null) {
+            return List.of();
+        }
+
+        return membresia.getEspecialidades().stream()
+                .map(me -> new EspecialidadItemResponse(
+                        me.getEspecialidad().name(),
+                        me.getAclaracion()))
+                .toList();
+    }
+
+    /**
+     * Cada especialidad con su aclaración opcional.
+     */
+    public record EspecialidadItemResponse(
+            String especialidad,
+            String aclaracion
+    ) {}
 }

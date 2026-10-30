@@ -12,6 +12,12 @@ function rutaBitacora(proyectoId) {
   return `/proyectos/${encodeURIComponent(proyectoId)}/bitacora`
 }
 
+function rutaResumen(proyectoId) {
+  if (!cliente.defaults.baseURL)
+    throw new Error('Falta configurar la conexión con TRAMA.')
+  return `/proyectos/${encodeURIComponent(proyectoId)}/resumen`
+}
+
 function traducirErrorAporte(error, accion = 'guardar') {
   if (error.response?.status === 403) {
     return new Error(
@@ -72,6 +78,24 @@ export async function listarAportes(proyectoId, signalOrOpciones) {
     throw new Error('No pudimos verificar los aportes del perfil.')
   }
   return { aportes: data }
+}
+
+export async function obtenerResumenProyecto(proyectoId, signal) {
+  const { data } = await cliente.get(
+    rutaResumen(proyectoId),
+    ...(signal ? [{ signal }] : []),
+  )
+  if (!data || typeof data !== 'object' || Array.isArray(data)) {
+    throw new Error('No pudimos verificar el resumen del perfil.')
+  }
+  return {
+    intereses: Array.isArray(data.intereses) ? data.intereses : [],
+    fortalezas: Array.isArray(data.fortalezas) ? data.fortalezas : [],
+    comunicacion: Array.isArray(data.comunicacion) ? data.comunicacion : [],
+    sensorial: Array.isArray(data.sensorial) ? data.sensorial : [],
+    estrategias: Array.isArray(data.estrategias) ? data.estrategias : [],
+    desregulacion: Array.isArray(data.desregulacion) ? data.desregulacion : [],
+  }
 }
 
 export async function listarBitacora(proyectoId, signalOrOpciones) {
@@ -143,6 +167,31 @@ export async function archivarAporte(proyectoId, aporteId) {
   } catch (error) {
     if (error.message === 'Falta configurar la conexión con TRAMA.') throw error
     throw traducirErrorAporte(error, 'archivar')
+  }
+}
+
+// 3.2: todas las versiones del aporte, de la más nueva a la más vieja
+export async function listarVersiones(proyectoId, aporteId) {
+  try {
+    const url = `${ruta(proyectoId)}/${encodeURIComponent(aporteId)}/versiones`
+    const { data } = await cliente.get(url)
+    if (!Array.isArray(data)) throw new Error('Respuesta incompleta')
+    return data
+  } catch (error) {
+    if (error.message === 'Falta configurar la conexión con TRAMA.') throw error
+    if (error.response?.status === 403)
+      throw new Error('No tenés permiso para ver el historial de este aporte.', {
+        cause: error,
+      })
+    if (error.response?.status === 401)
+      throw new Error('Tu sesión venció. Ingresá nuevamente.', { cause: error })
+    if (error.response?.status === 404)
+      throw new Error('No encontramos este aporte. Volvé a cargar el perfil.', {
+        cause: error,
+      })
+    throw new Error('No pudimos cargar el historial. Intentá nuevamente.', {
+      cause: error,
+    })
   }
 }
 
