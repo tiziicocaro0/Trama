@@ -25,6 +25,12 @@ public record EventoRequest(
         @NotNull(message = "La hora de fin es obligatoria")
         LocalTime horaFin,
 
-        UUID imagenId
+        UUID imagenId,
+
+        Boolean recurrente,
+
+        Byte diaSemana,
+
+        LocalDate fechaFinRecurrencia
 
 ) {}

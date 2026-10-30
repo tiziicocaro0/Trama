@@ -16,6 +16,11 @@ public record EventoResponse(
         LocalTime horaInicio,
         LocalTime horaFin,
         UUID imagenId,
-        Instant creadoEn
+        Instant creadoEn,
+
+        Boolean recurrente,
+        Byte diaSemana,
+        LocalDate fechaFinRecurrencia,
+        LocalDate fechaOcurrencia
 
 ) {}
