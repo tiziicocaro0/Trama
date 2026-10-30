@@ -125,16 +125,18 @@ class AporteVisibilidadPorRolTest {
     @Test
     void notaProfesionalTieneVisibilidadSoloSaludPorDefecto()
             throws Exception {
+        // 4.2: las notas las cargan profesionales; una de salud queda SOLO_SALUD por defecto
         String request = """
                 {
                   "tipo": "NOTA_PROFESIONAL",
                   "titulo": "Nota de seguimiento",
-                  "contenido": "Observación profesional"
+                  "contenido": "Observación profesional",
+                  "datos": "{\\"tipoNota\\":\\"OBSERVACION\\",\\"fecha\\":\\"2026-10-29\\"}"
                 }
                 """;
 
         mockMvc.perform(post(rutaAportes())
-                .header("Authorization", token(tutorAutor))
+                .header("Authorization", token(profesionalSalud))
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(request))
                 .andExpect(status().isCreated())

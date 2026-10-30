@@ -134,6 +134,32 @@ public class PermisoService {
         }
     }
 
+    // 3b. VERIFICAR QUE PUEDE CARGAR NOTAS PROFESIONALES (4.2)
+    // Solo los profesionales de educación y salud, y solo donde pueden editar (freemium).
+    public void verificarPuedeCargarNotas(UUID proyectoId) {
+
+        verificarPuedeEditar(proyectoId);
+
+        Rol rol = obtenerMembresia(proyectoId).getRol();
+
+        if (rol != Rol.EDUCACION && rol != Rol.SALUD) {
+            throw new AccessDeniedException(
+                    "Solo los profesionales de educación o salud pueden cargar notas"
+            );
+        }
+    }
+
+    // Igual que verificarPuedeCargarNotas, pero devuelve true/false (lo usa el front).
+    public boolean puedeCargarNotas(UUID proyectoId) {
+        verificarMiembro(proyectoId);
+        try {
+            verificarPuedeCargarNotas(proyectoId);
+            return true;
+        } catch (AccessDeniedException sinPermisoParaNotas) {
+            return false;
+        }
+    }
+
     // 4. VERIFICAR AUTORÍA DE UN APORTE
     public void verificarAutor(UUID autorId) {
 

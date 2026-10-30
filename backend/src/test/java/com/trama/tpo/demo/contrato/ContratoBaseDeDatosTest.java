@@ -25,6 +25,7 @@ import com.trama.tpo.demo.entity.dto.RegisterRequest;
 import com.trama.tpo.demo.entity.invitacion.EstadoInvitacion;
 import com.trama.tpo.demo.entity.membresia.Especialidad;
 import com.trama.tpo.demo.entity.membresia.Rol;
+import com.trama.tpo.demo.entity.registro.AccionRegistro;
 import com.trama.tpo.demo.service.ArchivoService;
 
 import jakarta.validation.constraints.Size;
@@ -70,6 +71,11 @@ class ContratoBaseDeDatosTest {
         Set<String> base = valoresDelCheck("ck_invitacion_estado");
         assertTrue(base.containsAll(nombres(EstadoInvitacion.class)),
                 "EstadoInvitacion tiene valores que la base rechaza: " + nombres(EstadoInvitacion.class));
+    }
+
+    @Test
+    void accionesDelRegistro() {
+        assertEquals(nombres(AccionRegistro.class), valoresDelCheck("ck_registro_accion"));
     }
 
     @Test
