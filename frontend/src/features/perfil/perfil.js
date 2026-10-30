@@ -44,6 +44,16 @@ export const seccionNotas = {
   tono: 'bg-secundario text-superficie',
 }
 
+// 4.2: leyenda fija de la sección y tipos de nota (iguales al enum TipoNota del back)
+export const LEYENDA_NOTAS =
+  'Las notas no reemplazan la historia clínica ni los informes de cada profesional.'
+
+export const TIPOS_NOTA = [
+  ['ORIENTACION', 'Orientación'],
+  ['OBSERVACION', 'Observación'],
+  ['INFORME_BREVE', 'Informe breve'],
+]
+
 export function calcularEdad(fechaNacimiento, hoy = new Date()) {
   if (
     typeof fechaNacimiento !== 'string' ||
@@ -64,4 +74,16 @@ export function calcularEdad(fechaNacimiento, hoy = new Date()) {
     hoy.getMonth() > mes - 1 ||
     (hoy.getMonth() === mes - 1 && hoy.getDate() >= dia)
   return hoy.getFullYear() - anio - (cumplio ? 0 : 1)
+}
+
+// Campos propios de un aporte (el JSON "datos"). Si falta o no es un objeto, devuelve {}.
+export function leerDatosAporte(texto) {
+  try {
+    const datos = JSON.parse(texto ?? '')
+    return datos && typeof datos === 'object' && !Array.isArray(datos)
+      ? datos
+      : {}
+  } catch {
+    return {}
+  }
 }

@@ -1,4 +1,3 @@
-
 package com.trama.tpo.demo;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -38,6 +37,7 @@ import com.trama.tpo.demo.repository.UsuarioRepository;
 import com.trama.tpo.demo.service.EmailService;
 import com.trama.tpo.demo.service.InvitacionService;
 import com.trama.tpo.demo.service.PermisoService;
+import com.trama.tpo.demo.service.RegistroAccionService;
 import com.trama.tpo.demo.service.UsuarioActual;
 
 @ExtendWith(MockitoExtension.class)
@@ -77,7 +77,8 @@ class InvitacionServiceTest {
                 permisoService,
                 usuarioActual,
                 emailService,
-                "https://trama.example/aceptar-invitacion"
+                mock(RegistroAccionService.class),
+                "https://trama.example/invitacion"
         );
     }
 
@@ -168,7 +169,7 @@ class InvitacionServiceTest {
         String enlace = enlaceCaptor.getValue();
 
         String prefijo =
-                "https://trama.example/aceptar-invitacion?token=";
+                "https://trama.example/invitacion/";
 
         assertTrue(enlace.startsWith(prefijo));
 
@@ -213,13 +214,63 @@ class InvitacionServiceTest {
     }
 
     @Test
-    void noSePuedeInvitarConRolTutor() {
+    void tutorAdminPuedeInvitarConRolTutor() {
+
+        UUID proyectoId = UUID.randomUUID();
+        UUID tutorId = UUID.randomUUID();
+
+        Proyecto proyecto = Proyecto.builder()
+                .id(proyectoId)
+                .build();
+
+        Usuario tutor = Usuario.builder()
+                .id(tutorId)
+                .build();
+
+        when(proyectoRepository.findById(proyectoId))
+                .thenReturn(Optional.of(proyecto));
+
+        when(usuarioActual.obtenerId())
+                .thenReturn(tutorId);
+
+        when(usuarioRepository.findById(tutorId))
+                .thenReturn(Optional.of(tutor));
+
+        when(usuarioRepository.findByEmail("cotutor@ejemplo.test"))
+                .thenReturn(Optional.empty());
+
+        when(invitacionRepository.findByProyectoIdAndEstado(
+                proyectoId, EstadoInvitacion.PENDIENTE))
+                .thenReturn(List.of());
+
+        when(invitacionRepository.saveAndFlush(any(Invitacion.class)))
+                .thenAnswer(invocacion -> {
+                    Invitacion invitacion = invocacion.getArgument(0);
+                    invitacion.setId(UUID.randomUUID());
+                    return invitacion;
+                });
+
+        InvitacionRequest request = new InvitacionRequest(
+                "cotutor@ejemplo.test",
+                Rol.TUTOR
+        );
+
+        InvitacionResponse respuesta =
+                invitacionService.crearInvitacion(proyectoId, request);
+
+        verify(permisoService).verificarAdmin(proyectoId);
+        assertEquals(Rol.TUTOR, respuesta.getRol());
+        assertEquals("cotutor@ejemplo.test", respuesta.getEmail());
+    }
+
+    @Test
+    void noSePuedeInvitarSinRol() {
 
         UUID proyectoId = UUID.randomUUID();
 
         InvitacionRequest request = new InvitacionRequest(
                 "persona@ejemplo.test",
-                Rol.TUTOR
+                null
         );
 
         ApiException excepcion = assertThrows(
@@ -230,124 +281,124 @@ class InvitacionServiceTest {
         assertEquals(HttpStatus.BAD_REQUEST, excepcion.getEstado());
         assertEquals("ROL_INVALIDO", excepcion.getCodigo());
 
-        // Tampoco se genera invitacion ni se envia correo.
         verifyNoInteractions(invitacionRepository, emailService);
     }
+
     @Test
-void noSePuedeInvitarAAlguienQueYaEsMiembro() {
+    void noSePuedeInvitarAAlguienQueYaEsMiembro() {
 
-    UUID proyectoId = UUID.randomUUID();
-    UUID tutorId = UUID.randomUUID();
-    UUID miembroId = UUID.randomUUID();
+        UUID proyectoId = UUID.randomUUID();
+        UUID tutorId = UUID.randomUUID();
+        UUID miembroId = UUID.randomUUID();
 
-    Proyecto proyecto = Proyecto.builder()
-            .id(proyectoId)
-            .build();
+        Proyecto proyecto = Proyecto.builder()
+                .id(proyectoId)
+                .build();
 
-    Usuario tutor = Usuario.builder()
-            .id(tutorId)
-            .build();
+        Usuario tutor = Usuario.builder()
+                .id(tutorId)
+                .build();
 
-    Usuario miembro = Usuario.builder()
-            .id(miembroId)
-            .email("docente@ejemplo.test")
-            .build();
+        Usuario miembro = Usuario.builder()
+                .id(miembroId)
+                .email("docente@ejemplo.test")
+                .build();
 
-    when(proyectoRepository.findById(proyectoId))
-            .thenReturn(Optional.of(proyecto));
+        when(proyectoRepository.findById(proyectoId))
+                .thenReturn(Optional.of(proyecto));
 
-    when(usuarioActual.obtenerId())
-            .thenReturn(tutorId);
+        when(usuarioActual.obtenerId())
+                .thenReturn(tutorId);
 
-    when(usuarioRepository.findById(tutorId))
-            .thenReturn(Optional.of(tutor));
+        when(usuarioRepository.findById(tutorId))
+                .thenReturn(Optional.of(tutor));
 
-    when(usuarioRepository.findByEmail("docente@ejemplo.test"))
-            .thenReturn(Optional.of(miembro));
+        when(usuarioRepository.findByEmail("docente@ejemplo.test"))
+                .thenReturn(Optional.of(miembro));
 
-    when(membresiaRepository.existsByUsuarioIdAndProyectoId(
-            miembroId, proyectoId))
-            .thenReturn(true);
+        when(membresiaRepository.existsByUsuarioIdAndProyectoId(
+                miembroId, proyectoId))
+                .thenReturn(true);
 
-    InvitacionRequest request = new InvitacionRequest(
-            "docente@ejemplo.test",
-            Rol.EDUCACION
-    );
+        InvitacionRequest request = new InvitacionRequest(
+                "docente@ejemplo.test",
+                Rol.EDUCACION
+        );
 
-    ApiException excepcion = assertThrows(
-            ApiException.class,
-            () -> invitacionService.crearInvitacion(proyectoId, request)
-    );
+        ApiException excepcion = assertThrows(
+                ApiException.class,
+                () -> invitacionService.crearInvitacion(proyectoId, request)
+        );
 
-    assertEquals(HttpStatus.CONFLICT, excepcion.getEstado());
-    assertEquals("YA_ES_MIEMBRO", excepcion.getCodigo());
+        assertEquals(HttpStatus.CONFLICT, excepcion.getEstado());
+        assertEquals("YA_ES_MIEMBRO", excepcion.getCodigo());
 
-    // No debe guardar una nueva invitacion.
-    verify(invitacionRepository, never())
-            .saveAndFlush(any(Invitacion.class));
+        // No debe guardar una nueva invitacion.
+        verify(invitacionRepository, never())
+                .saveAndFlush(any(Invitacion.class));
 
-    // Tampoco debe enviar un correo.
-    verifyNoInteractions(emailService);
-}
+        // Tampoco debe enviar un correo.
+        verifyNoInteractions(emailService);
+    }
 
-@Test
-void noSePuedeDuplicarUnaInvitacionPendiente() {
+    @Test
+    void noSePuedeDuplicarUnaInvitacionPendiente() {
 
-    UUID proyectoId = UUID.randomUUID();
-    UUID tutorId = UUID.randomUUID();
+        UUID proyectoId = UUID.randomUUID();
+        UUID tutorId = UUID.randomUUID();
 
-    Proyecto proyecto = Proyecto.builder()
-            .id(proyectoId)
-            .build();
+        Proyecto proyecto = Proyecto.builder()
+                .id(proyectoId)
+                .build();
 
-    Usuario tutor = Usuario.builder()
-            .id(tutorId)
-            .build();
+        Usuario tutor = Usuario.builder()
+                .id(tutorId)
+                .build();
 
-    // Ya existe una invitacion pendiente y vigente.
-    Invitacion invitacionExistente = Invitacion.builder()
-            .proyecto(proyecto)
-            .email("docente@ejemplo.test")
-            .rol(Rol.EDUCACION)
-            .estado(EstadoInvitacion.PENDIENTE)
-            .venceEn(Instant.now().plus(7, ChronoUnit.DAYS))
-            .build();
+        // Ya existe una invitacion pendiente y vigente.
+        Invitacion invitacionExistente = Invitacion.builder()
+                .proyecto(proyecto)
+                .email("docente@ejemplo.test")
+                .rol(Rol.EDUCACION)
+                .estado(EstadoInvitacion.PENDIENTE)
+                .venceEn(Instant.now().plus(7, ChronoUnit.DAYS))
+                .build();
 
-    when(proyectoRepository.findById(proyectoId))
-            .thenReturn(Optional.of(proyecto));
+        when(proyectoRepository.findById(proyectoId))
+                .thenReturn(Optional.of(proyecto));
 
-    when(usuarioActual.obtenerId())
-            .thenReturn(tutorId);
+        when(usuarioActual.obtenerId())
+                .thenReturn(tutorId);
 
-    when(usuarioRepository.findById(tutorId))
-            .thenReturn(Optional.of(tutor));
+        when(usuarioRepository.findById(tutorId))
+                .thenReturn(Optional.of(tutor));
 
-    when(usuarioRepository.findByEmail("docente@ejemplo.test"))
-            .thenReturn(Optional.empty());
+        when(usuarioRepository.findByEmail("docente@ejemplo.test"))
+                .thenReturn(Optional.empty());
 
-    when(invitacionRepository.findByProyectoIdAndEstado(
-            proyectoId, EstadoInvitacion.PENDIENTE))
-            .thenReturn(List.of(invitacionExistente));
+        when(invitacionRepository.findByProyectoIdAndEstado(
+                proyectoId, EstadoInvitacion.PENDIENTE))
+                .thenReturn(List.of(invitacionExistente));
 
-    InvitacionRequest request = new InvitacionRequest(
-            "docente@ejemplo.test",
-            Rol.EDUCACION
-    );
+        InvitacionRequest request = new InvitacionRequest(
+                "docente@ejemplo.test",
+                Rol.EDUCACION
+        );
 
-    ApiException excepcion = assertThrows(
-            ApiException.class,
-            () -> invitacionService.crearInvitacion(proyectoId, request)
-    );
+        ApiException excepcion = assertThrows(
+                ApiException.class,
+                () -> invitacionService.crearInvitacion(proyectoId, request)
+        );
 
-    assertEquals(HttpStatus.CONFLICT, excepcion.getEstado());
-    assertEquals("INVITACION_EXISTENTE", excepcion.getCodigo());
+        assertEquals(HttpStatus.CONFLICT, excepcion.getEstado());
+        assertEquals("INVITACION_EXISTENTE", excepcion.getCodigo());
 
-    // No debe guardar otra invitacion.
-    verify(invitacionRepository, never())
-            .saveAndFlush(any(Invitacion.class));
+        // No debe guardar otra invitacion.
+        verify(invitacionRepository, never())
+                .saveAndFlush(any(Invitacion.class));
 
-    // Tampoco debe enviar otro correo.
-    verifyNoInteractions(emailService);
-}
+        // Tampoco debe enviar otro correo.
+        verifyNoInteractions(emailService);
+    }
 
 }

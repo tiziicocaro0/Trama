@@ -1,9 +1,15 @@
 import { useEffect, useRef, useState } from 'react'
-import Button from '../../../components/ui/Button.jsx'
-import Input from '../../../components/ui/Input.jsx'
-import FormField from '../../../components/ui/FormField.jsx'
+import Boton from '../../../components/ui/Boton.jsx'
+import Campo from '../../../components/ui/Campo.jsx'
+import CampoFecha from '../../../components/ui/CampoFecha.jsx'
+import CampoFormulario from '../../../components/ui/CampoFormulario.jsx'
 import SelectorVisibilidad from '../../../components/ui/SelectorVisibilidad.jsx'
+import SubirArchivo from '../../../components/ui/SubirArchivo.jsx'
 import { guardarAporte } from '../../../api/aportes.js'
+import { leerDatosAporte, TIPOS_NOTA } from '../perfil.js'
+import { hoyIso } from '../../../utils/fechas.js'
+
+const SECCIONES_CON_ADJUNTOS = ['NOTA_PROFESIONAL', 'COMUNICACION']
 
 // 2.1 y 2.2: campos propios que el back exige en "datos" para estos tipos.
 // Arrancan en un valor neutro para no frenar la carga; se pueden cambiar.
@@ -46,17 +52,24 @@ const camposPorTipo = {
       ],
     },
   ],
+  // 4.2: tipo de nota y fecha (hoy por defecto)
+  NOTA_PROFESIONAL: [
+    {
+      nombre: 'tipoNota',
+      etiqueta: 'Tipo de nota',
+      inicial: 'ORIENTACION',
+      opciones: TIPOS_NOTA,
+    },
+    { nombre: 'fecha', etiqueta: 'Fecha', tipo: 'fecha', inicial: hoyIso },
+  ],
 }
 
-function leerDatos(texto) {
-  try {
-    const datos = JSON.parse(texto ?? '')
-    return datos && typeof datos === 'object' && !Array.isArray(datos)
-      ? datos
-      : {}
-  } catch {
-    return {}
-  }
+// 2.2: textos propios del formulario según la sección; el resto usa los genéricos.
+const textosPorTipo = {
+  FORTALEZA: {
+    titulo: '¿Qué hace bien o disfruta?',
+    contenido: 'Un ejemplo (opcional)',
+  },
 }
 
 export default function EditorAporte({
@@ -69,15 +82,19 @@ export default function EditorAporte({
   const [titulo, setTitulo] = useState(aporte?.titulo ?? '')
   const [contenido, setContenido] = useState(aporte?.contenido ?? '')
   const [visibilidad, setVisibilidad] = useState(aporte?.visibilidad ?? 'TODOS')
+  const [archivos, setArchivos] = useState(() =>
+    Array.isArray(aporte?.archivos) ? aporte.archivos : [],
+  )
   const campos = camposPorTipo[seccion.tipo] ?? []
   const [extra, setExtra] = useState(() => {
-    const guardados = leerDatos(aporte?.datos)
+    const guardados = leerDatosAporte(aporte?.datos)
     return {
       ...guardados,
       ...Object.fromEntries(
         campos.map(({ nombre, inicial }) => [
           nombre,
-          guardados[nombre] ?? inicial,
+          guardados[nombre] ??
+            (typeof inicial === 'function' ? inicial() : inicial),
         ]),
       ),
     }
@@ -88,7 +105,10 @@ export default function EditorAporte({
   const formulario = useRef(null)
   const alerta = useRef(null)
   const esNota = seccion.tipo === 'NOTA_PROFESIONAL'
+  const permiteAdjuntos = SECCIONES_CON_ADJUNTOS.includes(seccion.tipo)
   const sustantivo = esNota ? 'nota' : 'aporte'
+  const textos = textosPorTipo[seccion.tipo] ?? {}
+  const etiquetaTitulo = textos.titulo ?? 'Título'
   useEffect(() => {
     formulario.current?.querySelector('input')?.focus()
   }, [])
@@ -111,12 +131,21 @@ export default function EditorAporte({
     setEnviando(true)
     setError('')
     try {
+      const teniaArchivos =
+        (Array.isArray(aporte?.archivos) && aporte.archivos.length > 0) ||
+        (Array.isArray(aporte?.archivoIds) && aporte.archivoIds.length > 0)
+      const incluirArchivos =
+        permiteAdjuntos && (archivos.length > 0 || teniaArchivos)
+
       await guardarAporte(proyectoId, aporte?.id, {
         tipo: seccion.tipo,
         titulo: titulo.trim(),
         contenido: contenido.trim(),
         visibilidad,
         ...(campos.length ? { datos: JSON.stringify(extra) } : {}),
+        ...(incluirArchivos
+          ? { archivoIds: archivos.map((item) => item.id) }
+          : {}),
       })
       alGuardar()
     } catch (errorGuardado) {
@@ -144,27 +173,28 @@ export default function EditorAporte({
             ? 'Nueva nota'
             : 'Nuevo aporte'}
       </p>
-      <FormField
+      <CampoFormulario
         id={`titulo-aporte-${seccion.tipo}`}
-        label="Título"
-        hint="Título (obligatorio, hasta 150 caracteres)"
+        label={etiquetaTitulo}
+        hint="Obligatorio, hasta 150 caracteres"
       >
-        <Input
+        <Campo
           name="titulo"
-          placeholder="Título"
+          placeholder={etiquetaTitulo}
           value={titulo}
           onChange={(event) => setTitulo(event.target.value)}
           required
           maxLength={150}
           disabled={enviando}
         />
-      </FormField>
+      </CampoFormulario>
       <div>
         <label
           htmlFor={`contenido-aporte-${seccion.tipo}`}
           className="mb-2 block font-semibold"
         >
-          {esNota ? 'Texto de la nota (opcional)' : 'Descripción (opcional)'}
+          {textos.contenido ??
+            (esNota ? 'Texto de la nota (opcional)' : 'Descripción (opcional)')}
         </label>
         <textarea
           id={`contenido-aporte-${seccion.tipo}`}
@@ -177,7 +207,7 @@ export default function EditorAporte({
           className="w-full rounded-md border border-borde bg-superficie p-4 text-texto focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primario"
         />
       </div>
-      {campos.map(({ nombre, etiqueta, opciones }) => (
+      {campos.map(({ nombre, etiqueta, opciones, tipo }) => (
         <div key={nombre}>
           <label
             htmlFor={`${nombre}-aporte-${seccion.tipo}`}
@@ -185,27 +215,52 @@ export default function EditorAporte({
           >
             {etiqueta}
           </label>
-          <select
-            id={`${nombre}-aporte-${seccion.tipo}`}
-            name={nombre}
-            value={extra[nombre]}
-            onChange={(event) =>
-              setExtra((actual) => ({
-                ...actual,
-                [nombre]: event.target.value,
-              }))
-            }
-            disabled={enviando}
-            className="min-h-14 w-full rounded-md border border-borde bg-superficie px-4 py-3 text-texto focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primario"
-          >
-            {opciones.map(([valor, texto]) => (
-              <option key={valor} value={valor}>
-                {texto}
-              </option>
-            ))}
-          </select>
+          {tipo === 'fecha' ? (
+            <CampoFecha
+              id={`${nombre}-aporte-${seccion.tipo}`}
+              name={nombre}
+              value={extra[nombre]}
+              max={hoyIso()}
+              onChange={(event) =>
+                setExtra((actual) => ({
+                  ...actual,
+                  [nombre]: event.target.value,
+                }))
+              }
+              disabled={enviando}
+              required
+            />
+          ) : (
+            <select
+              id={`${nombre}-aporte-${seccion.tipo}`}
+              name={nombre}
+              value={extra[nombre]}
+              onChange={(event) =>
+                setExtra((actual) => ({
+                  ...actual,
+                  [nombre]: event.target.value,
+                }))
+              }
+              disabled={enviando}
+              className="min-h-14 w-full rounded-md border border-borde bg-superficie px-4 py-3 text-texto focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primario"
+            >
+              {opciones.map(([valor, texto]) => (
+                <option key={valor} value={valor}>
+                  {texto}
+                </option>
+              ))}
+            </select>
+          )}
         </div>
       ))}
+      {permiteAdjuntos && (
+        <SubirArchivo
+          proyectoId={proyectoId}
+          archivos={archivos}
+          onChange={setArchivos}
+          disabled={enviando}
+        />
+      )}
       <SelectorVisibilidad
         id={`visibilidad-aporte-${seccion.tipo}`}
         value={visibilidad}
@@ -218,12 +273,12 @@ export default function EditorAporte({
         </p>
       )}
       <div className="flex flex-wrap gap-3">
-        <Button type="submit" disabled={enviando}>
+        <Boton type="submit" disabled={enviando}>
           {enviando ? 'Guardando…' : `Guardar ${sustantivo}`}
-        </Button>
-        <Button variant="secondary" onClick={alCancelar} disabled={enviando}>
+        </Boton>
+        <Boton variant="secondary" onClick={alCancelar} disabled={enviando}>
           Cancelar
-        </Button>
+        </Boton>
       </div>
     </form>
   )

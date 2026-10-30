@@ -14,6 +14,9 @@ vi.mock('../../api/cliente.js', () => ({
     put: vi.fn(),
   },
 }))
+// 2.2: el formulario de fortalezas pregunta qué hace bien y pide un ejemplo
+const TITULO_FORTALEZA = '¿Qué hace bien o disfruta?'
+const EJEMPLO_FORTALEZA = 'Un ejemplo (opcional)'
 const id = '304d3b5e-8c8a-4a50-83d3-a84ade17b697'
 const proyecto = { id, nombre: 'Niño ficticio', fechaNacimiento: '2018-05-12' }
 const aporteOriginal = {
@@ -70,25 +73,25 @@ beforeEach(() => {
 
 describe('Crear y editar aportes de las seis secciones', () => {
   it.each([
-    ['fortalezas', 'FORTALEZA'],
-    ['intereses', 'INTERES'],
-    ['comunicacion', 'COMUNICACION'],
-    ['perfil-sensorial', 'SENSORIAL'],
-    ['estrategias', 'ESTRATEGIA'],
-    ['rutinas', 'RUTINA'],
+    ['fortalezas', 'FORTALEZA', TITULO_FORTALEZA, EJEMPLO_FORTALEZA],
+    ['intereses', 'INTERES', 'Título', 'Descripción (opcional)'],
+    ['comunicacion', 'COMUNICACION', 'Título', 'Descripción (opcional)'],
+    ['perfil-sensorial', 'SENSORIAL', 'Título', 'Descripción (opcional)'],
+    ['estrategias', 'ESTRATEGIA', 'Título', 'Descripción (opcional)'],
+    ['rutinas', 'RUTINA', 'Título', 'Descripción (opcional)'],
   ])(
     'agrega un aporte en %s y lo muestra al volver a consultar el servidor',
-    async (slug, tipo) => {
+    async (slug, tipo, etiquetaTitulo, etiquetaContenido) => {
       abrir(slug)
       await userEvent.click(
         await screen.findByRole('button', { name: 'Agregar aporte' }),
       )
       await userEvent.type(
-        screen.getByRole('textbox', { name: 'Título' }),
+        screen.getByRole('textbox', { name: etiquetaTitulo }),
         'Nuevo título ficticio',
       )
       await userEvent.type(
-        screen.getByRole('textbox', { name: 'Descripción (opcional)' }),
+        screen.getByRole('textbox', { name: etiquetaContenido }),
         'Nueva descripción ficticia',
       )
       await userEvent.selectOptions(
@@ -109,7 +112,9 @@ describe('Crear y editar aportes de las seis secciones', () => {
         },
       )
       expect(
-        await screen.findByRole('heading', { name: 'Nuevo título ficticio' }),
+        await screen.findByRole('heading', {
+          name: /Nuevo título ficticio/,
+        })
       ).toBeInTheDocument()
       expect(screen.getByText('Nueva descripción ficticia')).toBeInTheDocument()
       expect(screen.getByRole('status')).toHaveTextContent('Aporte guardado')
@@ -154,11 +159,11 @@ describe('Crear y editar aportes de las seis secciones', () => {
       }),
     )
     expect(
-      screen.getByRole('textbox', { name: 'Descripción (opcional)' }),
+      screen.getByRole('textbox', { name: EJEMPLO_FORTALEZA }),
     ).toHaveValue('Descripción ficticia')
-    await userEvent.clear(screen.getByRole('textbox', { name: 'Título' }))
+    await userEvent.clear(screen.getByRole('textbox', { name: TITULO_FORTALEZA }))
     await userEvent.type(
-      screen.getByRole('textbox', { name: 'Título' }),
+      screen.getByRole('textbox', { name: TITULO_FORTALEZA }),
       'Título ficticio editado',
     )
     await userEvent.click(
@@ -178,6 +183,31 @@ describe('Crear y editar aportes de las seis secciones', () => {
       },
     )
     expect(cliente.post).not.toHaveBeenCalled()
+  })
+
+  it('cada fortaleza muestra quién la cargó y cuándo (2.2)', async () => {
+    lista = [
+      {
+        ...aporteOriginal,
+        puedeEditar: false,
+        autorNombre: 'María Díaz',
+        creadoEn: '2026-10-20T15:00:00Z',
+      },
+    ]
+    abrir()
+    await screen.findByRole('heading', { name: aporteOriginal.titulo })
+    expect(screen.getByText('Cargado por: María Díaz')).toBeInTheDocument()
+    expect(document.querySelector('time[datetime="2026-10-20T15:00:00Z"]')).not.toBeNull()
+  })
+
+  it('el formulario de fortalezas pide qué hace bien, dónde y un ejemplo (2.2)', async () => {
+    abrir()
+    await userEvent.click(
+      await screen.findByRole('button', { name: 'Agregar aporte' }),
+    )
+    expect(screen.getByRole('textbox', { name: TITULO_FORTALEZA })).toBeInTheDocument()
+    expect(screen.getByRole('combobox', { name: '¿Dónde lo hace?' })).toBeInTheDocument()
+    expect(screen.getByRole('textbox', { name: EJEMPLO_FORTALEZA })).toBeInTheDocument()
   })
 
   it('no permite editar aportes ajenos y respeta el modo de solo lectura', async () => {
@@ -214,7 +244,7 @@ describe('Crear y editar aportes de las seis secciones', () => {
     })
     await userEvent.click(editar)
     await userEvent.type(
-      screen.getByRole('textbox', { name: 'Título' }),
+      screen.getByRole('textbox', { name: TITULO_FORTALEZA }),
       ' otro texto',
     )
     await userEvent.click(screen.getByRole('button', { name: 'Cancelar' }))
@@ -247,12 +277,12 @@ describe('Crear y editar aportes de las seis secciones', () => {
       await userEvent.click(
         await screen.findByRole('button', { name: 'Agregar aporte' }),
       )
-      fireEvent.change(screen.getByRole('textbox', { name: 'Título' }), {
+      fireEvent.change(screen.getByRole('textbox', { name: TITULO_FORTALEZA }), {
         target: { value: 'Título ficticio' },
       })
       fireEvent.submit(screen.getByRole('form'))
       await screen.findByRole('alert')
-      expect(screen.getByRole('textbox', { name: 'Título' })).toHaveValue(
+      expect(screen.getByRole('textbox', { name: TITULO_FORTALEZA })).toHaveValue(
         'Título ficticio',
       )
       expect(screen.queryByText('Aporte guardado.')).not.toBeInTheDocument()
@@ -270,7 +300,7 @@ describe('Crear y editar aportes de las seis secciones', () => {
     await userEvent.click(
       await screen.findByRole('button', { name: 'Agregar aporte' }),
     )
-    fireEvent.change(screen.getByRole('textbox', { name: 'Título' }), {
+    fireEvent.change(screen.getByRole('textbox', { name: TITULO_FORTALEZA }), {
       target: { value: 'Título ficticio' },
     })
     const form = screen.getByRole('form')

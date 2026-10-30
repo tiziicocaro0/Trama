@@ -238,7 +238,10 @@ Los valores los completa Zoe con los tokens de Sofía. Tailwind genera las clase
 | Qué | Cómo |
 |---|---|
 | Idioma del dominio | Español: `Aporte`, `Proyecto`, `Membresia` |
-| Sufijos técnicos | Inglés: `AporteService`, `AporteController`, `AporteRepository` |
+| Sufijos técnicos | Inglés: `AporteService`, `AporteController`, `AporteRepository`, `AporteRequest`, `PerfilPage`, `usePerfil` |
+| Front | Español: componentes (`Boton`, `Campo`, `TarjetaAporte`), funciones (`listarMiembros`), variables y rutas (`/acompanamientos`), como en el mockup |
+| Infraestructura de seguridad | Puede quedar en inglés: `JwtService`, `AuthenticationService`, `CryptoService` |
+| Nombres de archivo | Sin `ñ` ni tildes: `CampoContrasena.jsx` |
 | Textos de la app | Español rioplatense, lenguaje claro, no clínico ("le cuesta", no "déficit") |
 | Ramas | `feature/<id>-descripcion` (ej. `feature/1.10-mis-proyectos`) |
 | Commits | `<id>: qué se hizo` (ej. `2.1: alta de interés con validación`) |

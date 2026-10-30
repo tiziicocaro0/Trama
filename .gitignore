@@ -11,8 +11,8 @@ coverage/
 # Backend (Java / Maven)
 target/
 
-# Archivos adjuntos cifrados (0.3)
-uploads/
+# Archivos subidos en desarrollo (backend)
+backend/uploads/
 
 # Backups cifrados de la base y los archivos (0.3)
 backups/

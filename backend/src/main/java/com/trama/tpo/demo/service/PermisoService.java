@@ -51,6 +51,18 @@ public class PermisoService {
         }
     }
 
+    // 2b. VERIFICAR QUE ES TUTOR (administrador o co-tutor, 8.0)
+    public void verificarTutor(UUID proyectoId) {
+
+        Membresia membresia = obtenerMembresia(proyectoId);
+
+        if (membresia.getRol() != Rol.TUTOR) {
+            throw new AccessDeniedException(
+                    "Solo los tutores pueden ver el registro de accesos"
+            );
+        }
+    }
+
     // 3. VERIFICAR QUE PUEDE EDITAR
     public void verificarPuedeEditar(UUID proyectoId) {
 
@@ -122,6 +134,32 @@ public class PermisoService {
         }
     }
 
+    // 3b. VERIFICAR QUE PUEDE CARGAR NOTAS PROFESIONALES (4.2)
+    // Solo los profesionales de educación y salud, y solo donde pueden editar (freemium).
+    public void verificarPuedeCargarNotas(UUID proyectoId) {
+
+        verificarPuedeEditar(proyectoId);
+
+        Rol rol = obtenerMembresia(proyectoId).getRol();
+
+        if (rol != Rol.EDUCACION && rol != Rol.SALUD) {
+            throw new AccessDeniedException(
+                    "Solo los profesionales de educación o salud pueden cargar notas"
+            );
+        }
+    }
+
+    // Igual que verificarPuedeCargarNotas, pero devuelve true/false (lo usa el front).
+    public boolean puedeCargarNotas(UUID proyectoId) {
+        verificarMiembro(proyectoId);
+        try {
+            verificarPuedeCargarNotas(proyectoId);
+            return true;
+        } catch (AccessDeniedException sinPermisoParaNotas) {
+            return false;
+        }
+    }
+
     // 4. VERIFICAR AUTORÍA DE UN APORTE
     public void verificarAutor(UUID autorId) {
 
@@ -142,29 +180,28 @@ public class PermisoService {
 
         Membresia membresia = obtenerMembresia(proyectoId);
 
-        Rol rol = membresia.getRol();
-
-        // Los tutores siempre pueden ver todos los aportes
-        if (rol == Rol.TUTOR) {
-            return;
-        }
-
-        boolean puedeVer = switch (visibilidad) {
-
-            case TODOS -> true;
-
-            case SOLO_TUTORES -> false;
-
-            case SOLO_SALUD -> rol == Rol.SALUD;
-
-            case SOLO_EDUCACION -> rol == Rol.EDUCACION;
-        };
-
-        if (!puedeVer) {
+        if (!visibilidadesPermitidas(membresia.getRol()).contains(visibilidad)) {
             throw new AccessDeniedException(
                     "No tenés permiso para ver este aporte"
             );
         }
+    }
+
+    // 6. VISIBILIDADES QUE PUEDE VER CADA ROL
+    // Única fuente de la regla: la usan este chequeo y el listado filtrado en la base.
+    public static List<Visibilidad> visibilidadesPermitidas(Rol rol) {
+
+        return switch (rol) {
+
+            // Los tutores siempre pueden ver todos los aportes
+            case TUTOR -> List.of(Visibilidad.values());
+
+            case SALUD -> List.of(Visibilidad.TODOS, Visibilidad.SOLO_SALUD);
+
+            case EDUCACION -> List.of(Visibilidad.TODOS, Visibilidad.SOLO_EDUCACION);
+
+            case FAMILIAR -> List.of(Visibilidad.TODOS);
+        };
     }
 
     // MÉTODO PRIVADO COMPARTIDO

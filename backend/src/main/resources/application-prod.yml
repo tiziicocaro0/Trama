@@ -28,5 +28,6 @@ trama:
   invitaciones:
     url-base: ${INVITACION_URL_BASE:}
 
+  # Archivos adjuntos (0.3): obligatoria en producción
   archivos:
     directorio: ${UPLOADS_DIR}

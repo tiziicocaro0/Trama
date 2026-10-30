@@ -1,9 +1,11 @@
-
 package com.trama.tpo.demo;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 import static org.hamcrest.Matchers.containsInAnyOrder;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.time.Instant;
 import java.time.LocalDate;
@@ -52,6 +54,7 @@ class MiembroControllerTest {
     private Usuario familiar;
     private Usuario ajeno;
     private Proyecto proyecto;
+    private Membresia membresiaFamiliar;
 
     @BeforeEach
     void prepararDatos() {
@@ -73,7 +76,7 @@ class MiembroControllerTest {
 
         // El tutor y el familiar pertenecen al proyecto.
         crearMembresia(tutorAdmin, Rol.TUTOR, true);
-        crearMembresia(familiar, Rol.FAMILIAR, false);
+        membresiaFamiliar = crearMembresia(familiar, Rol.FAMILIAR, false);
 
         // El usuario ajeno NO tiene membresia.
     }
@@ -120,6 +123,39 @@ class MiembroControllerTest {
                         .value("ACCESO_DENEGADO"));
     }
 
+    @Test
+    void tutorAdminPuedeConvertirFamiliarEnCoTutor() throws Exception {
+
+        mockMvc.perform(put(
+                        "/api/proyectos/{proyectoId}/miembros/{miembroId}/co-tutor",
+                        proyecto.getId(),
+                        membresiaFamiliar.getId())
+                .header("Authorization", token(tutorAdmin)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(membresiaFamiliar.getId().toString()))
+                .andExpect(jsonPath("$.rol").value("TUTOR"))
+                .andExpect(jsonPath("$.esAdmin").value(true));
+
+        Membresia actualizada = membresiaRepository
+                .findById(membresiaFamiliar.getId())
+                .orElseThrow();
+
+        assertEquals(Rol.TUTOR, actualizada.getRol());
+        assertTrue(actualizada.getEsAdmin());
+    }
+
+    @Test
+    void noAdminNoPuedeConvertirFamiliarEnCoTutor() throws Exception {
+
+        mockMvc.perform(put(
+                        "/api/proyectos/{proyectoId}/miembros/{miembroId}/co-tutor",
+                        proyecto.getId(),
+                        membresiaFamiliar.getId())
+                .header("Authorization", token(familiar)))
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.codigo").value("ACCESO_DENEGADO"));
+    }
+
     private Usuario crearUsuario(String nombre) {
 
         return usuarioRepository.save(Usuario.builder()
@@ -131,12 +167,12 @@ class MiembroControllerTest {
                 .build());
     }
 
-    private void crearMembresia(
+    private Membresia crearMembresia(
             Usuario usuario,
             Rol rol,
             boolean esAdmin) {
 
-        membresiaRepository.save(Membresia.builder()
+        return membresiaRepository.save(Membresia.builder()
                 .usuario(usuario)
                 .proyecto(proyecto)
                 .rol(rol)

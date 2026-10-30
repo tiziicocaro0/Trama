@@ -3,9 +3,10 @@ import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { App } from './App';
-import { CampoContraseña } from './components/ui/CampoContraseña';
+import CampoContrasena from './components/ui/CampoContrasena.jsx';
+import CampoFormulario from './components/ui/CampoFormulario.jsx';
 import { clienteApi } from './api/cliente.js';
-import { PROYECTOS_MOCK } from './api/proyectos.js';
+import { PROYECTOS_MOCK } from './api/proyectos.mock.js';
 
 vi.mock('./api/cliente.js', () => {
   const cliente = { defaults: { baseURL: '/api' }, get: vi.fn() };
@@ -24,7 +25,7 @@ vi.mock('./hooks/useAuth', async (importOriginal) => {
 });
 
 describe('Arquitectura base del Frontend (0.14)', () => {
-  it('accede directamente a /proyectos con la sesión mockeada de useAuth y filtra por miembro', async () => {
+  it('/proyectos redirige a Acompañamientos y lista los proyectos que devuelve la API', async () => {
     render(
       <MemoryRouter initialEntries={['/proyectos']}>
         <App />
@@ -36,8 +37,6 @@ describe('Arquitectura base del Frontend (0.14)', () => {
     expect(screen.getByText('Tomás')).toBeInTheDocument();
     expect(screen.getByText('Martina')).toBeInTheDocument();
     expect(screen.getByText('Joaquín')).toBeInTheDocument();
-    // Lucía pertenece a otro usuario y no debe mostrarse
-    expect(screen.queryByText('Lucía')).not.toBeInTheDocument();
   });
   it('renderiza la página /componentes en entorno de desarrollo', () => {
     render(
@@ -48,8 +47,12 @@ describe('Arquitectura base del Frontend (0.14)', () => {
     expect(screen.getByText('Catálogo de componentes UI')).toBeInTheDocument();
     expect(screen.getByText('Paleta de colores oficial')).toBeInTheDocument();
   });
-  it('alterna la visibilidad en CampoContraseña al hacer clic en el ícono de ojito', async () => {
-    render(<CampoContraseña etiqueta="Clave secreta" />);
+  it('alterna la visibilidad en CampoContrasena al hacer clic en el ícono de ojito', async () => {
+    render(
+      <CampoFormulario id="clave" label="Clave secreta">
+        <CampoContrasena name="clave" />
+      </CampoFormulario>,
+    );
     const input = screen.getByLabelText('Clave secreta');
     expect(input).toHaveAttribute('type', 'password');
     await userEvent.click(

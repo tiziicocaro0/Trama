@@ -1,4 +1,3 @@
-
 package com.trama.tpo.demo.service;
 
 import java.net.URI;
@@ -18,12 +17,16 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.trama.tpo.demo.entity.dto.InvitacionDetalleResponse;
 import com.trama.tpo.demo.entity.dto.InvitacionRequest;
 import com.trama.tpo.demo.entity.dto.InvitacionResponse;
+import com.trama.tpo.demo.entity.dto.MiembroResponse;
 import com.trama.tpo.demo.entity.invitacion.EstadoInvitacion;
 import com.trama.tpo.demo.entity.invitacion.Invitacion;
+import com.trama.tpo.demo.entity.membresia.Membresia;
 import com.trama.tpo.demo.entity.membresia.Rol;
 import com.trama.tpo.demo.entity.proyecto.Proyecto;
+import com.trama.tpo.demo.entity.registro.AccionRegistro;
 import com.trama.tpo.demo.entity.usuario.Usuario;
 import com.trama.tpo.demo.exceptions.ApiException;
 import com.trama.tpo.demo.repository.InvitacionRepository;
@@ -43,6 +46,7 @@ public class InvitacionService {
     private final PermisoService permisoService;
     private final UsuarioActual usuarioActual;
     private final EmailService emailService;
+    private final RegistroAccionService registroAccionService;
     private final String urlBaseInvitacion;
 
     public InvitacionService(
@@ -53,6 +57,7 @@ public class InvitacionService {
             PermisoService permisoService,
             UsuarioActual usuarioActual,
             EmailService emailService,
+            RegistroAccionService registroAccionService,
             @Value("${trama.invitaciones.url-base:}") String urlBaseInvitacion) {
 
         this.invitacionRepository = invitacionRepository;
@@ -62,7 +67,120 @@ public class InvitacionService {
         this.permisoService = permisoService;
         this.usuarioActual = usuarioActual;
         this.emailService = emailService;
+        this.registroAccionService = registroAccionService;
         this.urlBaseInvitacion = urlBaseInvitacion;
+    }
+
+    // 1.4 - Consultar una invitacion mediante su token.
+    @Transactional(readOnly = true)
+    public InvitacionDetalleResponse consultarInvitacion(String token) {
+
+        // 1. Calcular el hash del token recibido.
+        String tokenHash = calcularHash(token);
+
+        // 2. Buscar la invitacion en la base de datos.
+        Invitacion invitacion = invitacionRepository
+                .findByTokenHash(tokenHash)
+                .orElseThrow(() -> new ApiException(
+                        "INVITACION_NO_ENCONTRADA",
+                        "No encontramos esta invitacion",
+                        HttpStatus.NOT_FOUND
+                ));
+
+        // 3. Comprobar que siga pendiente y no haya vencido.
+        if (invitacion.getEstado() != EstadoInvitacion.PENDIENTE
+                || !invitacion.getVenceEn().isAfter(Instant.now())) {
+
+            throw new ApiException(
+                    "INVITACION_NO_DISPONIBLE",
+                    "La invitacion vencio o ya fue utilizada",
+                    HttpStatus.GONE
+            );
+        }
+
+        // 4. Devolver solamente los datos publicos.
+        return InvitacionDetalleResponse.from(invitacion);
+    }
+
+    // Aceptar una invitacion y crear la membresia.
+    // La especialidad se configura despues con PUT /miembros/me/especialidades.
+    @Transactional
+    public MiembroResponse aceptarInvitacion(String token) {
+
+        // 1. Buscar la invitacion bloqueando su registro.
+        String tokenHash = calcularHash(token);
+
+        Invitacion invitacion = invitacionRepository
+                .findByTokenHashForUpdate(tokenHash)
+                .orElseThrow(() -> new ApiException(
+                        "INVITACION_NO_ENCONTRADA",
+                        "No encontramos esta invitacion",
+                        HttpStatus.NOT_FOUND
+                ));
+
+        // 2. Comprobar que siga pendiente y vigente.
+        if (invitacion.getEstado() != EstadoInvitacion.PENDIENTE
+                || !invitacion.getVenceEn().isAfter(Instant.now())) {
+
+            throw new ApiException(
+                    "INVITACION_NO_DISPONIBLE",
+                    "La invitacion vencio o ya fue utilizada",
+                    HttpStatus.GONE
+            );
+        }
+
+        // 3. Obtener al usuario autenticado.
+        UUID usuarioId = usuarioActual.obtenerId();
+
+        Usuario usuario = usuarioRepository.findById(usuarioId)
+                .orElseThrow(() -> new ApiException(
+                        "USUARIO_NO_ENCONTRADO",
+                        "No encontramos al usuario autenticado",
+                        HttpStatus.UNAUTHORIZED
+                ));
+
+        // 4. Verificar que sea el destinatario de la invitacion.
+        String emailUsuario = usuario.getEmail()
+                .trim()
+                .toLowerCase(Locale.ROOT);
+
+        if (!invitacion.getEmail().equalsIgnoreCase(emailUsuario)) {
+            throw new ApiException(
+                    "DESTINATARIO_INCORRECTO",
+                    "Esta invitacion pertenece a otra cuenta",
+                    HttpStatus.FORBIDDEN
+            );
+        }
+
+        // 5. Evitar crear una membresia duplicada.
+        if (membresiaRepository.existsByUsuarioIdAndProyectoId(
+                usuarioId,
+                invitacion.getProyecto().getId())) {
+
+            throw new ApiException(
+                    "YA_ES_MIEMBRO",
+                    "Ya perteneces a este proyecto",
+                    HttpStatus.CONFLICT
+            );
+        }
+
+        // 6. Crear la membresia con el rol indicado en la invitacion.
+        // 1.6: Si la invitacion es para rol TUTOR (co-tutor), queda con esAdmin = true.
+        Membresia membresia = Membresia.builder()
+                .usuario(usuario)
+                .proyecto(invitacion.getProyecto())
+                .rol(invitacion.getRol())
+                .esAdmin(invitacion.getRol() == Rol.TUTOR)
+                .build();
+
+        membresia = membresiaRepository.saveAndFlush(membresia);
+
+        // 7. Marcar la invitacion como utilizada.
+        invitacion.setEstado(EstadoInvitacion.ACEPTADA);
+        invitacionRepository.saveAndFlush(invitacion);
+
+        // 8. Devolver los datos de la nueva membresia.
+        return MiembroResponse.from(membresia);
     }
 
     @Transactional
@@ -73,13 +191,13 @@ public class InvitacionService {
         // 1. Solo un tutor administrador puede invitar miembros.
         permisoService.verificarAdmin(proyectoId);
 
-        // 2. Validar el rol solicitado.
+        // 2. Validar el rol solicitado (incluye TUTOR para co-tutor en 1.6).
         Rol rol = request.getRol();
 
-        if (rol == null || rol == Rol.TUTOR) {
+        if (rol == null) {
             throw new ApiException(
                     "ROL_INVALIDO",
-                    "Solo se puede invitar con los roles FAMILIAR, EDUCACION o SALUD",
+                    "El rol es obligatorio",
                     HttpStatus.BAD_REQUEST
             );
         }
@@ -167,6 +285,10 @@ public class InvitacionService {
 
         invitacion = invitacionRepository.saveAndFlush(invitacion);
 
+        // 0.2: auditoría (sin el email del invitado: es dato personal)
+        registroAccionService.registrar(
+                usuarioId, proyectoId, AccionRegistro.INVITAR, "MIEMBROS");
+
         // 10. Enviar el enlace por correo.
         // Evitamos incluir datos personales del niño en el email.
         emailService.enviarInvitacion(
@@ -233,6 +355,6 @@ public class InvitacionService {
             );
         }
 
-        return base + "?token=" + token;
+        return base.replaceAll("/+$", "") + "/" + token;
     }
 }

@@ -1,8 +1,9 @@
 import { useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import Button from '../../components/ui/Button.jsx'
-import Input from '../../components/ui/Input.jsx'
-import FormField from '../../components/ui/FormField.jsx'
+import Boton from '../../components/ui/Boton.jsx'
+import Campo from '../../components/ui/Campo.jsx'
+import CampoFecha from '../../components/ui/CampoFecha.jsx'
+import CampoFormulario from '../../components/ui/CampoFormulario.jsx'
 import InicioSidebar from '../inicio/InicioSidebar.jsx'
 import useAuth from '../../hooks/useAuth.js'
 import { crearProyecto } from '../../api/proyectos.js'
@@ -17,7 +18,7 @@ const campos = [
     maxLength: 40,
     opcional: true,
   },
-  { nombre: 'fechaNacimiento', etiqueta: 'Fecha de nacimiento', type: 'date' },
+  { nombre: 'fechaNacimiento', etiqueta: 'Fecha de nacimiento', tipo: 'fecha' },
   { nombre: 'escuela', etiqueta: 'Escuela', maxLength: 120 },
   { nombre: 'grado', etiqueta: 'Grado', maxLength: 30 },
 ]
@@ -122,22 +123,32 @@ export default function NuevoAcompanamientoPage() {
                   <p aria-hidden="true" className="mb-2 font-semibold">
                     {campo.etiqueta}
                   </p>
-                  <FormField
+                  <CampoFormulario
                     id={`nuevo-${campo.nombre}`}
                     label={campo.etiqueta}
                     error={errores[campo.nombre]}
                   >
-                    <Input
-                      name={campo.nombre}
-                      type={campo.type ?? 'text'}
-                      maxLength={campo.maxLength}
-                      max={campo.type === 'date' ? fechaMaxima : undefined}
-                      value={valores[campo.nombre]}
-                      onChange={cambiar}
-                      required={!campo.opcional}
-                      disabled={enviando}
-                    />
-                  </FormField>
+                    {campo.tipo === 'fecha' ? (
+                      <CampoFecha
+                        name={campo.nombre}
+                        value={valores[campo.nombre]}
+                        onChange={cambiar}
+                        max={fechaMaxima}
+                        disabled={enviando}
+                        required
+                      />
+                    ) : (
+                      <Campo
+                        name={campo.nombre}
+                        type="text"
+                        maxLength={campo.maxLength}
+                        value={valores[campo.nombre]}
+                        onChange={cambiar}
+                        required={!campo.opcional}
+                        disabled={enviando}
+                      />
+                    )}
+                  </CampoFormulario>
                 </div>
               ))}
             </div>
@@ -181,16 +192,16 @@ export default function NuevoAcompanamientoPage() {
               </p>
             )}
             <div className="flex flex-col gap-3 sm:flex-row">
-              <Button type="submit" disabled={enviando}>
+              <Boton type="submit" disabled={enviando}>
                 {enviando ? 'Creando acompañamiento…' : 'Crear acompañamiento'}
-              </Button>
-              <Button
+              </Boton>
+              <Boton
                 to="/acompanamientos"
                 variant="secondary"
                 disabled={enviando}
               >
                 Volver a acompañamientos
-              </Button>
+              </Boton>
             </div>
           </form>
         </div>

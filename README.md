@@ -215,7 +215,7 @@ Los comandos definitivos se verificarán cuando esté disponible el proyecto fro
 
 ### Configuración de Git Hooks
 
-Trama utiliza un hook local `pre-push` para verificar los tests del backend antes de subir modificaciones a GitHub.
+Trama usa un hook local `pre-push` que corre **los mismos pasos que el CI** antes de subir cambios, para no enterarse recién en el Pull Request de que algo falla.
 
 #### Activación
 
@@ -225,20 +225,36 @@ Cada integrante debe activarlo **una vez** por cada copia local del repositorio.
 git config core.hooksPath .githooks
 ```
 
-#### Requisitos para pushear cambios del backend
+#### Requisitos
 
 - MySQL levantado: `docker compose up -d`
-- Archivo `.env` en la raíz (copiado de `.env.example` y completado). El hook lo lee solo.
+- Archivo `.env` en la raíz (copiado de `.env.example` y completado), con `MYSQL_PASSWORD`, `MYSQL_ROOT_PASSWORD` y `JWT_SECRET`. El hook lo lee solo.
+- Java 21 y Node 22, las mismas versiones del CI (si no coinciden, el hook avisa).
 
 #### Funcionamiento
 
-- Si entre los commits que se suben hay cambios en `backend/`, corre `./mvnw -B clean test`.
-- Si los tests pasan, el push sigue. Si fallan, el push se cancela.
-- Si no hay cambios en `backend/`, el push sigue sin correr Maven.
+Primero hace `git fetch origin develop` y revisa que la rama que se sube **contenga todo el develop actual**. Si le faltan commits, cancela el push y pide `git merge origin/develop`. Así los tests prueban la rama tal como va a quedar después del merge, y no contra un develop viejo. Con varios PR abiertos, cada vez que se mergea uno, los demás tienen que traer develop antes de volver a pushear. Los push directos a `develop` o `main` no pasan por este chequeo, y si no hay conexión solo se avisa.
 
-El hook está en `.githooks/pre-push`.
+Después mira qué cambió entre los commits que se suben y llama a `scripts/verificar-ci.sh`:
 
-**Nota:** los hooks se ejecutan localmente y complementan las verificaciones de GitHub Actions. No reemplazan los checks obligatorios de los Pull Requests.
+| Si cambia… | Se corre |
+| --- | --- |
+| `backend/` | Se recrea la base `trama_test` **vacía** (como en el CI) y se corre `./mvnw -B clean test` |
+| `frontend/` | `npm run lint` (ESLint + `check:estilos`) y `npm test -- --run` |
+| `frontend/package.json` o `package-lock.json` | Además, `npm ci`, que falla si el lock no coincide con `package.json` |
+| `.github/` | Backend y frontend |
+
+En todos los casos se buscan marcadores de conflicto (`<<<<<<<` / `>>>>>>>`) olvidados. Si algo falla, el push se cancela.
+
+También se puede correr a mano en cualquier momento:
+
+```bash
+sh scripts/verificar-ci.sh              # todo
+sh scripts/verificar-ci.sh --backend    # solo backend
+sh scripts/verificar-ci.sh --frontend   # solo frontend
+```
+
+**Nota:** el hook verifica tu copia de trabajo, así que conviene pushear con todo commiteado. Complementa los checks obligatorios de los Pull Requests, no los reemplaza.
 
 ## Despliegue local con Docker Compose
 
@@ -260,7 +276,7 @@ TRAMA_CRYPTO_KEY=
 TRAMA_BACKUP_KEY=
 ```
 
-`TRAMA_CRYPTO_KEY` y `TRAMA_BACKUP_KEY` son las claves de cifrado (AES-256, en Base64). Se generan una vez con `openssl rand -base64 32`, cada una por separado. Las variables `OPENBAO_*` las agrega solo `openbao/inicializar.sh` (ver la sección 9).
+`TRAMA_CRYPTO_KEY` y `TRAMA_BACKUP_KEY` son las claves de cifrado (AES-256, en Base64). Se generan una vez con `openssl rand -base64 32`, cada una por separado: tienen que ser distintas. Las variables `OPENBAO_*` las agrega solo `openbao/inicializar.sh` (ver la sección 9).
 
 Las contraseñas y claves deben mantenerse privadas. El archivo `.env` no debe subirse al repositorio.
 
@@ -327,7 +343,7 @@ El backend guarda los archivos adjuntos cifrados en `/app/uploads`, dentro de su
 | Dónde corre el backend | Carpeta de archivos |
 |---|---|
 | Docker Compose (`--profile app`) | `/app/uploads`, en el volumen `trama-uploads` |
-| Desde el IDE o con `./mvnw` | `uploads/` en la raíz del repo, ignorada por git. Se puede cambiar con `UPLOADS_DIR` en el `.env` |
+| Desde el IDE o con `./mvnw` | `backend/uploads/`, ignorada por git. Se puede cambiar con `UPLOADS_DIR` en el `.env` |
 
 Para ver los archivos guardados (cada uno tiene un nombre UUID y está cifrado):
 
@@ -335,23 +351,13 @@ Para ver los archivos guardados (cada uno tiene un nombre UUID y está cifrado):
 docker exec trama-backend ls -la /app/uploads
 ```
 
-La base y los archivos van juntos: la tabla `archivo` guarda el UUID de cada uno. Para respaldar o mover el entorno, siempre hay que copiar los dos volúmenes a la vez.
+La base y los archivos van juntos: la tabla `archivo` guarda el nombre de cada uno. Para respaldar o mover el entorno, siempre hay que copiar los dos volúmenes a la vez.
 
-### 7. Actualizar los contenedores
-
-Después de traer cambios de `develop` que tocan el `docker-compose.yml`, el `Dockerfile` o el backend, hay que reconstruir:
-
-```bash
-docker compose --profile app up -d --build
-```
-
-Los contenedores se recrean con la configuración nueva y los datos de los volúmenes se mantienen.
-
-### 8. Backups cifrados
+### 7. Backups cifrados
 
 Un backup guarda **juntos** la base y los archivos adjuntos, en un solo archivo cifrado con AES-256. La clave (`TRAMA_BACKUP_KEY`) la pide a OpenBao, así que OpenBao tiene que estar abierto (ver la sección 9).
 
-Hacer un backup (MySQL tiene que estar levantado):
+Hacer un backup (MySQL y OpenBao tienen que estar levantados):
 
 ```bash
 docker compose --profile backup run --rm backup
@@ -359,18 +365,26 @@ docker compose --profile backup run --rm backup
 
 Queda en `backups/trama-AAAAMMDD-HHMMSS.tar.gz.gpg`, carpeta ignorada por git.
 
-Restaurar un backup en una base de **prueba** (`trama_restaurada`), sin tocar los datos reales:
+Restaurar en una base de **prueba** (`trama_restaurada`), sin tocar los datos reales:
 
 ```bash
 docker compose --profile backup run --rm --entrypoint sh backup \
     /scripts/restaurar.sh trama-AAAAMMDD-HHMMSS.tar.gz.gpg
 ```
 
-Para restaurar sobre la base y los archivos **reales**, agregar `--sobrescribir-real` al final. Esto reemplaza los datos actuales.
+Para restaurar sobre la base y los archivos **reales**, agregar `--sobrescribir-real` al final.
 
-⚠️ Guardar las claves **fuera** de los backups:
-- Sin `TRAMA_BACKUP_KEY`, el backup no se puede abrir.
-- Sin `TRAMA_CRYPTO_KEY`, los campos sensibles de la base restaurada no se pueden leer.
+⚠️ Guardar las claves **fuera** de los backups: sin `TRAMA_BACKUP_KEY` el backup no se puede abrir, y sin `TRAMA_CRYPTO_KEY` los campos sensibles de la base restaurada no se pueden leer.
+
+### 8. Actualizar los contenedores
+
+Después de traer cambios de `develop` que tocan el `docker-compose.yml`, el `Dockerfile` o el backend:
+
+```bash
+docker compose --profile app up -d --build
+```
+
+Los contenedores se recrean con la configuración nueva y los datos de los volúmenes se mantienen.
 
 ### 9. OpenBao (claves de cifrado)
 
@@ -498,14 +512,7 @@ Todo el texto libre que se carga sobre el niño se guarda cifrado en la base:
 | `evento` | `descripcion`, `acta` (actas de reunión) |
 | `solicitud_revision` | `motivo` |
 
-Los archivos adjuntos también se guardan cifrados, fuera de la base:
-
-- `ArchivoStorageService` los cifra con la misma clave y el mismo formato (`[IV][cifrado + tag]`) antes de escribirlos en disco.
-- Cada archivo se guarda con un nombre UUID, nunca con el original. El nombre original va en la columna `archivo.nombre_original`.
-- La carpeta se configura con `UPLOADS_DIR`. En producción es obligatoria: si falta, la app no arranca.
-- El service no verifica permisos. Los endpoints de subida y descarga (4.3) tienen que llamar a `PermisoService` antes de usarlo.
-
-Los backups se cifran con AES-256 usando una clave aparte (`TRAMA_BACKUP_KEY`). Ver [Despliegue local con Docker Compose](#despliegue-local-con-docker-compose), sección 8.
+Los archivos adjuntos también se guardan cifrados en disco.
 
 **No se cifran** los títulos de los aportes y eventos, porque se muestran en listados. Por eso un título nunca debe tener información sensible.
 

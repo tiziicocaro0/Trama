@@ -57,7 +57,7 @@ services:
       SPRING_MAIL_SMTP_AUTH: ${SPRING_MAIL_SMTP_AUTH:-false}
       SPRING_MAIL_SMTP_STARTTLS: ${SPRING_MAIL_SMTP_STARTTLS:-false}
 
-      # Archivos adjuntos cifrados (0.3)
+      # Archivos adjuntos cifrados (0.3): en un volumen, para que no se pierdan al recrear el contenedor
       UPLOADS_DIR: /app/uploads
 
     volumes:

@@ -9,7 +9,7 @@ export default function useAcompanamientos() {
     const controller = new AbortController()
     async function cargar() {
       try {
-        const proyectos = await obtenerMisProyectos(undefined, controller.signal)
+        const proyectos = await obtenerMisProyectos(controller.signal)
         if (!controller.signal.aborted) setResultado({ intento, proyectos })
       } catch (error) {
         if (controller.signal.aborted) return

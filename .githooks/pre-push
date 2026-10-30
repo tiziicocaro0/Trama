@@ -1,11 +1,29 @@
 #!/bin/sh
+# Antes de cada push corre los mismos chequeos que el CI, pero solo
+# para la parte del repo que cambió (ver scripts/verificar-ci.sh).
 
 set -eu
 
 cd "$(git rev-parse --show-toplevel)"
 
 zero=0000000000000000000000000000000000000000
-changed=0
+cambia_backend=0
+cambia_frontend=0
+cambian_dependencias=0
+desactualizadas=""
+
+# Traer el develop actual del remoto: los tests tienen que probar la rama
+# tal como quedaría al mergearse, no contra un develop viejo.
+# Sin conexión no se bloquea el push (el CI lo va a revisar igual).
+develop_al_dia=1
+if command -v timeout >/dev/null 2>&1; then
+    timeout 60 git fetch --quiet origin develop || develop_al_dia=0
+else
+    git fetch --quiet origin develop || develop_al_dia=0
+fi
+if [ "$develop_al_dia" -eq 0 ]; then
+    echo "Aviso: no se pudo traer origin/develop; se verifica contra la última copia local."
+fi
 
 # Revisar todas las referencias que se intentan subir.
 while read -r local_ref local_sha remote_ref remote_sha
@@ -15,6 +33,19 @@ do
         continue
     fi
 
+    # Una rama de trabajo tiene que incluir todo develop. Si no, sus tests
+    # no prueban lo que va a quedar después del merge.
+    case "$remote_ref" in
+        refs/heads/develop|refs/heads/main) ;;
+        *)
+            if ! git merge-base --is-ancestor origin/develop "$local_sha"; then
+                atrasados=$(git rev-list --count "$local_sha..origin/develop")
+                desactualizadas="$desactualizadas
+  - ${remote_ref#refs/heads/}: le faltan $atrasados commit(s) de develop"
+            fi
+            ;;
+    esac
+
     # Determinar los commits que se van a subir.
     if [ "$remote_sha" = "$zero" ]; then
         base=$(git merge-base "$local_sha" origin/develop 2>/dev/null || true)
@@ -22,56 +53,57 @@ do
         base="$remote_sha"
     fi
 
-    # Si no se puede determinar la base, ejecutar tests por seguridad.
+    # Si no se puede determinar la base, verificar todo por seguridad.
     if [ -z "$base" ]; then
-        changed=1
-    elif git diff --name-only "$base" "$local_sha" -- backend/ | grep -q .; then
-        changed=1
+        cambia_backend=1
+        cambia_frontend=1
+        continue
+    fi
+
+    cambios=$(git diff --name-only "$base" "$local_sha")
+
+    if printf '%s\n' "$cambios" | grep -q -E '^(backend/|\.github/)'; then
+        cambia_backend=1
+    fi
+    if printf '%s\n' "$cambios" | grep -q -E '^(frontend/|\.github/)'; then
+        cambia_frontend=1
+    fi
+    if printf '%s\n' "$cambios" | grep -q -E '^frontend/package(-lock)?\.json$'; then
+        cambian_dependencias=1
     fi
 done
 
-# Si no hubo cambios del backend, permitir el push.
-if [ "$changed" -eq 0 ]; then
-    echo "No hay cambios de backend pendientes de push."
+if [ -n "$desactualizadas" ]; then
+    echo "Push cancelado: la rama no está al día con develop.$desactualizadas"
+    echo ""
+    echo "Traé develop, resolvé los conflictos si hay y volvé a pushear:"
+    echo "  git merge origin/develop"
+    exit 1
+fi
+
+if [ "$cambia_backend" -eq 0 ] && [ "$cambia_frontend" -eq 0 ]; then
+    echo "No hay cambios de backend ni de frontend pendientes de push."
     exit 0
 fi
 
-# Cargar todas las variables del .env (MYSQL_PASSWORD, JWT_SECRET, TRAMA_CRYPTO_KEY...).
-# Se ignoran comentarios y líneas vacías, y se quitan los \r de Windows.
-if [ -f .env ]; then
-    while IFS= read -r line || [ -n "$line" ]; do
-        line=$(printf '%s' "$line" | tr -d '\r')
-        case "$line" in
-            ''|'#'*) continue ;;
-            *=*)
-                clave="${line%%=*}"
-                valor="${line#*=}"
-                export "$clave=$valor"
-                ;;
-        esac
-    done < .env
+opciones=""
+if [ "$cambia_backend" -eq 1 ]; then
+    opciones="$opciones --backend"
+fi
+if [ "$cambia_frontend" -eq 1 ]; then
+    opciones="$opciones --frontend"
+fi
+if [ "$cambian_dependencias" -eq 1 ]; then
+    opciones="$opciones --npm-ci"
 fi
 
-if [ -z "${MYSQL_PASSWORD:-}" ] || [ -z "${JWT_SECRET:-}" ]; then
-    echo "ERROR: Faltan MYSQL_PASSWORD o JWT_SECRET en .env."
-    exit 1
-fi
+echo "Verificando como el CI:$opciones"
 
-echo "Cambios detectados en backend. Ejecutando tests..."
-
-if [ ! -f backend/mvnw ]; then
-    echo "ERROR: No se encontro backend/mvnw."
-    exit 1
-fi
-
-(
-    cd backend
-    # clean: descarta clases compiladas por el IDE, que pueden quedar rotas
-    ./mvnw -B clean test
-) || {
-    echo "ERROR: Los tests del backend fallaron. Push cancelado."
+# shellcheck disable=SC2086
+sh scripts/verificar-ci.sh $opciones || {
+    echo "Push cancelado: corregí lo que falló y volvé a pushear."
     exit 1
 }
 
-echo "Tests del backend correctos. Push permitido."
+echo "Verificación correcta. Push permitido."
 exit 0

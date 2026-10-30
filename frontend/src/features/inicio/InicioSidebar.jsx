@@ -1,6 +1,6 @@
 import { BookOpen, CalendarBlank, User, Users } from '@phosphor-icons/react'
 import { Link, NavLink, useSearchParams } from 'react-router-dom'
-import BrandLogo from '../../components/ui/BrandLogo.jsx'
+import Logo from '../../components/ui/Logo.jsx'
 import HiloInicio from './HiloInicio.jsx'
 
 const navegacion = [
@@ -24,7 +24,7 @@ export default function InicioSidebar({ cerrarSesion }) {
           aria-label="TRAMA · Inicio"
           className="block w-32 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-primario lg:w-28 xl:w-32"
         >
-          <BrandLogo />
+          <Logo />
         </NavLink>
       </div>
       <nav

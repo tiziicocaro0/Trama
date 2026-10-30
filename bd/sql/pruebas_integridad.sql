@@ -1,6 +1,6 @@
 -- =====================================================================
 -- TRAMA · Pruebas de integridad de la base (sin back, sin Spring)
--- Uso: correr V1..V6 + datos_mock_dev.sql en una base vacía y después este script.
+-- Uso: correr todas las migraciones (V1 en adelante) + datos_mock_dev.sql en una base vacía y después este script.
 --   mysql -u root trama < pruebas_integridad.sql
 -- Cada prueba dice si la base RECHAZA lo que tiene que rechazar (o acepta lo que debe).
 -- Todo corre dentro de una transacción que se deshace al final: no deja cambios.
@@ -49,8 +49,9 @@ CALL probar('Visibilidad inválida', "INSERT INTO aporte (id,proyecto_id,autor_i
 CALL probar('Aporte con autor inexistente', "INSERT INTO aporte (id,proyecto_id,autor_id,tipo,titulo) VALUES (UUID_TO_BIN(UUID()),@p_tomi,@fantasma,'INTERES','X')", TRUE);
 CALL probar('Confirmar dos veces el mismo aporte', "INSERT INTO confirmacion_aporte (aporte_id,usuario_id) VALUES (@a1,@u_psico),(@a1,@u_psico)", TRUE);
 
--- Archivos (5 MB, solo PDF/JPG/PNG)
+-- Archivos (hasta 5 MB, solo PDF/JPG/PNG)
 CALL probar('Archivo de 6 MB', "INSERT INTO archivo (id,proyecto_id,autor_id,nombre_original,tipo_mime,tamano_bytes,ruta) VALUES (UUID_TO_BIN(UUID()),@p_tomi,@u_tutor,'a.pdf','application/pdf',6291456,UUID())", TRUE);
+CALL probar('Archivo de exactamente 5 MB', "INSERT INTO archivo (id,proyecto_id,autor_id,nombre_original,tipo_mime,tamano_bytes,ruta) VALUES (UUID_TO_BIN(UUID()),@p_tomi,@u_tutor,'b.pdf','application/pdf',5242880,UUID())", FALSE);
 CALL probar('Archivo .exe', "INSERT INTO archivo (id,proyecto_id,autor_id,nombre_original,tipo_mime,tamano_bytes,ruta) VALUES (UUID_TO_BIN(UUID()),@p_tomi,@u_tutor,'a.exe','application/x-msdownload',1000,UUID())", TRUE);
 CALL probar('Archivo PDF de 2 MB', "INSERT INTO archivo (id,proyecto_id,autor_id,nombre_original,tipo_mime,tamano_bytes,ruta) VALUES (UUID_TO_BIN(UUID()),@p_tomi,@u_tutor,'informe.pdf','application/pdf',2097152,UUID())", FALSE);
 
