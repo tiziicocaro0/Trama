@@ -14,7 +14,7 @@ import org.springframework.web.method.annotation.MethodArgumentTypeMismatchExcep
 import org.springframework.web.multipart.MaxUploadSizeExceededException;
 import org.springframework.web.multipart.support.MissingServletRequestPartException;
 import org.springframework.http.converter.HttpMessageNotReadableException;
-
+import org.springframework.web.server.ResponseStatusException;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
@@ -132,6 +132,29 @@ public class GlobalExceptionHandler {
                         "DATOS_INVALIDOS",
                         "Los datos enviados no son válidos"
                 ));
+    }
+
+    // ERRORES HTTP DEFINIDOS POR LOS SERVICIOS
+    @ExceptionHandler(ResponseStatusException.class)
+    public ResponseEntity<ErrorResponse> handleResponseStatus(
+            ResponseStatusException e) {
+
+        String codigo = switch (e.getStatusCode().value()) {
+            case 400 -> "DATOS_INVALIDOS";
+            case 401 -> "NO_AUTENTICADO";
+            case 403 -> "ACCESO_DENEGADO";
+            case 404 -> "NO_ENCONTRADO";
+            case 409 -> "CONFLICTO";
+            default -> "ERROR_HTTP";
+        };
+
+        String mensaje = e.getReason() != null
+                ? e.getReason()
+                : "No se pudo completar la solicitud";
+
+        return ResponseEntity
+                .status(e.getStatusCode())
+                .body(new ErrorResponse(codigo, mensaje));
     }
 
     // ERRORES INESPERADOS
