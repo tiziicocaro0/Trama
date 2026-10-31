@@ -37,7 +37,9 @@ import com.trama.tpo.demo.entity.dto.EspecialidadItemRequest;
 import com.trama.tpo.demo.entity.dto.RegisterRequest;
 import com.trama.tpo.demo.entity.dto.RestablecerContrasenaRequest;
 import com.trama.tpo.demo.entity.membresia.Especialidad;
+import com.trama.tpo.demo.entity.usuario.TipoCuenta;
 import com.trama.tpo.demo.entity.membresia.Rol;
+import com.trama.tpo.demo.entity.plan.PeriodoSuscripcion;
 import com.trama.tpo.demo.service.ArchivoService;
 import com.trama.tpo.demo.service.BitacoraService;
 
@@ -104,6 +106,26 @@ class ContratoFrontendTest {
     void tiposDeNota() {
         assertEquals(nombres(TipoNota.class), valoresEnMayusculas(
                 entre(leer("features/perfil/perfil.js"), "export const TIPOS_NOTA = [", "\n]")));
+    }
+
+    @Test
+    void planesDeSuscripcion() {
+        // 9.1 y 9.2: el front nombra cada plan que devuelve el back
+        // (GRATUITO, los períodos pagos e INSTITUCIONAL, ver SuscripcionService)
+        Set<String> periodos = new java.util.LinkedHashSet<>(Set.of("GRATUITO"));
+        periodos.addAll(nombres(PeriodoSuscripcion.class));
+        periodos.add("INSTITUCIONAL");
+        assertEquals(periodos, valoresEnMayusculas(entre(leer("api/planes.js"), "const PLANES = [", "]")));
+        assertEquals(periodos, todasLasCoincidencias(Pattern.compile("([A-Z]+):"),
+                entre(leer("features/plan/planes.js"), "NOMBRES_PLAN = {", "}")));
+    }
+
+    @Test
+    void tiposDeCuenta() {
+        // 9.4: las opciones del registro son exactamente las del enum
+        assertEquals(nombres(TipoCuenta.class), todasLasCoincidencias(
+                Pattern.compile("valor: '([A-Z]+)'"),
+                entre(leer("features/auth/registro/tipoCuenta.js"), "TIPOS_CUENTA = [", "\n]")));
     }
 
     @Test

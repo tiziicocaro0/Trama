@@ -2,6 +2,7 @@ import { ArrowLeft, User } from '@phosphor-icons/react'
 import { Link } from 'react-router-dom'
 import Logo from '../../../components/ui/Logo.jsx'
 import { calcularEdad } from '../perfil.js'
+import AvisoPlanGratuito from '../../plan/AvisoPlanGratuito.jsx'
 
 export default function CabeceraPerfil({ proyecto, seccion }) {
   const edad = calcularEdad(proyecto.fechaNacimiento)
@@ -45,6 +46,11 @@ export default function CabeceraPerfil({ proyecto, seccion }) {
           </p>
         </div>
       </div>
+      {proyecto.soloLecturaPorPlan === true && (
+        <div className="mt-6 print:hidden">
+          <AvisoPlanGratuito />
+        </div>
+      )}
     </header>
   )
 }

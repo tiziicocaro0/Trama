@@ -6,10 +6,12 @@ const datos = {
   apellido: 'Ejemplo',
   email: 'alma@trama.test',
   password: 'Prueba123!',
+  tipoCuenta: 'FAMILIA',
+  especialidades: [],
 }
 
 describe('Validaciones del contrato de registro', () => {
-  it('acepta los datos completos y no obliga a elegir un rol', () => {
+  it('acepta los datos completos de una familia', () => {
     expect(validarRegistro(datos)).toEqual({})
   })
 
@@ -58,7 +60,32 @@ describe('Validaciones del contrato de registro', () => {
 
   it('valida solo los campos de la etapa visible antes de la confirmación', () => {
     expect(validarRegistro({ ...datos, password: '' }, 0)).toEqual({})
-    expect(validarRegistro({ ...datos, email: '' }, 1)).toEqual({})
-    expect(validarRegistro({ ...datos, email: '' }, 2).email).toBeTruthy()
+    expect(validarRegistro({ ...datos, password: '' }, 1)).toEqual({})
+    expect(validarRegistro({ ...datos, email: '' }, 2)).toEqual({})
+    expect(validarRegistro({ ...datos, tipoCuenta: '' }, 2)).toEqual({})
+    expect(validarRegistro({ ...datos, email: '' }, 3).email).toBeTruthy()
+  })
+
+  it('9.4: pide el tipo de cuenta, el área y al menos una especialidad al profesional', () => {
+    expect(validarRegistro({ ...datos, tipoCuenta: '' }, 1).tipoCuenta).toBeTruthy()
+    const profesional = { ...datos, tipoCuenta: 'PROFESIONAL', area: '' }
+    expect(validarRegistro(profesional, 1).area).toBeTruthy()
+    const salud = { ...profesional, area: 'SALUD' }
+    expect(validarRegistro(salud, 1).especialidades).toBeTruthy()
+    const psicologia = { especialidad: 'PSICOLOGIA', aclaracion: '' }
+    expect(validarRegistro({ ...salud, especialidades: [psicologia] }, 1)).toEqual({})
+    expect(
+      validarRegistro({ ...salud, especialidades: Array(11).fill(psicologia) }, 1)
+        .especialidades,
+    ).toBeTruthy()
+    const otra = { especialidad: 'OTRA_SALUD', aclaracion: '  ' }
+    expect(validarRegistro({ ...salud, especialidades: [otra] }, 1).especialidades).toBe(
+      'Contanos qué hacés en «Otra».',
+    )
+  })
+
+  it('el último paso pide los 6 dígitos del código', () => {
+    expect(validarRegistro({ ...datos, codigo: '12345' }, 4).codigo).toBeTruthy()
+    expect(validarRegistro({ ...datos, codigo: '123456' }, 4)).toEqual({})
   })
 })

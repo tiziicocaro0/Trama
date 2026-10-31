@@ -24,7 +24,10 @@ import com.trama.tpo.demo.entity.dto.InvitacionRequest;
 import com.trama.tpo.demo.entity.dto.RegisterRequest;
 import com.trama.tpo.demo.entity.invitacion.EstadoInvitacion;
 import com.trama.tpo.demo.entity.membresia.Especialidad;
+import com.trama.tpo.demo.entity.usuario.TipoCuenta;
 import com.trama.tpo.demo.entity.membresia.Rol;
+import com.trama.tpo.demo.entity.plan.MotivoCambioPaquete;
+import com.trama.tpo.demo.entity.plan.PeriodoSuscripcion;
 import com.trama.tpo.demo.entity.registro.AccionRegistro;
 import com.trama.tpo.demo.service.ArchivoService;
 
@@ -76,6 +79,23 @@ class ContratoBaseDeDatosTest {
     @Test
     void accionesDelRegistro() {
         assertEquals(nombres(AccionRegistro.class), valoresDelCheck("ck_registro_accion"));
+    }
+
+    @Test
+    void periodosDeSuscripcion() {
+        assertEquals(nombres(PeriodoSuscripcion.class), valoresDelCheck("ck_suscripcion_periodo"));
+    }
+
+    @Test
+    void tiposDeCuentaYEspecialidadesDeLaCuenta() {
+        // 9.4
+        assertEquals(nombres(TipoCuenta.class), valoresDelCheck("ck_usuario_tipo_cuenta"));
+        assertEquals(nombres(Especialidad.class), valoresDelCheck("ck_uesp_especialidad"));
+    }
+
+    @Test
+    void motivosDeCambioDePaquete() {
+        assertEquals(nombres(MotivoCambioPaquete.class), valoresDelCheck("ck_institucion_aviso_motivo"));
     }
 
     @Test

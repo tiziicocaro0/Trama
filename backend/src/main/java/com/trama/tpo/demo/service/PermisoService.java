@@ -2,14 +2,16 @@ package com.trama.tpo.demo.service;
 
 import java.util.UUID;
 import java.util.List;
-import java.util.Set;
 
+import org.springframework.http.HttpStatus;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 
 import com.trama.tpo.demo.entity.membresia.Membresia;
 import com.trama.tpo.demo.entity.membresia.Rol;
 import com.trama.tpo.demo.aporte.Visibilidad;
+import com.trama.tpo.demo.exceptions.ApiException;
+import com.trama.tpo.demo.exceptions.SoloLecturaException;
 import com.trama.tpo.demo.repository.MembresiaRepository;
 
 @Service
@@ -17,19 +19,35 @@ public class PermisoService {
 
     private final UsuarioActual usuarioActual;
     private final MembresiaRepository membresiaRepository;
+    private final PlanService planService;
 
     public PermisoService(
             UsuarioActual usuarioActual,
-            MembresiaRepository membresiaRepository) {
+            MembresiaRepository membresiaRepository,
+            PlanService planService) {
 
         this.usuarioActual = usuarioActual;
         this.membresiaRepository = membresiaRepository;
+        this.planService = planService;
     }
 
     // Al crear todavía no existe proyecto ni membresía: cualquier usuario autenticado
     // puede crear uno y queda como su tutor administrador.
+    // 9.4: hasta PlanService.NINOS_POR_CUENTA niños como tutor, para que nadie
+    // use la cuenta de familia como si fuera un plan profesional ilimitado.
     public UUID verificarPuedeCrearProyecto() {
-        return usuarioActual.obtenerId();
+        UUID usuarioId = usuarioActual.obtenerId();
+
+        if (membresiaRepository.countByUsuarioIdAndRol(usuarioId, Rol.TUTOR)
+                >= PlanService.NINOS_POR_CUENTA) {
+            throw new ApiException(
+                    "LIMITE_NINOS",
+                    "Cada cuenta puede crear hasta " + PlanService.NINOS_POR_CUENTA
+                            + " acompañamientos.",
+                    HttpStatus.CONFLICT
+            );
+        }
+        return usuarioId;
     }
 
     // 1. VERIFICAR QUE PERTENECE AL PROYECTO
@@ -88,21 +106,25 @@ public class PermisoService {
             );
         }
 
-        // Los profesionales gratuitos pueden editar
-        // únicamente sus dos proyectos más antiguos
+        // 9.0: los profesionales con plan pago editan en todos sus niños;
+        // los gratuitos, únicamente en sus dos proyectos más antiguos
         if (rol == Rol.SALUD || rol == Rol.EDUCACION) {
 
             UUID usuarioId = usuarioActual.obtenerId();
+
+            if (planService.editaSinLimite(usuarioId)) {
+                return;
+            }
 
             List<Membresia> membresiasProfesionales =
                     membresiaRepository
                             .findByUsuarioIdAndRolInOrderByFechaAltaAscIdAsc(
                                     usuarioId,
-                                    Set.of(Rol.SALUD, Rol.EDUCACION)
+                                    PlanService.ROLES_PROFESIONALES
                             );
 
             boolean puedeEditar = membresiasProfesionales.stream()
-                    .limit(2)
+                    .limit(PlanService.PROYECTOS_GRATUITOS)
                     .anyMatch(m ->
                             m.getProyecto().getId().equals(proyectoId)
                     );
@@ -111,9 +133,9 @@ public class PermisoService {
                 return;
             }
 
-            throw new AccessDeniedException(
-                    "Alcanzaste el límite de dos proyectos gratuitos. "
-                    + "Este proyecto está disponible en modo solo lectura."
+            throw new SoloLecturaException(
+                    "Con el plan gratuito podés editar en 2 niños. "
+                    + "Suscribite para editar en todos."
             );
         }
 
@@ -130,6 +152,20 @@ public class PermisoService {
             verificarPuedeEditar(proyectoId);
             return true;
         } catch (AccessDeniedException sinPermisoDeEdicion) {
+            return false;
+        }
+    }
+
+    // 9.0: true si el usuario solo puede leer este proyecto por el límite del plan gratuito
+    // (lo usa el front para mostrar el aviso de suscripción).
+    public boolean soloLecturaPorPlan(UUID proyectoId) {
+        verificarMiembro(proyectoId);
+        try {
+            verificarPuedeEditar(proyectoId);
+            return false;
+        } catch (SoloLecturaException limiteGratuito) {
+            return true;
+        } catch (AccessDeniedException otroMotivo) {
             return false;
         }
     }
