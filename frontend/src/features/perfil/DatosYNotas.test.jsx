@@ -77,7 +77,7 @@ beforeEach(() => {
 })
 
 describe('Datos personales y navegación compartida', () => {
-  it('agrega los tres botones juntos y permite recorrer los datos guardados', async () => {
+  it('agrega los botones juntos, con la vista general primero, y permite recorrer los datos guardados', async () => {
     abrir()
     const nav = await screen.findByRole('navigation', {
       name: 'Espacios del perfil',
@@ -86,7 +86,7 @@ describe('Datos personales y navegación compartida', () => {
       within(nav)
         .getAllByRole('link')
         .map((link) => link.textContent),
-    ).toEqual(['Red', 'Datos personales', 'Notas'])
+    ).toEqual(['Vista general', 'Red', 'Datos personales', 'Notas'])
     await userEvent.click(
       within(nav).getByRole('link', { name: 'Datos personales' }),
     )

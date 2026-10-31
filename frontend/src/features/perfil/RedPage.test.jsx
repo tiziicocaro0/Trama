@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react'
+import { render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router-dom'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
@@ -20,6 +20,7 @@ const proyecto = { id, nombre: 'Niño ficticio', fechaNacimiento: '2018-05-12' }
 const red = [
   {
     id: 'membresia-tutora',
+    usuarioId: 'usuario-tutora',
     nombre: 'Tutora ficticia',
     apellido: 'Ejemplo',
     rol: 'TUTOR',
@@ -235,5 +236,30 @@ describe('Red de profesionales', () => {
     expect(
       screen.queryByRole('heading', { name: 'Familiar ficticio Ejemplo' }),
     ).not.toBeInTheDocument()
+  })
+  it('nadie ve el botón para quitarse el acceso a sí mismo', async () => {
+    abrir(undefined, true, { id: 'usuario-tutora', esAdmin: true })
+    expect(
+      await screen.findByRole('button', { name: 'Quitar acceso a Familiar ficticio Ejemplo' }),
+    ).toBeInTheDocument()
+    expect(
+      screen.queryByRole('button', { name: 'Quitar acceso a Tutora ficticia Ejemplo' }),
+    ).not.toBeInTheDocument()
+  })
+  it('tiene la navegación principal a un clic', async () => {
+    abrir()
+    const nav = await screen.findByRole('navigation', { name: 'Navegación principal' })
+    for (const [nombre, destino] of [
+      ['Inicio', '/inicio'],
+      ['Acompañamientos', '/acompanamientos'],
+      ['Recursos', '/inicio?seccion=recursos'],
+      ['Mi plan', '/cuenta/plan'],
+    ]) {
+      expect(within(nav).getByRole('link', { name: nombre })).toHaveAttribute('href', destino)
+    }
+    expect(within(nav).getByRole('link', { name: 'Acompañamientos' })).toHaveAttribute(
+      'aria-current',
+      'page',
+    )
   })
 })

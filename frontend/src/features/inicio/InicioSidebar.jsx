@@ -1,16 +1,8 @@
-import { BookOpen, CalendarBlank, CreditCard, User, Users } from '@phosphor-icons/react'
 import { Link, NavLink, useLocation, useSearchParams } from 'react-router-dom'
 import Logo from '../../components/ui/Logo.jsx'
 import HiloInicio from './HiloInicio.jsx'
+import { navegacion } from './navegacion.js'
 
-const navegacion = [
-  { id: '', titulo: 'Acompañamientos', icon: Users },
-  { id: 'recursos', titulo: 'Recursos', icon: BookOpen },
-  { id: 'calendario', titulo: 'Calendario', icon: CalendarBlank },
-  { id: 'perfil', titulo: 'Mi perfil', icon: User },
-  // 9.1: página propia (no es una sección de Inicio)
-  { id: 'plan', titulo: 'Mi plan', icon: CreditCard, to: '/cuenta/plan' },
-]
 // 9.2: la página de la institución se abre desde Mi plan
 const RUTAS_PLAN = ['/cuenta/plan', '/institucion']
 
@@ -40,7 +32,7 @@ export default function InicioSidebar({ cerrarSesion }) {
           {navegacion.map((item) => {
             const { id, titulo, icon: Icon, to } = item
             const enPlan = RUTAS_PLAN.includes(pathname)
-            const seleccionada = to
+            const seleccionada = id === 'plan'
               ? enPlan
               : id
                 ? !enPlan && actual === id
@@ -49,7 +41,7 @@ export default function InicioSidebar({ cerrarSesion }) {
             return (
               <li key={titulo}>
                 <Link
-                  to={to ?? (id ? `/inicio?seccion=${id}` : '/acompanamientos')}
+                  to={to}
                   aria-current={seleccionada ? 'page' : false}
                   className={`flex min-h-12 flex-col items-center gap-1 rounded-md px-2 py-3 text-xs focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primario sm:justify-center sm:text-sm lg:flex-row lg:justify-start lg:gap-3 lg:px-3 xl:min-h-13 xl:px-4 xl:text-base ${seleccionada ? 'bg-decoracion font-semibold text-primario' : 'text-texto-suave hover:bg-decoracion/60'}`}
                 >

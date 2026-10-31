@@ -20,6 +20,7 @@ import InstitucionPage from '../features/institucion/InstitucionPage.jsx'
 import AceptarInvitacionPage from '../features/invitaciones/AceptarInvitacionPage.jsx'
 import VerificarEmailPage from '../features/auth/verificar/VerificarEmailPage.jsx'
 import { Layout } from '../components/layout/Layout.jsx'
+import { ConBarraIconos } from '../components/layout/BarraIconos.jsx'
 import { Tarjeta } from '../components/ui/Tarjeta.jsx'
 import { Componentes } from '../pages/Componentes.jsx'
 
@@ -164,7 +165,9 @@ export default function AppRoutes() {
         path="/proyectos/:id"
         element={
           <Acceso privado>
-            <PerfilPage />
+            <ConBarraIconos>
+              <PerfilPage />
+            </ConBarraIconos>
           </Acceso>
         }
       />
@@ -172,7 +175,9 @@ export default function AppRoutes() {
         path="/proyectos/:id/conocelo"
         element={
           <Acceso privado>
-            <ConoceloPage />
+            <ConBarraIconos>
+              <ConoceloPage />
+            </ConBarraIconos>
           </Acceso>
         }
       />
@@ -180,7 +185,9 @@ export default function AppRoutes() {
         path="/proyectos/:id/red"
         element={
           <Acceso privado>
-            <RedPage />
+            <ConBarraIconos>
+              <RedPage />
+            </ConBarraIconos>
           </Acceso>
         }
       />
@@ -188,7 +195,9 @@ export default function AppRoutes() {
         path="/proyectos/:id/datos-personales"
         element={
           <Acceso privado>
-            <DatosPersonalesPage />
+            <ConBarraIconos>
+              <DatosPersonalesPage />
+            </ConBarraIconos>
           </Acceso>
         }
       />
@@ -196,7 +205,9 @@ export default function AppRoutes() {
         path="/proyectos/:id/bitacora"
         element={
           <Acceso privado>
-            <BitacoraPage />
+            <ConBarraIconos>
+              <BitacoraPage />
+            </ConBarraIconos>
           </Acceso>
         }
       />
@@ -204,7 +215,9 @@ export default function AppRoutes() {
         path="/proyectos/:id/:seccion"
         element={
           <Acceso privado>
-            <PerfilPage />
+            <ConBarraIconos>
+              <PerfilPage />
+            </ConBarraIconos>
           </Acceso>
         }
       />

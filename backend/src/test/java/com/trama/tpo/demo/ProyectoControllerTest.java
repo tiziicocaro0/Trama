@@ -201,14 +201,14 @@ class ProyectoControllerTest {
                 .andExpect(jsonPath("$.codigo").value("ACCESO_DENEGADO"));
     }
 
-    // 1.5: no se puede quitar el acceso al único administrador del proyecto (400)
+    // 1.5: nadie se quita el acceso a sí mismo, así el proyecto nunca queda sin su administrador (400)
     @Test
-    void noSePuedeQuitarAlUnicoAdminRecibe400() throws Exception {
+    void elAdminNoSePuedeQuitarElAccesoASiMismoRecibe400() throws Exception {
 
         mockMvc.perform(delete("/api/proyectos/" + proyecto.getId() + "/miembros/" + membresiaTutor.getId())
                 .header("Authorization", token(tutorAdmin)))
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.codigo").value("ULTIMO_ADMIN"));
+                .andExpect(jsonPath("$.codigo").value("QUITARSE_A_SI_MISMO"));
     }
 
     // 1.5: un tutor administrador quita el acceso a un miembro (200 OK) y el revocado pierde el acceso al instante (403)

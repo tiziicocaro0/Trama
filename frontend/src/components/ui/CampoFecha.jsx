@@ -42,6 +42,21 @@ function formatearParaValor(fecha) {
   return `${anio}-${mes}-${dia}`
 }
 
+// dd/mm/aaaa a medida que se escribe (solo dígitos)
+function enmascarar(escrito) {
+  const digitos = escrito.replace(/\D/g, '').slice(0, 8)
+  return [digitos.slice(0, 2), digitos.slice(2, 4), digitos.slice(4)]
+    .filter(Boolean)
+    .join('/')
+}
+
+// '12/05/2018' -> '2018-05-12'; incompleta -> ''
+function isoDeTexto(texto) {
+  const digitos = texto.replace(/\D/g, '')
+  if (digitos.length !== 8) return ''
+  return `${digitos.slice(4)}-${digitos.slice(2, 4)}-${digitos.slice(0, 2)}`
+}
+
 function obtenerDiasDelMes(anio, mes) {
   const primerDia = new Date(anio, mes, 1)
   // lunes = 0, domingo = 6
@@ -76,6 +91,29 @@ export default function CampoFecha({
   const [vista, setVista] = useState('dias')
   const contenedorRef = useRef(null)
   const botonRef = useRef(null)
+
+  const [texto, setTexto] = useState(() => formatearParaMostrar(value))
+  const [valorPrevio, setValorPrevio] = useState(value)
+  // Si la fecha cambia desde afuera (calendario o formulario), se muestra la nueva.
+  if (value !== valorPrevio) {
+    setValorPrevio(value)
+    if (value !== isoDeTexto(texto)) setTexto(formatearParaMostrar(value))
+  }
+
+  function escribir(evento) {
+    const escrito = evento.target.value
+    let iso
+    if (/^\d{4}-\d{2}-\d{2}$/.test(escrito)) {
+      // pegada en formato ISO
+      iso = escrito
+      setTexto(formatearParaMostrar(escrito) || escrito)
+    } else {
+      const enmascarado = enmascarar(escrito)
+      setTexto(enmascarado)
+      iso = isoDeTexto(enmascarado)
+    }
+    onChange?.({ target: { name, value: iso, type: 'text' } })
+  }
 
   const fechaSeleccionada = parsearFecha(value)
   const hoy = new Date()
@@ -203,7 +241,6 @@ export default function CampoFecha({
   }
 
   const dias = obtenerDiasDelMes(mesVista.anio, mesVista.mes)
-  const textoMostrado = formatearParaMostrar(value) || ''
 
   // Generar grilla de anios (4 columnas x 3 filas = 12 anios)
   const aniosGrilla = []
@@ -213,6 +250,23 @@ export default function CampoFecha({
 
   return (
     <div ref={contenedorRef} className={`relative ${className}`}>
+      {/* 9.x: la fecha se puede escribir (dd/mm/aaaa) o elegir en el calendario */}
+      <input
+        id={id}
+        type="text"
+        name={name}
+        inputMode="numeric"
+        autoComplete="off"
+        placeholder="dd/mm/aaaa"
+        maxLength={10}
+        value={texto}
+        onChange={escribir}
+        disabled={disabled}
+        required={required}
+        aria-invalid={ariaInvalid}
+        aria-describedby={ariaDescribedby}
+        className={`min-h-18 w-full rounded-md border bg-superficie py-4 pl-14 pr-5 text-lg text-texto placeholder:text-texto-suave focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primario disabled:cursor-wait ${ariaInvalid ? 'border-error' : 'border-borde'}`}
+      />
       <button
         ref={botonRef}
         type="button"
@@ -220,32 +274,11 @@ export default function CampoFecha({
         disabled={disabled}
         aria-haspopup="dialog"
         aria-expanded={abierto}
-        aria-invalid={ariaInvalid}
-        aria-describedby={ariaDescribedby}
-        className={`flex min-h-18 w-full items-center gap-3 rounded-md border bg-superficie py-4 pl-14 pr-5 text-left text-lg focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primario disabled:cursor-wait ${ariaInvalid ? 'border-error' : 'border-borde'}`}
+        aria-label="Elegir la fecha en el calendario"
+        className="absolute top-1/2 left-2 flex size-11 -translate-y-1/2 items-center justify-center rounded-md text-agua hover:bg-decoracion focus-visible:outline-2 focus-visible:outline-primario"
       >
-        <CalendarBlank
-          size={20}
-          aria-hidden="true"
-          className="pointer-events-none absolute top-1/2 left-5 -translate-y-1/2 text-agua"
-        />
-        {textoMostrado ? (
-          <span className="text-texto">{textoMostrado}</span>
-        ) : (
-          <span className="text-texto-suave">dd/mm/aaaa</span>
-        )}
+        <CalendarBlank size={20} aria-hidden="true" />
       </button>
-      {/* Input accesible para asociación con label y formularios */}
-      <input
-        id={id}
-        type="text"
-        name={name}
-        value={value}
-        onChange={onChange}
-        required={required}
-        tabIndex={-1}
-        className="sr-only"
-      />
       {abierto && (
         <div
           role="dialog"
