@@ -170,6 +170,36 @@ export async function archivarAporte(proyectoId, aporteId) {
   }
 }
 
+// 3.3: "Yo también lo observé" / "A mí también me funcionó" en un aporte ajeno
+const MENSAJES_CONFIRMACION = {
+  APORTE_PROPIO: 'No podés confirmar tu propio aporte.',
+  APORTE_ARCHIVADO: 'Este aporte está archivado.',
+}
+
+async function cambiarConfirmacion(metodo, proyectoId, aporteId) {
+  try {
+    const url = `${ruta(proyectoId)}/${encodeURIComponent(aporteId)}/confirmaciones`
+    await cliente[metodo](url)
+  } catch (error) {
+    if (error.message === 'Falta configurar la conexión con TRAMA.') throw error
+    const mensaje = MENSAJES_CONFIRMACION[error.response?.data?.codigo]
+    if (mensaje) throw new Error(mensaje, { cause: error })
+    if (error.response?.status === 401)
+      throw new Error('Tu sesión venció. Ingresá nuevamente.', { cause: error })
+    throw new Error('No pudimos guardar tu confirmación. Intentá nuevamente.', {
+      cause: error,
+    })
+  }
+}
+
+export function confirmarAporte(proyectoId, aporteId) {
+  return cambiarConfirmacion('post', proyectoId, aporteId)
+}
+
+export function quitarConfirmacion(proyectoId, aporteId) {
+  return cambiarConfirmacion('delete', proyectoId, aporteId)
+}
+
 // 3.2: todas las versiones del aporte, de la más nueva a la más vieja
 export async function listarVersiones(proyectoId, aporteId) {
   try {
