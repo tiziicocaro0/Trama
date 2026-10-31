@@ -39,3 +39,9 @@ const ETIQUETAS_ESPECIALIDAD = Object.fromEntries(
 export function etiquetaEspecialidad(valor) {
   return ETIQUETAS_ESPECIALIDAD[valor] ?? valor
 }
+
+// 9.4: valores de un rol, para precargar las especialidades de la cuenta al aceptar una invitación.
+export function especialidadesDelRol(rol) {
+  const lista = rol === 'EDUCACION' ? ESPECIALIDADES_EDUCACION : ESPECIALIDADES_SALUD
+  return lista.map(({ valor }) => valor)
+}

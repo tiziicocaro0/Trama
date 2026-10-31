@@ -17,6 +17,7 @@ import ConoceloPage from '../features/perfil/ConoceloPage.jsx'
 import BitacoraPage from '../features/bitacora/BitacoraPage.jsx'
 import PlanPage from '../features/plan/PlanPage.jsx'
 import InstitucionPage from '../features/institucion/InstitucionPage.jsx'
+import AceptarInvitacionPage from '../features/invitaciones/AceptarInvitacionPage.jsx'
 import { Layout } from '../components/layout/Layout.jsx'
 import { Tarjeta } from '../components/ui/Tarjeta.jsx'
 import { Componentes } from '../pages/Componentes.jsx'
@@ -62,7 +63,8 @@ export default function AppRoutes() {
       perfil && (!perfil[1] || seccion || espacio)
         ? (espacio ?? seccion?.titulo ?? 'Perfil del niño')
         : null
-    document.title = `TRAMA · ${titles[pathname] ?? tituloPerfil ?? 'Página no encontrada'}`
+    const invitacion = pathname.startsWith('/invitaciones/') ? 'Invitación' : null
+    document.title = `TRAMA · ${titles[pathname] ?? tituloPerfil ?? invitacion ?? 'Página no encontrada'}`
     document.querySelector('main')?.focus()
   }, [pathname])
 
@@ -97,6 +99,14 @@ export default function AppRoutes() {
         element={
           <Acceso>
             <RecuperarPage />
+          </Acceso>
+        }
+      />
+      <Route
+        path="/invitaciones/:token"
+        element={
+          <Acceso abierto>
+            <AceptarInvitacionPage />
           </Acceso>
         }
       />

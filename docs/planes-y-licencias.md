@@ -98,3 +98,10 @@ de cada niño quedaban a su nombre. La 9.4 cierra ese camino sin pedir documenta
 - Ser co-tutor de un niño cuenta para el tope; ser familiar o profesional en otros niños, no.
 - `GET /api/auth/yo` suma `tipoCuenta` y `especialidades`. El front las usa para precargar las casillas al aceptar una invitación, filtradas por el rol que eligió quien invita.
 - Migración `V202610302300__tipo_de_cuenta.sql`: columna `tipo_cuenta` (con `CHECK`) y tabla `usuario_especialidad`. Las cuentas que ya existían pasan a profesional si trabajan como educación o salud en algún niño, y heredan las especialidades de sus membresías.
+
+### 1.4 · Pantalla para aceptar la invitación
+
+El backend de la 1.4 ya estaba en develop; faltaba la pantalla. `/invitaciones/:token` muestra el niño,
+quién invita y con qué rol. Sin sesión ofrece ingresar o crear la cuenta y, al volver, lleva de nuevo a
+la invitación. Con sesión, el profesional ve sus especialidades precargadas y se suma con un botón.
+El enlace del mail sale de `INVITACION_URL_BASE` (en local: `http://localhost:5173/invitaciones`).
