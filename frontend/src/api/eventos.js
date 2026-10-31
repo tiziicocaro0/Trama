@@ -41,6 +41,10 @@ function traducirErrorEvento(error, accion = 'guardar') {
   )
 }
 
+function rutaOcurrenciaEvento(proyectoId, eventoId, fecha) {
+  return `${rutaEventos(proyectoId, eventoId)}/ocurrencias/${encodeURIComponent(fecha)}`
+}
+
 function armarCuerpoEvento({
   titulo,
   descripcion,
@@ -48,10 +52,24 @@ function armarCuerpoEvento({
   horaInicio,
   horaFin,
   imagenId,
+  recurrente,
+  diaSemana,
+  fechaFinRecurrencia,
 }) {
   const textoDescripcion =
     typeof descripcion === 'string' && descripcion.trim()
       ? descripcion.trim()
+      : null
+  const esRecurrente = Boolean(recurrente)
+  const diaNumero =
+    esRecurrente && diaSemana != null && diaSemana !== ''
+      ? Number(diaSemana)
+      : null
+  const fechaFinLimpia =
+    esRecurrente &&
+    typeof fechaFinRecurrencia === 'string' &&
+    fechaFinRecurrencia.trim()
+      ? fechaFinRecurrencia.trim()
       : null
 
   return {
@@ -61,6 +79,17 @@ function armarCuerpoEvento({
     horaInicio,
     horaFin,
     imagenId: imagenId ?? null,
+    recurrente: esRecurrente,
+    diaSemana: diaNumero,
+    fechaFinRecurrencia: fechaFinLimpia,
+  }
+}
+
+function armarCuerpoOcurrencia({ titulo, horaInicio, horaFin }) {
+  return {
+    titulo: typeof titulo === 'string' ? titulo.trim() : '',
+    horaInicio,
+    horaFin,
   }
 }
 
@@ -114,6 +143,30 @@ export async function editarEvento(proyectoId, eventoId, datos) {
 export async function eliminarEvento(proyectoId, eventoId) {
   try {
     await cliente.delete(rutaEventos(proyectoId, eventoId))
+  } catch (error) {
+    throw traducirErrorEvento(error, 'eliminar')
+  }
+}
+
+export async function editarOcurrenciaEvento(
+  proyectoId,
+  eventoId,
+  fecha,
+  datos,
+) {
+  try {
+    await cliente.put(
+      rutaOcurrenciaEvento(proyectoId, eventoId, fecha),
+      armarCuerpoOcurrencia(datos),
+    )
+  } catch (error) {
+    throw traducirErrorEvento(error, 'editar')
+  }
+}
+
+export async function cancelarOcurrenciaEvento(proyectoId, eventoId, fecha) {
+  try {
+    await cliente.delete(rutaOcurrenciaEvento(proyectoId, eventoId, fecha))
   } catch (error) {
     throw traducirErrorEvento(error, 'eliminar')
   }
