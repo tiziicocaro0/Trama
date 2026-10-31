@@ -15,6 +15,7 @@ import RedPage from '../features/perfil/RedPage.jsx'
 import DatosPersonalesPage from '../features/perfil/DatosPersonalesPage.jsx'
 import ConoceloPage from '../features/perfil/ConoceloPage.jsx'
 import BitacoraPage from '../features/bitacora/BitacoraPage.jsx'
+import CalendarioPage from '../features/calendario/CalendarioPage.jsx'
 import PlanPage from '../features/plan/PlanPage.jsx'
 import PreferenciasNotificacionesPage from '../features/notificaciones/PreferenciasNotificacionesPage.jsx'
 import InstitucionPage from '../features/institucion/InstitucionPage.jsx'
@@ -60,6 +61,7 @@ export default function AppRoutes() {
       'datos-personales': 'Datos personales',
       notas: 'Notas',
       bitacora: 'Bitácora',
+      calendario: 'Calendario',
     }
     const espacio = Object.hasOwn(espaciosPerfil, perfil?.[1])
       ? espaciosPerfil[perfil[1]]
@@ -222,6 +224,16 @@ export default function AppRoutes() {
         }
       />
       <Route
+        path="/proyectos/:id/calendario"
+        element={
+          <Acceso privado>
+            <ConBarraIconos>
+              <CalendarioPage />
+            </ConBarraIconos>
+          </Acceso>
+        }
+      />
+      <Route
         path="/proyectos/:id/:seccion"
         element={
           <Acceso privado>
@@ -240,7 +252,7 @@ export default function AppRoutes() {
       {import.meta.env.DEV && <Route path="/componentes" element={<Componentes />} />}
       <Route element={<Acceso privado><Layout /></Acceso>}>
         <Route path="/recursos" element={<Proximamente titulo="Recursos" />} />
-        <Route path="/calendario" element={<Proximamente titulo="Calendario" />} />
+        <Route path="/calendario" element={<CalendarioPage />} />
         <Route path="/perfil" element={<Proximamente titulo="Mi perfil" />} />
       </Route>
       <Route
