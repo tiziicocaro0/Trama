@@ -13,3 +13,6 @@ target/
 
 # Archivos subidos en desarrollo (backend)
 backend/uploads/
+
+# Backups cifrados de la base y los archivos (0.3)
+backups/

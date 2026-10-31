@@ -14,6 +14,9 @@ FROM eclipse-temurin:21-jre
 
 WORKDIR /app
 
+# Carpeta de archivos adjuntos: en Docker Compose se monta el volumen trama-uploads
+RUN mkdir -p /app/uploads
+
 COPY --from=build /build/target/*.jar app.jar
 
 EXPOSE 8080
