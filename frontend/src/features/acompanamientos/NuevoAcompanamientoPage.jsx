@@ -4,22 +4,24 @@ import Boton from '../../components/ui/Boton.jsx'
 import Campo from '../../components/ui/Campo.jsx'
 import CampoFecha from '../../components/ui/CampoFecha.jsx'
 import CampoFormulario from '../../components/ui/CampoFormulario.jsx'
+import CasillaOvillo from '../../components/ui/CasillaOvillo.jsx'
 import InicioSidebar from '../inicio/InicioSidebar.jsx'
 import useAuth from '../../hooks/useAuth.js'
 import { crearProyecto } from '../../api/proyectos.js'
 import { calcularEdad } from '../perfil/perfil.js'
 
+// Son los datos del niño, no de quien crea el acompañamiento.
 const campos = [
-  { nombre: 'nombre', etiqueta: 'Nombre', maxLength: 80 },
-  { nombre: 'apellido', etiqueta: 'Apellido', maxLength: 80 },
+  { nombre: 'nombre', etiqueta: 'Nombre del niño', maxLength: 80 },
+  { nombre: 'apellido', etiqueta: 'Apellido del niño', maxLength: 80 },
   {
     nombre: 'apodo',
-    etiqueta: 'Apodo (opcional)',
+    etiqueta: 'Apodo del niño (opcional)',
     maxLength: 40,
     opcional: true,
   },
   { nombre: 'fechaNacimiento', etiqueta: 'Fecha de nacimiento', tipo: 'fecha' },
-  { nombre: 'escuela', etiqueta: 'Escuela', maxLength: 120 },
+  { nombre: 'escuela', etiqueta: 'Escuela a la que va', maxLength: 120 },
   { nombre: 'grado', etiqueta: 'Grado', maxLength: 30 },
 ]
 
@@ -117,6 +119,9 @@ export default function NuevoAcompanamientoPage() {
             aria-busy={enviando}
             className="mt-6 space-y-6 rounded-lg bg-superficie p-5 shadow-sm sm:p-8"
           >
+            <h2 className="font-display text-h2 text-secundario">
+              Datos del niño
+            </h2>
             <div className="grid gap-5 sm:grid-cols-2">
               {campos.map((campo) => (
                 <div key={campo.nombre}>
@@ -153,25 +158,21 @@ export default function NuevoAcompanamientoPage() {
               ))}
             </div>
             <div>
-              <label className="flex min-h-11 items-start gap-3 rounded-md p-2 focus-within:outline-2 focus-within:outline-primario">
-                <input
-                  name="consentimiento"
-                  type="checkbox"
-                  checked={valores.consentimiento}
-                  onChange={cambiar}
-                  required
-                  disabled={enviando}
-                  aria-invalid={Boolean(errores.consentimiento)}
-                  aria-describedby={
-                    errores.consentimiento ? 'error-consentimiento' : undefined
-                  }
-                  className="mt-1 size-5 shrink-0 accent-primario"
-                />
-                <span>
-                  Confirmo que cuento con autorización para crear este
-                  acompañamiento y compartir estos datos con su red de apoyo.
-                </span>
-              </label>
+              <CasillaOvillo
+                name="consentimiento"
+                checked={valores.consentimiento}
+                onChange={cambiar}
+                required
+                disabled={enviando}
+                invalida={Boolean(errores.consentimiento)}
+                describedBy={
+                  errores.consentimiento ? 'error-consentimiento' : undefined
+                }
+              >
+                Declaro ser madre, padre o tutor legal de este niño, o contar
+                con su autorización, para crear este acompañamiento y
+                compartir estos datos con su red de apoyo.
+              </CasillaOvillo>
               {errores.consentimiento && (
                 <p
                   id="error-consentimiento"

@@ -42,6 +42,14 @@ export async function crearProyecto(datos) {
       throw new Error('Tu sesión venció. Ingresá nuevamente.', { cause: error })
     if (error.response?.status === 403)
       throw new Error('No tenés permiso para crear este acompañamiento.', { cause: error })
+    if (
+      error.response?.status === 409 &&
+      error.response.data?.codigo === 'LIMITE_NINOS'
+    )
+      throw new Error(
+        'Cada cuenta puede crear hasta 2 acompañamientos. Si necesitás sumar otro niño, escribinos y lo vemos.',
+        { cause: error },
+      )
     throw new Error(
       'No pudimos confirmar la creación. Revisá tus acompañamientos antes de volver a intentarlo.',
       { cause: error },
@@ -93,5 +101,17 @@ export async function obtenerProyecto(id, signal) {
   ) {
     throw new Error('No pudimos verificar los datos del proyecto.')
   }
+  return data
+}
+
+// Editar los datos del niño (DatosPersonalesPage). PUT /api/proyectos/{id}, solo el tutor administrador.
+// Devuelve el error de Axios tal cual: la pantalla arma el mensaje según el estado.
+export async function actualizarProyecto(id, datos) {
+  if (!cliente.defaults.baseURL) {
+    throw new Error(
+      'Falta configurar la conexión con TRAMA. Revisá VITE_API_URL.',
+    )
+  }
+  const { data } = await cliente.put(`/proyectos/${encodeURIComponent(id)}`, datos)
   return data
 }

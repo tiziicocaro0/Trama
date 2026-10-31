@@ -57,6 +57,24 @@ public class EmailService {
         );
     }
 
+    /** Registro: código de 6 dígitos para confirmar el email de una cuenta nueva. */
+    public void enviarCodigoVerificacion(
+            String destinatario,
+            String codigo,
+            int minutosVigencia) {
+
+        enviarMensaje(
+            destinatario,
+            "Tu codigo para activar tu cuenta de Trama",
+            "Hola!\n\n" +
+            "Gracias por sumarte a Trama. Para activar tu cuenta, ingresa este codigo:\n\n" +
+            codigo + "\n\n" +
+            "Vence en " + minutosVigencia + " minutos. No lo compartas con nadie.\n\n" +
+            "Si no creaste una cuenta en Trama, podes ignorar este mensaje.\n\n" +
+            "Equipo Trama"
+        );
+    }
+
     private void enviarMensaje(
             String destinatario,
             String asunto,

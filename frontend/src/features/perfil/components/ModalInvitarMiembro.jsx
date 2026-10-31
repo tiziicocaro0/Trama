@@ -1,14 +1,32 @@
 import { useState } from 'react'
 import { Aviso } from '../../../components/ui/Aviso.jsx'
 import Boton from '../../../components/ui/Boton.jsx'
+import { Envelope, UsersThree } from '@phosphor-icons/react'
 import Campo from '../../../components/ui/Campo.jsx'
+import CampoSelector from '../../../components/ui/CampoSelector.jsx'
 import { Modal } from '../../../components/ui/Modal.jsx'
 
 const OPCIONES_ROL = [
-  { valor: 'FAMILIAR', etiqueta: 'Familiar' },
-  { valor: 'EDUCACION', etiqueta: 'Educación' },
-  { valor: 'SALUD', etiqueta: 'Salud' },
-  { valor: 'TUTOR', etiqueta: 'Co-tutor (otro tutor legal)' },
+  {
+    valor: 'FAMILIAR',
+    etiqueta: 'Familiar',
+    ayuda: 'Abuelos, tíos u otros familiares que lo acompañan.',
+  },
+  {
+    valor: 'EDUCACION',
+    etiqueta: 'Educación',
+    ayuda: 'Docentes y equipo de la escuela.',
+  },
+  {
+    valor: 'SALUD',
+    etiqueta: 'Salud',
+    ayuda: 'Profesionales de la salud que lo tratan.',
+  },
+  {
+    valor: 'TUTOR',
+    etiqueta: 'Co-tutor (otro tutor legal)',
+    ayuda: 'Otra madre, padre o tutor legal: también administra la red.',
+  },
 ]
 
 export default function ModalInvitarMiembro({
@@ -69,6 +87,7 @@ export default function ModalInvitarMiembro({
           <Campo
             id="email-invitacion"
             type="email"
+            icon={Envelope}
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             placeholder="ejemplo@correo.com"
@@ -84,19 +103,18 @@ export default function ModalInvitarMiembro({
           >
             Rol
           </label>
-          <select
+          <CampoSelector
             id="rol-invitacion"
+            icon={UsersThree}
+            opciones={OPCIONES_ROL}
             value={rol}
             onChange={(e) => setRol(e.target.value)}
             disabled={enviando}
-            className="min-h-12 w-full rounded-md border border-borde bg-superficie px-4 py-2 text-base text-texto focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primario"
-          >
-            {OPCIONES_ROL.map((opcion) => (
-              <option key={opcion.valor} value={opcion.valor}>
-                {opcion.etiqueta}
-              </option>
-            ))}
-          </select>
+            aria-describedby="rol-invitacion-ayuda"
+          />
+          <p id="rol-invitacion-ayuda" className="mt-2 text-sm text-texto-suave">
+            {OPCIONES_ROL.find((opcion) => opcion.valor === rol)?.ayuda}
+          </p>
         </div>
 
         <div className="flex justify-end gap-3 pt-2">

@@ -76,6 +76,19 @@ public class GlobalExceptionHandler {
                 ));
     }
 
+    // 9.0: PROFESIONAL EN SOLO LECTURA POR EL PLAN GRATUITO (más específico que ACCESO_DENEGADO)
+    @ExceptionHandler(SoloLecturaException.class)
+    public ResponseEntity<ErrorResponse> handleSoloLectura(
+            SoloLecturaException e) {
+
+        return ResponseEntity
+                .status(HttpStatus.FORBIDDEN)
+                .body(new ErrorResponse(
+                        "SOLO_LECTURA",
+                        e.getMessage()
+                ));
+    }
+
     // TAMAÑO MÁXIMO DE ARCHIVO SUPERADO
     @ExceptionHandler(MaxUploadSizeExceededException.class)
     public ResponseEntity<ErrorResponse> handleMaxUploadSize(

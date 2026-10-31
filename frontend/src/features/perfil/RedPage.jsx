@@ -245,7 +245,8 @@ export default function RedPage() {
                   <ul className="grid gap-4 md:grid-cols-2">
                     {miembrosVisibles.map((persona) => {
                       const nombre = nombreCompleto(persona)
-                      const esMiPerfil = persona.usuarioId === usuario?.id
+                      const esMiPerfil =
+                        Boolean(usuario?.id) && persona.usuarioId === usuario.id
                       const especialidades = obtenerEspecialidades(persona)
                       return (
                         <li
@@ -296,16 +297,19 @@ export default function RedPage() {
                                   Hacer co-tutor
                                 </Boton>
                               )}
-                              <Boton
-                                variant="danger"
-                                onClick={() => {
-                                  setErrorAccion('')
-                                  setMiembroSeleccionado(persona)
-                                }}
-                                aria-label={`Quitar acceso a ${nombre}`}
-                              >
-                                Quitar acceso
-                              </Boton>
+                              {/* Nadie se quita el acceso a sí mismo */}
+                              {!esMiPerfil && (
+                                <Boton
+                                  variant="danger"
+                                  onClick={() => {
+                                    setErrorAccion('')
+                                    setMiembroSeleccionado(persona)
+                                  }}
+                                  aria-label={`Quitar acceso a ${nombre}`}
+                                >
+                                  Quitar acceso
+                                </Boton>
+                              )}
                             </div>
                           )}
                         </li>

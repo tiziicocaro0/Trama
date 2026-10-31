@@ -15,7 +15,12 @@ import RedPage from '../features/perfil/RedPage.jsx'
 import DatosPersonalesPage from '../features/perfil/DatosPersonalesPage.jsx'
 import ConoceloPage from '../features/perfil/ConoceloPage.jsx'
 import BitacoraPage from '../features/bitacora/BitacoraPage.jsx'
+import PlanPage from '../features/plan/PlanPage.jsx'
+import InstitucionPage from '../features/institucion/InstitucionPage.jsx'
+import AceptarInvitacionPage from '../features/invitaciones/AceptarInvitacionPage.jsx'
+import VerificarEmailPage from '../features/auth/verificar/VerificarEmailPage.jsx'
 import { Layout } from '../components/layout/Layout.jsx'
+import { ConBarraIconos } from '../components/layout/BarraIconos.jsx'
 import { Tarjeta } from '../components/ui/Tarjeta.jsx'
 import { Componentes } from '../pages/Componentes.jsx'
 
@@ -24,12 +29,15 @@ const titles = {
   '/login': 'Iniciar sesión',
   '/recuperar': 'Recuperar contraseña',
   '/registro': 'Crear cuenta',
+  '/verificar-email': 'Activar cuenta',
   '/inicio': 'Inicio',
   '/acompanamientos': 'Acompañamientos',
   '/acompanamientos/nuevo': 'Nuevo acompañamiento',
   '/recursos': 'Recursos',
   '/calendario': 'Calendario',
   '/perfil': 'Mi perfil',
+  '/cuenta/plan': 'Mi plan',
+  '/institucion': 'Institución',
   '/componentes': 'Componentes',
 }
 
@@ -58,7 +66,8 @@ export default function AppRoutes() {
       perfil && (!perfil[1] || seccion || espacio)
         ? (espacio ?? seccion?.titulo ?? 'Perfil del niño')
         : null
-    document.title = `TRAMA · ${titles[pathname] ?? tituloPerfil ?? 'Página no encontrada'}`
+    const invitacion = pathname.startsWith('/invitaciones/') ? 'Invitación' : null
+    document.title = `TRAMA · ${titles[pathname] ?? tituloPerfil ?? invitacion ?? 'Página no encontrada'}`
     document.querySelector('main')?.focus()
   }, [pathname])
 
@@ -89,10 +98,26 @@ export default function AppRoutes() {
         }
       />
       <Route
+        path="/verificar-email"
+        element={
+          <Acceso>
+            <VerificarEmailPage />
+          </Acceso>
+        }
+      />
+      <Route
         path="/recuperar"
         element={
           <Acceso>
             <RecuperarPage />
+          </Acceso>
+        }
+      />
+      <Route
+        path="/invitaciones/:token"
+        element={
+          <Acceso abierto>
+            <AceptarInvitacionPage />
           </Acceso>
         }
       />
@@ -121,10 +146,28 @@ export default function AppRoutes() {
         }
       />
       <Route
+        path="/cuenta/plan"
+        element={
+          <Acceso privado>
+            <PlanPage />
+          </Acceso>
+        }
+      />
+      <Route
+        path="/institucion"
+        element={
+          <Acceso privado>
+            <InstitucionPage />
+          </Acceso>
+        }
+      />
+      <Route
         path="/proyectos/:id"
         element={
           <Acceso privado>
-            <PerfilPage />
+            <ConBarraIconos>
+              <PerfilPage />
+            </ConBarraIconos>
           </Acceso>
         }
       />
@@ -132,7 +175,9 @@ export default function AppRoutes() {
         path="/proyectos/:id/conocelo"
         element={
           <Acceso privado>
-            <ConoceloPage />
+            <ConBarraIconos>
+              <ConoceloPage />
+            </ConBarraIconos>
           </Acceso>
         }
       />
@@ -140,7 +185,9 @@ export default function AppRoutes() {
         path="/proyectos/:id/red"
         element={
           <Acceso privado>
-            <RedPage />
+            <ConBarraIconos>
+              <RedPage />
+            </ConBarraIconos>
           </Acceso>
         }
       />
@@ -148,7 +195,9 @@ export default function AppRoutes() {
         path="/proyectos/:id/datos-personales"
         element={
           <Acceso privado>
-            <DatosPersonalesPage />
+            <ConBarraIconos>
+              <DatosPersonalesPage />
+            </ConBarraIconos>
           </Acceso>
         }
       />
@@ -156,7 +205,9 @@ export default function AppRoutes() {
         path="/proyectos/:id/bitacora"
         element={
           <Acceso privado>
-            <BitacoraPage />
+            <ConBarraIconos>
+              <BitacoraPage />
+            </ConBarraIconos>
           </Acceso>
         }
       />
@@ -164,7 +215,9 @@ export default function AppRoutes() {
         path="/proyectos/:id/:seccion"
         element={
           <Acceso privado>
-            <PerfilPage />
+            <ConBarraIconos>
+              <PerfilPage />
+            </ConBarraIconos>
           </Acceso>
         }
       />

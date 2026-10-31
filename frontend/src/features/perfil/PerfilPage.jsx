@@ -110,7 +110,8 @@ export default function PerfilPage() {
                 )}
               </div>
             )}
-            {proyecto.puedeCargar !== true && (
+            {proyecto.puedeCargar !== true &&
+              proyecto.soloLecturaPorPlan !== true && (
               <p className="mb-4 text-sm text-texto-suave">
                 Podés consultar este perfil en modo de solo lectura.
               </p>

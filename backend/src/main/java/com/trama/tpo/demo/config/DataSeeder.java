@@ -16,9 +16,12 @@ import com.trama.tpo.demo.entity.membresia.Membresia;
 import com.trama.tpo.demo.entity.membresia.MembresiaEspecialidad;
 import com.trama.tpo.demo.entity.membresia.Rol;
 import com.trama.tpo.demo.entity.proyecto.Proyecto;
+import com.trama.tpo.demo.entity.usuario.TipoCuenta;
 import com.trama.tpo.demo.entity.usuario.Usuario;
+import com.trama.tpo.demo.entity.usuario.UsuarioEspecialidad;
 import com.trama.tpo.demo.repository.MembresiaRepository;
 import com.trama.tpo.demo.repository.ProyectoRepository;
+import com.trama.tpo.demo.repository.UsuarioEspecialidadRepository;
 import com.trama.tpo.demo.repository.UsuarioRepository;
 
 @Component
@@ -31,17 +34,20 @@ public class DataSeeder implements CommandLineRunner {
     private final UsuarioRepository usuarioRepository;
     private final ProyectoRepository proyectoRepository;
     private final MembresiaRepository membresiaRepository;
+    private final UsuarioEspecialidadRepository usuarioEspecialidadRepository;
     private final PasswordEncoder passwordEncoder;
 
     public DataSeeder(
             UsuarioRepository usuarioRepository,
             ProyectoRepository proyectoRepository,
             MembresiaRepository membresiaRepository,
+            UsuarioEspecialidadRepository usuarioEspecialidadRepository,
             PasswordEncoder passwordEncoder) {
 
         this.usuarioRepository = usuarioRepository;
         this.proyectoRepository = proyectoRepository;
         this.membresiaRepository = membresiaRepository;
+        this.usuarioEspecialidadRepository = usuarioEspecialidadRepository;
         this.passwordEncoder = passwordEncoder;
     }
 
@@ -62,6 +68,13 @@ public class DataSeeder implements CommandLineRunner {
         Usuario psico = crearUsuario("Diego", "Torres", "psico@trama.test");
         Usuario tutoraValen = crearUsuario("Laura", "Ruiz", "tutora.valen@trama.test");
         Usuario tutorJuli = crearUsuario("Pablo", "Gómez", "tutor.juli@trama.test");
+
+        // 9.4: cuentas profesionales con sus especialidades declaradas.
+        // terapeuta@ todavía no está en ningún niño: sirve para probar invitaciones.
+        declararProfesional(docente, Especialidad.DOCENTE_PRIMARIO);
+        declararProfesional(psico, Especialidad.PSICOLOGIA);
+        declararProfesional(crearUsuario("Sofía", "Ramos", "terapeuta@trama.test"),
+                Especialidad.TERAPIA_OCUPACIONAL, Especialidad.ACOMPANANTE_TERAPEUTICO);
 
         // Niños ficticios
         Proyecto tomi = crearProyecto("Tomás", "Fernández", "Tomi",
@@ -107,6 +120,19 @@ public class DataSeeder implements CommandLineRunner {
                 .build();
 
         return usuarioRepository.save(usuario);
+    }
+
+    private void declararProfesional(Usuario usuario, Especialidad... especialidades) {
+
+        usuario.setTipoCuenta(TipoCuenta.PROFESIONAL);
+        usuarioRepository.save(usuario);
+
+        for (Especialidad especialidad : especialidades) {
+            usuarioEspecialidadRepository.save(UsuarioEspecialidad.builder()
+                    .usuarioId(usuario.getId())
+                    .especialidad(especialidad)
+                    .build());
+        }
     }
 
     private Proyecto crearProyecto(

@@ -50,7 +50,9 @@ public class SecurityConfig {
                         "/api/auth/login",
                         "/api/auth/recuperar",
                         "/api/auth/verificar-codigo",
-                        "/api/auth/restablecer"
+                        "/api/auth/restablecer",
+                        "/api/auth/verificar-email",
+                        "/api/auth/reenviar-verificacion"
                 ).permitAll()
                 .requestMatchers("/api/auth/yo").authenticated()
 

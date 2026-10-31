@@ -1,8 +1,10 @@
 import { Navigate } from 'react-router-dom'
 import useAuth from '../hooks/useAuth.js'
 import Boton from '../components/ui/Boton.jsx'
+import { invitacionPendiente } from '../features/invitaciones/invitacionPendiente.js'
 
-export default function Acceso({ privado = false, children }) {
+// abierto: la página sirve con o sin sesión (1.4: el enlace de una invitación).
+export default function Acceso({ privado = false, abierto = false, children }) {
   const { usuario, estado, mensajeSesion, reintentar, cerrarSesion } = useAuth()
   if (estado === 'verificando' || estado === 'sin-conexion') {
     return (
@@ -25,6 +27,9 @@ export default function Acceso({ privado = false, children }) {
     )
   }
   if (privado && !usuario) return <Navigate to="/login" replace />
-  if (!privado && usuario) return <Navigate to="/inicio" replace />
+  if (abierto) return children
+  // 1.4: quien ingresa desde el enlace de una invitación vuelve a ella.
+  if (!privado && usuario)
+    return <Navigate to={invitacionPendiente() ?? '/inicio'} replace />
   return children
 }
