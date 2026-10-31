@@ -92,7 +92,8 @@ class ContratoFrontendTest {
 
     @Test
     void camposDeInteresYFortaleza() {
-        String editor = leer("features/perfil/components/EditorAporte.jsx");
+        // Los campos propios de cada tipo viven en camposAporte.js (los usa EditorAporte).
+        String editor = leer("features/perfil/camposAporte.js");
         assertEquals(nombres(CategoriaInteres.class),
                 valoresEnMayusculas(entre(editor, "nombre: 'categoria'", "nombre: 'intensidad'")));
         assertEquals(nombres(IntensidadInteres.class),

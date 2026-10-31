@@ -77,6 +77,23 @@ export function calcularEdad(fechaNacimiento, hoy = new Date()) {
 }
 
 // Campos propios de un aporte (el JSON "datos"). Si falta o no es un objeto, devuelve {}.
+// 2.2: contexto y ejemplo de una fortaleza (van en "datos"). Si faltan o son inválidos, quedan vacíos.
+const CONTEXTOS_FORTALEZA = {
+  CASA: 'Casa',
+  ESCUELA: 'Escuela',
+  CONSULTORIO: 'Consultorio',
+  OTRO: 'Otro',
+}
+
+export function leerFortaleza(aporte) {
+  if (aporte?.tipo !== 'FORTALEZA') return {}
+  const datos = leerDatosAporte(aporte.datos)
+  return {
+    contexto: CONTEXTOS_FORTALEZA[datos.contexto],
+    ejemplo: typeof datos.ejemplo === 'string' ? datos.ejemplo.trim() : '',
+  }
+}
+
 export function leerDatosAporte(texto) {
   try {
     const datos = JSON.parse(texto ?? '')

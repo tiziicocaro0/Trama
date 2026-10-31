@@ -5,7 +5,11 @@ import {
 } from '../../api/archivos.js'
 import { formatearFechaCalendario, formatearFechaHora } from '../../utils/fechas.js'
 import { etiquetaEspecialidad } from '../../features/perfil/especialidades.js'
-import { leerDatosAporte, TIPOS_NOTA } from '../../features/perfil/perfil.js'
+import {
+  leerDatosAporte,
+  leerFortaleza,
+  TIPOS_NOTA,
+} from '../../features/perfil/perfil.js'
 import ConfirmacionAporte from '../../features/perfil/components/ConfirmacionAporte.jsx'
 
 const ETIQUETAS_TIPO_NOTA = Object.fromEntries(TIPOS_NOTA)
@@ -67,6 +71,7 @@ export default function TarjetaAporte({
   const datosNota = esNota ? leerDatosAporte(aporte.datos) : {}
   const tipoNota = ETIQUETAS_TIPO_NOTA[datosNota.tipoNota] ?? null
   const fechaNota = formatearFechaCalendario(datosNota.fecha)
+  const fortaleza = leerFortaleza(aporte)
 
   // 3.1: Identificar aportes con visibilidad restringida
   const esRestringido =
@@ -119,6 +124,20 @@ export default function TarjetaAporte({
             className={`mt-1 whitespace-pre-wrap break-words text-sm text-texto-suave ${resumen ? 'line-clamp-3' : ''}`}
           >
             {aporte.contenido}
+          </p>
+        )}
+
+        {/* 2.2: dónde lo hace y un ejemplo concreto */}
+        {fortaleza.contexto && (
+          <p className="mt-1 text-sm text-texto-suave">
+            Contexto: {fortaleza.contexto}
+          </p>
+        )}
+        {fortaleza.ejemplo && (
+          <p
+            className={`mt-1 whitespace-pre-wrap break-words text-sm text-texto-suave ${resumen ? 'line-clamp-2' : ''}`}
+          >
+            Ejemplo: {fortaleza.ejemplo}
           </p>
         )}
 

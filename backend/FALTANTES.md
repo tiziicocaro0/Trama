@@ -135,8 +135,8 @@ En la columna **Permiso**:
 | Método | Ruta | Qué hace | Permiso |
 |---|---|---|---|
 | POST | `/api/proyectos/{proyectoId}/invitaciones` | Invita por mail con un rol; vence a los 7 días | Admin |
-| GET | `/api/proyectos/{proyectoId}/invitaciones` | Invitaciones pendientes | Admin |
-| DELETE | `/api/invitaciones/{invitacionId}` | Cancela una invitación | Admin del proyecto |
+| GET | `/api/proyectos/{proyectoId}/invitaciones` | Invitaciones pendientes y vigentes, ordenadas por vencimiento | Admin |
+| DELETE | `/api/proyectos/{proyectoId}/invitaciones/{invitacionId}` | Cancela una invitación pendiente (queda `CANCELADA`) | Admin |
 | GET | `/api/invitaciones/{token}` | Datos de la invitación antes de aceptar | Logueado |
 | POST | `/api/invitaciones/{token}/aceptar` | Crea la membresía | Logueado (el mail tiene que coincidir) |
 
@@ -220,7 +220,7 @@ Pendiente de definir con el equipo (ver `CONTEXTO.md`). Como mínimo hará falta
 | Tarea | Historia | Qué hace |
 |---|---|---|
 | Eliminar proyectos | 8.2 | Borra los proyectos con `eliminacion_programada` vencida (`findByEliminacionProgramadaBefore` ya existe) |
-| Vencer invitaciones | 1.3 | Pasa a `VENCIDA` las invitaciones con `vence_en` pasado |
+| Vencer invitaciones | 1.3 | Opcional: el listado y la aceptación ya ignoran las vencidas por `vence_en`. Solo dejaría el estado `VENCIDA` prolijo en la base |
 | Avisar acuerdos vencidos | 5.x | Notifica los acuerdos no cumplidos con `fecha_revision` vencida y completa `avisado_en` |
 
 ## 4. Para cada módulo nuevo

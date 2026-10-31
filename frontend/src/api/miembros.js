@@ -65,3 +65,37 @@ export async function quitarMiembro(proyectoId, miembroId) {
     `/proyectos/${encodeURIComponent(proyectoId)}/miembros/${encodeURIComponent(miembroId)}`,
   )
 }
+
+// 1.3: invitaciones pendientes del proyecto, con su vencimiento (solo tutores administradores).
+// GET /api/proyectos/{id}/invitaciones
+export async function listarInvitacionesPendientes(proyectoId, signal) {
+  if (!cliente.defaults.baseURL)
+    throw new Error('Falta configurar la conexión con TRAMA.')
+  const { data } = await cliente.get(
+    `/proyectos/${encodeURIComponent(proyectoId)}/invitaciones`,
+    { signal },
+  )
+  if (
+    !Array.isArray(data) ||
+    data.some(
+      (invitacion) =>
+        !invitacion?.id ||
+        typeof invitacion.email !== 'string' ||
+        !ROLES.includes(invitacion.rol) ||
+        !invitacion.venceEn,
+    )
+  ) {
+    throw new Error('No pudimos verificar las invitaciones pendientes.')
+  }
+  return data
+}
+
+// 1.3: cancelar una invitación pendiente; el link deja de servir.
+// DELETE /api/proyectos/{id}/invitaciones/{invitacionId}
+export async function cancelarInvitacion(proyectoId, invitacionId) {
+  if (!cliente.defaults.baseURL)
+    throw new Error('Falta configurar la conexión con TRAMA.')
+  await cliente.delete(
+    `/proyectos/${encodeURIComponent(proyectoId)}/invitaciones/${encodeURIComponent(invitacionId)}`,
+  )
+}

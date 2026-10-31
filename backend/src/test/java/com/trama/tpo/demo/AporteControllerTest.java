@@ -122,6 +122,34 @@ class AporteControllerTest {
                 .andExpect(jsonPath("$.archivado").value(false));
     }
 
+    // 2.2: la fortaleza guarda dónde lo hace y un ejemplo opcional
+
+    @Test
+    void fortalezaGuardaContextoYEjemplo() throws Exception {
+        mockMvc.perform(post(rutaAportes())
+                .header("Authorization", token(tutorAutor))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(APORTE_EDITADO))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.datos")
+                        .value("{\"contexto\":\"CASA\",\"ejemplo\":\"Pintó un paisaje\"}"));
+    }
+
+    @Test
+    void fortalezaConEjemploMuyLargoDevuelve400() throws Exception {
+        String ejemplo = "a".repeat(501);
+        String cuerpo = APORTE_VALIDO.replace(
+                "{\\\"contexto\\\":\\\"ESCUELA\\\"}",
+                "{\\\"contexto\\\":\\\"ESCUELA\\\",\\\"ejemplo\\\":\\\"" + ejemplo + "\\\"}");
+
+        mockMvc.perform(post(rutaAportes())
+                .header("Authorization", token(tutorAutor))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(cuerpo))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.codigo").value("EJEMPLO_MUY_LARGO"));
+    }
+
     // CRITERIO 2: solamente el autor puede editar su aporte
 
     @Test

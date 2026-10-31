@@ -14,6 +14,7 @@ import { Modal } from '../../components/ui/Modal.jsx'
 import useAuth from '../../hooks/useAuth.js'
 import CabeceraPerfil from './components/CabeceraPerfil.jsx'
 import ModalInvitarMiembro from './components/ModalInvitarMiembro.jsx'
+import InvitacionesPendientes from './components/InvitacionesPendientes.jsx'
 import usePerfil from './hooks/usePerfil.js'
 import NavegacionPerfil from './components/NavegacionPerfil.jsx'
 import EspecialidadModal from './components/EspecialidadModal.jsx'
@@ -74,6 +75,8 @@ export default function RedPage() {
   const [eliminando, setEliminando] = useState(false)
   const [convirtiendoId, setConvirtiendoId] = useState(null)
   const [modalInvitarAbierto, setModalInvitarAbierto] = useState(false)
+  // 1.3: cambia al enviar una invitación, para recargar las pendientes
+  const [versionInvitaciones, setVersionInvitaciones] = useState(0)
   // El menú lateral lleva a /red?invitar=1 para abrir directo el modal de invitar.
   const [parametros, setParametros] = useSearchParams()
   const pidioInvitar = parametros.get('invitar') === '1'
@@ -150,6 +153,7 @@ export default function RedPage() {
     setErrorAccion('')
     setMensajeExito('')
     await invitarMiembro(id, datosInvitacion)
+    setVersionInvitaciones((actual) => actual + 1)
     setMensajeExito('Invitación enviada correctamente.')
   }
 
@@ -320,6 +324,13 @@ export default function RedPage() {
                   <p className="rounded-lg bg-superficie p-6">
                     Todavía no hay miembros en esta red.
                   </p>
+                )}
+
+                {esAdmin && (
+                  <InvitacionesPendientes
+                    proyectoId={id}
+                    version={versionInvitaciones}
+                  />
                 )}
               </section>
 
