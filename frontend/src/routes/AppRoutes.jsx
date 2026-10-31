@@ -18,6 +18,7 @@ import BitacoraPage from '../features/bitacora/BitacoraPage.jsx'
 import PlanPage from '../features/plan/PlanPage.jsx'
 import InstitucionPage from '../features/institucion/InstitucionPage.jsx'
 import AceptarInvitacionPage from '../features/invitaciones/AceptarInvitacionPage.jsx'
+import VerificarEmailPage from '../features/auth/verificar/VerificarEmailPage.jsx'
 import { Layout } from '../components/layout/Layout.jsx'
 import { Tarjeta } from '../components/ui/Tarjeta.jsx'
 import { Componentes } from '../pages/Componentes.jsx'
@@ -27,6 +28,7 @@ const titles = {
   '/login': 'Iniciar sesión',
   '/recuperar': 'Recuperar contraseña',
   '/registro': 'Crear cuenta',
+  '/verificar-email': 'Activar cuenta',
   '/inicio': 'Inicio',
   '/acompanamientos': 'Acompañamientos',
   '/acompanamientos/nuevo': 'Nuevo acompañamiento',
@@ -91,6 +93,14 @@ export default function AppRoutes() {
         element={
           <Acceso>
             <RegistroPage />
+          </Acceso>
+        }
+      />
+      <Route
+        path="/verificar-email"
+        element={
+          <Acceso>
+            <VerificarEmailPage />
           </Acceso>
         }
       />

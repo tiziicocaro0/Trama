@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.trama.tpo.demo.service.AuthenticationService;
 import com.trama.tpo.demo.service.RecuperacionService;
+import com.trama.tpo.demo.service.VerificacionEmailService;
 import com.trama.tpo.demo.entity.dto.AuthenticationResponse;
 import com.trama.tpo.demo.entity.dto.MensajeResponse;
 import com.trama.tpo.demo.entity.dto.RegisterRequest;
@@ -20,6 +21,7 @@ import com.trama.tpo.demo.entity.dto.AuthenticationRequest;
 import com.trama.tpo.demo.entity.dto.RestablecerContrasenaRequest;
 import com.trama.tpo.demo.entity.dto.SolicitarRecuperacionRequest;
 import com.trama.tpo.demo.entity.dto.VerificarCodigoRequest;
+import com.trama.tpo.demo.entity.dto.VerificarEmailRequest;
 import com.trama.tpo.demo.exceptions.ApiException;
 
 import jakarta.validation.Valid;
@@ -30,14 +32,17 @@ public class AuthenticationController {
 
     private final AuthenticationService service;
     private final RecuperacionService recuperacionService;
+    private final VerificacionEmailService verificacionEmailService;
 
     // Constructor manual
     public AuthenticationController(
             AuthenticationService service,
-            RecuperacionService recuperacionService) {
+            RecuperacionService recuperacionService,
+            VerificacionEmailService verificacionEmailService) {
 
         this.service = service;
         this.recuperacionService = recuperacionService;
+        this.verificacionEmailService = verificacionEmailService;
     }
 
     // REGISTRO DE USUARIOS
@@ -78,6 +83,29 @@ public class AuthenticationController {
         AuthenticationResponse respuesta = service.perfil(usuarioId);
 
         return ResponseEntity.ok(respuesta);
+    }
+
+    // REGISTRO - VERIFICAR EL EMAIL CON EL CODIGO (devuelve la sesión)
+    @PostMapping("/verificar-email")
+    public ResponseEntity<AuthenticationResponse> verificarEmail(
+            @Valid @RequestBody VerificarEmailRequest request) {
+
+        return ResponseEntity.ok(
+                verificacionEmailService.verificar(request.email(), request.codigo()));
+    }
+
+    // REGISTRO - REENVIAR EL CODIGO (misma respuesta exista o no la cuenta)
+    @PostMapping("/reenviar-verificacion")
+    public ResponseEntity<MensajeResponse> reenviarVerificacion(
+            @Valid @RequestBody SolicitarRecuperacionRequest request) {
+
+        verificacionEmailService.reenviar(request.getEmail());
+
+        return ResponseEntity.ok(
+                MensajeResponse.builder()
+                        .mensaje("Si la cuenta espera verificación, te mandamos un código nuevo.")
+                        .build()
+        );
     }
 
     // 1.11 - PASO 1: PEDIR EL CODIGO POR MAIL

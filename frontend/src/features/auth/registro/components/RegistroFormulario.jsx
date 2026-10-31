@@ -11,10 +11,15 @@ import { Link } from 'react-router-dom'
 import Boton from '../../../../components/ui/Boton.jsx'
 import Campo from '../../../../components/ui/Campo.jsx'
 import CampoFormulario from '../../../../components/ui/CampoFormulario.jsx'
-import { ETAPA_CONFIRMACION, requisitosPassword } from '../validaciones.js'
+import {
+  ETAPA_CODIGO,
+  ETAPA_CONFIRMACION,
+  requisitosPassword,
+} from '../validaciones.js'
 import { nombreTipoCuenta } from '../tipoCuenta.js'
-import { etiquetaEspecialidad } from '../../../perfil/especialidades.js'
+import { nombreEspecialidad } from '../../../perfil/especialidades.js'
 import RegistroTipoCuenta from './RegistroTipoCuenta.jsx'
+import RegistroCodigo from './RegistroCodigo.jsx'
 
 export default function RegistroFormulario({ registro, formRef, titleRef }) {
   const {
@@ -27,12 +32,19 @@ export default function RegistroFormulario({ registro, formRef, titleRef }) {
     volver,
     avanzar,
   } = registro
-  const titulos = ['Tus datos', 'Tu rol', 'Tu seguridad', 'Confirmá tus datos']
+  const titulos = [
+    'Tus datos',
+    'Tu rol',
+    'Tu seguridad',
+    'Confirmá tus datos',
+    'Revisá tu email',
+  ]
   const subtitulos = [
     'Contanos un poco sobre vos.',
     'Así te mostramos lo que te sirve. En cada niño, el rol lo elige quien te invita.',
     'Elegí una contraseña para cuidar tu cuenta.',
     'Revisá la información antes de crear tu cuenta.',
+    `Te mandamos un código de 6 dígitos a ${valores.email.trim().toLowerCase()}. Ingresalo para activar tu cuenta.`,
   ]
 
   function campo(nombre, label, Icon, props = {}) {
@@ -153,7 +165,7 @@ export default function RegistroFormulario({ registro, formRef, titleRef }) {
                 ? [
                     [
                       'Especialidades',
-                      valores.especialidades.map(etiquetaEspecialidad).join(', '),
+                      valores.especialidades.map(nombreEspecialidad).join(', '),
                     ],
                   ]
                 : []),
@@ -166,6 +178,11 @@ export default function RegistroFormulario({ registro, formRef, titleRef }) {
           </dl>
         )}
       </div>
+      {etapa === ETAPA_CODIGO && (
+        <div className="mt-7">
+          <RegistroCodigo registro={registro} />
+        </div>
+      )}
       {mensaje && (
         <p
           role="alert"
@@ -187,16 +204,21 @@ export default function RegistroFormulario({ registro, formRef, titleRef }) {
                 aria-hidden="true"
                 className="animate-spin motion-reduce:animate-none"
               />
-              Creando cuenta…
+              {etapa === ETAPA_CODIGO ? 'Activando cuenta…' : 'Creando cuenta…'}
             </>
           ) : (
             <>
-              {etapa === ETAPA_CONFIRMACION ? 'Crear cuenta' : 'Continuar'}
+              {
+                {
+                  [ETAPA_CONFIRMACION]: 'Crear cuenta',
+                  [ETAPA_CODIGO]: 'Activar cuenta',
+                }[etapa] ?? 'Continuar'
+              }
               <CaretRight aria-hidden="true" size={20} />
             </>
           )}
         </Boton>
-        {etapa > 0 && (
+        {etapa > 0 && etapa < ETAPA_CODIGO && (
           <Boton variant="secondary" disabled={enviando} onClick={volver}>
             <ArrowLeft size={20} aria-hidden="true" />
             Volver

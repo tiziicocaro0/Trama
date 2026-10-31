@@ -14,6 +14,7 @@ export default function LoginPage() {
   const [valores, setValores] = useState({ email: '', password: '' })
   const [errores, setErrores] = useState({})
   const [mensaje, setMensaje] = useState('')
+  const [sinVerificar, setSinVerificar] = useState(false)
   const [enviando, setEnviando] = useState(false)
   const pendiente = useRef(false)
   const form = useRef(null)
@@ -29,6 +30,7 @@ export default function LoginPage() {
       [event.target.name]: event.target.value,
     }))
     setMensaje('')
+    setSinVerificar(false)
   }
 
   async function enviar(event) {
@@ -47,6 +49,7 @@ export default function LoginPage() {
       await ingresar(valores)
       setValores((actual) => ({ ...actual, password: '' }))
     } catch (error) {
+      setSinVerificar(error.codigo === 'EMAIL_NO_VERIFICADO')
       setMensaje(
         error.message || 'No pudimos iniciar sesión. Intentá nuevamente.',
       )
@@ -141,6 +144,18 @@ export default function LoginPage() {
               className="rounded-sm border border-primario p-3 text-primario"
             >
               {mensaje || mensajeSesion}
+              {sinVerificar && (
+                <>
+                  {' '}
+                  <Link
+                    to="/verificar-email"
+                    state={{ email: valores.email.trim().toLowerCase() }}
+                    className="font-bold underline underline-offset-4"
+                  >
+                    Ingresar el código
+                  </Link>
+                </>
+              )}
             </p>
           )}
           <Boton

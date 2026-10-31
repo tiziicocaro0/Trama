@@ -8,8 +8,10 @@ import java.security.SecureRandom;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Base64;
+import java.util.Collection;
 import java.util.HexFormat;
-import java.util.List;
+import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.Locale;
 import java.util.UUID;
 
@@ -19,6 +21,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.trama.tpo.demo.entity.dto.AceptarInvitacionRequest;
+import com.trama.tpo.demo.entity.dto.EspecialidadItemRequest;
 import com.trama.tpo.demo.entity.dto.InvitacionDetalleResponse;
 import com.trama.tpo.demo.entity.dto.InvitacionRequest;
 import com.trama.tpo.demo.entity.dto.InvitacionResponse;
@@ -120,9 +123,14 @@ public class InvitacionService {
     @Transactional
     public MiembroResponse aceptarInvitacion(String token, AceptarInvitacionRequest request) {
 
-        List<Especialidad> especialidades = request == null || request.especialidades() == null
-                ? List.of()
-                : request.especialidades().stream().distinct().toList();
+        Map<Especialidad, String> especialidades = new LinkedHashMap<>();
+        if (request != null && request.especialidades() != null) {
+            for (EspecialidadItemRequest item : request.especialidades()) {
+                String aclaracion = item.aclaracion() == null || item.aclaracion().isBlank()
+                        ? null : item.aclaracion().trim();
+                especialidades.putIfAbsent(item.especialidad(), aclaracion);
+            }
+        }
 
         // 1. Buscar la invitacion bloqueando su registro.
         String tokenHash = calcularHash(token);
@@ -182,7 +190,7 @@ public class InvitacionService {
         }
 
         // 5b. 9.4: las especialidades tienen que corresponder al rol de la invitacion.
-        validarEspecialidades(invitacion.getRol(), especialidades);
+        validarEspecialidades(invitacion.getRol(), especialidades.keySet());
 
         // 6. Crear la membresia con el rol indicado en la invitacion.
         // 1.6: Si la invitacion es para rol TUTOR (co-tutor), queda con esAdmin = true.
@@ -193,10 +201,11 @@ public class InvitacionService {
                 .esAdmin(invitacion.getRol() == Rol.TUTOR)
                 .build();
 
-        for (Especialidad especialidad : especialidades) {
+        for (Map.Entry<Especialidad, String> especialidad : especialidades.entrySet()) {
             membresia.getEspecialidades().add(MembresiaEspecialidad.builder()
                     .membresia(membresia)
-                    .especialidad(especialidad)
+                    .especialidad(especialidad.getKey())
+                    .aclaracion(especialidad.getValue())
                     .build());
         }
 
@@ -363,7 +372,7 @@ public class InvitacionService {
         }
     }
 
-    private void validarEspecialidades(Rol rol, List<Especialidad> especialidades) {
+    private void validarEspecialidades(Rol rol, Collection<Especialidad> especialidades) {
 
         if (especialidades.isEmpty()) {
             return;

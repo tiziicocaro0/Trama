@@ -1,10 +1,11 @@
 import { validarEmail } from '../../../utils/validaciones.js'
 
 export const camposDatos = ['nombre', 'apellido', 'email']
-export const camposTipoCuenta = ['tipoCuenta', 'especialidades']
+export const camposTipoCuenta = ['tipoCuenta', 'area', 'especialidades']
 
-// Etapas: 0 datos, 1 tipo de cuenta (9.4), 2 contraseña, 3 confirmación.
+// Etapas: 0 datos, 1 tipo de cuenta (9.4), 2 contraseña, 3 revisión, 4 código del mail.
 export const ETAPA_CONFIRMACION = 3
+export const ETAPA_CODIGO = 4
 
 export const requisitosPassword = [
   { texto: 'Al menos 8 caracteres', cumple: (valor) => valor.length >= 8 },
@@ -35,10 +36,18 @@ export function validarRegistro(valores, etapa = ETAPA_CONFIRMACION) {
     if (!valores.tipoCuenta)
       errores.tipoCuenta = 'Elegí si sos familia o profesional.'
     else if (valores.tipoCuenta === 'PROFESIONAL') {
-      if (!valores.especialidades.length)
+      if (!valores.area) errores.area = 'Elegí si trabajás en educación o en salud.'
+      else if (!valores.especialidades.length)
         errores.especialidades = 'Elegí al menos una especialidad.'
       else if (valores.especialidades.length > 10)
         errores.especialidades = 'Podés elegir hasta 10 especialidades.'
+      else if (
+        valores.especialidades.some(
+          ({ especialidad, aclaracion }) =>
+            /^OTRA_/.test(especialidad) && !aclaracion.trim(),
+        )
+      )
+        errores.especialidades = 'Contanos qué hacés en «Otra».'
     }
   }
   if (etapa === 2 || todas) {
@@ -51,5 +60,7 @@ export function validarRegistro(valores, etapa = ETAPA_CONFIRMACION) {
         'La contraseña debe cumplir todos los requisitos de seguridad.'
     }
   }
+  if (etapa === ETAPA_CODIGO && !/^\d{6}$/.test(valores.codigo ?? ''))
+    errores.codigo = 'Ingresá los 6 dígitos del código.'
   return errores
 }

@@ -40,6 +40,11 @@ public enum Especialidad {
         this.rol = rol;
     }
 
+    /** 9.4: «Otra» pide escribir qué hace la persona. */
+    public boolean esOtra() {
+        return this == OTRA_EDUCACION || this == OTRA_SALUD;
+    }
+
     /** Rol al que pertenece esta especialidad (EDUCACION o SALUD). */
     public Rol getRol() {
         return rol;

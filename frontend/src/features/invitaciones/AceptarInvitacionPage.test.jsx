@@ -26,7 +26,10 @@ const terapeuta = {
   nombre: 'Sofía',
   email: 'terapeuta@trama.test',
   tipoCuenta: 'PROFESIONAL',
-  especialidades: ['TERAPIA_OCUPACIONAL', 'DOCENTE_PRIMARIO'],
+  especialidades: [
+    { especialidad: 'TERAPIA_OCUPACIONAL', aclaracion: null },
+    { especialidad: 'DOCENTE_PRIMARIO', aclaracion: null },
+  ],
 }
 
 function abrir(usuario, ruta = '/invitaciones/token-ficticio') {
@@ -89,7 +92,10 @@ describe('1.4 y 9.4: aceptar una invitación', () => {
     await user.click(screen.getByRole('button', { name: 'Unirme a la red' }))
 
     expect(cliente.post).toHaveBeenCalledWith('/invitaciones/token-ficticio/aceptar', {
-      especialidades: ['TERAPIA_OCUPACIONAL', 'FONOAUDIOLOGIA'],
+      especialidades: [
+        { especialidad: 'TERAPIA_OCUPACIONAL', aclaracion: null },
+        { especialidad: 'FONOAUDIOLOGIA', aclaracion: null },
+      ],
     })
     // Después de sumarse va al perfil del niño
     await waitFor(() =>

@@ -7,6 +7,7 @@ import java.util.UUID;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.trama.tpo.demo.entity.usuario.Usuario;
 import com.trama.tpo.demo.repository.UsuarioRepository;
+import com.trama.tpo.demo.service.EmailService;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
@@ -14,6 +15,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
@@ -37,6 +39,17 @@ class AuthenticationControllerTest {
 
     @Autowired
     private UsuarioRepository usuarioRepository;
+
+    // El registro manda un código por mail: en los tests no hay SMTP.
+    @MockBean
+    private EmailService emailService;
+
+    // Simula que la persona ya confirmó el código del mail.
+    private void verificar(String email) {
+        Usuario usuario = usuarioRepository.findByEmail(email).orElseThrow();
+        usuario.setEmailVerificado(true);
+        usuarioRepository.save(usuario);
+    }
 
     // Emails de los usuarios creados durante cada test
     private final List<String> emailsDePrueba = new ArrayList<>();
@@ -84,7 +97,8 @@ class AuthenticationControllerTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(usuario))
                 .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.access_token").isNotEmpty());
+                .andExpect(jsonPath("$.verificacionPendiente").value(true))
+                .andExpect(jsonPath("$.access_token").isEmpty());
     }
 
     // TEST 2: EMAIL DUPLICADO
@@ -170,6 +184,7 @@ class AuthenticationControllerTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(registro))
                 .andExpect(status().isCreated());
+        verificar(email);
 
         // Iniciar sesión
         mockMvc.perform(post("/api/auth/login")
@@ -258,12 +273,19 @@ class AuthenticationControllerTest {
             }
             """.formatted(email);
 
-        // Registrar usuario y obtener JWT
-        MvcResult resultado = mockMvc.perform(
+        // Registrar usuario, confirmar el email e iniciar sesión
+        mockMvc.perform(
                 post("/api/auth/registro")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(registro))
-                .andExpect(status().isCreated())
+                .andExpect(status().isCreated());
+        verificar(email);
+
+        MvcResult resultado = mockMvc.perform(
+                post("/api/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"email\":\"" + email + "\",\"password\":\"Prueba123!\"}"))
+                .andExpect(status().isOk())
                 .andReturn();
 
         String respuesta = resultado.getResponse()

@@ -2,8 +2,7 @@ package com.trama.tpo.demo.entity.dto;
 
 import java.util.List;
 
-import com.trama.tpo.demo.entity.membresia.Especialidad;
-
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
@@ -14,5 +13,5 @@ import jakarta.validation.constraints.Size;
  */
 public record AceptarInvitacionRequest(
         @Size(max = 10, message = "No se pueden declarar más de 10 especialidades")
-        List<@NotNull(message = "La especialidad es obligatoria") Especialidad> especialidades
+        List<@NotNull(message = "La especialidad es obligatoria") @Valid EspecialidadItemRequest> especialidades
 ) {}

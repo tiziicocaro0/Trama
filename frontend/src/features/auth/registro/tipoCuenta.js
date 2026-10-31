@@ -16,3 +16,17 @@ export const TIPOS_CUENTA = [
 export function nombreTipoCuenta(valor) {
   return TIPOS_CUENTA.find((tipo) => tipo.valor === valor)?.titulo ?? ''
 }
+
+// 9.4: el profesional elige primero su área; cada una tiene sus especialidades (1.9).
+export const AREAS_PROFESIONALES = [
+  {
+    valor: 'EDUCACION',
+    titulo: 'Educación',
+    descripcion: 'Docentes, maestras integradoras, equipos de orientación…',
+  },
+  {
+    valor: 'SALUD',
+    titulo: 'Salud',
+    descripcion: 'Psicología, fonoaudiología, terapia ocupacional…',
+  },
+]

@@ -2,7 +2,12 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router-dom'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { ErrorRegistro, registrarUsuario } from '../../../api/auth.js'
+import {
+  ErrorRegistro,
+  reenviarVerificacion,
+  registrarUsuario,
+  verificarEmail,
+} from '../../../api/auth.js'
 import RegistroPage from './RegistroPage.jsx'
 
 vi.mock('../../../hooks/useAuth.js', () => ({
@@ -12,10 +17,14 @@ vi.mock('../../../hooks/useAuth.js', () => ({
 vi.mock('../../../api/auth.js', async (importOriginal) => ({
   ...(await importOriginal()),
   registrarUsuario: vi.fn(),
+  verificarEmail: vi.fn(),
+  reenviarVerificacion: vi.fn(),
 }))
 
 beforeEach(() => {
   vi.mocked(registrarUsuario).mockReset()
+  vi.mocked(verificarEmail).mockReset()
+  vi.mocked(reenviarVerificacion).mockReset()
 })
 
 function preparar() {
@@ -44,7 +53,7 @@ async function llegarAConfirmacion(user) {
 }
 
 describe('Crear cuenta', () => {
-  it('muestra el formulario y las cuatro etapas acordadas', () => {
+  it('muestra el formulario y las cinco etapas acordadas', () => {
     preparar()
     expect(
       screen.getByRole('heading', { name: 'Crear tu cuenta' }),
@@ -58,7 +67,8 @@ describe('Crear cuenta', () => {
     )
     expect(screen.getByText('Tu rol')).toBeInTheDocument()
     expect(screen.getByText('Seguridad')).toBeInTheDocument()
-    expect(screen.getByText('Confirmación')).toBeInTheDocument()
+    expect(screen.getByText('Revisión')).toBeInTheDocument()
+    expect(screen.getByText('Código')).toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'Ingresá acá' })).toHaveAttribute(
       'href',
       '/login',
@@ -133,7 +143,25 @@ describe('Crear cuenta', () => {
       email: 'alma@trama.test',
       password: 'Prueba123!',
       tipoCuenta: 'FAMILIA',
+      area: '',
+      codigo: '',
       especialidades: [],
+    })
+    // Último paso: el código que llega por mail
+    expect(
+      await screen.findByRole('heading', { name: 'Revisá tu email' }),
+    ).toHaveFocus()
+    expect(screen.getByText(/Te mandamos un código de 6 dígitos a alma@trama.test/)).toBeVisible()
+    expect(screen.queryByRole('button', { name: 'Volver' })).not.toBeInTheDocument()
+    expect(
+      screen.getByRole('button', { name: 'Reenviar código en 60 s' }),
+    ).toBeDisabled()
+    vi.mocked(verificarEmail).mockResolvedValue(undefined)
+    await user.type(screen.getByLabelText('Código de 6 dígitos'), '12a3456')
+    await user.click(screen.getByRole('button', { name: 'Activar cuenta' }))
+    expect(verificarEmail).toHaveBeenCalledWith({
+      email: 'alma@trama.test',
+      codigo: '123456',
     })
     expect(
       await screen.findByRole('heading', { name: 'Cuenta creada' }),
@@ -165,7 +193,7 @@ describe('Crear cuenta', () => {
     expect(registrarUsuario).toHaveBeenCalledTimes(1)
     resolver()
     expect(
-      await screen.findByRole('heading', { name: 'Cuenta creada' }),
+      await screen.findByRole('heading', { name: 'Revisá tu email' }),
     ).toBeInTheDocument()
   })
 
@@ -205,7 +233,7 @@ describe('Crear cuenta', () => {
     expect(screen.getByLabelText('Contraseña')).toHaveValue('Prueba123!')
   })
 
-  it('9.4: pide familia o profesional y, al profesional, al menos una especialidad', async () => {
+  it('9.4: el profesional elige el área, sus especialidades y cuenta qué hace en «Otra»', async () => {
     vi.mocked(registrarUsuario).mockResolvedValue(undefined)
     const user = preparar()
     await user.type(screen.getByLabelText('Nombre'), 'Alma')
@@ -218,22 +246,34 @@ describe('Crear cuenta', () => {
     expect(screen.getByText('Elegí si sos familia o profesional.')).toBeVisible()
 
     await user.click(screen.getByRole('radio', { name: /Soy profesional/ }))
+    expect(screen.queryByRole('checkbox')).not.toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: 'Continuar' }))
+    expect(screen.getByText('Elegí si trabajás en educación o en salud.')).toBeVisible()
+
+    await user.click(screen.getByRole('radio', { name: /Salud/ }))
+    expect(screen.queryByRole('checkbox', { name: 'Docente primario' })).not.toBeInTheDocument()
     await user.click(screen.getByRole('button', { name: 'Continuar' }))
     expect(screen.getByText('Elegí al menos una especialidad.')).toBeVisible()
 
     await user.click(screen.getByRole('checkbox', { name: 'Psicología' }))
-    await user.click(screen.getByRole('checkbox', { name: 'Maestra integradora' }))
+    await user.click(screen.getByRole('checkbox', { name: 'Otra (salud)' }))
     await user.click(screen.getByRole('button', { name: 'Continuar' }))
-    await user.type(screen.getByLabelText('Contraseña'), 'Prueba123!')
+    expect(screen.getByText('Contanos qué hacés en «Otra».')).toBeVisible()
+    await user.type(screen.getByLabelText('Contanos qué hacés'), 'Musicoterapeuta')
     await user.click(screen.getByRole('button', { name: 'Continuar' }))
 
+    await user.type(screen.getByLabelText('Contraseña'), 'Prueba123!')
+    await user.click(screen.getByRole('button', { name: 'Continuar' }))
     expect(screen.getByText('Soy profesional')).toBeInTheDocument()
-    expect(screen.getByText('Psicología, Maestra integradora')).toBeInTheDocument()
+    expect(screen.getByText('Psicología, Musicoterapeuta')).toBeInTheDocument()
     await user.click(screen.getByRole('button', { name: 'Crear cuenta' }))
     expect(registrarUsuario).toHaveBeenCalledWith(
       expect.objectContaining({
         tipoCuenta: 'PROFESIONAL',
-        especialidades: ['PSICOLOGIA', 'MAESTRA_INTEGRADORA'],
+        especialidades: [
+          { especialidad: 'PSICOLOGIA', aclaracion: null },
+          { especialidad: 'OTRA_SALUD', aclaracion: 'Musicoterapeuta' },
+        ],
       }),
     )
   })
@@ -246,6 +286,7 @@ describe('Crear cuenta', () => {
     await user.type(screen.getByLabelText('Email'), 'alma@trama.test')
     await user.click(screen.getByRole('button', { name: 'Continuar' }))
     await user.click(screen.getByRole('radio', { name: /Soy profesional/ }))
+    await user.click(screen.getByRole('radio', { name: /Salud/ }))
     await user.click(screen.getByRole('checkbox', { name: 'Psicología' }))
     await user.click(screen.getByRole('radio', { name: /Soy familia/ }))
     expect(screen.queryByRole('checkbox', { name: 'Psicología' })).not.toBeInTheDocument()
@@ -256,5 +297,19 @@ describe('Crear cuenta', () => {
     expect(registrarUsuario).toHaveBeenCalledWith(
       expect.objectContaining({ tipoCuenta: 'FAMILIA', especialidades: [] }),
     )
+  })
+
+  it('un código equivocado avisa sin perder lo escrito', async () => {
+    vi.mocked(registrarUsuario).mockResolvedValue(undefined)
+    vi.mocked(verificarEmail).mockRejectedValue(
+      new Error('El código no es correcto o ya venció. Revisalo o pedí uno nuevo.'),
+    )
+    const user = preparar()
+    await llegarAConfirmacion(user)
+    await user.click(screen.getByRole('button', { name: 'Crear cuenta' }))
+    await user.type(await screen.findByLabelText('Código de 6 dígitos'), '000000')
+    await user.click(screen.getByRole('button', { name: 'Activar cuenta' }))
+    expect(await screen.findByRole('alert')).toHaveTextContent('El código no es correcto')
+    expect(screen.getByLabelText('Código de 6 dígitos')).toHaveValue('000000')
   })
 })

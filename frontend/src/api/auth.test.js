@@ -3,6 +3,7 @@ import cliente, { guardarToken, obtenerToken } from './cliente.js'
 import {
   iniciarSesion,
   obtenerIdentidad,
+  verificarEmail,
   registrarUsuario,
   restablecerContrasena,
   solicitarRecuperacion,
@@ -15,7 +16,7 @@ const datos = {
   email: 'alma@trama.test',
   password: 'Prueba123!',
   tipoCuenta: 'PROFESIONAL',
-  especialidades: ['PSICOLOGIA'],
+  especialidades: [{ especialidad: 'PSICOLOGIA', aclaracion: null }],
 }
 const baseOriginal = cliente.defaults.baseURL
 
@@ -85,7 +86,7 @@ describe('Contrato de login e identidad', () => {
       apellido: 'Ejemplo',
       email: datos.email,
       tipoCuenta: 'PROFESIONAL',
-      especialidades: ['PSICOLOGIA'],
+      especialidades: [{ especialidad: 'OTRA_SALUD', aclaracion: 'Musicoterapeuta' }],
     }
     const get = vi.spyOn(cliente, 'get').mockResolvedValue({ data: identidad })
     expect(await obtenerIdentidad()).toEqual(identidad)
@@ -107,16 +108,38 @@ afterEach(() => {
 })
 
 describe('API real de registro con transporte simulado', () => {
-  it('envía únicamente los campos del DTO a la ruta real y guarda el JWT solo en memoria', async () => {
-    const almacenar = vi.spyOn(Storage.prototype, 'setItem')
+  it('envía únicamente los campos del DTO y no abre sesión hasta confirmar el código', async () => {
     const post = vi.spyOn(cliente, 'post').mockResolvedValue({
       status: 201,
-      data: { access_token: 'jwt-ficticio' },
+      data: { email: datos.email, verificacionPendiente: true },
     })
     await registrarUsuario({ ...datos, rol: 'TUTOR' })
     expect(post).toHaveBeenCalledExactlyOnceWith('/auth/registro', datos)
+    expect(obtenerToken()).toBeNull()
+  })
+
+  it('con el código del mail guarda el JWT solo en memoria', async () => {
+    const almacenar = vi.spyOn(Storage.prototype, 'setItem')
+    const post = vi.spyOn(cliente, 'post').mockResolvedValue({
+      data: { access_token: 'jwt-ficticio' },
+    })
+    await verificarEmail({ email: 'ALMA@trama.test ', codigo: '123456' })
+    expect(post).toHaveBeenCalledWith('/auth/verificar-email', {
+      email: 'alma@trama.test',
+      codigo: '123456',
+    })
     expect(obtenerToken()).toBe('jwt-ficticio')
     expect(almacenar).not.toHaveBeenCalled()
+  })
+
+  it('traduce un código equivocado o bloqueado', async () => {
+    vi.spyOn(cliente, 'post').mockRejectedValue({
+      response: { status: 429, data: { codigo: 'CODIGO_BLOQUEADO' } },
+    })
+    await expect(verificarEmail({ email: 'a@trama.test', codigo: '000000' })).rejects.toThrow(
+      'Superaste la cantidad de intentos. Pedí un código nuevo.',
+    )
+    expect(obtenerToken()).toBeNull()
   })
 
   it.each([
@@ -173,10 +196,10 @@ describe('API real de registro con transporte simulado', () => {
     expect(post).not.toHaveBeenCalled()
   })
 
-  it('no guarda una sesión si la respuesta no incluye el token del contrato', async () => {
+  it('avisa si el registro no confirma que espera el código', async () => {
     vi.spyOn(cliente, 'post').mockResolvedValue({ status: 201, data: {} })
     await expect(registrarUsuario(datos)).rejects.toThrow(
-      'La cuenta se creó, pero no recibimos la sesión.',
+      'La cuenta se creó, pero no pudimos confirmarlo.',
     )
     expect(obtenerToken()).toBeNull()
   })

@@ -58,6 +58,11 @@ public class Usuario {
     @Column(name = "tipo_cuenta", nullable = false, length = 12)
     private TipoCuenta tipoCuenta = TipoCuenta.FAMILIA;
 
+    /** Registro: la cuenta entra recién después de confirmar el código que llega por mail. */
+    @Builder.Default
+    @Column(name = "email_verificado", nullable = false)
+    private Boolean emailVerificado = true;
+
     /** Cuando la persona se registró en TRAMA. */
     @CreationTimestamp
     @Column(name = "fecha_alta", nullable = false, updatable = false)

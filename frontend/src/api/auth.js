@@ -59,13 +59,57 @@ export async function registrarUsuario({
     )
   }
 
-  const token = respuesta.data?.access_token
-  if (typeof token !== 'string' || !token.trim()) {
+  // La cuenta queda esperando el código que llega por mail: todavía no hay sesión.
+  if (respuesta.data?.verificacionPendiente !== true) {
     throw new ErrorRegistro(
-      'La cuenta se creó, pero no recibimos la sesión. No vuelvas a registrarte con el mismo email.',
+      'La cuenta se creó, pero no pudimos confirmarlo. No vuelvas a registrarte con el mismo email: ingresá y te pedimos el código.',
     )
   }
+}
+
+const MENSAJES_CODIGO = {
+  CODIGO_INVALIDO: 'El código no es correcto o ya venció. Revisalo o pedí uno nuevo.',
+  CODIGO_BLOQUEADO: 'Superaste la cantidad de intentos. Pedí un código nuevo.',
+  EMAIL_YA_VERIFICADO: 'Tu email ya está verificado. Ingresá con tu contraseña.',
+}
+
+// Registro: el código de 6 dígitos del mail activa la cuenta y abre la sesión.
+export async function verificarEmail({ email, codigo }) {
+  if (!cliente.defaults.baseURL)
+    throw new Error('Falta configurar la conexión con TRAMA. Revisá VITE_API_URL.')
+  let respuesta
+  try {
+    respuesta = await cliente.post('/auth/verificar-email', {
+      email: email.trim().toLowerCase(),
+      codigo,
+    })
+  } catch (error) {
+    if (!error.response)
+      throw new Error('No pudimos conectar con TRAMA. Revisá tu conexión e intentá nuevamente.', { cause: error })
+    const falla = new Error(
+      MENSAJES_CODIGO[error.response.data?.codigo] ??
+        'No pudimos verificar el código. Intentá nuevamente.',
+      { cause: error },
+    )
+    falla.codigo = error.response.data?.codigo
+    throw falla
+  }
+  const token = respuesta.data?.access_token
+  if (typeof token !== 'string' || !token.trim())
+    throw new Error('No recibimos una sesión válida. Ingresá con tu email y contraseña.')
   guardarToken(token)
+}
+
+export async function reenviarVerificacion(email) {
+  if (!cliente.defaults.baseURL)
+    throw new Error('Falta configurar la conexión con TRAMA. Revisá VITE_API_URL.')
+  try {
+    await cliente.post('/auth/reenviar-verificacion', {
+      email: email.trim().toLowerCase(),
+    })
+  } catch (error) {
+    throw new Error('No pudimos reenviar el código. Intentá nuevamente en unos minutos.', { cause: error })
+  }
 }
 
 export async function iniciarSesion({ email, password }) {
@@ -80,6 +124,14 @@ export async function iniciarSesion({ email, password }) {
   } catch (error) {
     if (error.response?.status === 401)
       throw new Error('El email o la contraseña no son correctos.', { cause: error })
+    if (
+      error.response?.status === 403 &&
+      error.response.data?.codigo === 'EMAIL_NO_VERIFICADO'
+    ) {
+      const falla = new Error('Todavía no confirmaste tu email. Ingresá el código que te mandamos.', { cause: error })
+      falla.codigo = 'EMAIL_NO_VERIFICADO'
+      throw falla
+    }
     if (
       error.response?.status === 429 &&
       error.response.data?.codigo === 'CUENTA_BLOQUEADA'
@@ -114,7 +166,9 @@ export async function obtenerIdentidad() {
     email: data.email,
     // 9.4: para precargar cómo figura al sumarse a cada niño.
     tipoCuenta: data.tipoCuenta === 'PROFESIONAL' ? 'PROFESIONAL' : 'FAMILIA',
-    especialidades: Array.isArray(data.especialidades) ? data.especialidades : [],
+    especialidades: Array.isArray(data.especialidades)
+      ? data.especialidades.filter((item) => typeof item?.especialidad === 'string')
+      : [],
   }
 }
 

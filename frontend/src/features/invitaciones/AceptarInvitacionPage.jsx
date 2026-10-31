@@ -6,7 +6,7 @@ import { Aviso } from '../../components/ui/Aviso.jsx'
 import useAuth from '../../hooks/useAuth.js'
 import { aceptarInvitacion } from '../../api/invitaciones.js'
 import SelectorEspecialidades from '../perfil/components/SelectorEspecialidades.jsx'
-import { especialidadesDelRol } from '../perfil/especialidades.js'
+import { esOtraEspecialidad, especialidadesDelRol } from '../perfil/especialidades.js'
 import useInvitacion from './hooks/useInvitacion.js'
 import { olvidarInvitacion, recordarInvitacion } from './invitacionPendiente.js'
 
@@ -92,20 +92,22 @@ function Unirse({ token, detalle, usuario }) {
   const [enviando, setEnviando] = useState(false)
   const [error, setError] = useState(null)
 
-  function alternar(valor) {
-    setEspecialidades((actuales) =>
-      actuales.includes(valor)
-        ? actuales.filter((actual) => actual !== valor)
-        : [...actuales, valor],
-    )
-  }
-
   async function unirse() {
     if (enviando) return
+    if (especialidades.some(({ especialidad, aclaracion }) => esOtraEspecialidad(especialidad) && !aclaracion.trim())) {
+      setError(new Error('Contanos qué hacés en «Otra».'))
+      return
+    }
     setEnviando(true)
     setError(null)
     try {
-      await aceptarInvitacion(token, especialidades)
+      await aceptarInvitacion(
+        token,
+        especialidades.map(({ especialidad, aclaracion }) => ({
+          especialidad,
+          aclaracion: aclaracion.trim() || null,
+        })),
+      )
       navegar(`/proyectos/${detalle.proyectoId}`)
     } catch (err) {
       setError(err)
@@ -126,9 +128,9 @@ function Unirse({ token, detalle, usuario }) {
           </p>
           <SelectorEspecialidades
             id="invitacion-especialidades"
-            roles={[detalle.rol]}
-            seleccionadas={especialidades}
-            onAlternar={alternar}
+            rol={detalle.rol}
+            value={especialidades}
+            onChange={setEspecialidades}
             disabled={enviando}
           />
         </section>
@@ -162,5 +164,7 @@ function Unirse({ token, detalle, usuario }) {
 
 function precargadas(especialidadesCuenta = [], rol) {
   const delRol = especialidadesDelRol(rol)
-  return especialidadesCuenta.filter((valor) => delRol.includes(valor))
+  return especialidadesCuenta
+    .filter(({ especialidad }) => delRol.includes(especialidad))
+    .map(({ especialidad, aclaracion }) => ({ especialidad, aclaracion: aclaracion ?? '' }))
 }

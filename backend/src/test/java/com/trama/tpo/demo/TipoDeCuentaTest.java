@@ -12,6 +12,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
@@ -19,6 +20,7 @@ import org.springframework.test.web.servlet.ResultActions;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.trama.tpo.demo.repository.UsuarioRepository;
+import com.trama.tpo.demo.service.EmailService;
 
 // 9.4: al registrarse la persona dice si es familia o profesional (y qué hace).
 @SpringBootTest
@@ -29,6 +31,7 @@ class TipoDeCuentaTest {
     @Autowired private MockMvc mockMvc;
     @Autowired private ObjectMapper json;
     @Autowired private UsuarioRepository usuarioRepository;
+    @MockBean private EmailService emailService;
 
     private final String email = "cuenta." + UUID.randomUUID() + "@example.com";
 
@@ -48,7 +51,7 @@ class TipoDeCuentaTest {
 
     @Test
     void unProfesionalDeclaraSusEspecialidadesYVeLosPlanesSinEstarEnNingunNino() throws Exception {
-        registrar("PROFESIONAL", "[\"PSICOLOGIA\",\"DOCENTE_PRIMARIO\",\"PSICOLOGIA\"]")
+        registrar("PROFESIONAL", "[{\"especialidad\":\"PSICOLOGIA\"},{\"especialidad\":\"DOCENTE_PRIMARIO\"},{\"especialidad\":\"PSICOLOGIA\"}]")
                 .andExpect(status().isCreated());
 
         yo().andExpect(jsonPath("$.tipoCuenta").value("PROFESIONAL"))
@@ -66,16 +69,28 @@ class TipoDeCuentaTest {
 
     @Test
     void unaFamiliaNoDeclaraEspecialidades() throws Exception {
-        registrar("FAMILIA", "[\"PSICOLOGIA\"]")
+        registrar("FAMILIA", "[{\"especialidad\":\"PSICOLOGIA\"}]")
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.codigo").value("ESPECIALIDAD_SOLO_PROFESIONAL"));
+    }
+
+    @Test
+    void siEligeOtraTieneQueContarQueHace() throws Exception {
+        registrar("PROFESIONAL", "[{\"especialidad\":\"OTRA_SALUD\",\"aclaracion\":\" \"}]")
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.codigo").value("ACLARACION_REQUERIDA"));
+
+        registrar("PROFESIONAL", "[{\"especialidad\":\"OTRA_SALUD\",\"aclaracion\":\"Musicoterapeuta\"}]")
+                .andExpect(status().isCreated());
+        yo().andExpect(jsonPath("$.especialidades[0].especialidad").value("OTRA_SALUD"))
+                .andExpect(jsonPath("$.especialidades[0].aclaracion").value("Musicoterapeuta"));
     }
 
     @Test
     void elTipoDeCuentaEsObligatorioYTieneQueExistir() throws Exception {
         registrar(null, "[]").andExpect(status().isBadRequest());
         registrar("DOCENTE", "[]").andExpect(status().isBadRequest());
-        registrar("PROFESIONAL", "[\"ASTROLOGIA\"]").andExpect(status().isBadRequest());
+        registrar("PROFESIONAL", "[{\"especialidad\":\"ASTROLOGIA\"}]").andExpect(status().isBadRequest());
     }
 
     // ---------------------------------------------------------------
@@ -99,6 +114,10 @@ class TipoDeCuentaTest {
     }
 
     private String token() throws Exception {
+        // Simula que ya confirmó el código del mail.
+        var usuario = usuarioRepository.findByEmail(email).orElseThrow();
+        usuario.setEmailVerificado(true);
+        usuarioRepository.save(usuario);
         String respuesta = mockMvc.perform(post("/api/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"email\":\"" + email + "\",\"password\":\"Prueba123!\"}"))

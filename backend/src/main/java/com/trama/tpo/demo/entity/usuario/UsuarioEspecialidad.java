@@ -48,4 +48,8 @@ public class UsuarioEspecialidad {
     @JdbcTypeCode(SqlTypes.VARCHAR)
     @Column(name = "especialidad", nullable = false, length = 40)
     private Especialidad especialidad;
+
+    /** Subtítulo opcional; obligatorio para OTRA_EDUCACION y OTRA_SALUD. */
+    @Column(name = "aclaracion", length = 120)
+    private String aclaracion;
 }

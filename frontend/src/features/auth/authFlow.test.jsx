@@ -48,6 +48,8 @@ beforeEach(() => {
       )
     }
     if (config.url === '/auth/yo') return respuesta(config, identidad)
+    if (config.url === '/auth/registro')
+      return respuesta(config, { email: identidad.email, verificacionPendiente: true }, 201)
     return respuesta(
       config,
       { access_token: jwt(), nombre: 'No usar esta identidad' },
@@ -80,7 +82,7 @@ async function login(user) {
 }
 
 describe('Flujo integrado de autenticación con transporte Axios simulado', () => {
-  it('registra, verifica la identidad y entra automáticamente sin un POST de login', async () => {
+  it('registra, pide el código del mail, verifica la identidad y entra sin un POST de login', async () => {
     const user = userEvent.setup()
     abrir('/registro')
     await user.type(screen.getByLabelText('Nombre'), 'Nora')
@@ -92,14 +94,18 @@ describe('Flujo integrado de autenticación con transporte Axios simulado', () =
     await user.type(screen.getByLabelText('Contraseña'), 'Prueba123!')
     await user.click(screen.getByRole('button', { name: 'Continuar' }))
     await user.click(screen.getByRole('button', { name: 'Crear cuenta' }))
+    // Último paso: el código que llega por mail
+    await user.type(await screen.findByLabelText('Código de 6 dígitos'), '123456')
+    await user.click(screen.getByRole('button', { name: 'Activar cuenta' }))
     expect(
       await screen.findByRole('heading', { name: 'Hola, Nora.' }),
     ).toBeInTheDocument()
     expect(peticiones.map(({ url }) => url)).toEqual([
       '/auth/registro',
+      '/auth/verificar-email',
       '/auth/yo',
     ])
-    expect(peticiones[1].headers.get('Authorization')).toBe(
+    expect(peticiones[2].headers.get('Authorization')).toBe(
       `Bearer ${obtenerToken()}`,
     )
     expect(screen.queryByLabelText('Contraseña')).not.toBeInTheDocument()

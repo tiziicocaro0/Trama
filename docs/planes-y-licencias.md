@@ -88,7 +88,7 @@ de cada niño quedaban a su nombre. La 9.4 cierra ese camino sin pedir documenta
 
 | Regla | Dónde vive |
 |---|---|
-| Al registrarse se elige **familia o profesional**; el profesional marca sus especialidades (las mismas de la 1.9) | `RegisterRequest.tipoCuenta`, tabla `usuario_especialidad` |
+| Al registrarse se elige **familia o profesional**; el profesional elige primero su **área** (educación o salud) y después sus especialidades de la 1.9. En «Otra» escribe qué hace | `RegisterRequest.tipoCuenta`, tabla `usuario_especialidad` (con `aclaracion`) |
 | Cualquier cuenta crea o administra como tutora **hasta 2 niños**; el tercero responde `409 LIMITE_NINOS` | `PermisoService.verificarPuedeCrearProyecto`, `PlanService.NINOS_POR_CUENTA` |
 | El rol en cada niño lo sigue eligiendo **quien invita**; el invitado solo ajusta con qué especialidades figura | `POST /api/invitaciones/{token}/aceptar` con `{ especialidades }` |
 | Crear un niño pide declarar ser madre, padre o tutor legal (o tener su autorización) | `NuevoAcompanamientoPage` |
@@ -97,6 +97,9 @@ de cada niño quedaban a su nombre. La 9.4 cierra ese camino sin pedir documenta
 - El tipo de cuenta **no da permisos**: los permisos y el límite freemium siguen saliendo del rol en cada membresía.
 - Ser co-tutor de un niño cuenta para el tope; ser familiar o profesional en otros niños, no.
 - `GET /api/auth/yo` suma `tipoCuenta` y `especialidades`. El front las usa para precargar las casillas al aceptar una invitación, filtradas por el rol que eligió quien invita.
+- **La cuenta se activa con un código por mail.** El registro manda un código de 6 dígitos y no devuelve sesión; `POST /api/auth/verificar-email` lo confirma y abre la sesión. Mismas reglas que recuperar la contraseña: vence a los 10 minutos, 5 intentos, un reenvío por minuto (`POST /api/auth/reenviar-verificacion`). Si alguien sin verificar intenta ingresar, el login responde `403 EMAIL_NO_VERIFICADO` y le reenvía el código.
+- Las casillas usan `CasillaOvillo`: al marcarlas se dibuja un ovillo de lana. Es el componente de casilla de TRAMA para reutilizar.
+- Migraciones `V202610310100` (aclaración de las especialidades de la cuenta) y `V202610310110` (`email_verificado` y tabla `codigo_verificacion`; las cuentas existentes quedan verificadas).
 - Migración `V202610302300__tipo_de_cuenta.sql`: columna `tipo_cuenta` (con `CHECK`) y tabla `usuario_especialidad`. Las cuentas que ya existían pasan a profesional si trabajan como educación o salud en algún niño, y heredan las especialidades de sus membresías.
 
 ### 1.4 · Pantalla para aceptar la invitación

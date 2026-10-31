@@ -124,7 +124,8 @@ class ContratoFrontendTest {
     void tiposDeCuenta() {
         // 9.4: las opciones del registro son exactamente las del enum
         assertEquals(nombres(TipoCuenta.class), todasLasCoincidencias(
-                Pattern.compile("valor: '([A-Z]+)'"), leer("features/auth/registro/tipoCuenta.js")));
+                Pattern.compile("valor: '([A-Z]+)'"),
+                entre(leer("features/auth/registro/tipoCuenta.js"), "TIPOS_CUENTA = [", "\n]")));
     }
 
     @Test

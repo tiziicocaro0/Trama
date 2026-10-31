@@ -10,6 +10,7 @@ import com.trama.tpo.demo.repository.UsuarioEspecialidadRepository;
 import com.trama.tpo.demo.repository.UsuarioRepository;
 import com.trama.tpo.demo.service.AuthenticationService;
 import com.trama.tpo.demo.service.LoginAttemptService;
+import com.trama.tpo.demo.service.VerificacionEmailService;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.security.authentication.ProviderManager;
@@ -34,7 +35,8 @@ class PasswordContractTest {
         JwtService jwt = mock(JwtService.class);
         LoginAttemptService intentos = mock(LoginAttemptService.class);
         AuthenticationService service = new AuthenticationService(repository,
-                mock(UsuarioEspecialidadRepository.class), encoder, jwt, manager, intentos);
+                mock(UsuarioEspecialidadRepository.class), encoder, jwt, manager, intentos,
+                mock(VerificacionEmailService.class));
         AtomicReference<Usuario> guardado = new AtomicReference<>();
         UUID id = UUID.randomUUID();
         when(repository.save(any(Usuario.class))).thenAnswer(invocacion -> {
@@ -51,6 +53,8 @@ class PasswordContractTest {
                 .email("PASSWORD@trama.test").password(password).build());
 
         assertTrue(encoder.matches(password, guardado.get().getPasswordHash()), "El hash debe coincidir sin transformar la contraseña");
+        assertFalse(guardado.get().getEmailVerificado(), "La cuenta nueva espera el código del mail");
+        guardado.get().setEmailVerificado(true);
         assertNotEquals(password, guardado.get().getPasswordHash());
         var respuesta = service.authenticate(AuthenticationRequest.builder()
                 .email("password@trama.test").password(password).build());

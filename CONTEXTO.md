@@ -15,7 +15,7 @@ Una app web donde la red de apoyo de un niño autista en edad escolar (familia, 
 | **Proyecto** | El espacio de un niño. Un usuario puede participar en N proyectos. |
 | **Miembro** | Usuario vinculado a un proyecto con un rol. Tabla `membresia`. |
 | **Rol** | `TUTOR`, `FAMILIAR`, `EDUCACION` o `SALUD`. Es **por proyecto**: alguien puede ser tutor en uno y profesional en otro. El rol se asigna al crear un proyecto (`TUTOR`) o al aceptar una invitación (lo elige quien invita). |
-| **Tipo de cuenta** | `FAMILIA` o `PROFESIONAL`, declarado al registrarse junto con las especialidades del profesional (9.4). No da permisos: sirve para mostrar el plan y precargar las especialidades al sumarse a cada niño. |
+| **Tipo de cuenta** | `FAMILIA` o `PROFESIONAL`, declarado al registrarse junto con el área y las especialidades del profesional (9.4). La cuenta se activa con un código de 6 dígitos que llega por mail. No da permisos: sirve para mostrar el plan y precargar las especialidades al sumarse a cada niño. |
 | **Administrador** | Un miembro `TUTOR` con `esAdmin = true`. Quien crea el proyecto lo es; puede designar co-tutores. |
 | **Aporte** | Cualquier información cargada en el perfil (interés, fortaleza, estrategia, observación, nota profesional, etc.). Tiene autor, versiones y visibilidad. |
 | **Bitácora** | La lista de aportes de tipo `OBSERVACION` y `ABC`, ordenada por fecha. |

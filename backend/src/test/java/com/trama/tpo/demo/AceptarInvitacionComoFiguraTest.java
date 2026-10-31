@@ -88,7 +88,7 @@ class AceptarInvitacionComoFiguraTest {
 
     @Test
     void elProfesionalSeSumaConLasEspecialidadesQueElige() throws Exception {
-        aceptar(invitar(Rol.SALUD), "{\"especialidades\":[\"PSICOLOGIA\",\"FONOAUDIOLOGIA\"]}")
+        aceptar(invitar(Rol.SALUD), "{\"especialidades\":[{\"especialidad\":\"PSICOLOGIA\"},{\"especialidad\":\"FONOAUDIOLOGIA\"}]}")
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.rol").value("SALUD"))
                 .andExpect(jsonPath("$.especialidades.length()").value(2));
@@ -104,7 +104,7 @@ class AceptarInvitacionComoFiguraTest {
 
     @Test
     void noPuedeElegirUnaEspecialidadDeOtroRol() throws Exception {
-        aceptar(invitar(Rol.EDUCACION), "{\"especialidades\":[\"PSICOLOGIA\"]}")
+        aceptar(invitar(Rol.EDUCACION), "{\"especialidades\":[{\"especialidad\":\"PSICOLOGIA\"}]}")
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.codigo").value("ESPECIALIDAD_INCOMPATIBLE"));
     }
@@ -112,7 +112,7 @@ class AceptarInvitacionComoFiguraTest {
     @Test
     void unFamiliarNoDeclaraEspecialidadesYLaInvitacionSigueDisponible() throws Exception {
         String token = invitar(Rol.FAMILIAR);
-        aceptar(token, "{\"especialidades\":[\"PSICOLOGIA\"]}")
+        aceptar(token, "{\"especialidades\":[{\"especialidad\":\"PSICOLOGIA\"}]}")
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.codigo").value("ROL_SIN_ESPECIALIDAD"));
 
