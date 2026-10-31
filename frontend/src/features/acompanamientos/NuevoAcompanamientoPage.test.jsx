@@ -35,9 +35,9 @@ function abrir(ruta = '/acompanamientos/nuevo', auth = sesion) {
 
 function completar() {
   for (const [nombre, valor] of [
-    ['Nombre', 'Luz ficticia'],
-    ['Apellido', 'Ejemplo'],
-    ['Escuela', 'Escuela ficticia'],
+    ['Nombre del niño', 'Luz ficticia'],
+    ['Apellido del niño', 'Ejemplo'],
+    ['Escuela a la que va', 'Escuela ficticia'],
     ['Grado', '2.º'],
     ['Fecha de nacimiento', '2018-05-12'],
   ]) {
@@ -96,7 +96,7 @@ describe('Alta real de acompañamiento', () => {
   it('exige campos obligatorios y consentimiento sin enviar solicitudes', () => {
     abrir()
     fireEvent.submit(screen.getByRole('form', { name: 'Crear acompañamiento' }))
-    expect(screen.getByLabelText('Nombre', { exact: true })).toHaveFocus()
+    expect(screen.getByLabelText('Nombre del niño', { exact: true })).toHaveFocus()
     expect(screen.getAllByText('Completá este dato.')).toHaveLength(5)
     expect(
       screen.getByText('Necesitamos tu autorización para continuar.'),
@@ -114,7 +114,7 @@ describe('Alta real de acompañamiento', () => {
     expect(
       screen.getByText('Ingresá una fecha válida que no sea futura.'),
     ).toBeInTheDocument()
-    expect(screen.getByLabelText('Nombre', { exact: true })).toHaveValue(
+    expect(screen.getByLabelText('Nombre del niño', { exact: true })).toHaveValue(
       'Luz ficticia',
     )
     expect(cliente.post).not.toHaveBeenCalled()
@@ -123,7 +123,7 @@ describe('Alta real de acompañamiento', () => {
   it('rechaza campos que contienen solo espacios', () => {
     abrir()
     completar()
-    fireEvent.change(screen.getByLabelText('Nombre', { exact: true }), {
+    fireEvent.change(screen.getByLabelText('Nombre del niño', { exact: true }), {
       target: { value: '   ' },
     })
     fireEvent.submit(screen.getByRole('form', { name: 'Crear acompañamiento' }))
@@ -143,7 +143,7 @@ describe('Alta real de acompañamiento', () => {
         screen.getByRole('form', { name: 'Crear acompañamiento' }),
       )
       await screen.findByRole('alert')
-      expect(screen.getByLabelText('Nombre', { exact: true })).toHaveValue(
+      expect(screen.getByLabelText('Nombre del niño', { exact: true })).toHaveValue(
         'Luz ficticia',
       )
       expect(
@@ -154,6 +154,18 @@ describe('Alta real de acompañamiento', () => {
       ).toBeEnabled()
     },
   )
+
+  it('9.4: si ya tiene 2 niños explica el tope y cómo pedir otro', async () => {
+    cliente.post.mockRejectedValue({
+      response: { status: 409, data: { codigo: 'LIMITE_NINOS' } },
+    })
+    abrir()
+    completar()
+    fireEvent.submit(screen.getByRole('form', { name: 'Crear acompañamiento' }))
+    expect(await screen.findByRole('alert')).toHaveTextContent(
+      'Cada cuenta puede crear hasta 2 acompañamientos.',
+    )
+  })
 
   it('bloquea envíos duplicados mientras se guarda', async () => {
     let rechazar

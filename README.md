@@ -273,9 +273,12 @@ MYSQL_PASSWORD=
 MYSQL_ROOT_PASSWORD=
 JWT_SECRET=
 TRAMA_CRYPTO_KEY=
+TRAMA_BACKUP_KEY=
 ```
 
 `TRAMA_CRYPTO_KEY` es la clave de cifrado (AES-256, en Base64). Se genera una vez con `openssl rand -base64 32`.
+
+`TRAMA_BACKUP_KEY` es la clave de los backups cifrados (ver la sección 7). Se genera igual, por separado: tiene que ser distinta de `TRAMA_CRYPTO_KEY`.
 
 Las contraseñas y claves deben mantenerse privadas. El archivo `.env` no debe subirse al repositorio.
 
@@ -329,9 +332,57 @@ docker compose logs --tail=80 backend
 docker compose --profile app stop
 ```
 
-Este comando detiene los contenedores sin eliminar los datos persistentes de MySQL.
+Este comando detiene los contenedores sin eliminar los datos persistentes: la base (volumen `trama-mysql-data`) y los archivos adjuntos (volumen `trama-uploads`).
 
-No utilizar `docker compose down -v`, ya que elimina también los volúmenes de datos.
+No utilizar `docker compose down -v`, ya que elimina también los volúmenes: se pierden la base **y** los archivos.
+
+### 6. Archivos adjuntos
+
+El backend guarda los archivos adjuntos cifrados en `/app/uploads`, dentro de su contenedor. Esa carpeta es el volumen persistente `trama-uploads`: los archivos no se pierden al reiniciar o reconstruir el contenedor.
+
+| Dónde corre el backend | Carpeta de archivos |
+|---|---|
+| Docker Compose (`--profile app`) | `/app/uploads`, en el volumen `trama-uploads` |
+| Desde el IDE o con `./mvnw` | `backend/uploads/`, ignorada por git. Se puede cambiar con `UPLOADS_DIR` en el `.env` |
+
+Para ver los archivos guardados (cada uno tiene un nombre UUID y está cifrado):
+
+```bash
+docker exec trama-backend ls -la /app/uploads
+```
+
+La base y los archivos van juntos: la tabla `archivo` guarda el nombre de cada uno. Para respaldar o mover el entorno, siempre hay que copiar los dos volúmenes a la vez.
+
+### 7. Backups cifrados
+
+Un backup guarda **juntos** la base y los archivos adjuntos, en un solo archivo cifrado con AES-256. Requiere `TRAMA_BACKUP_KEY` en el `.env`.
+
+```bash
+docker compose --profile backup run --rm backup
+```
+
+Queda en `backups/trama-AAAAMMDD-HHMMSS.tar.gz.gpg`, carpeta ignorada por git.
+
+Restaurar en una base de **prueba** (`trama_restaurada`), sin tocar los datos reales:
+
+```bash
+docker compose --profile backup run --rm --entrypoint sh backup \
+    /scripts/restaurar.sh trama-AAAAMMDD-HHMMSS.tar.gz.gpg
+```
+
+Para restaurar sobre la base y los archivos **reales**, agregar `--sobrescribir-real` al final.
+
+⚠️ Guardar las claves **fuera** de los backups: sin `TRAMA_BACKUP_KEY` el backup no se puede abrir, y sin `TRAMA_CRYPTO_KEY` los campos sensibles de la base restaurada no se pueden leer.
+
+### 8. Actualizar los contenedores
+
+Después de traer cambios de `develop` que tocan el `docker-compose.yml`, el `Dockerfile` o el backend:
+
+```bash
+docker compose --profile app up -d --build
+```
+
+Los contenedores se recrean con la configuración nueva y los datos de los volúmenes se mantienen.
 
 **Estado actual:** el despliegue mediante Docker Compose incluye MySQL y Spring Boot. La incorporación del frontend con Nginx queda pendiente hasta que el equipo integre su estructura en `develop`.
 

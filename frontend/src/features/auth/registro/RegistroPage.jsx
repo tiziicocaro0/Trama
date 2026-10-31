@@ -28,7 +28,7 @@ export default function RegistroPage() {
       <main tabIndex={-1} className="px-6 py-8 lg:col-span-5 lg:px-12 lg:py-16">
         <div className="mx-auto w-full max-w-registro-form">
           <Pasos
-            steps={['Datos', 'Seguridad', 'Confirmación']}
+            steps={['Datos', 'Tu rol', 'Seguridad', 'Revisión', 'Código']}
             current={etapa}
             complete={exito}
           />

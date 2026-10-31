@@ -37,7 +37,7 @@ public class RegistroAccion {
     private UUID proyectoId;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "accion", nullable = false, length = 10, updatable = false)
+    @Column(name = "accion", nullable = false, length = 20, updatable = false)
     private AccionRegistro accion;
 
     @Column(name = "seccion", nullable = false, length = 30, updatable = false)

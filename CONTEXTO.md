@@ -14,7 +14,8 @@ Una app web donde la red de apoyo de un niño autista en edad escolar (familia, 
 |---|---|
 | **Proyecto** | El espacio de un niño. Un usuario puede participar en N proyectos. |
 | **Miembro** | Usuario vinculado a un proyecto con un rol. Tabla `membresia`. |
-| **Rol** | `TUTOR`, `FAMILIAR`, `EDUCACION` o `SALUD`. Es **por proyecto**: alguien puede ser tutor en uno y profesional en otro. Al registrarse no se elige tipo de usuario: el rol se asigna al crear un proyecto o al aceptar una invitación. |
+| **Rol** | `TUTOR`, `FAMILIAR`, `EDUCACION` o `SALUD`. Es **por proyecto**: alguien puede ser tutor en uno y profesional en otro. El rol se asigna al crear un proyecto (`TUTOR`) o al aceptar una invitación (lo elige quien invita). |
+| **Tipo de cuenta** | `FAMILIA` o `PROFESIONAL`, declarado al registrarse junto con el área y las especialidades del profesional (9.4). La cuenta se activa con un código de 6 dígitos que llega por mail. No da permisos: sirve para mostrar el plan y precargar las especialidades al sumarse a cada niño. |
 | **Administrador** | Un miembro `TUTOR` con `esAdmin = true`. Quien crea el proyecto lo es; puede designar co-tutores. |
 | **Aporte** | Cualquier información cargada en el perfil (interés, fortaleza, estrategia, observación, nota profesional, etc.). Tiene autor, versiones y visibilidad. |
 | **Bitácora** | La lista de aportes de tipo `OBSERVACION` y `ABC`, ordenada por fecha. |
@@ -30,6 +31,7 @@ Una app web donde la red de apoyo de un niño autista en edad escolar (familia, 
 6. **Nada se genera automáticamente.** No hay recomendaciones, algoritmos ni IA dentro del producto. Todo contenido lo escribe una persona.
 7. **Solo datos mock.** Ningún entorno tiene datos de niños reales.
 8. **Freemium:** un profesional edita gratis en hasta 2 proyectos; en los demás queda en solo lectura. Las familias nunca pagan.
+9. **Tope de niños por cuenta:** cualquier cuenta crea o administra como tutora hasta 2 niños (9.4). Así la cuenta de familia no reemplaza al plan profesional.
 
 ## Stack
 
@@ -156,7 +158,7 @@ permisoService.verificarAutor(autorId);              // coincide con el autor de
 
 La implementación actual obtiene el usuario autenticado mediante `UsuarioActual` y lanza `AccessDeniedException` si falta un permiso; Spring Security responde `403` mediante el manejador de acceso denegado. **No se duplica esta lógica en ningún otro lado.**
 
-**Pendiente:** `verificarPuedeEditar` todavía no aplica el límite freemium de dos proyectos para profesionales. El control de autor debe combinarse con la comprobación de membresía y permisos del proyecto en los servicios que operen sobre aportes.
+`verificarPuedeEditar` aplica el límite freemium de dos proyectos para profesionales (9.0) y `verificarPuedeCrearProyecto` el tope de dos niños por cuenta (9.4). El control de autor debe combinarse con la comprobación de membresía y permisos del proyecto en los servicios que operen sobre aportes.
 
 ## Seguridad de los datos
 

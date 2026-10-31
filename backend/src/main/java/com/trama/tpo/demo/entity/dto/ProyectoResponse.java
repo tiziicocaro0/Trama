@@ -18,12 +18,22 @@ public record ProyectoResponse(
         // true si el usuario actual puede cargar aportes en este proyecto
         Boolean puedeCargar,
         // 4.2: true si además puede cargar notas profesionales (educación o salud)
-        Boolean puedeCargarNotas) {
+        Boolean puedeCargarNotas,
+        // 9.0: true si es un profesional en solo lectura por el límite del plan gratuito
+        Boolean soloLecturaPorPlan) {
 
     public static ProyectoResponse from(
             Proyecto proyecto,
             boolean puedeCargar,
             boolean puedeCargarNotas) {
+        return from(proyecto, puedeCargar, puedeCargarNotas, false);
+    }
+
+    public static ProyectoResponse from(
+            Proyecto proyecto,
+            boolean puedeCargar,
+            boolean puedeCargarNotas,
+            boolean soloLecturaPorPlan) {
         return new ProyectoResponse(
                 proyecto.getId(),
                 proyecto.getNombre(),
@@ -35,6 +45,7 @@ public record ProyectoResponse(
                 proyecto.getFamiliarPuedeCargar(),
                 proyecto.getFamiliarVeNotas(),
                 puedeCargar,
-                puedeCargarNotas);
+                puedeCargarNotas,
+                soloLecturaPorPlan);
     }
 }

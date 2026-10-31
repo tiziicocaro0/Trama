@@ -82,6 +82,6 @@ class ResumenServiceTest {
         return new AporteResponse(
                 UUID.randomUUID(), proyectoId, UUID.randomUUID(), "Autora Ficticia",
                 tipo, titulo, null, datos, Visibilidad.TODOS, false,
-                ahora, ahora, false, List.of(), List.of(), List.of());
+                ahora, ahora, false, List.of(), List.of(), List.of(), 0, false, List.of());
     }
 }

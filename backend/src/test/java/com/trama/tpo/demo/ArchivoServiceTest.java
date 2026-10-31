@@ -23,6 +23,7 @@ import com.trama.tpo.demo.repository.UsuarioRepository;
 import com.trama.tpo.demo.service.AporteService;
 import com.trama.tpo.demo.service.ArchivoService;
 import com.trama.tpo.demo.service.ArchivoService.ArchivoDescargado;
+import com.trama.tpo.demo.service.ConfirmacionAporteService;
 import com.trama.tpo.demo.service.CryptoService;
 import com.trama.tpo.demo.service.PermisoService;
 import com.trama.tpo.demo.service.RegistroAccionService;
@@ -240,7 +241,8 @@ class ArchivoServiceTest {
                 permisoService,
                 usuarioActual,
                 archivoRepository,
-                mock(RegistroAccionService.class)
+                mock(RegistroAccionService.class),
+                mock(ConfirmacionAporteService.class)
         );
 
         when(usuarioActual.obtenerId()).thenReturn(usuarioId);

@@ -159,6 +159,16 @@ public class MiembroService {
         // 2. Buscar la membresia en el proyecto (por id de membresia o id de usuario).
         Membresia objetivo = buscarMiembro(miembros, miembroId);
 
+        // 2b. Nadie se quita el acceso a sí mismo.
+        if (objetivo.getUsuario() != null
+                && objetivo.getUsuario().getId().equals(usuarioActual.obtenerId())) {
+            throw new ApiException(
+                    "QUITARSE_A_SI_MISMO",
+                    "No podés quitarte el acceso a vos mismo",
+                    HttpStatus.BAD_REQUEST
+            );
+        }
+
         // 3. No se puede quitar al único administrador.
         if (esAdministrador(objetivo)) {
             long cantidadAdmins = miembros.stream()

@@ -27,11 +27,13 @@ import com.trama.tpo.demo.entity.membresia.Membresia;
 import com.trama.tpo.demo.entity.membresia.Rol;
 import com.trama.tpo.demo.entity.proyecto.Proyecto;
 import com.trama.tpo.demo.exceptions.ApiException;
+import com.trama.tpo.demo.exceptions.SoloLecturaException;
 import com.trama.tpo.demo.repository.MembresiaRepository;
 import com.trama.tpo.demo.repository.ProyectoRepository;
 import com.trama.tpo.demo.repository.UsuarioRepository;
 import com.trama.tpo.demo.service.MiembroService;
 import com.trama.tpo.demo.service.PermisoService;
+import com.trama.tpo.demo.service.PlanService;
 import com.trama.tpo.demo.service.RegistroAccionService;
 import com.trama.tpo.demo.service.ProyectoService;
 import com.trama.tpo.demo.service.UsuarioActual;
@@ -50,6 +52,9 @@ class PermisoServiceTest {
 
     @Mock
     private UsuarioRepository usuarioRepository;
+
+    @Mock
+    private PlanService planService;
 
     @InjectMocks
     private PermisoService permisoService;
@@ -284,5 +289,49 @@ class PermisoServiceTest {
                 .thenReturn(List.of(salud));
 
         assertDoesNotThrow(() -> permisoService.verificarPuedeCargarNotas(proyectoId));
+    }
+
+    // 9.0: límite freemium del profesional
+
+    @Test
+    void profesionalGratuitoRecibeSoloLecturaEnSuTercerProyecto() {
+        Membresia tercera = membresiaProfesional(proyectoId);
+        when(membresiaRepository.findByUsuarioIdAndProyectoId(usuarioId, proyectoId))
+                .thenReturn(Optional.of(tercera));
+        when(membresiaRepository.findByUsuarioIdAndRolInOrderByFechaAltaAscIdAsc(eq(usuarioId), anySet()))
+                .thenReturn(List.of(membresiaProfesional(UUID.randomUUID()),
+                        membresiaProfesional(UUID.randomUUID()), tercera));
+
+        assertThrows(SoloLecturaException.class, () -> permisoService.verificarPuedeEditar(proyectoId));
+        assertEquals(true, permisoService.soloLecturaPorPlan(proyectoId));
+    }
+
+    @Test
+    void profesionalConPlanPagoEditaEnTodosSusProyectos() {
+        when(membresiaRepository.findByUsuarioIdAndProyectoId(usuarioId, proyectoId))
+                .thenReturn(Optional.of(membresiaProfesional(proyectoId)));
+        when(planService.editaSinLimite(usuarioId)).thenReturn(true);
+
+        assertDoesNotThrow(() -> permisoService.verificarPuedeEditar(proyectoId));
+        assertEquals(false, permisoService.soloLecturaPorPlan(proyectoId));
+    }
+
+    @Test
+    void unFamiliarSinPermisoNoQuedaEnSoloLecturaPorPlan() {
+        Membresia familiar = Membresia.builder()
+                .rol(Rol.FAMILIAR)
+                .proyecto(Proyecto.builder().id(proyectoId).familiarPuedeCargar(false).build())
+                .build();
+        when(membresiaRepository.findByUsuarioIdAndProyectoId(usuarioId, proyectoId))
+                .thenReturn(Optional.of(familiar));
+
+        assertEquals(false, permisoService.soloLecturaPorPlan(proyectoId));
+    }
+
+    private Membresia membresiaProfesional(UUID idProyecto) {
+        return Membresia.builder()
+                .rol(Rol.EDUCACION)
+                .proyecto(Proyecto.builder().id(idProyecto).build())
+                .build();
     }
 }

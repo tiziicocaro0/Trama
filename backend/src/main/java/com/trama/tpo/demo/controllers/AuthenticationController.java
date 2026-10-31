@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.trama.tpo.demo.service.AuthenticationService;
 import com.trama.tpo.demo.service.RecuperacionService;
+import com.trama.tpo.demo.service.VerificacionEmailService;
 import com.trama.tpo.demo.entity.dto.AuthenticationResponse;
 import com.trama.tpo.demo.entity.dto.MensajeResponse;
 import com.trama.tpo.demo.entity.dto.RegisterRequest;
@@ -20,9 +21,8 @@ import com.trama.tpo.demo.entity.dto.AuthenticationRequest;
 import com.trama.tpo.demo.entity.dto.RestablecerContrasenaRequest;
 import com.trama.tpo.demo.entity.dto.SolicitarRecuperacionRequest;
 import com.trama.tpo.demo.entity.dto.VerificarCodigoRequest;
-import com.trama.tpo.demo.entity.usuario.Usuario;
+import com.trama.tpo.demo.entity.dto.VerificarEmailRequest;
 import com.trama.tpo.demo.exceptions.ApiException;
-import com.trama.tpo.demo.repository.UsuarioRepository;
 
 import jakarta.validation.Valid;
 
@@ -32,17 +32,17 @@ public class AuthenticationController {
 
     private final AuthenticationService service;
     private final RecuperacionService recuperacionService;
-    private final UsuarioRepository usuarioRepository;
+    private final VerificacionEmailService verificacionEmailService;
 
     // Constructor manual
     public AuthenticationController(
             AuthenticationService service,
             RecuperacionService recuperacionService,
-            UsuarioRepository usuarioRepository) {
+            VerificacionEmailService verificacionEmailService) {
 
         this.service = service;
         this.recuperacionService = recuperacionService;
-        this.usuarioRepository = usuarioRepository;
+        this.verificacionEmailService = verificacionEmailService;
     }
 
     // REGISTRO DE USUARIOS
@@ -80,21 +80,32 @@ public class AuthenticationController {
 
         UUID usuarioId = UUID.fromString(authentication.getName());
 
-        Usuario usuario = usuarioRepository.findById(usuarioId)
-                .orElseThrow(() -> new ApiException(
-                        "USUARIO_NO_ENCONTRADO",
-                        "Usuario no encontrado",
-                        HttpStatus.NOT_FOUND
-                ));
-
-        AuthenticationResponse respuesta = AuthenticationResponse.builder()
-                .id(usuario.getId())
-                .nombre(usuario.getNombre())
-                .apellido(usuario.getApellido())
-                .email(usuario.getEmail())
-                .build();
+        AuthenticationResponse respuesta = service.perfil(usuarioId);
 
         return ResponseEntity.ok(respuesta);
+    }
+
+    // REGISTRO - VERIFICAR EL EMAIL CON EL CODIGO (devuelve la sesión)
+    @PostMapping("/verificar-email")
+    public ResponseEntity<AuthenticationResponse> verificarEmail(
+            @Valid @RequestBody VerificarEmailRequest request) {
+
+        return ResponseEntity.ok(
+                verificacionEmailService.verificar(request.email(), request.codigo()));
+    }
+
+    // REGISTRO - REENVIAR EL CODIGO (misma respuesta exista o no la cuenta)
+    @PostMapping("/reenviar-verificacion")
+    public ResponseEntity<MensajeResponse> reenviarVerificacion(
+            @Valid @RequestBody SolicitarRecuperacionRequest request) {
+
+        verificacionEmailService.reenviar(request.getEmail());
+
+        return ResponseEntity.ok(
+                MensajeResponse.builder()
+                        .mensaje("Si la cuenta espera verificación, te mandamos un código nuevo.")
+                        .build()
+        );
     }
 
     // 1.11 - PASO 1: PEDIR EL CODIGO POR MAIL

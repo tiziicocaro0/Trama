@@ -11,12 +11,14 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 
 import com.trama.tpo.demo.entity.usuario.Usuario;
 import com.trama.tpo.demo.repository.UsuarioRepository;
+import com.trama.tpo.demo.service.EmailService;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
@@ -34,6 +36,17 @@ class LoginBloqueoTest {
 
     @Autowired
     private UsuarioRepository usuarioRepository;
+
+    // El registro manda un código por mail: en los tests no hay SMTP.
+    @MockBean
+    private EmailService emailService;
+
+    // Simula que la persona ya confirmó el código del mail.
+    private void verificar(String email) {
+        Usuario usuario = usuarioRepository.findByEmail(email).orElseThrow();
+        usuario.setEmailVerificado(true);
+        usuarioRepository.save(usuario);
+    }
 
     private final List<String> emailsDePrueba = new ArrayList<>();
 
@@ -69,6 +82,7 @@ class LoginBloqueoTest {
 
         String registro = """
             {
+                "tipoCuenta": "FAMILIA",
                 "nombre": "Ana",
                 "apellido": "Prueba",
                 "email": "%s",
@@ -88,6 +102,7 @@ class LoginBloqueoTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(registro))
                 .andExpect(status().isCreated());
+        verificar(email);
 
         // Primeros cuatro intentos incorrectos: HTTP 401
         for (int i = 0; i < 4; i++) {
@@ -128,6 +143,7 @@ class LoginBloqueoTest {
 
         String registro = """
             {
+                "tipoCuenta": "FAMILIA",
                 "nombre": "Ana",
                 "apellido": "Prueba",
                 "email": "%s",
@@ -154,6 +170,7 @@ class LoginBloqueoTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(registro))
                 .andExpect(status().isCreated());
+        verificar(email);
 
         // Tres intentos incorrectos
         for (int i = 0; i < 3; i++) {
@@ -196,6 +213,7 @@ class LoginBloqueoTest {
 
         String registro = """
             {
+                "tipoCuenta": "FAMILIA",
                 "nombre": "Ana",
                 "apellido": "Prueba",
                 "email": "%s",
@@ -222,6 +240,7 @@ class LoginBloqueoTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(registro))
                 .andExpect(status().isCreated());
+        verificar(email);
 
         // Cuatro intentos incorrectos: HTTP 401
         for (int i = 0; i < 4; i++) {
@@ -271,6 +290,7 @@ class LoginBloqueoTest {
 
         String registro = """
             {
+                "tipoCuenta": "FAMILIA",
                 "nombre": "Ana",
                 "apellido": "Prueba",
                 "email": "%s",
@@ -290,6 +310,7 @@ class LoginBloqueoTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(registro))
                 .andExpect(status().isCreated());
+        verificar(email);
 
         // Cuatro intentos incorrectos
         for (int i = 0; i < 4; i++) {
