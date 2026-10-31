@@ -65,7 +65,9 @@ beforeEach(() => {
   cliente.get.mockReset().mockImplementation(async (ruta) => ({
     data: ruta.endsWith('/miembros')
       ? red
-      : ruta.endsWith('/aportes')
+      : ruta.endsWith('/invitaciones')
+        ? []
+        : ruta.endsWith('/aportes')
         ? []
         : { ...proyecto, puedeCargar: true },
   }))
@@ -176,6 +178,28 @@ describe('Red de profesionales', () => {
     expect(
       await screen.findByText('Invitación enviada correctamente.'),
     ).toBeInTheDocument()
+    // 1.3: después de invitar se recarga la lista de pendientes
+    const pedidosPendientes = cliente.get.mock.calls.filter(([ruta]) =>
+      ruta.endsWith('/invitaciones'),
+    )
+    expect(pedidosPendientes.length).toBeGreaterThanOrEqual(2)
+  })
+  it('muestra las invitaciones pendientes solo al administrador (1.3)', async () => {
+    abrir(undefined, true, { esAdmin: true })
+    expect(
+      await screen.findByRole('heading', { name: 'Invitaciones pendientes' }),
+    ).toBeInTheDocument()
+    expect(screen.getByText('No hay invitaciones pendientes.')).toBeInTheDocument()
+  })
+  it('un miembro que no es administrador no pide ni ve las invitaciones (1.3)', async () => {
+    abrir(undefined, true, { esAdmin: false })
+    await screen.findByText('Familiar ficticio Ejemplo')
+    expect(
+      screen.queryByRole('heading', { name: 'Invitaciones pendientes' }),
+    ).not.toBeInTheDocument()
+    expect(
+      cliente.get.mock.calls.some(([ruta]) => ruta.endsWith('/invitaciones')),
+    ).toBe(false)
   })
   it('permite al tutor administrador convertir a un familiar en co-tutor', async () => {
     cliente.put.mockResolvedValue({

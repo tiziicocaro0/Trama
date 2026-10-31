@@ -6,71 +6,11 @@ import CampoFormulario from '../../../components/ui/CampoFormulario.jsx'
 import SelectorVisibilidad from '../../../components/ui/SelectorVisibilidad.jsx'
 import SubirArchivo from '../../../components/ui/SubirArchivo.jsx'
 import { guardarAporte } from '../../../api/aportes.js'
-import { leerDatosAporte, TIPOS_NOTA } from '../perfil.js'
+import { leerDatosAporte } from '../perfil.js'
+import { camposPorTipo, datosSinVacios, textosPorTipo } from '../camposAporte.js'
 import { hoyIso } from '../../../utils/fechas.js'
 
 const SECCIONES_CON_ADJUNTOS = ['NOTA_PROFESIONAL', 'COMUNICACION']
-
-// 2.1 y 2.2: campos propios que el back exige en "datos" para estos tipos.
-// Arrancan en un valor neutro para no frenar la carga; se pueden cambiar.
-const camposPorTipo = {
-  INTERES: [
-    {
-      nombre: 'categoria',
-      etiqueta: 'Categoría',
-      inicial: 'OTRO',
-      opciones: [
-        ['JUEGO', 'Juego'],
-        ['PERSONAJE', 'Personaje'],
-        ['TEMA', 'Tema'],
-        ['ACTIVIDAD', 'Actividad'],
-        ['OBJETO', 'Objeto'],
-        ['OTRO', 'Otro'],
-      ],
-    },
-    {
-      nombre: 'intensidad',
-      etiqueta: 'Intensidad',
-      inicial: 'MEDIA',
-      opciones: [
-        ['BAJA', 'Baja'],
-        ['MEDIA', 'Media'],
-        ['ALTA', 'Alta'],
-      ],
-    },
-  ],
-  FORTALEZA: [
-    {
-      nombre: 'contexto',
-      etiqueta: '¿Dónde lo hace?',
-      inicial: 'OTRO',
-      opciones: [
-        ['CASA', 'Casa'],
-        ['ESCUELA', 'Escuela'],
-        ['CONSULTORIO', 'Consultorio'],
-        ['OTRO', 'Otro'],
-      ],
-    },
-  ],
-  // 4.2: tipo de nota y fecha (hoy por defecto)
-  NOTA_PROFESIONAL: [
-    {
-      nombre: 'tipoNota',
-      etiqueta: 'Tipo de nota',
-      inicial: 'ORIENTACION',
-      opciones: TIPOS_NOTA,
-    },
-    { nombre: 'fecha', etiqueta: 'Fecha', tipo: 'fecha', inicial: hoyIso },
-  ],
-}
-
-// 2.2: textos propios del formulario según la sección; el resto usa los genéricos.
-const textosPorTipo = {
-  FORTALEZA: {
-    titulo: '¿Qué hace bien o disfruta?',
-    contenido: 'Un ejemplo (opcional)',
-  },
-}
 
 export default function EditorAporte({
   seccion,
@@ -142,7 +82,7 @@ export default function EditorAporte({
         titulo: titulo.trim(),
         contenido: contenido.trim(),
         visibilidad,
-        ...(campos.length ? { datos: JSON.stringify(extra) } : {}),
+        ...(campos.length ? { datos: JSON.stringify(datosSinVacios(extra)) } : {}),
         ...(incluirArchivos
           ? { archivoIds: archivos.map((item) => item.id) }
           : {}),
@@ -207,7 +147,7 @@ export default function EditorAporte({
           className="w-full rounded-md border border-borde bg-superficie p-4 text-texto focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primario"
         />
       </div>
-      {campos.map(({ nombre, etiqueta, opciones, tipo }) => (
+      {campos.map(({ nombre, etiqueta, opciones, tipo, maximo }) => (
         <div key={nombre}>
           <label
             htmlFor={`${nombre}-aporte-${seccion.tipo}`}
@@ -215,7 +155,21 @@ export default function EditorAporte({
           >
             {etiqueta}
           </label>
-          {tipo === 'fecha' ? (
+          {tipo === 'texto' ? (
+            <Campo
+              id={`${nombre}-aporte-${seccion.tipo}`}
+              name={nombre}
+              value={extra[nombre] ?? ''}
+              maxLength={maximo}
+              onChange={(event) =>
+                setExtra((actual) => ({
+                  ...actual,
+                  [nombre]: event.target.value,
+                }))
+              }
+              disabled={enviando}
+            />
+          ) : tipo === 'fecha' ? (
             <CampoFecha
               id={`${nombre}-aporte-${seccion.tipo}`}
               name={nombre}

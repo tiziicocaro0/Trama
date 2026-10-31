@@ -14,9 +14,10 @@ vi.mock('../../api/cliente.js', () => ({
     put: vi.fn(),
   },
 }))
-// 2.2: el formulario de fortalezas pregunta qué hace bien y pide un ejemplo
+// 2.2: el formulario de fortalezas pregunta qué hace bien, dónde y pide un ejemplo (en "datos")
 const TITULO_FORTALEZA = '¿Qué hace bien o disfruta?'
-const EJEMPLO_FORTALEZA = 'Un ejemplo (opcional)'
+const DESCRIPCION_FORTALEZA = 'Descripción (opcional)'
+const EJEMPLO_FORTALEZA = 'Ejemplo (opcional)'
 const id = '304d3b5e-8c8a-4a50-83d3-a84ade17b697'
 const proyecto = { id, nombre: 'Niño ficticio', fechaNacimiento: '2018-05-12' }
 const aporteOriginal = {
@@ -73,7 +74,7 @@ beforeEach(() => {
 
 describe('Crear y editar aportes de las seis secciones', () => {
   it.each([
-    ['fortalezas', 'FORTALEZA', TITULO_FORTALEZA, EJEMPLO_FORTALEZA],
+    ['fortalezas', 'FORTALEZA', TITULO_FORTALEZA, DESCRIPCION_FORTALEZA],
     ['intereses', 'INTERES', 'Título', 'Descripción (opcional)'],
     ['comunicacion', 'COMUNICACION', 'Título', 'Descripción (opcional)'],
     ['perfil-sensorial', 'SENSORIAL', 'Título', 'Descripción (opcional)'],
@@ -155,13 +156,13 @@ describe('Crear y editar aportes de las seis secciones', () => {
     await userEvent.click(
       await screen.findByRole('button', { name: 'Agregar aporte' }),
     )
-    await userEvent.type(screen.getByRole('textbox', { name: 'Título' }), 'Arma rompecabezas')
+    await userEvent.type(screen.getByRole('textbox', { name: TITULO_FORTALEZA }), 'Arma rompecabezas')
     await userEvent.selectOptions(
       screen.getByRole('combobox', { name: '¿Dónde lo hace?' }),
       'CASA',
     )
     await userEvent.type(
-      screen.getByRole('textbox', { name: 'Ejemplo (opcional)' }),
+      screen.getByRole('textbox', { name: EJEMPLO_FORTALEZA }),
       'Completó un rompecabezas de animales',
     )
     await userEvent.click(screen.getByRole('button', { name: 'Guardar aporte' }))
@@ -175,7 +176,7 @@ describe('Crear y editar aportes de las seis secciones', () => {
     expect(await screen.findByText('Contexto: Casa')).toBeInTheDocument()
     expect(screen.getByText('Ejemplo: Completó un rompecabezas de animales')).toBeInTheDocument()
     await userEvent.click(screen.getByRole('button', { name: 'Editar aporte: Arma rompecabezas' }))
-    const ejemplo = screen.getByRole('textbox', { name: 'Ejemplo (opcional)' })
+    const ejemplo = screen.getByRole('textbox', { name: EJEMPLO_FORTALEZA })
     expect(ejemplo).toHaveValue('Completó un rompecabezas de animales')
     await userEvent.clear(ejemplo)
     await userEvent.type(ejemplo, 'Armó otro rompecabezas')
@@ -198,7 +199,7 @@ describe('Crear y editar aportes de las seis secciones', () => {
       }),
     )
     expect(
-      screen.getByRole('textbox', { name: EJEMPLO_FORTALEZA }),
+      screen.getByRole('textbox', { name: DESCRIPCION_FORTALEZA }),
     ).toHaveValue('Descripción ficticia')
     await userEvent.clear(screen.getByRole('textbox', { name: TITULO_FORTALEZA }))
     await userEvent.type(

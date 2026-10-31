@@ -530,6 +530,15 @@ public class AporteService {
                 );
                 }
 
+                // 2.2: el ejemplo es opcional y corto: un caso concreto, no un informe.
+                if (datos.ejemplo() != null && datos.ejemplo().length() > 500) {
+                throw new ApiException(
+                        "EJEMPLO_MUY_LARGO",
+                        "El ejemplo de la fortaleza puede tener hasta 500 caracteres",
+                        HttpStatus.BAD_REQUEST
+                );
+                }
+
         } catch (JsonProcessingException e) {
 
                 throw new ApiException(

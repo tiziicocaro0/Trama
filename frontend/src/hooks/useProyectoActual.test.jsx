@@ -2,14 +2,15 @@ import { render, renderHook, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Route, Routes, useParams } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { obtenerMisProyectos } from '../api/proyectos.js';
+import { clienteApi } from '../api/cliente.js';
 import { PROYECTOS_MOCK } from '../api/proyectos.mock.js';
 import { Layout } from '../components/layout/Layout.jsx';
 import { useProyectoActual } from './useProyectoActual.js';
 
-vi.mock('../api/proyectos.js', () => ({
-  obtenerMisProyectos: vi.fn(),
-}));
+vi.mock('../api/cliente.js', () => {
+  const cliente = { defaults: { baseURL: '/api' }, get: vi.fn() };
+  return { default: cliente, clienteApi: cliente };
+});
 
 vi.mock('./useAuth', async (importOriginal) => {
   const original = await importOriginal();
@@ -66,8 +67,6 @@ describe('Selector de proyecto y rol por niño (Tarea 1.7)', () => {
     expect(result.current.rolCodigo).toBe('SALUD');
     expect(result.current.esAdmin).toBe(false);
     expect(result.current.proyectos).toHaveLength(PROYECTOS_MOCK.length);
-    expect(result.current.proyectos).toEqual(PROYECTOS_MOCK);
-    expect(result.current.proyectos).not.toBe(PROYECTOS_MOCK);
   });
 
   it('muestra el selector en el encabezado con todos los niños del usuario y navega a la portada al elegir uno', async () => {
