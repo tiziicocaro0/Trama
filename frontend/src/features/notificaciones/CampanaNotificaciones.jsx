@@ -1,4 +1,4 @@
-﻿import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Bell } from '@phosphor-icons/react'
 import {
@@ -23,7 +23,7 @@ export default function CampanaNotificaciones() {
       const total = await contarNotificacionesNoLeidas()
       setCantidad(total)
     } catch {
-      // El prÃ³ximo intervalo volverÃ¡ a intentarlo.
+      // El próximo intervalo volverá a intentarlo.
     }
   }, [])
 
@@ -53,7 +53,7 @@ export default function CampanaNotificaciones() {
             setCantidad(total)
         }
         } catch {
-        // El prÃ³ximo intervalo volverÃ¡ a intentarlo.
+        // El próximo intervalo volverá a intentarlo.
         }
     }
 
@@ -114,7 +114,7 @@ export default function CampanaNotificaciones() {
         await actualizarContador()
       }
 
-      // Solo permitimos rutas internas de la aplicaciÃ³n.
+      // Solo permitimos rutas internas de la aplicación.
       if (
         notificacion.link?.startsWith('/') &&
         !notificacion.link.startsWith('//')
@@ -167,7 +167,7 @@ export default function CampanaNotificaciones() {
       {abierto && (
         <section
           aria-label="Lista de notificaciones"
-          className="absolute right-0 top-12 z-50 w-80 max-w-full rounded-2xl border border-oliva/10 bg-superficie p-4 shadow-xl"
+          className="absolute right-0 top-12 z-50 w-80 rounded-2xl border border-oliva/10 bg-superficie p-4 shadow-xl"
         >
           <div className="mb-3 flex items-center justify-between gap-2">
             <h2 className="font-display text-lg font-semibold text-oliva">
@@ -196,7 +196,7 @@ export default function CampanaNotificaciones() {
             </p>
           ) : notificaciones.length === 0 ? (
             <p className="py-5 text-center text-sm text-oliva/70">
-              TodavÃ­a no tenÃ©s notificaciones.
+              Todavía no tenés notificaciones.
             </p>
           ) : (
             <ul className="max-h-80 space-y-1 overflow-y-auto">

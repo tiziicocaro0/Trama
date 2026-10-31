@@ -11,7 +11,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.server.ResponseStatusException;
+import com.trama.tpo.demo.exceptions.ApiException;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -67,9 +67,7 @@ public class NotificacionService {
 
         if (proyectoId != null) {
             proyecto = proyectoRepository.findById(proyectoId)
-                    .orElseThrow(() -> new ResponseStatusException(
-                            HttpStatus.NOT_FOUND,
-                            "Proyecto no encontrado"));
+                    .orElseThrow(() -> new ApiException("PROYECTO_NO_ENCONTRADO", "Proyecto no encontrado", HttpStatus.NOT_FOUND));
         }
 
         List<UUID> ids = usuarios.stream()
@@ -79,9 +77,7 @@ public class NotificacionService {
         List<Usuario> destinatarios = usuarioRepository.findAllById(ids);
 
         if (destinatarios.size() != ids.size()) {
-            throw new ResponseStatusException(
-                    HttpStatus.BAD_REQUEST,
-                    "Uno o mas destinatarios no existen");
+            throw new ApiException("DESTINATARIO_NO_ENCONTRADO", "Uno o mas destinatarios no existen", HttpStatus.BAD_REQUEST);
         }
 
         List<Notificacion> notificaciones = new ArrayList<>();
@@ -126,9 +122,7 @@ public class NotificacionService {
 
         Notificacion notificacion = notificacionRepository
                 .findByIdAndUsuarioId(notificacionId, usuarioId)
-                .orElseThrow(() -> new ResponseStatusException(
-                        HttpStatus.NOT_FOUND,
-                        "Notificacion no encontrada"));
+                .orElseThrow(() -> new ApiException("NOTIFICACION_NO_ENCONTRADA", "Notificacion no encontrada", HttpStatus.NOT_FOUND));
 
         notificacion.setLeida(true);
         notificacionRepository.save(notificacion);
@@ -147,24 +141,18 @@ public class NotificacionService {
             String link) {
 
         if (tipo == null || tipo.isBlank() || tipo.length() > 20) {
-            throw new ResponseStatusException(
-                    HttpStatus.BAD_REQUEST,
-                    "Tipo de notificacion invalido");
+            throw new ApiException("NOTIFICACION_INVALIDA", "Tipo de notificacion invalido", HttpStatus.BAD_REQUEST);
         }
 
         if (texto == null || texto.isBlank() || texto.length() > 255) {
-            throw new ResponseStatusException(
-                    HttpStatus.BAD_REQUEST,
-                    "Texto de notificacion invalido");
+            throw new ApiException("NOTIFICACION_INVALIDA", "Texto de notificacion invalido", HttpStatus.BAD_REQUEST);
         }
 
         if (link == null || link.isBlank()
                 || link.length() > 255
                 || !link.startsWith("/")
                 || link.startsWith("//")) {
-            throw new ResponseStatusException(
-                    HttpStatus.BAD_REQUEST,
-                    "Link de notificacion invalido");
+            throw new ApiException("NOTIFICACION_INVALIDA", "Link de notificacion invalido", HttpStatus.BAD_REQUEST);
         }
     }
 }

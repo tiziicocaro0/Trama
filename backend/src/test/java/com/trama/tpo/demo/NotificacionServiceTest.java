@@ -49,34 +49,19 @@ class NotificacionServiceTest {
 
     private final List<UUID> usuariosDePrueba = new ArrayList<>();
 
-    private UUID registrarUsuario() throws Exception {
-        String email = "notif.test." + UUID.randomUUID()
-                + "@example.com";
+    // Usuario de prueba creado directo en la base
+    // (el registro por API ahora pide tipo de cuenta y el código del mail).
+    private UUID registrarUsuario() {
+        Usuario usuario = usuarioRepository.save(Usuario.builder()
+                .nombre("Usuario")
+                .apellido("Prueba")
+                .email("notif.service." + UUID.randomUUID() + "@example.com")
+                .passwordHash("no-se-usa-en-estos-tests")
+                .build());
 
-        String registro = """
-                {
-                    "nombre": "Usuario",
-                    "apellido": "Prueba",
-                    "email": "%s",
-                    "password": "Prueba123!"
-                }
-                """.formatted(email);
+        usuariosDePrueba.add(usuario.getId());
 
-        mockMvc.perform(
-                        post("/api/auth/registro")
-                                .contentType(MediaType.APPLICATION_JSON)
-                                .content(registro))
-                .andExpect(status().isCreated());
-
-        Usuario usuario = usuarioRepository.findByEmail(email)
-                .orElseThrow(() -> new AssertionError(
-                        "No se encontró el usuario registrado: " + email));
-
-        UUID usuarioId = usuario.getId();
-
-        usuariosDePrueba.add(usuarioId);
-
-        return usuarioId;
+        return usuario.getId();
     }
 
     @AfterEach

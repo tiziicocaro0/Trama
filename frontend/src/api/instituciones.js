@@ -61,14 +61,3 @@ export async function quitarProfesional(licenciaId) {
     throw traducir(error, 'No pudimos quitar al profesional. Intentá de nuevo.')
   }
 }
-
-// 9.3: el responsable cierra el aviso de cambio automático de paquete.
-export async function cerrarAvisoCambioPaquete() {
-  verificarConexion()
-  try {
-    const { data } = await cliente.put('/institucion/aviso')
-    return data
-  } catch (error) {
-    throw traducir(error, 'No pudimos cerrar el aviso. Intentá de nuevo.')
-  }
-}

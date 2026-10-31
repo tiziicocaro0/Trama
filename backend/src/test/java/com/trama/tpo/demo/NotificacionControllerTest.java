@@ -2,7 +2,9 @@ package com.trama.tpo.demo;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.trama.tpo.demo.config.JwtService;
 import com.trama.tpo.demo.entity.notificacion.Notificacion;
+import com.trama.tpo.demo.entity.usuario.Usuario;
 import com.trama.tpo.demo.repository.NotificacionRepository;
 import com.trama.tpo.demo.repository.UsuarioRepository;
 import com.trama.tpo.demo.service.NotificacionService;
@@ -48,42 +50,26 @@ class NotificacionControllerTest {
     @Autowired
     private NotificacionService notificacionService;
 
+    @Autowired
+    private JwtService jwtService;
+
     private final List<UUID> usuariosDePrueba = new ArrayList<>();
 
     private record UsuarioPrueba(UUID id, String token) {}
 
-    private UsuarioPrueba registrarUsuario() throws Exception {
-        String email = "notif.controller." + UUID.randomUUID()
-                + "@example.com";
+    // Usuario de prueba creado directo en la base, con su token
+    // (el registro por API ahora pide tipo de cuenta y el código del mail).
+    private UsuarioPrueba registrarUsuario() {
+        Usuario usuario = usuarioRepository.save(Usuario.builder()
+                .nombre("Usuario")
+                .apellido("Prueba")
+                .email("notif.controller." + UUID.randomUUID() + "@example.com")
+                .passwordHash("no-se-usa-en-estos-tests")
+                .build());
 
-        String registro = """
-                {
-                    "nombre": "Usuario",
-                    "apellido": "Prueba",
-                    "email": "%s",
-                    "password": "Prueba123!"
-                }
-                """.formatted(email);
+        usuariosDePrueba.add(usuario.getId());
 
-        String respuesta = mockMvc.perform(
-                        post("/api/auth/registro")
-                                .contentType(MediaType.APPLICATION_JSON)
-                                .content(registro))
-                .andExpect(status().isCreated())
-                .andReturn()
-                .getResponse()
-                .getContentAsString();
-
-        JsonNode json = objectMapper.readTree(respuesta);
-        String token = json.get("access_token").asText();
-
-        UUID id = usuarioRepository.findByEmail(email)
-                .orElseThrow()
-                .getId();
-
-        usuariosDePrueba.add(id);
-
-        return new UsuarioPrueba(id, token);
+        return new UsuarioPrueba(usuario.getId(), jwtService.generateToken(usuario.getId()));
     }
 
     @AfterEach

@@ -9,7 +9,7 @@ import com.trama.tpo.demo.repository.EventoExcepcionRepository;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.server.ResponseStatusException;
+import com.trama.tpo.demo.exceptions.ApiException;
 
 import java.time.LocalDate;
 import java.time.LocalTime;
@@ -43,8 +43,8 @@ public class EventoOcurrenciaService {
 
         Evento evento = eventoRepository
                 .findByIdAndProyectoId(eventoId, proyectoId)
-                .orElseThrow(() -> new ResponseStatusException(
-                        HttpStatus.NOT_FOUND, "Evento no encontrado"));
+                .orElseThrow(() -> new ApiException("EVENTO_NO_ENCONTRADO",
+                        "Evento no encontrado", HttpStatus.NOT_FOUND));
 
         permisoService.verificarPuedeModificarEvento(
                 proyectoId, evento.getAutor().getId());
@@ -54,8 +54,8 @@ public class EventoOcurrenciaService {
         if (request == null || request.titulo() == null
                 || request.titulo().isBlank()
                 || request.titulo().length() > 150) {
-            throw new ResponseStatusException(
-                    HttpStatus.BAD_REQUEST, "Titulo invalido");
+            throw new ApiException("TITULO_INVALIDO",
+                    "Titulo invalido", HttpStatus.BAD_REQUEST);
         }
 
         LocalTime inicio = request.horaInicio() != null
@@ -65,8 +65,8 @@ public class EventoOcurrenciaService {
                 ? request.horaFin() : evento.getHoraFin();
 
         if (inicio == null || fin == null || !fin.isAfter(inicio)) {
-            throw new ResponseStatusException(
-                    HttpStatus.BAD_REQUEST, "Horarios invalidos");
+            throw new ApiException("HORARIO_INVALIDO",
+                    "Horarios invalidos", HttpStatus.BAD_REQUEST);
         }
 
         EventoExcepcion excepcion = excepcionRepository
@@ -94,9 +94,8 @@ public class EventoOcurrenciaService {
                 || fecha.getDayOfWeek().getValue()
                         != evento.getDiaSemana().intValue()) {
 
-            throw new ResponseStatusException(
-                    HttpStatus.BAD_REQUEST,
-                    "La fecha no pertenece a la serie recurrente");
+            throw new ApiException("FECHA_FUERA_DE_SERIE",
+                    "La fecha no pertenece a la serie recurrente", HttpStatus.BAD_REQUEST);
         }
     }
 }

@@ -72,13 +72,8 @@ bloquea a nadie.
 | Al asociar un profesional | `InstitucionService.asociar` |
 | Cuando un profesional con licencia acepta la invitación a un niño nuevo | `InvitacionService.aceptarInvitacion` → `InstitucionService.revisarCuposDe` |
 
-- El aviso queda guardado en la institución (`aviso_paquete_anterior`, `aviso_motivo` = `NINOS` o `PROFESIONALES`) y viaja en `InstitucionResponse.aviso`.
-- `PUT /api/institucion/aviso` lo cierra.
-- Front: cartel flotante en `/institucion` con la etiqueta **«Aviso de prueba»**.
-- Migración `V202610301530__aviso_cambio_paquete.sql` (su `CHECK` está cubierto por `ContratoBaseDeDatosTest`).
-
-> **Pendiente para cuando se mergee la 6.0:** reemplazar el cartel de prueba por una notificación
-> real (`NotificacionService.notificar(...)`) al responsable y sacar el cartel.
+- El responsable se entera con una **notificación** de la 6.0 («Superaste el cupo de profesionales del paquete Inicial: tu institución pasó al paquete Intermedio»), que lleva a `/institucion`.
+- El cartel flotante de prueba que había antes de la 6.0 se quitó, junto con `PUT /api/institucion/aviso` y las columnas del aviso (migración `V202610311000__aviso_paquete_por_notificacion.sql`).
 
 ## 9.4 · Tipo de cuenta y tope de niños
 

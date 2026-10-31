@@ -46,6 +46,8 @@ public class EventoController {
     }
 
     // LISTAR EVENTOS Y OCURRENCIAS ENTRE DOS FECHAS
+    // desde y hasta son obligatorios, pero los valida el service después de verificar
+    // la membresía: así alguien ajeno recibe 403 y no un 400 (0.21).
     @GetMapping
     public ResponseEntity<List<EventoResponse>> listar(
             @PathVariable UUID proyectoId,
@@ -87,7 +89,7 @@ public class EventoController {
     // EDITAR UNA SOLA OCURRENCIA
     @PutMapping("/{eventoId}/ocurrencias/{fecha}")
     public ResponseEntity<Void> editarOcurrencia(
-            @PathVariable("id") UUID proyectoId,
+            @PathVariable UUID proyectoId,
             @PathVariable UUID eventoId,
             @PathVariable
             @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
@@ -103,7 +105,7 @@ public class EventoController {
     // CANCELAR UNA SOLA OCURRENCIA
     @DeleteMapping("/{eventoId}/ocurrencias/{fecha}")
     public ResponseEntity<Void> cancelarOcurrencia(
-            @PathVariable("id") UUID proyectoId,
+            @PathVariable UUID proyectoId,
             @PathVariable UUID eventoId,
             @PathVariable
             @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)

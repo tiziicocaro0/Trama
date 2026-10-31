@@ -10,7 +10,10 @@ export default function NotificacionesGlobales() {
     pathname === '/inicio' ||
     pathname === '/acompanamientos' ||
     pathname.startsWith('/acompanamientos/') ||
-    pathname.startsWith('/proyectos/')
+    pathname.startsWith('/proyectos/') ||
+    // 9.x: Mi plan y la institución (el cambio de paquete llega como notificación)
+    pathname.startsWith('/cuenta/') ||
+    pathname === '/institucion'
 
   if (estado !== 'autenticado' || !usuario || !esRutaPrivada) {
     return null

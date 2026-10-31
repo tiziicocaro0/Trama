@@ -1,6 +1,5 @@
 package com.trama.tpo.demo.service;
 
-import com.trama.tpo.demo.exceptions.ApiException;
 import com.trama.tpo.demo.entity.archivo.Archivo;
 import com.trama.tpo.demo.entity.dto.EventoRequest;
 import com.trama.tpo.demo.entity.dto.EventoResponse;
@@ -10,6 +9,7 @@ import com.trama.tpo.demo.entity.proyecto.Proyecto;
 import com.trama.tpo.demo.entity.usuario.Usuario;
 import com.trama.tpo.demo.repository.*;
 
+import com.trama.tpo.demo.exceptions.ApiException;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -57,11 +57,11 @@ public class EventoService {
         validar(request);
 
         Proyecto proyecto = proyectoRepository.findById(proyectoId)
-                .orElseThrow(() -> error(HttpStatus.NOT_FOUND,
+                .orElseThrow(() -> error("PROYECTO_NO_ENCONTRADO", HttpStatus.NOT_FOUND,
                         "Proyecto no encontrado"));
 
         Usuario autor = usuarioRepository.findById(usuarioActual.obtenerId())
-                .orElseThrow(() -> error(HttpStatus.NOT_FOUND,
+                .orElseThrow(() -> error("USUARIO_NO_ENCONTRADO", HttpStatus.NOT_FOUND,
                         "Usuario no encontrado"));
 
         boolean recurrente = Boolean.TRUE.equals(request.recurrente());
@@ -94,7 +94,7 @@ public class EventoService {
         permisoService.verificarMiembro(proyectoId);
 
         if (desde == null || hasta == null || hasta.isBefore(desde)) {
-            throw error(HttpStatus.BAD_REQUEST, "Rango de fechas invalido");
+            throw error("RANGO_INVALIDO", HttpStatus.BAD_REQUEST, "Rango de fechas invalido");
         }
 
         List<EventoResponse> resultado = new ArrayList<>();
@@ -225,7 +225,7 @@ public class EventoService {
             Evento evento, LocalDate fecha) {
 
         if (!Boolean.TRUE.equals(evento.getRecurrente())) {
-            throw error(HttpStatus.BAD_REQUEST,
+            throw error("EVENTO_NO_RECURRENTE", HttpStatus.BAD_REQUEST,
                     "El evento no es recurrente");
         }
 
@@ -235,7 +235,7 @@ public class EventoService {
                     && fecha.isAfter(evento.getFechaFinRecurrencia()))
                 || fecha.getDayOfWeek().getValue()
                     != evento.getDiaSemana().intValue()) {
-            throw error(HttpStatus.BAD_REQUEST,
+            throw error("FECHA_FUERA_DE_SERIE", HttpStatus.BAD_REQUEST,
                     "La fecha no pertenece a la serie");
         }
     }
@@ -247,7 +247,7 @@ public class EventoService {
 
     private Evento buscarEvento(UUID proyectoId, UUID eventoId) {
         return eventoRepository.findByIdAndProyectoId(eventoId, proyectoId)
-                .orElseThrow(() -> error(HttpStatus.NOT_FOUND,
+                .orElseThrow(() -> error("EVENTO_NO_ENCONTRADO", HttpStatus.NOT_FOUND,
                         "Evento no encontrado"));
     }
 
@@ -255,7 +255,7 @@ public class EventoService {
         if (imagenId == null) return null;
 
         return archivoRepository.findByIdAndProyectoId(imagenId, proyectoId)
-                .orElseThrow(() -> error(HttpStatus.BAD_REQUEST,
+                .orElseThrow(() -> error("IMAGEN_NO_ENCONTRADA", HttpStatus.BAD_REQUEST,
                         "La imagen no pertenece al proyecto"));
     }
 
@@ -263,13 +263,13 @@ public class EventoService {
         if (request == null || request.titulo() == null
                 || request.titulo().isBlank()
                 || request.titulo().length() > 150) {
-            throw error(HttpStatus.BAD_REQUEST, "Titulo invalido");
+            throw error("TITULO_INVALIDO", HttpStatus.BAD_REQUEST, "Titulo invalido");
         }
 
         if (request.fecha() == null || request.horaInicio() == null
                 || request.horaFin() == null
                 || !request.horaFin().isAfter(request.horaInicio())) {
-            throw error(HttpStatus.BAD_REQUEST,
+            throw error("HORARIO_INVALIDO", HttpStatus.BAD_REQUEST,
                     "Fecha u horarios invalidos");
         }
 
@@ -279,14 +279,14 @@ public class EventoService {
                     || request.diaSemana() > 7
                     || request.fecha().getDayOfWeek().getValue()
                             != request.diaSemana()) {
-                throw error(HttpStatus.BAD_REQUEST,
+                throw error("DIA_SEMANA_INVALIDO", HttpStatus.BAD_REQUEST,
                         "Dia semanal invalido");
             }
 
             if (request.fechaFinRecurrencia() != null
                     && request.fechaFinRecurrencia()
                             .isBefore(request.fecha())) {
-                throw error(HttpStatus.BAD_REQUEST,
+                throw error("FIN_RECURRENCIA_INVALIDO", HttpStatus.BAD_REQUEST,
                         "Fecha de fin anterior al inicio");
             }
         }
@@ -294,14 +294,14 @@ public class EventoService {
         if (request.descripcion() != null
                 && request.descripcion()
                         .getBytes(StandardCharsets.UTF_8).length + 28 > 4096) {
-            throw error(HttpStatus.BAD_REQUEST,
+            throw error("DESCRIPCION_MUY_LARGA", HttpStatus.BAD_REQUEST,
                     "Descripcion demasiado extensa");
         }
     }
 
-    private ResponseStatusException error(
-            HttpStatus estado, String mensaje) {
-        return new ResponseStatusException(estado, mensaje);
+    private static ApiException error(
+            String codigo, HttpStatus estado, String mensaje) {
+        return new ApiException(codigo, mensaje, estado);
     }
 
     private EventoResponse convertir(Evento evento) {

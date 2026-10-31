@@ -78,7 +78,9 @@ class AccesoEndpointsTest {
             EspecialidadRequest.class, """
                     {"especialidades":[{"especialidad":"DOCENTE_PRIMARIO"}]}""",
             EventoRequest.class, """
-                    {"titulo":"Prueba","fecha":"2026-11-05","horaInicio":"10:00","horaFin":"11:00"}""");
+                    {"titulo":"Prueba","fecha":"2026-11-05","horaInicio":"10:00","horaFin":"11:00"}""",
+            EventoOcurrenciaRequest.class, """
+                    {"titulo":"Prueba","horaInicio":"10:00","horaFin":"11:00"}""");
 
     @Autowired private MockMvc mockMvc;
     @Autowired private JwtService jwtService;
@@ -240,6 +242,7 @@ class AccesoEndpointsTest {
     private MockHttpServletRequestBuilder pedido(Endpoint endpoint) {
         String url = endpoint.ruta()
                 .replace("{proyectoId}", proyecto.getId().toString())
+                .replace("{fecha}", "2026-11-05")
                 .replaceAll("\\{[^}]+}", UUID.randomUUID().toString());
 
         for (MethodParameter parametro : endpoint.handler().getMethodParameters()) {

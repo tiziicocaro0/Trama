@@ -2,7 +2,6 @@ package com.trama.tpo.demo;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -42,7 +41,7 @@ import com.trama.tpo.demo.repository.PaqueteRepository;
 import com.trama.tpo.demo.repository.ProyectoRepository;
 import com.trama.tpo.demo.repository.UsuarioRepository;
 
-// 9.3: al superar un cupo, la institución pasa sola al paquete siguiente y queda un aviso.
+// 9.3: al superar un cupo, la institución pasa sola al paquete siguiente y se le avisa al responsable (6.0).
 @SpringBootTest
 @AutoConfigureMockMvc
 @ActiveProfiles("test")
@@ -92,9 +91,16 @@ class CambioPaqueteTest {
         asociar(profesionalConNinos("ProfSexto", 1))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.paquete.nombre").value("Intermedio"))
-                .andExpect(jsonPath("$.profesionalesUsados").value(6))
-                .andExpect(jsonPath("$.aviso.paqueteAnterior").value("Inicial"))
-                .andExpect(jsonPath("$.aviso.motivo").value("PROFESIONALES"));
+                .andExpect(jsonPath("$.profesionalesUsados").value(6));
+
+        // 6.0: el responsable se entera por una notificación que lleva a su institución
+        notificacionesDelResponsable()
+                .andExpect(jsonPath("$.length()").value(1))
+                .andExpect(jsonPath("$[0].texto").value(
+                        "Superaste el cupo de profesionales del paquete Inicial: "
+                                + "tu institución pasó al paquete Intermedio."))
+                .andExpect(jsonPath("$[0].link").value("/institucion"))
+                .andExpect(jsonPath("$[0].leida").value(false));
     }
 
     @Test
@@ -114,8 +120,12 @@ class CambioPaqueteTest {
         mockMvc.perform(get(RUTA)
                         .header("Authorization", token(responsable)))
                 .andExpect(jsonPath("$.institucion.paquete.nombre").value("Intermedio"))
-                .andExpect(jsonPath("$.institucion.ninosUsados").value(16))
-                .andExpect(jsonPath("$.institucion.aviso.motivo").value("NINOS"));
+                .andExpect(jsonPath("$.institucion.ninosUsados").value(16));
+
+        notificacionesDelResponsable()
+                .andExpect(jsonPath("$[0].texto").value(
+                        "Superaste el cupo de niños del paquete Inicial: "
+                                + "tu institución pasó al paquete Intermedio."));
     }
 
     @Test
@@ -127,28 +137,16 @@ class CambioPaqueteTest {
         mockMvc.perform(get(RUTA)
                         .header("Authorization", token(responsable)))
                 .andExpect(jsonPath("$.institucion.paquete.nombre").value("Red"))
-                .andExpect(jsonPath("$.institucion.profesionalesUsados").value(6))
-                .andExpect(jsonPath("$.institucion.aviso").doesNotExist());
+                .andExpect(jsonPath("$.institucion.profesionalesUsados").value(6));
+
+        // Sin cambio de paquete, no hay nada que avisar
+        notificacionesDelResponsable().andExpect(jsonPath("$.length()").value(0));
     }
 
-    @Test
-    void elResponsableCierraElAviso() throws Exception {
-        contratar("Inicial");
-        for (int i = 0; i < 6; i++) {
-            asociar(profesionalConNinos("ProfAviso" + i, 1));
-        }
-
-        mockMvc.perform(put(RUTA + "/aviso").header("Authorization", token(responsable)))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.paquete.nombre").value("Intermedio"))
-                .andExpect(jsonPath("$.aviso").doesNotExist());
-    }
-
-    @Test
-    void cerrarElAvisoSinInstitucionDevuelve404() throws Exception {
-        mockMvc.perform(put(RUTA + "/aviso").header("Authorization", token(tutora)))
-                .andExpect(status().isNotFound())
-                .andExpect(jsonPath("$.codigo").value("SIN_INSTITUCION"));
+    private ResultActions notificacionesDelResponsable() throws Exception {
+        return mockMvc.perform(get("/api/notificaciones")
+                        .header("Authorization", token(responsable)))
+                .andExpect(status().isOk());
     }
 
     // ---------------------------------------------------------------
