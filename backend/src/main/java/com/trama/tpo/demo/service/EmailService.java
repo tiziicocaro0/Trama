@@ -75,6 +75,26 @@ public class EmailService {
         );
     }
 
+    /**
+     * 6.1: la misma notificación de la campana, por mail. El texto ya viene sin datos sensibles
+     * (sin el nombre del niño ni contenido de aportes); el link lleva a la pantalla en TRAMA.
+     */
+    public void enviarNotificacion(
+            String destinatario,
+            String texto,
+            String enlace) {
+
+        enviarMensaje(
+            destinatario,
+            "Tenes una novedad en Trama",
+            "Hola!\n\n" +
+            texto + "\n\n" +
+            (enlace == null ? "Ingresa a Trama para verla.\n\n" : "Para verla, ingresa a:\n\n" + enlace + "\n\n") +
+            "Podes elegir que avisos te llegan por mail desde la campana de notificaciones de Trama.\n\n" +
+            "Equipo Trama"
+        );
+    }
+
     private void enviarMensaje(
             String destinatario,
             String asunto,

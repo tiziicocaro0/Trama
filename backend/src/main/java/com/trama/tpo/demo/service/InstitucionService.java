@@ -12,6 +12,7 @@ import org.springframework.transaction.annotation.Transactional;
 import com.trama.tpo.demo.entity.dto.AsociarProfesionalRequest;
 import com.trama.tpo.demo.entity.dto.ContratarPaqueteRequest;
 import com.trama.tpo.demo.entity.dto.InstitucionResponse;
+import com.trama.tpo.demo.entity.notificacion.TipoNotificacion;
 import com.trama.tpo.demo.entity.dto.PaginaInstitucionResponse;
 import com.trama.tpo.demo.entity.dto.PaqueteResponse;
 import com.trama.tpo.demo.entity.plan.Institucion;
@@ -157,7 +158,7 @@ public class InstitucionService {
         // 6.0: el responsable se entera por una notificación (antes era un cartel de prueba).
         notificacionService.notificar(
                 List.of(institucion.getResponsableId()),
-                "CAMBIO_PAQUETE",
+                TipoNotificacion.CAMBIO_PAQUETE.name(),
                 "Superaste " + (motivo == MotivoCambioPaquete.NINOS
                         ? "el cupo de niños" : "el cupo de profesionales")
                         + " del paquete " + original.getNombre()

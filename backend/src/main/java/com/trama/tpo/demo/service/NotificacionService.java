@@ -24,17 +24,20 @@ public class NotificacionService {
     private final UsuarioRepository usuarioRepository;
     private final ProyectoRepository proyectoRepository;
     private final UsuarioActual usuarioActual;
+    private final AvisoPorEmailService avisoPorEmailService;
 
     public NotificacionService(
             NotificacionRepository notificacionRepository,
             UsuarioRepository usuarioRepository,
             ProyectoRepository proyectoRepository,
-            UsuarioActual usuarioActual) {
+            UsuarioActual usuarioActual,
+            AvisoPorEmailService avisoPorEmailService) {
 
         this.notificacionRepository = notificacionRepository;
         this.usuarioRepository = usuarioRepository;
         this.proyectoRepository = proyectoRepository;
         this.usuarioActual = usuarioActual;
+        this.avisoPorEmailService = avisoPorEmailService;
     }
 
     // Permite notificar sin asociar un proyecto.
@@ -96,6 +99,9 @@ public class NotificacionService {
         }
 
         notificacionRepository.saveAll(notificaciones);
+
+        // 6.1: y por mail a quien lo tenga activado para este tipo
+        avisoPorEmailService.avisar(destinatarios, tipo, texto, link);
     }
 
     // Ultimas 10 notificaciones del usuario autenticado.

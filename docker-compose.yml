@@ -50,6 +50,7 @@ services:
       # Configuración del correo
       MAIL_FROM: ${MAIL_FROM:-}
       INVITACION_URL_BASE: ${INVITACION_URL_BASE:-}
+      APP_URL: ${APP_URL:-}
       SPRING_MAIL_HOST: ${SPRING_MAIL_HOST:-}
       SPRING_MAIL_PORT: ${SPRING_MAIL_PORT:-587}
       SPRING_MAIL_USERNAME: ${SPRING_MAIL_USERNAME:-}

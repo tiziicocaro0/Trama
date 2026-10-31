@@ -1,8 +1,11 @@
 package com.trama.tpo.demo.controllers;
 
 import com.trama.tpo.demo.entity.dto.NotificacionResponse;
+import com.trama.tpo.demo.entity.dto.PreferenciaNotificacionDto;
 import com.trama.tpo.demo.entity.notificacion.Notificacion;
 import com.trama.tpo.demo.service.NotificacionService;
+import com.trama.tpo.demo.service.PreferenciaNotificacionService;
+
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -15,10 +18,26 @@ import java.util.UUID;
 public class NotificacionController {
 
     private final NotificacionService notificacionService;
+    private final PreferenciaNotificacionService preferenciaService;
 
     public NotificacionController(
-            NotificacionService notificacionService) {
+            NotificacionService notificacionService,
+            PreferenciaNotificacionService preferenciaService) {
         this.notificacionService = notificacionService;
+        this.preferenciaService = preferenciaService;
+    }
+
+    // 6.1 GET: qué tipos de aviso llegan también por mail.
+    @GetMapping("/preferencias")
+    public List<PreferenciaNotificacionDto> listarPreferencias() {
+        return preferenciaService.listar();
+    }
+
+    // 6.1 PUT: cambia uno o varios interruptores y devuelve todos.
+    @PutMapping("/preferencias")
+    public List<PreferenciaNotificacionDto> guardarPreferencias(
+            @RequestBody List<PreferenciaNotificacionDto> preferencias) {
+        return preferenciaService.guardar(preferencias);
     }
 
     // GET: ultimas 10 notificaciones del usuario autenticado.

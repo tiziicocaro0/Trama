@@ -16,6 +16,7 @@ import DatosPersonalesPage from '../features/perfil/DatosPersonalesPage.jsx'
 import ConoceloPage from '../features/perfil/ConoceloPage.jsx'
 import BitacoraPage from '../features/bitacora/BitacoraPage.jsx'
 import PlanPage from '../features/plan/PlanPage.jsx'
+import PreferenciasNotificacionesPage from '../features/notificaciones/PreferenciasNotificacionesPage.jsx'
 import InstitucionPage from '../features/institucion/InstitucionPage.jsx'
 import AceptarInvitacionPage from '../features/invitaciones/AceptarInvitacionPage.jsx'
 import VerificarEmailPage from '../features/auth/verificar/VerificarEmailPage.jsx'
@@ -37,6 +38,7 @@ const titles = {
   '/calendario': 'Calendario',
   '/perfil': 'Mi perfil',
   '/cuenta/plan': 'Mi plan',
+  '/cuenta/notificaciones': 'Notificaciones',
   '/institucion': 'Institución',
   '/componentes': 'Componentes',
 }
@@ -150,6 +152,14 @@ export default function AppRoutes() {
         element={
           <Acceso privado>
             <PlanPage />
+          </Acceso>
+        }
+      />
+      <Route
+        path="/cuenta/notificaciones"
+        element={
+          <Acceso privado>
+            <PreferenciasNotificacionesPage />
           </Acceso>
         }
       />
