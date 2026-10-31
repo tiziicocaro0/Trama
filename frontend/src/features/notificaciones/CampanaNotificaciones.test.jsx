@@ -78,6 +78,24 @@ describe('Campana de notificaciones - RF-26', () => {
     expect(obtenerNotificaciones).toHaveBeenCalled()
   })
 
+  it('lleva a elegir qué avisos llegan por mail (6.1)', async () => {
+    montar()
+
+    fireEvent.click(screen.getByRole('button', {
+      name: /Notificaciones:/,
+    }))
+    fireEvent.click(
+      await screen.findByRole('link', { name: 'Elegir avisos por mail' }),
+    )
+
+    expect(screen.getByTestId('ruta-actual').textContent).toBe(
+      '/cuenta/notificaciones',
+    )
+    expect(
+      screen.queryByRole('region', { name: 'Lista de notificaciones' }),
+    ).toBeNull()
+  })
+
   it('muestra como máximo las últimas 10 notificaciones recibidas', async () => {
     const lista = Array.from({ length: 15 }, (_, indice) => ({
       id: `notificacion-${indice}`,

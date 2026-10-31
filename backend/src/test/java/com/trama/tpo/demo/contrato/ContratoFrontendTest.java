@@ -37,6 +37,7 @@ import com.trama.tpo.demo.entity.dto.EspecialidadItemRequest;
 import com.trama.tpo.demo.entity.dto.RegisterRequest;
 import com.trama.tpo.demo.entity.dto.RestablecerContrasenaRequest;
 import com.trama.tpo.demo.entity.membresia.Especialidad;
+import com.trama.tpo.demo.entity.notificacion.TipoNotificacion;
 import com.trama.tpo.demo.entity.usuario.TipoCuenta;
 import com.trama.tpo.demo.entity.membresia.Rol;
 import com.trama.tpo.demo.entity.plan.PeriodoSuscripcion;
@@ -101,6 +102,16 @@ class ContratoFrontendTest {
         assertEquals(nombres(ContextoFortaleza.class),
                 // Corta en el cierre de su lista de opciones, sin depender de lo que viene después.
                 valoresEnMayusculas(entre(editor, "nombre: 'contexto'", "],\n    },")));
+    }
+
+    @Test
+    void avisosPorMail() {
+        // 6.1: un interruptor en /cuenta/notificaciones por cada tipo que el back deja configurar
+        Set<String> configurables = TipoNotificacion.configurables().stream()
+                .map(Enum::name)
+                .collect(Collectors.toCollection(java.util.LinkedHashSet::new));
+        assertEquals(configurables, todasLasCoincidencias(Pattern.compile("\\['([A-Z_]+)'"),
+                entre(leer("features/notificaciones/tiposAviso.js"), "TIPOS_AVISO = [", "\n]")));
     }
 
     @Test

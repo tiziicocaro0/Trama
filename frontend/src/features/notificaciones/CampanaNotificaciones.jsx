@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { Bell } from '@phosphor-icons/react'
 import {
   obtenerNotificaciones,
@@ -228,6 +228,15 @@ export default function CampanaNotificaciones() {
               ))}
             </ul>
           )}
+
+          {/* 6.1: elegir qué avisos llegan también por mail */}
+          <Link
+            to="/cuenta/notificaciones"
+            onClick={() => setAbierto(false)}
+            className="mt-3 block border-t border-oliva/10 pt-3 text-center text-sm font-semibold text-terracota hover:underline"
+          >
+            Elegir avisos por mail
+          </Link>
         </section>
       )}
     </div>

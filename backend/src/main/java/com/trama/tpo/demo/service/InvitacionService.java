@@ -11,7 +11,9 @@ import java.util.Base64;
 import java.util.Collection;
 import java.util.HexFormat;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Locale;
 import java.util.UUID;
 
@@ -32,6 +34,7 @@ import com.trama.tpo.demo.entity.membresia.Especialidad;
 import com.trama.tpo.demo.entity.membresia.Membresia;
 import com.trama.tpo.demo.entity.membresia.MembresiaEspecialidad;
 import com.trama.tpo.demo.entity.membresia.Rol;
+import com.trama.tpo.demo.entity.notificacion.TipoNotificacion;
 import com.trama.tpo.demo.entity.proyecto.Proyecto;
 import com.trama.tpo.demo.entity.registro.AccionRegistro;
 import com.trama.tpo.demo.entity.usuario.Usuario;
@@ -55,6 +58,7 @@ public class InvitacionService {
     private final EmailService emailService;
     private final RegistroAccionService registroAccionService;
     private final InstitucionService institucionService;
+    private final NotificacionService notificacionService;
     private final String urlBaseInvitacion;
 
     public InvitacionService(
@@ -67,6 +71,7 @@ public class InvitacionService {
             EmailService emailService,
             RegistroAccionService registroAccionService,
             InstitucionService institucionService,
+            NotificacionService notificacionService,
             @Value("${trama.invitaciones.url-base:}") String urlBaseInvitacion) {
 
         this.invitacionRepository = invitacionRepository;
@@ -78,6 +83,7 @@ public class InvitacionService {
         this.emailService = emailService;
         this.registroAccionService = registroAccionService;
         this.institucionService = institucionService;
+        this.notificacionService = notificacionService;
         this.urlBaseInvitacion = urlBaseInvitacion;
     }
 
@@ -267,7 +273,8 @@ public class InvitacionService {
                 ));
 
         // 5. Evitar invitar a alguien que ya pertenece al proyecto.
-        usuarioRepository.findByEmail(email).ifPresent(usuario -> {
+        Optional<Usuario> invitadoConCuenta = usuarioRepository.findByEmail(email);
+        invitadoConCuenta.ifPresent(usuario -> {
 
             if (membresiaRepository.existsByUsuarioIdAndProyectoId(
                     usuario.getId(), proyectoId)) {
@@ -338,7 +345,22 @@ public class InvitacionService {
                 enlace
         );
 
+        // 11. 6.0: si ya tiene cuenta, también le llega a la campana. El mail sale igual (paso 10),
+        // así que este tipo no manda un segundo mail. El token solo sirve con la sesión del invitado.
+        invitadoConCuenta.ifPresent(usuario -> notificacionService.notificar(
+                List.of(usuario.getId()),
+                proyectoId,
+                TipoNotificacion.INVITACION.name(),
+                nombreCompleto(invitadoPor) + " te invitó a sumarte a un acompañamiento en TRAMA.",
+                "/invitaciones/" + token));
+
         return InvitacionResponse.from(invitacion);
+    }
+
+    private static String nombreCompleto(Usuario usuario) {
+        String nombre = ((usuario.getNombre() == null ? "" : usuario.getNombre()) + " "
+                + (usuario.getApellido() == null ? "" : usuario.getApellido())).trim();
+        return nombre.isEmpty() ? "Alguien" : nombre;
     }
 
     // Genera 32 bytes aleatorios y los convierte en un token URL-safe.

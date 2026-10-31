@@ -28,6 +28,10 @@ trama:
   invitaciones:
     url-base: ${INVITACION_URL_BASE:}
 
+  # 6.1: dirección del front para los links de los mails de notificaciones (sin ella, el mail no lleva link)
+  app:
+    url: ${APP_URL:}
+
   # Archivos adjuntos (0.3): obligatoria en producción
   archivos:
     directorio: ${UPLOADS_DIR}

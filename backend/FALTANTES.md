@@ -202,11 +202,18 @@ Además, cada service que crea, edita, archiva, invita o revoca tiene que **escr
 
 | Método | Ruta | Qué hace | Permiso |
 |---|---|---|---|
-| GET | `/api/notificaciones?noLeidas=` | La campana (el front consulta cada 60 s) | Logueado |
-| POST | `/api/notificaciones/{id}/leida` | Marca como leída | Logueado (solo las propias) |
-| POST | `/api/notificaciones/leidas` | Marca todas como leídas | Logueado |
-| GET | `/api/usuarios/yo/preferencias-notificacion` | Preferencias de mail | Logueado |
-| PUT | `/api/usuarios/yo/preferencias-notificacion` | Cambia las preferencias | Logueado |
+| GET | `/api/notificaciones` | Las últimas 10 (la campana) | Logueado |
+| GET | `/api/notificaciones/no-leidas/count` | Contador de la campana (el front consulta cada 60 s) | Logueado |
+| PUT | `/api/notificaciones/{id}/leida` | Marca como leída | Logueado (solo las propias) |
+| PUT | `/api/notificaciones/leer-todas` | Marca todas como leídas | Logueado |
+| GET | `/api/notificaciones/preferencias` | Qué tipos llegan también por mail (por defecto, todos) | Logueado |
+| PUT | `/api/notificaciones/preferencias` | Cambia uno o varios tipos; la invitación no se puede apagar | Logueado |
+
+Para avisar desde otra historia: `notificacionService.notificar(usuarios, proyectoId, TipoNotificacion.X.name(), texto, link)`.
+El texto no lleva contenido sensible ni el nombre del niño, porque también puede salir por mail.
+El mail sale después de confirmar la transacción y, si falla el correo, solo queda en el log.
+Ya avisan: la nota profesional nueva (4.2), la invitación a alguien con cuenta (1.3) y el cambio de paquete (9.3).
+Faltan, en sus historias: el cambio de calendario (5.4), la mención (6.2) y el pedido de revisión (3.4).
 
 #### Planes y licencias (historias 9.0 a 9.3)
 

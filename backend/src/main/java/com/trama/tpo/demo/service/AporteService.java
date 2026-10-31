@@ -53,6 +53,7 @@ public class AporteService {
     private final ArchivoRepository archivoRepository;
     private final RegistroAccionService registroAccionService;
     private final ConfirmacionAporteService confirmacionAporteService;
+    private final AvisoNotaService avisoNotaService;
     // Lee el JSON "datos" de cada tipo de aporte (fechas incluidas).
     private final ObjectMapper mapper = new ObjectMapper().findAndRegisterModules();
 
@@ -66,7 +67,8 @@ public class AporteService {
             UsuarioActual usuarioActual,
             ArchivoRepository archivoRepository,
             RegistroAccionService registroAccionService,
-            ConfirmacionAporteService confirmacionAporteService) {
+            ConfirmacionAporteService confirmacionAporteService,
+            AvisoNotaService avisoNotaService) {
 
         this.aporteRepository = aporteRepository;
         this.aporteVersionRepository = aporteVersionRepository;
@@ -78,6 +80,7 @@ public class AporteService {
         this.archivoRepository = archivoRepository;
         this.registroAccionService = registroAccionService;
         this.confirmacionAporteService = confirmacionAporteService;
+        this.avisoNotaService = avisoNotaService;
     }
 
     // CREAR APORTE
@@ -132,6 +135,9 @@ public class AporteService {
         // 0.2: auditoría (la sección es el tipo de aporte, nunca el contenido)
         registroAccionService.registrar(
                 usuarioId, proyectoId, AccionRegistro.CREAR, guardado.getTipo().name());
+
+        // 6.1: una nota nueva se avisa a quienes pueden leerla
+        avisoNotaService.notaNueva(guardado);
 
         // Un aporte recién creado todavía no tiene confirmaciones (3.3)
         return convertirRespuesta(guardado, true, especialidadesPorAutor(proyectoId), List.of());

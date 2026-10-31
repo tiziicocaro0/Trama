@@ -20,3 +20,7 @@ trama:
 
   invitaciones:
     url-base: ${INVITACION_URL_BASE:}
+
+  # 6.1: dirección del front para los links de los mails de notificaciones
+  app:
+    url: ${APP_URL:http://localhost:5173}
