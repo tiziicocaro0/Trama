@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
+﻿import { useCallback, useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Bell } from '@phosphor-icons/react'
 import {
@@ -23,7 +23,7 @@ export default function CampanaNotificaciones() {
       const total = await contarNotificacionesNoLeidas()
       setCantidad(total)
     } catch {
-      // El próximo intervalo volverá a intentarlo.
+      // El prÃ³ximo intervalo volverÃ¡ a intentarlo.
     }
   }, [])
 
@@ -43,15 +43,29 @@ export default function CampanaNotificaciones() {
   }, [actualizarContador])
 
   useEffect(() => {
-    void actualizarContador()
+    const controlador = new AbortController()
 
-    const intervalo = setInterval(
-      actualizarContador,
-      60_000,
-    )
+    async function cargarContadorInicial() {
+        try {
+        const total = await contarNotificacionesNoLeidas()
 
-    return () => clearInterval(intervalo)
-  }, [actualizarContador])
+        if (!controlador.signal.aborted) {
+            setCantidad(total)
+        }
+        } catch {
+        // El prÃ³ximo intervalo volverÃ¡ a intentarlo.
+        }
+    }
+
+    void cargarContadorInicial()
+
+    const intervalo = setInterval(actualizarContador, 60_000)
+
+    return () => {
+        controlador.abort()
+        clearInterval(intervalo)
+    }
+}, [actualizarContador])
 
   useEffect(() => {
     if (!abierto) return
@@ -100,7 +114,7 @@ export default function CampanaNotificaciones() {
         await actualizarContador()
       }
 
-      // Solo permitimos rutas internas de la aplicación.
+      // Solo permitimos rutas internas de la aplicaciÃ³n.
       if (
         notificacion.link?.startsWith('/') &&
         !notificacion.link.startsWith('//')
@@ -144,7 +158,7 @@ export default function CampanaNotificaciones() {
         <Bell size={23} aria-hidden="true" />
 
         {cantidad > 0 && (
-          <span className="absolute -right-1 -top-1 flex min-h-5 min-w-5 items-center justify-center rounded-full bg-terracota px-1 text-xs font-bold text-white">
+          <span className="absolute -right-1 -top-1 flex min-h-5 min-w-5 items-center justify-center rounded-full bg-terracota px-1 text-xs font-bold text-superficie">
             {cantidad > 99 ? '99+' : cantidad}
           </span>
         )}
@@ -153,7 +167,7 @@ export default function CampanaNotificaciones() {
       {abierto && (
         <section
           aria-label="Lista de notificaciones"
-          className="absolute right-0 top-12 z-50 w-[min(22rem,calc(100vw-2rem))] rounded-2xl border border-oliva/10 bg-superficie p-4 shadow-xl"
+          className="absolute right-0 top-12 z-50 w-80 max-w-full rounded-2xl border border-oliva/10 bg-superficie p-4 shadow-xl"
         >
           <div className="mb-3 flex items-center justify-between gap-2">
             <h2 className="font-display text-lg font-semibold text-oliva">
@@ -182,7 +196,7 @@ export default function CampanaNotificaciones() {
             </p>
           ) : notificaciones.length === 0 ? (
             <p className="py-5 text-center text-sm text-oliva/70">
-              Todavía no tenés notificaciones.
+              TodavÃ­a no tenÃ©s notificaciones.
             </p>
           ) : (
             <ul className="max-h-80 space-y-1 overflow-y-auto">
