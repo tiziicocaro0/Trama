@@ -76,7 +76,9 @@ class AccesoEndpointsTest {
                     {"nombre":"Otro","apellido":"Nombre","fechaNacimiento":"2017-01-01",
                      "escuela":"Escuela de prueba","grado":"3.º grado"}""",
             EspecialidadRequest.class, """
-                    {"especialidades":[{"especialidad":"DOCENTE_PRIMARIO"}]}""");
+                    {"especialidades":[{"especialidad":"DOCENTE_PRIMARIO"}]}""",
+            EventoRequest.class, """
+                    {"titulo":"Prueba","fecha":"2026-11-05","horaInicio":"10:00","horaFin":"11:00"}""");
 
     @Autowired private MockMvc mockMvc;
     @Autowired private JwtService jwtService;
