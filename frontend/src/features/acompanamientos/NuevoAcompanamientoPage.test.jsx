@@ -155,6 +155,18 @@ describe('Alta real de acompañamiento', () => {
     },
   )
 
+  it('9.4: si ya tiene 2 niños explica el tope y cómo pedir otro', async () => {
+    cliente.post.mockRejectedValue({
+      response: { status: 409, data: { codigo: 'LIMITE_NINOS' } },
+    })
+    abrir()
+    completar()
+    fireEvent.submit(screen.getByRole('form', { name: 'Crear acompañamiento' }))
+    expect(await screen.findByRole('alert')).toHaveTextContent(
+      'Cada cuenta puede crear hasta 2 acompañamientos.',
+    )
+  })
+
   it('bloquea envíos duplicados mientras se guarda', async () => {
     let rechazar
     cliente.post.mockReturnValue(

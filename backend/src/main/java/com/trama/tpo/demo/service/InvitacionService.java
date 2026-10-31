@@ -9,6 +9,7 @@ import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Base64;
 import java.util.HexFormat;
+import java.util.List;
 import java.util.Locale;
 import java.util.UUID;
 
@@ -17,13 +18,16 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.trama.tpo.demo.entity.dto.AceptarInvitacionRequest;
 import com.trama.tpo.demo.entity.dto.InvitacionDetalleResponse;
 import com.trama.tpo.demo.entity.dto.InvitacionRequest;
 import com.trama.tpo.demo.entity.dto.InvitacionResponse;
 import com.trama.tpo.demo.entity.dto.MiembroResponse;
 import com.trama.tpo.demo.entity.invitacion.EstadoInvitacion;
 import com.trama.tpo.demo.entity.invitacion.Invitacion;
+import com.trama.tpo.demo.entity.membresia.Especialidad;
 import com.trama.tpo.demo.entity.membresia.Membresia;
+import com.trama.tpo.demo.entity.membresia.MembresiaEspecialidad;
 import com.trama.tpo.demo.entity.membresia.Rol;
 import com.trama.tpo.demo.entity.proyecto.Proyecto;
 import com.trama.tpo.demo.entity.registro.AccionRegistro;
@@ -106,9 +110,19 @@ public class InvitacionService {
     }
 
     // Aceptar una invitacion y crear la membresia.
-    // La especialidad se configura despues con PUT /miembros/me/especialidades.
+    // La especialidad se puede cambiar despues con PUT /miembros/me/especialidades.
     @Transactional
     public MiembroResponse aceptarInvitacion(String token) {
+        return aceptarInvitacion(token, null);
+    }
+
+    // 9.4: el profesional elige como figura en este nino (el front precarga las de su cuenta).
+    @Transactional
+    public MiembroResponse aceptarInvitacion(String token, AceptarInvitacionRequest request) {
+
+        List<Especialidad> especialidades = request == null || request.especialidades() == null
+                ? List.of()
+                : request.especialidades().stream().distinct().toList();
 
         // 1. Buscar la invitacion bloqueando su registro.
         String tokenHash = calcularHash(token);
@@ -167,6 +181,9 @@ public class InvitacionService {
             );
         }
 
+        // 5b. 9.4: las especialidades tienen que corresponder al rol de la invitacion.
+        validarEspecialidades(invitacion.getRol(), especialidades);
+
         // 6. Crear la membresia con el rol indicado en la invitacion.
         // 1.6: Si la invitacion es para rol TUTOR (co-tutor), queda con esAdmin = true.
         Membresia membresia = Membresia.builder()
@@ -175,6 +192,13 @@ public class InvitacionService {
                 .rol(invitacion.getRol())
                 .esAdmin(invitacion.getRol() == Rol.TUTOR)
                 .build();
+
+        for (Especialidad especialidad : especialidades) {
+            membresia.getEspecialidades().add(MembresiaEspecialidad.builder()
+                    .membresia(membresia)
+                    .especialidad(especialidad)
+                    .build());
+        }
 
         membresia = membresiaRepository.saveAndFlush(membresia);
 
@@ -336,6 +360,30 @@ public class InvitacionService {
                     "No se pudo generar el hash de la invitacion",
                     e
             );
+        }
+    }
+
+    private void validarEspecialidades(Rol rol, List<Especialidad> especialidades) {
+
+        if (especialidades.isEmpty()) {
+            return;
+        }
+        if (!PlanService.ROLES_PROFESIONALES.contains(rol)) {
+            throw new ApiException(
+                    "ROL_SIN_ESPECIALIDAD",
+                    "Solo los profesionales de educación o salud pueden declarar especialidades",
+                    HttpStatus.BAD_REQUEST
+            );
+        }
+        for (Especialidad especialidad : especialidades) {
+            if (especialidad.getRol() != rol) {
+                throw new ApiException(
+                        "ESPECIALIDAD_INCOMPATIBLE",
+                        "La especialidad " + especialidad.name()
+                                + " no corresponde al rol " + rol.name(),
+                        HttpStatus.BAD_REQUEST
+                );
+            }
         }
     }
 

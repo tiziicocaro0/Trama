@@ -20,9 +20,7 @@ import com.trama.tpo.demo.entity.dto.AuthenticationRequest;
 import com.trama.tpo.demo.entity.dto.RestablecerContrasenaRequest;
 import com.trama.tpo.demo.entity.dto.SolicitarRecuperacionRequest;
 import com.trama.tpo.demo.entity.dto.VerificarCodigoRequest;
-import com.trama.tpo.demo.entity.usuario.Usuario;
 import com.trama.tpo.demo.exceptions.ApiException;
-import com.trama.tpo.demo.repository.UsuarioRepository;
 
 import jakarta.validation.Valid;
 
@@ -32,17 +30,14 @@ public class AuthenticationController {
 
     private final AuthenticationService service;
     private final RecuperacionService recuperacionService;
-    private final UsuarioRepository usuarioRepository;
 
     // Constructor manual
     public AuthenticationController(
             AuthenticationService service,
-            RecuperacionService recuperacionService,
-            UsuarioRepository usuarioRepository) {
+            RecuperacionService recuperacionService) {
 
         this.service = service;
         this.recuperacionService = recuperacionService;
-        this.usuarioRepository = usuarioRepository;
     }
 
     // REGISTRO DE USUARIOS
@@ -80,19 +75,7 @@ public class AuthenticationController {
 
         UUID usuarioId = UUID.fromString(authentication.getName());
 
-        Usuario usuario = usuarioRepository.findById(usuarioId)
-                .orElseThrow(() -> new ApiException(
-                        "USUARIO_NO_ENCONTRADO",
-                        "Usuario no encontrado",
-                        HttpStatus.NOT_FOUND
-                ));
-
-        AuthenticationResponse respuesta = AuthenticationResponse.builder()
-                .id(usuario.getId())
-                .nombre(usuario.getNombre())
-                .apellido(usuario.getApellido())
-                .email(usuario.getEmail())
-                .build();
+        AuthenticationResponse respuesta = service.perfil(usuarioId);
 
         return ResponseEntity.ok(respuesta);
     }

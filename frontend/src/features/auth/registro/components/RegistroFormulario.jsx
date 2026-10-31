@@ -11,7 +11,10 @@ import { Link } from 'react-router-dom'
 import Boton from '../../../../components/ui/Boton.jsx'
 import Campo from '../../../../components/ui/Campo.jsx'
 import CampoFormulario from '../../../../components/ui/CampoFormulario.jsx'
-import { requisitosPassword } from '../validaciones.js'
+import { ETAPA_CONFIRMACION, requisitosPassword } from '../validaciones.js'
+import { nombreTipoCuenta } from '../tipoCuenta.js'
+import { etiquetaEspecialidad } from '../../../perfil/especialidades.js'
+import RegistroTipoCuenta from './RegistroTipoCuenta.jsx'
 
 export default function RegistroFormulario({ registro, formRef, titleRef }) {
   const {
@@ -24,9 +27,10 @@ export default function RegistroFormulario({ registro, formRef, titleRef }) {
     volver,
     avanzar,
   } = registro
-  const titulos = ['Tus datos', 'Tu seguridad', 'Confirmá tus datos']
+  const titulos = ['Tus datos', 'Tu rol', 'Tu seguridad', 'Confirmá tus datos']
   const subtitulos = [
     'Contanos un poco sobre vos.',
+    'Así te mostramos lo que te sirve. En cada niño, el rol lo elige quien te invita.',
     'Elegí una contraseña para cuidar tu cuenta.',
     'Revisá la información antes de crear tu cuenta.',
   ]
@@ -90,7 +94,8 @@ export default function RegistroFormulario({ registro, formRef, titleRef }) {
             })}
           </>
         )}
-        {etapa === 1 && (
+        {etapa === 1 && <RegistroTipoCuenta registro={registro} />}
+        {etapa === 2 && (
           <>
             <CampoFormulario
               id="registro-password"
@@ -137,12 +142,21 @@ export default function RegistroFormulario({ registro, formRef, titleRef }) {
             </ul>
           </>
         )}
-        {etapa === 2 && (
+        {etapa === ETAPA_CONFIRMACION && (
           <dl className="space-y-5 rounded-md border border-borde p-6">
             {[
               ['Nombre', valores.nombre],
               ['Apellido', valores.apellido],
               ['Email', valores.email],
+              ['Uso', nombreTipoCuenta(valores.tipoCuenta)],
+              ...(valores.tipoCuenta === 'PROFESIONAL'
+                ? [
+                    [
+                      'Especialidades',
+                      valores.especialidades.map(etiquetaEspecialidad).join(', '),
+                    ],
+                  ]
+                : []),
             ].map(([label, valor]) => (
               <div key={label}>
                 <dt className="text-sm text-texto-suave">{label}</dt>
@@ -177,7 +191,7 @@ export default function RegistroFormulario({ registro, formRef, titleRef }) {
             </>
           ) : (
             <>
-              {etapa === 2 ? 'Crear cuenta' : 'Continuar'}
+              {etapa === ETAPA_CONFIRMACION ? 'Crear cuenta' : 'Continuar'}
               <CaretRight aria-hidden="true" size={20} />
             </>
           )}

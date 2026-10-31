@@ -3,12 +3,14 @@ package com.trama.tpo.demo.service;
 import java.util.UUID;
 import java.util.List;
 
+import org.springframework.http.HttpStatus;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 
 import com.trama.tpo.demo.entity.membresia.Membresia;
 import com.trama.tpo.demo.entity.membresia.Rol;
 import com.trama.tpo.demo.aporte.Visibilidad;
+import com.trama.tpo.demo.exceptions.ApiException;
 import com.trama.tpo.demo.exceptions.SoloLecturaException;
 import com.trama.tpo.demo.repository.MembresiaRepository;
 
@@ -31,8 +33,21 @@ public class PermisoService {
 
     // Al crear todavía no existe proyecto ni membresía: cualquier usuario autenticado
     // puede crear uno y queda como su tutor administrador.
+    // 9.4: hasta PlanService.NINOS_POR_CUENTA niños como tutor, para que nadie
+    // use la cuenta de familia como si fuera un plan profesional ilimitado.
     public UUID verificarPuedeCrearProyecto() {
-        return usuarioActual.obtenerId();
+        UUID usuarioId = usuarioActual.obtenerId();
+
+        if (membresiaRepository.countByUsuarioIdAndRol(usuarioId, Rol.TUTOR)
+                >= PlanService.NINOS_POR_CUENTA) {
+            throw new ApiException(
+                    "LIMITE_NINOS",
+                    "Cada cuenta puede crear hasta " + PlanService.NINOS_POR_CUENTA
+                            + " acompañamientos.",
+                    HttpStatus.CONFLICT
+            );
+        }
+        return usuarioId;
     }
 
     // 1. VERIFICAR QUE PERTENECE AL PROYECTO

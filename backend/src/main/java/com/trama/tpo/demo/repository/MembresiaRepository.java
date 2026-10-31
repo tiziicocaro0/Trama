@@ -31,6 +31,9 @@ public interface MembresiaRepository extends JpaRepository<Membresia, UUID> {
             UUID usuarioId,
             UUID proyectoId
     );
+    /** 9.4: en cuántos niños es tutor (tope de niños por cuenta). */
+    long countByUsuarioIdAndRol(UUID usuarioId, Rol rol);
+
     /** 9.1: si el usuario es profesional (educación o salud) en algún niño. */
     boolean existsByUsuarioIdAndRolIn(UUID usuarioId, Collection<Rol> roles);
 

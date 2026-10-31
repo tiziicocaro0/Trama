@@ -19,11 +19,12 @@ describe('Estado del registro', () => {
         apellido: 'Ejemplo',
         email: 'alma@trama.test',
         password: 'Prueba123!',
+        tipoCuenta: 'FAMILIA',
       })) {
         result.current.cambiar({ target: { name, value } })
       }
     })
-    for (let paso = 0; paso < 3; paso += 1) {
+    for (let paso = 0; paso < 4; paso += 1) {
       await act(async () => {
         await result.current.avanzar({ preventDefault: vi.fn() })
       })

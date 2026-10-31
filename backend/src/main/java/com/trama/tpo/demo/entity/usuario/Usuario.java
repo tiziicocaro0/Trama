@@ -51,6 +51,13 @@ public class Usuario {
     @Column(name = "token_version", nullable = false)
     private Integer tokenVersion = 0;
 
+    /** 9.4: cómo usa Trama (familia o profesional). No da permisos sobre ningún niño. */
+    @Builder.Default
+    @Enumerated(EnumType.STRING)
+    @JdbcTypeCode(SqlTypes.VARCHAR)
+    @Column(name = "tipo_cuenta", nullable = false, length = 12)
+    private TipoCuenta tipoCuenta = TipoCuenta.FAMILIA;
+
     /** Cuando la persona se registró en TRAMA. */
     @CreationTimestamp
     @Column(name = "fecha_alta", nullable = false, updatable = false)

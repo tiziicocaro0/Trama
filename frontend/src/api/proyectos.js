@@ -42,6 +42,14 @@ export async function crearProyecto(datos) {
       throw new Error('Tu sesión venció. Ingresá nuevamente.', { cause: error })
     if (error.response?.status === 403)
       throw new Error('No tenés permiso para crear este acompañamiento.', { cause: error })
+    if (
+      error.response?.status === 409 &&
+      error.response.data?.codigo === 'LIMITE_NINOS'
+    )
+      throw new Error(
+        'Cada cuenta puede crear hasta 2 acompañamientos. Si necesitás sumar otro niño, escribinos y lo vemos.',
+        { cause: error },
+      )
     throw new Error(
       'No pudimos confirmar la creación. Revisá tus acompañamientos antes de volver a intentarlo.',
       { cause: error },

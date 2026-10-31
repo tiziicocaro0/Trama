@@ -37,6 +37,7 @@ import com.trama.tpo.demo.entity.dto.EspecialidadItemRequest;
 import com.trama.tpo.demo.entity.dto.RegisterRequest;
 import com.trama.tpo.demo.entity.dto.RestablecerContrasenaRequest;
 import com.trama.tpo.demo.entity.membresia.Especialidad;
+import com.trama.tpo.demo.entity.usuario.TipoCuenta;
 import com.trama.tpo.demo.entity.membresia.Rol;
 import com.trama.tpo.demo.entity.plan.PeriodoSuscripcion;
 import com.trama.tpo.demo.service.ArchivoService;
@@ -117,6 +118,13 @@ class ContratoFrontendTest {
         assertEquals(periodos, valoresEnMayusculas(entre(leer("api/planes.js"), "const PLANES = [", "]")));
         assertEquals(periodos, todasLasCoincidencias(Pattern.compile("([A-Z]+):"),
                 entre(leer("features/plan/planes.js"), "NOMBRES_PLAN = {", "}")));
+    }
+
+    @Test
+    void tiposDeCuenta() {
+        // 9.4: las opciones del registro son exactamente las del enum
+        assertEquals(nombres(TipoCuenta.class), todasLasCoincidencias(
+                Pattern.compile("valor: '([A-Z]+)'"), leer("features/auth/registro/tipoCuenta.js")));
     }
 
     @Test

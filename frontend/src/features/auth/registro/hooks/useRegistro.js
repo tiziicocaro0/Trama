@@ -1,6 +1,11 @@
 import { useRef, useState } from 'react'
 import { registrarUsuario } from '../../../../api/auth.js'
-import { camposDatos, validarRegistro } from '../validaciones.js'
+import {
+  ETAPA_CONFIRMACION,
+  camposDatos,
+  camposTipoCuenta,
+  validarRegistro,
+} from '../validaciones.js'
 import useAuth from '../../../../hooks/useAuth.js'
 
 export default function useRegistro() {
@@ -10,6 +15,8 @@ export default function useRegistro() {
     apellido: '',
     email: '',
     password: '',
+    tipoCuenta: '',
+    especialidades: [],
   })
   const [etapa, setEtapa] = useState(0)
   const [errores, setErrores] = useState({})
@@ -23,6 +30,18 @@ export default function useRegistro() {
     if (solicitudActiva.current || exito) return
     setValores((actuales) => ({ ...actuales, [name]: value }))
     setErrores((actuales) => ({ ...actuales, [name]: undefined }))
+    setMensaje('')
+  }
+
+  function alternarEspecialidad(valor) {
+    if (solicitudActiva.current || exito) return
+    setValores((actuales) => ({
+      ...actuales,
+      especialidades: actuales.especialidades.includes(valor)
+        ? actuales.especialidades.filter((actual) => actual !== valor)
+        : [...actuales.especialidades, valor],
+    }))
+    setErrores((actuales) => ({ ...actuales, especialidades: undefined }))
     setMensaje('')
   }
 
@@ -40,11 +59,10 @@ export default function useRegistro() {
     setErrores(erroresActuales)
     setMensaje('')
     if (Object.keys(erroresActuales).length) {
-      if (etapa === 2)
-        setEtapa(camposDatos.some((campo) => erroresActuales[campo]) ? 0 : 1)
+      if (etapa === ETAPA_CONFIRMACION) setEtapa(etapaConError(erroresActuales))
       return
     }
-    if (etapa < 2) {
+    if (etapa < ETAPA_CONFIRMACION) {
       setEtapa(etapa + 1)
       return
     }
@@ -55,6 +73,8 @@ export default function useRegistro() {
       await registrarUsuario({
         ...valores,
         email: valores.email.trim().toLowerCase(),
+        especialidades:
+          valores.tipoCuenta === 'PROFESIONAL' ? valores.especialidades : [],
       })
       setValores((actuales) => ({ ...actuales, password: '' }))
       setExito(true)
@@ -65,7 +85,8 @@ export default function useRegistro() {
           'No pudimos completar el registro. Intentá nuevamente.',
       )
       setErrores(error.campos || {})
-      if (error.campos?.email) setEtapa(0)
+      if (error.campos && Object.keys(error.campos).length)
+        setEtapa(etapaConError(error.campos))
     } finally {
       solicitudActiva.current = false
       setEnviando(false)
@@ -80,7 +101,14 @@ export default function useRegistro() {
     enviando,
     exito,
     cambiar,
+    alternarEspecialidad,
     volver,
     avanzar,
   }
+}
+
+function etapaConError(errores) {
+  if (camposDatos.some((campo) => errores[campo])) return 0
+  if (camposTipoCuenta.some((campo) => errores[campo])) return 1
+  return 2
 }

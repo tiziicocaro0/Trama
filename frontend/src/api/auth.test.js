@@ -14,6 +14,8 @@ const datos = {
   apellido: 'Ejemplo',
   email: 'alma@trama.test',
   password: 'Prueba123!',
+  tipoCuenta: 'PROFESIONAL',
+  especialidades: ['PSICOLOGIA'],
 }
 const baseOriginal = cliente.defaults.baseURL
 
@@ -82,6 +84,8 @@ describe('Contrato de login e identidad', () => {
       nombre: 'Alma',
       apellido: 'Ejemplo',
       email: datos.email,
+      tipoCuenta: 'PROFESIONAL',
+      especialidades: ['PSICOLOGIA'],
     }
     const get = vi.spyOn(cliente, 'get').mockResolvedValue({ data: identidad })
     expect(await obtenerIdentidad()).toEqual(identidad)

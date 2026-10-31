@@ -1,8 +1,15 @@
 
 package com.trama.tpo.demo.entity.dto;
 
+import java.util.ArrayList;
+import java.util.List;
+
+import com.trama.tpo.demo.entity.membresia.Especialidad;
+import com.trama.tpo.demo.entity.usuario.TipoCuenta;
+
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 
@@ -45,4 +52,14 @@ public class RegisterRequest {
         message = "La contraseña debe contener al menos un carácter especial"
     )
     private String password;
+
+    /** 9.4: cómo va a usar Trama. */
+    @NotNull(message = "Contanos si sos familia o profesional")
+    private TipoCuenta tipoCuenta;
+
+    /** 9.4: solo para profesionales; se precargan al sumarse a cada niño. */
+    @Builder.Default
+    @NotNull(message = "Las especialidades no pueden ser nulas")
+    @Size(max = 10, message = "No se pueden declarar más de 10 especialidades")
+    private List<@NotNull(message = "La especialidad es obligatoria") Especialidad> especialidades = new ArrayList<>();
 }

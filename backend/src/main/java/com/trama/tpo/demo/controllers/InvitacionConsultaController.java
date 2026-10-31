@@ -3,9 +3,13 @@ package com.trama.tpo.demo.controllers;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import jakarta.validation.Valid;
+
+import com.trama.tpo.demo.entity.dto.AceptarInvitacionRequest;
 import com.trama.tpo.demo.entity.dto.InvitacionDetalleResponse;
 import com.trama.tpo.demo.service.InvitacionService;
 import org.springframework.http.HttpStatus;
@@ -36,10 +40,11 @@ public class InvitacionConsultaController {
     // Aceptar una invitacion y crear la membresia.
     @PostMapping("/{token}/aceptar")
     public ResponseEntity<MiembroResponse> aceptarInvitacion(
-            @PathVariable String token) {
+            @PathVariable String token,
+            @Valid @RequestBody(required = false) AceptarInvitacionRequest request) {
 
         MiembroResponse respuesta =
-                invitacionService.aceptarInvitacion(token);
+                invitacionService.aceptarInvitacion(token, request);
 
         return ResponseEntity
                 .status(HttpStatus.CREATED)

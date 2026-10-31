@@ -11,10 +11,12 @@ import com.trama.tpo.demo.entity.dto.MiPlanResponse;
 import com.trama.tpo.demo.entity.dto.SuscribirseRequest;
 import com.trama.tpo.demo.entity.plan.Institucion;
 import com.trama.tpo.demo.entity.plan.Suscripcion;
+import com.trama.tpo.demo.entity.usuario.TipoCuenta;
 import com.trama.tpo.demo.exceptions.ApiException;
 import com.trama.tpo.demo.repository.InstitucionRepository;
 import com.trama.tpo.demo.repository.MembresiaRepository;
 import com.trama.tpo.demo.repository.SuscripcionRepository;
+import com.trama.tpo.demo.repository.UsuarioRepository;
 
 /**
  * 9.1: suscripción del profesional con pago simulado.
@@ -27,6 +29,7 @@ public class SuscripcionService {
     private final SuscripcionRepository suscripcionRepository;
     private final MembresiaRepository membresiaRepository;
     private final InstitucionRepository institucionRepository;
+    private final UsuarioRepository usuarioRepository;
     private final PlanService planService;
     private final UsuarioActual usuarioActual;
 
@@ -34,11 +37,13 @@ public class SuscripcionService {
             SuscripcionRepository suscripcionRepository,
             MembresiaRepository membresiaRepository,
             InstitucionRepository institucionRepository,
+            UsuarioRepository usuarioRepository,
             PlanService planService,
             UsuarioActual usuarioActual) {
         this.suscripcionRepository = suscripcionRepository;
         this.membresiaRepository = membresiaRepository;
         this.institucionRepository = institucionRepository;
+        this.usuarioRepository = usuarioRepository;
         this.planService = planService;
         this.usuarioActual = usuarioActual;
     }
@@ -89,8 +94,10 @@ public class SuscripcionService {
 
     // Orden: suscripción propia vigente → licencia institucional (9.2) → plan gratuito.
     private MiPlanResponse respuesta(UUID usuarioId) {
-        boolean esProfesional = membresiaRepository.existsByUsuarioIdAndRolIn(
-                usuarioId, PlanService.ROLES_PROFESIONALES);
+        // 9.4: profesional por lo que declaró al registrarse o por trabajar como tal en algún niño.
+        boolean esProfesional = usuarioRepository.findById(usuarioId)
+                .map(u -> u.getTipoCuenta() == TipoCuenta.PROFESIONAL).orElse(false)
+                || membresiaRepository.existsByUsuarioIdAndRolIn(usuarioId, PlanService.ROLES_PROFESIONALES);
         boolean esResponsable = institucionRepository.existsByResponsableId(usuarioId);
         String institucion = planService.institucionQueLoCubre(usuarioId)
                 .map(Institucion::getNombre).orElse(null);

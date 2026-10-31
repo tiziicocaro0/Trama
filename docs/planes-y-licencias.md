@@ -1,4 +1,4 @@
-# Planes y licencias (9.0 a 9.3)
+# Planes y licencias (9.0 a 9.4)
 
 Trama es gratis para las familias, siempre. Los profesionales de educación y salud editan
 gratis en hasta 2 niños; para editar en todos tienen una suscripción propia o una licencia
@@ -79,3 +79,22 @@ bloquea a nadie.
 
 > **Pendiente para cuando se mergee la 6.0:** reemplazar el cartel de prueba por una notificación
 > real (`NotificacionService.notificar(...)`) al responsable y sacar el cartel.
+
+## 9.4 · Tipo de cuenta y tope de niños
+
+Sin esta card, un profesional podía registrarse «como padre», crear un niño por cada alumno
+como tutor (sin límite) e invitar a las familias: editaba todo gratis y, además, los datos
+de cada niño quedaban a su nombre. La 9.4 cierra ese camino sin pedir documentación.
+
+| Regla | Dónde vive |
+|---|---|
+| Al registrarse se elige **familia o profesional**; el profesional marca sus especialidades (las mismas de la 1.9) | `RegisterRequest.tipoCuenta`, tabla `usuario_especialidad` |
+| Cualquier cuenta crea o administra como tutora **hasta 2 niños**; el tercero responde `409 LIMITE_NINOS` | `PermisoService.verificarPuedeCrearProyecto`, `PlanService.NINOS_POR_CUENTA` |
+| El rol en cada niño lo sigue eligiendo **quien invita**; el invitado solo ajusta con qué especialidades figura | `POST /api/invitaciones/{token}/aceptar` con `{ especialidades }` |
+| Crear un niño pide declarar ser madre, padre o tutor legal (o tener su autorización) | `NuevoAcompanamientoPage` |
+| «Mi plan» trata como profesional a quien lo declaró, aunque todavía no esté en ningún niño | `SuscripcionService` |
+
+- El tipo de cuenta **no da permisos**: los permisos y el límite freemium siguen saliendo del rol en cada membresía.
+- Ser co-tutor de un niño cuenta para el tope; ser familiar o profesional en otros niños, no.
+- `GET /api/auth/yo` suma `tipoCuenta` y `especialidades`. El front las usa para precargar las casillas al aceptar una invitación, filtradas por el rol que eligió quien invita.
+- Migración `V202610302300__tipo_de_cuenta.sql`: columna `tipo_cuenta` (con `CHECK`) y tabla `usuario_especialidad`. Las cuentas que ya existían pasan a profesional si trabajan como educación o salud en algún niño, y heredan las especialidades de sus membresías.

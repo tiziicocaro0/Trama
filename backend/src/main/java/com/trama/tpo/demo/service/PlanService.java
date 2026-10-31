@@ -23,6 +23,9 @@ public class PlanService {
     /** Proyectos que un profesional sin plan pago puede editar (los más antiguos por fecha de alta). */
     public static final int PROYECTOS_GRATUITOS = 2;
 
+    /** 9.4: niños que cualquier cuenta puede crear o administrar como tutora. */
+    public static final int NINOS_POR_CUENTA = 2;
+
     /** Roles a los que aplica el plan: las familias y los tutores nunca tienen límite. */
     public static final Set<Rol> ROLES_PROFESIONALES = Set.of(Rol.EDUCACION, Rol.SALUD);
 

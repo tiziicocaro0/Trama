@@ -8,7 +8,14 @@ export class ErrorRegistro extends Error {
   }
 }
 
-export async function registrarUsuario({ nombre, apellido, email, password }) {
+export async function registrarUsuario({
+  nombre,
+  apellido,
+  email,
+  password,
+  tipoCuenta,
+  especialidades = [],
+}) {
   if (!cliente.defaults.baseURL) {
     throw new ErrorRegistro(
       'Falta configurar la conexión con TRAMA. Revisá VITE_API_URL.',
@@ -22,9 +29,16 @@ export async function registrarUsuario({ nombre, apellido, email, password }) {
       apellido,
       email,
       password,
+      tipoCuenta,
+      especialidades,
     })
   } catch (error) {
     const codigo = error.response?.data?.codigo
+    if (error.response?.status === 400 && codigo === 'ESPECIALIDAD_REQUERIDA') {
+      throw new ErrorRegistro('Revisá cómo vas a usar TRAMA.', {
+        especialidades: 'Elegí al menos una especialidad.',
+      })
+    }
     if (error.response?.status === 409 && codigo === 'EMAIL_EN_USO') {
       throw new ErrorRegistro('Revisá el email para continuar.', {
         email: 'Este email ya está registrado.',
@@ -98,6 +112,9 @@ export async function obtenerIdentidad() {
     nombre: data.nombre,
     apellido: data.apellido,
     email: data.email,
+    // 9.4: para precargar cómo figura al sumarse a cada niño.
+    tipoCuenta: data.tipoCuenta === 'PROFESIONAL' ? 'PROFESIONAL' : 'FAMILIA',
+    especialidades: Array.isArray(data.especialidades) ? data.especialidades : [],
   }
 }
 

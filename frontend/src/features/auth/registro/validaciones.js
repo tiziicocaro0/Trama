@@ -1,6 +1,10 @@
 import { validarEmail } from '../../../utils/validaciones.js'
 
 export const camposDatos = ['nombre', 'apellido', 'email']
+export const camposTipoCuenta = ['tipoCuenta', 'especialidades']
+
+// Etapas: 0 datos, 1 tipo de cuenta (9.4), 2 contraseña, 3 confirmación.
+export const ETAPA_CONFIRMACION = 3
 
 export const requisitosPassword = [
   { texto: 'Al menos 8 caracteres', cumple: (valor) => valor.length >= 8 },
@@ -12,9 +16,10 @@ export const requisitosPassword = [
   },
 ]
 
-export function validarRegistro(valores, etapa = 2) {
+export function validarRegistro(valores, etapa = ETAPA_CONFIRMACION) {
   const errores = {}
-  if (etapa !== 1) {
+  const todas = etapa === ETAPA_CONFIRMACION
+  if (etapa === 0 || todas) {
     for (const campo of ['nombre', 'apellido']) {
       const etiqueta = campo === 'nombre' ? 'nombre' : 'apellido'
       if (!valores[campo].trim()) errores[campo] = `Ingresá tu ${etiqueta}.`
@@ -26,7 +31,17 @@ export function validarRegistro(valores, etapa = 2) {
     else if (valores.email.length > 254)
       errores.email = 'El email no puede superar los 254 caracteres.'
   }
-  if (etapa !== 0) {
+  if (etapa === 1 || todas) {
+    if (!valores.tipoCuenta)
+      errores.tipoCuenta = 'Elegí si sos familia o profesional.'
+    else if (valores.tipoCuenta === 'PROFESIONAL') {
+      if (!valores.especialidades.length)
+        errores.especialidades = 'Elegí al menos una especialidad.'
+      else if (valores.especialidades.length > 10)
+        errores.especialidades = 'Podés elegir hasta 10 especialidades.'
+    }
+  }
+  if (etapa === 2 || todas) {
     if (!valores.password.trim()) errores.password = 'Ingresá una contraseña.'
     else if (
       requisitosPassword.some(({ cumple }) => !cumple(valores.password)) ||

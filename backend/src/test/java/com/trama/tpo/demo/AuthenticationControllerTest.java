@@ -72,6 +72,7 @@ class AuthenticationControllerTest {
 
         String usuario = """
             {
+                "tipoCuenta": "FAMILIA",
                 "nombre": "Ana",
                 "apellido": "Prueba",
                 "email": "%s",
@@ -94,6 +95,7 @@ class AuthenticationControllerTest {
 
         String usuario = """
             {
+                "tipoCuenta": "FAMILIA",
                 "nombre": "Ana",
                 "apellido": "Prueba",
                 "email": "%s",
@@ -124,6 +126,7 @@ class AuthenticationControllerTest {
 
         String usuario = """
             {
+                "tipoCuenta": "FAMILIA",
                 "nombre": "Ana",
                 "apellido": "Prueba",
                 "email": "%s",
@@ -147,6 +150,7 @@ class AuthenticationControllerTest {
 
         String registro = """
             {
+                "tipoCuenta": "FAMILIA",
                 "nombre": "Ana",
                 "apellido": "Prueba",
                 "email": "%s",
@@ -187,6 +191,7 @@ class AuthenticationControllerTest {
 
         String registro = """
             {
+                "tipoCuenta": "FAMILIA",
                 "nombre": "Ana",
                 "apellido": "Prueba",
                 "email": "%s",
@@ -245,6 +250,7 @@ class AuthenticationControllerTest {
 
         String registro = """
             {
+                "tipoCuenta": "FAMILIA",
                 "nombre": "Ana",
                 "apellido": "Prueba",
                 "email": "%s",

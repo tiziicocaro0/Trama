@@ -168,8 +168,9 @@ export default function NuevoAcompanamientoPage() {
                   className="mt-1 size-5 shrink-0 accent-primario"
                 />
                 <span>
-                  Confirmo que cuento con autorización para crear este
-                  acompañamiento y compartir estos datos con su red de apoyo.
+                  Declaro ser madre, padre o tutor legal de este niño, o contar
+                  con su autorización, para crear este acompañamiento y
+                  compartir estos datos con su red de apoyo.
                 </span>
               </label>
               {errores.consentimiento && (

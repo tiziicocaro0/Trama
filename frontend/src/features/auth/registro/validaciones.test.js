@@ -6,10 +6,12 @@ const datos = {
   apellido: 'Ejemplo',
   email: 'alma@trama.test',
   password: 'Prueba123!',
+  tipoCuenta: 'FAMILIA',
+  especialidades: [],
 }
 
 describe('Validaciones del contrato de registro', () => {
-  it('acepta los datos completos y no obliga a elegir un rol', () => {
+  it('acepta los datos completos de una familia', () => {
     expect(validarRegistro(datos)).toEqual({})
   })
 
@@ -58,7 +60,20 @@ describe('Validaciones del contrato de registro', () => {
 
   it('valida solo los campos de la etapa visible antes de la confirmación', () => {
     expect(validarRegistro({ ...datos, password: '' }, 0)).toEqual({})
-    expect(validarRegistro({ ...datos, email: '' }, 1)).toEqual({})
-    expect(validarRegistro({ ...datos, email: '' }, 2).email).toBeTruthy()
+    expect(validarRegistro({ ...datos, password: '' }, 1)).toEqual({})
+    expect(validarRegistro({ ...datos, email: '' }, 2)).toEqual({})
+    expect(validarRegistro({ ...datos, tipoCuenta: '' }, 2)).toEqual({})
+    expect(validarRegistro({ ...datos, email: '' }, 3).email).toBeTruthy()
+  })
+
+  it('9.4: pide el tipo de cuenta y al menos una especialidad al profesional', () => {
+    expect(validarRegistro({ ...datos, tipoCuenta: '' }, 1).tipoCuenta).toBeTruthy()
+    const profesional = { ...datos, tipoCuenta: 'PROFESIONAL' }
+    expect(validarRegistro(profesional, 1).especialidades).toBeTruthy()
+    expect(validarRegistro({ ...profesional, especialidades: ['PSICOLOGIA'] }, 1)).toEqual({})
+    expect(
+      validarRegistro({ ...profesional, especialidades: Array(11).fill('PSICOLOGIA') }, 1)
+        .especialidades,
+    ).toBeTruthy()
   })
 })

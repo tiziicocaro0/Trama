@@ -69,6 +69,7 @@ class LoginBloqueoTest {
 
         String registro = """
             {
+                "tipoCuenta": "FAMILIA",
                 "nombre": "Ana",
                 "apellido": "Prueba",
                 "email": "%s",
@@ -128,6 +129,7 @@ class LoginBloqueoTest {
 
         String registro = """
             {
+                "tipoCuenta": "FAMILIA",
                 "nombre": "Ana",
                 "apellido": "Prueba",
                 "email": "%s",
@@ -196,6 +198,7 @@ class LoginBloqueoTest {
 
         String registro = """
             {
+                "tipoCuenta": "FAMILIA",
                 "nombre": "Ana",
                 "apellido": "Prueba",
                 "email": "%s",
@@ -271,6 +274,7 @@ class LoginBloqueoTest {
 
         String registro = """
             {
+                "tipoCuenta": "FAMILIA",
                 "nombre": "Ana",
                 "apellido": "Prueba",
                 "email": "%s",

@@ -33,6 +33,8 @@ async function completarDatos(user, email = 'ALMA@trama.test') {
   await user.type(screen.getByLabelText('Apellido'), 'Ejemplo')
   await user.type(screen.getByLabelText('Email'), email)
   await user.click(screen.getByRole('button', { name: 'Continuar' }))
+  await user.click(screen.getByRole('radio', { name: /Soy familia/ }))
+  await user.click(screen.getByRole('button', { name: 'Continuar' }))
 }
 
 async function llegarAConfirmacion(user) {
@@ -42,7 +44,7 @@ async function llegarAConfirmacion(user) {
 }
 
 describe('Crear cuenta', () => {
-  it('muestra el formulario y las tres etapas acordadas', () => {
+  it('muestra el formulario y las cuatro etapas acordadas', () => {
     preparar()
     expect(
       screen.getByRole('heading', { name: 'Crear tu cuenta' }),
@@ -54,6 +56,7 @@ describe('Crear cuenta', () => {
       'aria-current',
       'step',
     )
+    expect(screen.getByText('Tu rol')).toBeInTheDocument()
     expect(screen.getByText('Seguridad')).toBeInTheDocument()
     expect(screen.getByText('Confirmación')).toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'Ingresá acá' })).toHaveAttribute(
@@ -101,8 +104,11 @@ describe('Crear cuenta', () => {
     await user.clear(screen.getByLabelText('Contraseña'))
     await user.type(screen.getByLabelText('Contraseña'), 'Prueba123!')
     await user.click(screen.getByRole('button', { name: 'Volver' }))
+    expect(screen.getByRole('radio', { name: /Soy familia/ })).toBeChecked()
+    await user.click(screen.getByRole('button', { name: 'Volver' }))
     expect(screen.getByLabelText('Nombre')).toHaveValue('Alma')
     expect(screen.getByLabelText('Email')).toHaveValue('ALMA@trama.test')
+    await user.click(screen.getByRole('button', { name: 'Continuar' }))
     await user.click(screen.getByRole('button', { name: 'Continuar' }))
     expect(screen.getByLabelText('Contraseña')).toHaveValue('Prueba123!')
     expect(registrarUsuario).not.toHaveBeenCalled()
@@ -116,6 +122,7 @@ describe('Crear cuenta', () => {
       screen.getByRole('heading', { name: 'Confirmá tus datos' }),
     ).toHaveFocus()
     expect(screen.getByText('Alma')).toBeInTheDocument()
+    expect(screen.getByText('Soy familia')).toBeInTheDocument()
     expect(screen.queryByText('Prueba123!')).not.toBeInTheDocument()
     expect(screen.queryByLabelText('Contraseña')).not.toBeInTheDocument()
     expect(registrarUsuario).not.toHaveBeenCalled()
@@ -125,6 +132,8 @@ describe('Crear cuenta', () => {
       apellido: 'Ejemplo',
       email: 'alma@trama.test',
       password: 'Prueba123!',
+      tipoCuenta: 'FAMILIA',
+      especialidades: [],
     })
     expect(
       await screen.findByRole('heading', { name: 'Cuenta creada' }),
@@ -177,6 +186,7 @@ describe('Crear cuenta', () => {
     await user.clear(screen.getByLabelText('Email'))
     await user.type(screen.getByLabelText('Email'), 'otro@trama.test')
     await user.click(screen.getByRole('button', { name: 'Continuar' }))
+    await user.click(screen.getByRole('button', { name: 'Continuar' }))
     expect(screen.getByLabelText('Contraseña')).toHaveValue('Prueba123!')
   })
 
@@ -193,5 +203,58 @@ describe('Crear cuenta', () => {
     expect(screen.getByRole('button', { name: 'Crear cuenta' })).toBeEnabled()
     await user.click(screen.getByRole('button', { name: 'Volver' }))
     expect(screen.getByLabelText('Contraseña')).toHaveValue('Prueba123!')
+  })
+
+  it('9.4: pide familia o profesional y, al profesional, al menos una especialidad', async () => {
+    vi.mocked(registrarUsuario).mockResolvedValue(undefined)
+    const user = preparar()
+    await user.type(screen.getByLabelText('Nombre'), 'Alma')
+    await user.type(screen.getByLabelText('Apellido'), 'Ejemplo')
+    await user.type(screen.getByLabelText('Email'), 'alma@trama.test')
+    await user.click(screen.getByRole('button', { name: 'Continuar' }))
+
+    expect(screen.getByRole('heading', { name: 'Tu rol' })).toHaveFocus()
+    await user.click(screen.getByRole('button', { name: 'Continuar' }))
+    expect(screen.getByText('Elegí si sos familia o profesional.')).toBeVisible()
+
+    await user.click(screen.getByRole('radio', { name: /Soy profesional/ }))
+    await user.click(screen.getByRole('button', { name: 'Continuar' }))
+    expect(screen.getByText('Elegí al menos una especialidad.')).toBeVisible()
+
+    await user.click(screen.getByRole('checkbox', { name: 'Psicología' }))
+    await user.click(screen.getByRole('checkbox', { name: 'Maestra integradora' }))
+    await user.click(screen.getByRole('button', { name: 'Continuar' }))
+    await user.type(screen.getByLabelText('Contraseña'), 'Prueba123!')
+    await user.click(screen.getByRole('button', { name: 'Continuar' }))
+
+    expect(screen.getByText('Soy profesional')).toBeInTheDocument()
+    expect(screen.getByText('Psicología, Maestra integradora')).toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: 'Crear cuenta' }))
+    expect(registrarUsuario).toHaveBeenCalledWith(
+      expect.objectContaining({
+        tipoCuenta: 'PROFESIONAL',
+        especialidades: ['PSICOLOGIA', 'MAESTRA_INTEGRADORA'],
+      }),
+    )
+  })
+
+  it('9.4: si cambia a familia no manda las especialidades que había marcado', async () => {
+    vi.mocked(registrarUsuario).mockResolvedValue(undefined)
+    const user = preparar()
+    await user.type(screen.getByLabelText('Nombre'), 'Alma')
+    await user.type(screen.getByLabelText('Apellido'), 'Ejemplo')
+    await user.type(screen.getByLabelText('Email'), 'alma@trama.test')
+    await user.click(screen.getByRole('button', { name: 'Continuar' }))
+    await user.click(screen.getByRole('radio', { name: /Soy profesional/ }))
+    await user.click(screen.getByRole('checkbox', { name: 'Psicología' }))
+    await user.click(screen.getByRole('radio', { name: /Soy familia/ }))
+    expect(screen.queryByRole('checkbox', { name: 'Psicología' })).not.toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: 'Continuar' }))
+    await user.type(screen.getByLabelText('Contraseña'), 'Prueba123!')
+    await user.click(screen.getByRole('button', { name: 'Continuar' }))
+    await user.click(screen.getByRole('button', { name: 'Crear cuenta' }))
+    expect(registrarUsuario).toHaveBeenCalledWith(
+      expect.objectContaining({ tipoCuenta: 'FAMILIA', especialidades: [] }),
+    )
   })
 })
