@@ -14,6 +14,25 @@ const aporteBase = {
 }
 
 describe('TarjetaAporte - RF-06 y Tarea 3.0', () => {
+  it.each(['CASA', 'ESCUELA', 'CONSULTORIO', 'OTRO'])(
+    'muestra el contexto %s de una fortaleza sin ejemplo',
+    (contexto) => {
+      render(<TarjetaAporte aporte={{ ...aporteBase, tipo: 'FORTALEZA', datos: JSON.stringify({ contexto }) }} />)
+      expect(screen.getByText(`Contexto: ${contexto[0]}${contexto.slice(1).toLowerCase()}`)).toBeInTheDocument()
+      expect(screen.queryByText(/^Ejemplo:/)).not.toBeInTheDocument()
+    },
+  )
+
+  it.each([undefined, 'texto inválido', 'null', '{}'])(
+    'conserva la tarjeta si faltan datos de fortaleza o son inválidos: %s',
+    (datos) => {
+      render(<TarjetaAporte aporte={{ ...aporteBase, tipo: 'FORTALEZA', datos }} />)
+      expect(screen.getByRole('heading', { name: aporteBase.titulo })).toBeInTheDocument()
+      expect(screen.queryByText(/^Contexto:/)).not.toBeInTheDocument()
+      expect(screen.queryByText(/^Ejemplo:/)).not.toBeInTheDocument()
+    },
+  )
+
   it('no muestra candado cuando es público', () => {
     render(<TarjetaAporte aporte={aporteBase} />)
 

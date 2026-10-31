@@ -19,6 +19,26 @@ function obtenerEspecialidades(aporte) {
   return nombres.length ? nombres.join(', ') : null
 }
 
+const contextosFortaleza = {
+  CASA: 'Casa',
+  ESCUELA: 'Escuela',
+  CONSULTORIO: 'Consultorio',
+  OTRO: 'Otro',
+}
+
+function leerFortaleza(aporte) {
+  if (aporte.tipo !== 'FORTALEZA') return {}
+  try {
+    const datos = JSON.parse(aporte.datos ?? '{}')
+    return {
+      contexto: contextosFortaleza[datos?.contexto],
+      ejemplo: typeof datos?.ejemplo === 'string' ? datos.ejemplo.trim() : '',
+    }
+  } catch {
+    return {}
+  }
+}
+
 function obtenerAutor(aporte, autorProp) {
   if (typeof autorProp === 'string' && autorProp.trim()) return autorProp.trim()
   if (typeof aporte?.autorNombre === 'string' && aporte.autorNombre.trim())
