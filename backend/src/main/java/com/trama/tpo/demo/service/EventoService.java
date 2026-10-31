@@ -1,5 +1,6 @@
 package com.trama.tpo.demo.service;
 
+import com.trama.tpo.demo.exceptions.ApiException;
 import com.trama.tpo.demo.entity.archivo.Archivo;
 import com.trama.tpo.demo.entity.dto.EventoRequest;
 import com.trama.tpo.demo.entity.dto.EventoResponse;
@@ -14,7 +15,6 @@ import com.trama.tpo.demo.repository.UsuarioRepository;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.server.ResponseStatusException;
 
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
@@ -55,12 +55,12 @@ public class EventoService {
         validar(request);
 
         Proyecto proyecto = proyectoRepository.findById(proyectoId)
-                .orElseThrow(() -> new ResponseStatusException(
-                        HttpStatus.NOT_FOUND, "Proyecto no encontrado"));
+                .orElseThrow(() -> new ApiException("PROYECTO_NO_ENCONTRADO",
+                        "Proyecto no encontrado", HttpStatus.NOT_FOUND));
 
         Usuario autor = usuarioRepository.findById(usuarioActual.obtenerId())
-                .orElseThrow(() -> new ResponseStatusException(
-                        HttpStatus.NOT_FOUND, "Usuario no encontrado"));
+                .orElseThrow(() -> new ApiException("USUARIO_NO_ENCONTRADO",
+                        "Usuario no encontrado", HttpStatus.NOT_FOUND));
 
         Evento evento = Evento.builder()
                 .proyecto(proyecto)
@@ -87,8 +87,8 @@ public class EventoService {
         permisoService.verificarMiembro(proyectoId);
 
         if (desde == null || hasta == null || hasta.isBefore(desde)) {
-            throw new ResponseStatusException(
-                    HttpStatus.BAD_REQUEST, "Rango de fechas inválido");
+            throw new ApiException("RANGO_INVALIDO",
+                    "Rango de fechas inválido", HttpStatus.BAD_REQUEST);
         }
 
         return eventoRepository
@@ -140,8 +140,8 @@ public class EventoService {
 
     private Evento buscarEvento(UUID proyectoId, UUID eventoId) {
         return eventoRepository.findByIdAndProyectoId(eventoId, proyectoId)
-                .orElseThrow(() -> new ResponseStatusException(
-                        HttpStatus.NOT_FOUND, "Evento no encontrado"));
+                .orElseThrow(() -> new ApiException("EVENTO_NO_ENCONTRADO",
+                        "Evento no encontrado", HttpStatus.NOT_FOUND));
     }
 
     private Archivo obtenerImagen(UUID imagenId, UUID proyectoId) {
@@ -150,9 +150,8 @@ public class EventoService {
         }
 
         return archivoRepository.findByIdAndProyectoId(imagenId, proyectoId)
-                .orElseThrow(() -> new ResponseStatusException(
-                        HttpStatus.BAD_REQUEST,
-                        "La imagen no pertenece al proyecto"));
+                .orElseThrow(() -> new ApiException("IMAGEN_NO_ENCONTRADA",
+                        "La imagen no pertenece al proyecto", HttpStatus.BAD_REQUEST));
     }
 
     private void validar(EventoRequest request) {
@@ -160,16 +159,16 @@ public class EventoService {
         if (request == null || request.titulo() == null
                 || request.titulo().isBlank()
                 || request.titulo().length() > 150) {
-            throw new ResponseStatusException(
-                    HttpStatus.BAD_REQUEST, "Título inválido");
+            throw new ApiException("TITULO_INVALIDO",
+                    "Título inválido", HttpStatus.BAD_REQUEST);
         }
 
         if (request.fecha() == null
                 || request.horaInicio() == null
                 || request.horaFin() == null
                 || !request.horaFin().isAfter(request.horaInicio())) {
-            throw new ResponseStatusException(
-                    HttpStatus.BAD_REQUEST, "Fecha u horarios inválidos");
+            throw new ApiException("HORARIO_INVALIDO",
+                    "Fecha u horarios inválidos", HttpStatus.BAD_REQUEST);
         }
 
         if (request.descripcion() != null) {
@@ -178,9 +177,8 @@ public class EventoService {
 
             // AES-GCM agrega 12 bytes de IV y 16 bytes de autenticación.
             if (bytes + 28 > 4096) {
-                throw new ResponseStatusException(
-                        HttpStatus.BAD_REQUEST,
-                        "La descripción supera el tamaño permitido");
+                throw new ApiException("DESCRIPCION_MUY_LARGA",
+                        "La descripción supera el tamaño permitido", HttpStatus.BAD_REQUEST);
             }
         }
     }

@@ -219,7 +219,39 @@ class EventoControllerTest {
                 .header("Authorization", token(tutor))
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(request))
-                .andExpect(status().isBadRequest());
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.codigo").value("HORARIO_INVALIDO"));
+    }
+
+    // TEST 8: RANGO DE FECHAS INVERTIDO
+
+    @Test
+    void rechazarRangoDeFechasInvertido() throws Exception {
+
+        mockMvc.perform(get(rutaEventos())
+                .param("desde", "2026-11-30")
+                .param("hasta", "2026-11-01")
+                .header("Authorization", token(docente)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.codigo").value("RANGO_INVALIDO"));
+
+        mockMvc.perform(get(rutaEventos())
+                .header("Authorization", token(docente)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.codigo").value("RANGO_INVALIDO"));
+    }
+
+    // TEST 9: EVENTO INEXISTENTE
+
+    @Test
+    void editarUnEventoInexistenteDevuelve404() throws Exception {
+
+        mockMvc.perform(put(rutaEventos() + "/" + UUID.randomUUID())
+                .header("Authorization", token(tutor))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(requestValido()))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.codigo").value("EVENTO_NO_ENCONTRADO"));
     }
 
     // MÉTODOS AUXILIARES

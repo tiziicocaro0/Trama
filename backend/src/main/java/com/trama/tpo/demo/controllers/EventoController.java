@@ -16,7 +16,7 @@ import java.util.List;
 import java.util.UUID;
 
 @RestController
-@RequestMapping("/api/proyectos/{id}/eventos")
+@RequestMapping("/api/proyectos/{proyectoId}/eventos")
 public class EventoController {
 
     private final EventoService eventoService;
@@ -28,7 +28,7 @@ public class EventoController {
     // CREAR EVENTO
     @PostMapping
     public ResponseEntity<EventoResponse> crear(
-            @PathVariable("id") UUID proyectoId,
+            @PathVariable UUID proyectoId,
             @Valid @RequestBody EventoRequest request) {
 
         EventoResponse evento = eventoService.crear(proyectoId, request);
@@ -39,13 +39,15 @@ public class EventoController {
     }
 
     // LISTAR EVENTOS ENTRE DOS FECHAS
+    // desde y hasta son obligatorios, pero los valida el service después de verificar
+    // la membresía: así alguien ajeno recibe 403 y no un 400 (0.21).
     @GetMapping
     public ResponseEntity<List<EventoResponse>> listar(
-            @PathVariable("id") UUID proyectoId,
-            @RequestParam
+            @PathVariable UUID proyectoId,
+            @RequestParam(required = false)
             @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
             LocalDate desde,
-            @RequestParam
+            @RequestParam(required = false)
             @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
             LocalDate hasta) {
 
@@ -57,7 +59,7 @@ public class EventoController {
     // EDITAR EVENTO
     @PutMapping("/{eventoId}")
     public ResponseEntity<EventoResponse> editar(
-            @PathVariable("id") UUID proyectoId,
+            @PathVariable UUID proyectoId,
             @PathVariable UUID eventoId,
             @Valid @RequestBody EventoRequest request) {
 
@@ -69,7 +71,7 @@ public class EventoController {
     // ELIMINAR EVENTO
     @DeleteMapping("/{eventoId}")
     public ResponseEntity<Void> eliminar(
-            @PathVariable("id") UUID proyectoId,
+            @PathVariable UUID proyectoId,
             @PathVariable UUID eventoId) {
 
         eventoService.eliminar(proyectoId, eventoId);
