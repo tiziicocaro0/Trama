@@ -1,20 +1,12 @@
-import {
-  CalendarBlank,
-  Clock,
-  FileImage,
-  PencilSimple,
-  Plus,
-  Trash,
-} from '@phosphor-icons/react'
+import { Plus } from '@phosphor-icons/react'
 import { useCallback, useState } from 'react'
 import { useParams } from 'react-router-dom'
+import { descargarArchivo } from '../../api/archivos.js'
 import {
-  descargarArchivo,
-  obtenerUrlDescargaArchivo,
-} from '../../api/archivos.js'
-import {
+  cancelarOcurrenciaEvento,
   crearEvento,
   editarEvento,
+  editarOcurrenciaEvento,
   eliminarEvento,
   listarEventos,
 } from '../../api/eventos.js'
@@ -26,29 +18,22 @@ import {
   normalizarRolProyecto,
   useProyectoActual,
 } from '../../hooks/useProyectoActual.js'
-import { formatearFechaCalendario } from '../../utils/fechas.js'
 import CabeceraPerfil from '../perfil/components/CabeceraPerfil.jsx'
 import NavegacionPerfil from '../perfil/components/NavegacionPerfil.jsx'
 import usePerfil from '../perfil/hooks/usePerfil.js'
+import ModalAlcanceRecurrente from './components/ModalAlcanceRecurrente.jsx'
 import ModalEvento from './components/ModalEvento.jsx'
+import TarjetaEvento from './components/TarjetaEvento.jsx'
 
 const RANGO_INICIAL = {
   desde: '2026-01-01',
   hasta: '2027-12-31',
 }
 
-function formatearHora(valor) {
-  if (typeof valor !== 'string' || !valor.trim()) return ''
-  return valor.trim().slice(0, 5)
-}
-
 function resolverAutorEvento(autorId, miembros) {
   if (!autorId || !Array.isArray(miembros)) return null
-  const encontrado = miembros.find(
-    (m) => m.usuarioId === autorId || m.id === autorId,
-  )
-  if (!encontrado) return null
-  return [encontrado.nombre, encontrado.apellido].filter(Boolean).join(' ').trim()
+  const encontrado = miembros.find((m) => m.usuarioId === autorId || m.id === autorId)
+  return encontrado ? [encontrado.nombre, encontrado.apellido].filter(Boolean).join(' ').trim() : null
 }
 
 export default function CalendarioPage() {
@@ -62,41 +47,31 @@ export default function CalendarioPage() {
 
   const [modalAbierto, setModalAbierto] = useState(false)
   const [eventoEnEdicion, setEventoEnEdicion] = useState(null)
+  const [alcanceEdicion, setAlcanceEdicion] = useState('serie')
+  const [dialogoAlcance, setDialogoAlcance] = useState(null)
   const [eliminandoId, setEliminandoId] = useState(null)
   const [mensajeExito, setMensajeExito] = useState('')
   const [errorAccion, setErrorAccion] = useState('')
 
   const cargarCalendario = useCallback(async (idProyecto, signal) => {
     const [eventos, miembros] = await Promise.all([
-      listarEventos(idProyecto, {
-        desde: RANGO_INICIAL.desde,
-        hasta: RANGO_INICIAL.hasta,
-        signal,
-      }),
+      listarEventos(idProyecto, { desde: RANGO_INICIAL.desde, hasta: RANGO_INICIAL.hasta, signal }),
       listarMiembros(idProyecto, signal).catch(() => []),
     ])
     return { eventos, miembros }
   }, [])
 
-  const { proyecto, datos, cargando, error, reintentar } = usePerfil(
-    proyectoId,
-    cargarCalendario,
-  )
-
+  const { proyecto, datos, cargando, error, reintentar } = usePerfil(proyectoId, cargarCalendario)
   const eventos = datos?.eventos ?? []
   const miembros = datos?.miembros ?? []
 
   const miembroActual = miembros.find(
-    (persona) =>
-      Boolean(usuario?.id) &&
-      (persona.usuarioId === usuario.id || persona.id === usuario.id),
+    (persona) => Boolean(usuario?.id) && (persona.usuarioId === usuario.id || persona.id === usuario.id),
   )
-
-  const esTutor =
-    miembroActual?.rol === 'TUTOR' ||
-    normalizarRolProyecto(rolUsuario) === 'TUTOR'
+  const esTutor = miembroActual?.rol === 'TUTOR' || normalizarRolProyecto(rolUsuario) === 'TUTOR'
 
   function puedeModificarEvento(evento) {
+    if (typeof evento?.puedeEditar === 'boolean') return evento.puedeEditar
     if (esTutor) return true
     return Boolean(usuario?.id && evento?.autorId === usuario.id)
   }
@@ -105,25 +80,55 @@ export default function CalendarioPage() {
     setErrorAccion('')
     setMensajeExito('')
     setEventoEnEdicion(null)
+    setAlcanceEdicion('serie')
     setModalAbierto(true)
   }
 
-  function abrirEditarEvento(evento) {
+  function solicitarEditarEvento(evento) {
     setErrorAccion('')
     setMensajeExito('')
+    if (evento?.recurrente) {
+      setDialogoAlcance({ accion: 'editar', evento })
+      return
+    }
     setEventoEnEdicion(evento)
+    setAlcanceEdicion('serie')
     setModalAbierto(true)
+  }
+
+  function solicitarEliminarEvento(evento) {
+    setErrorAccion('')
+    setMensajeExito('')
+    if (evento?.recurrente) {
+      setDialogoAlcance({ accion: 'eliminar', evento })
+      return
+    }
+    ejecutarEliminacion(evento, 'serie')
   }
 
   function cerrarModal() {
     setModalAbierto(false)
     setEventoEnEdicion(null)
+    setAlcanceEdicion('serie')
   }
 
   async function manejarGuardarEvento(datosFormulario) {
     setErrorAccion('')
     if (eventoEnEdicion?.id) {
-      await editarEvento(proyectoId, eventoEnEdicion.id, datosFormulario)
+      if (datosFormulario.alcance === 'ocurrencia') {
+        const fechaOcurrencia =
+          datosFormulario.fechaOcurrencia ||
+          eventoEnEdicion.fechaOcurrencia ||
+          eventoEnEdicion.fecha
+        await editarOcurrenciaEvento(
+          proyectoId,
+          eventoEnEdicion.id,
+          fechaOcurrencia,
+          datosFormulario,
+        )
+      } else {
+        await editarEvento(proyectoId, eventoEnEdicion.id, datosFormulario)
+      }
       setMensajeExito('Evento actualizado correctamente.')
     } else {
       await crearEvento(proyectoId, datosFormulario)
@@ -132,23 +137,42 @@ export default function CalendarioPage() {
     reintentar()
   }
 
-  async function manejarEliminarEvento(evento) {
+  async function ejecutarEliminacion(evento, alcance = 'serie') {
     if (eliminandoId) return
     setEliminandoId(evento.id)
     setErrorAccion('')
     setMensajeExito('')
     try {
-      await eliminarEvento(proyectoId, evento.id)
+      if (alcance === 'ocurrencia') {
+        const fechaOcurrencia = evento.fechaOcurrencia || evento.fecha
+        await cancelarOcurrenciaEvento(proyectoId, evento.id, fechaOcurrencia)
+      } else {
+        await eliminarEvento(proyectoId, evento.id)
+      }
+      setDialogoAlcance(null)
       setMensajeExito('Evento eliminado correctamente.')
       reintentar()
     } catch (err) {
+      setDialogoAlcance(null)
       setErrorAccion(
-        err?.message ||
-          'No pudimos eliminar el evento. Intentá nuevamente.',
+        err?.message || 'No pudimos eliminar el evento. Intentá nuevamente.',
       )
     } finally {
       setEliminandoId(null)
     }
+  }
+
+  function manejarEleccionAlcance(alcance) {
+    if (!dialogoAlcance?.evento) return
+    const { accion, evento } = dialogoAlcance
+    if (accion === 'editar') {
+      setDialogoAlcance(null)
+      setEventoEnEdicion(evento)
+      setAlcanceEdicion(alcance)
+      setModalAbierto(true)
+      return
+    }
+    ejecutarEliminacion(evento, alcance)
   }
 
   async function manejarDescargaImagen(e, evento) {
@@ -242,115 +266,21 @@ export default function CalendarioPage() {
                     {eventos.map((evento) => {
                       const fechaVisible =
                         evento.fechaOcurrencia || evento.fecha
-                      const fechaFormateada =
-                        formatearFechaCalendario(fechaVisible) || fechaVisible
-                      const inicio = formatearHora(evento.horaInicio)
-                      const fin = formatearHora(evento.horaFin)
-                      const autorNombre = resolverAutorEvento(
-                        evento.autorId,
-                        miembros,
-                      )
-                      const puedeModificar = puedeModificarEvento(evento)
-                      const claveEvento = `${evento.id}-${fechaVisible}`
-
                       return (
-                        <article
-                          key={claveEvento}
-                          className="rounded-lg border border-borde bg-superficie p-5 shadow-sm"
-                        >
-                          <div className="flex flex-wrap items-start justify-between gap-4">
-                            <div className="min-w-0 flex-1">
-                              <h3 className="break-words font-display text-h2 text-secundario">
-                                {evento.titulo}
-                              </h3>
-
-                              <div className="mt-2 flex flex-wrap items-center gap-4 text-sm font-semibold text-primario">
-                                <span className="inline-flex items-center gap-1.5">
-                                  <CalendarBlank
-                                    size={18}
-                                    aria-hidden="true"
-                                  />
-                                  <time dateTime={fechaVisible}>
-                                    {fechaFormateada}
-                                  </time>
-                                </span>
-
-                                {(inicio || fin) && (
-                                  <span className="inline-flex items-center gap-1.5 text-secundario">
-                                    <Clock size={18} aria-hidden="true" />
-                                    <span>
-                                      {inicio && fin
-                                        ? `${inicio} a ${fin}`
-                                        : inicio || fin}
-                                    </span>
-                                  </span>
-                                )}
-                              </div>
-
-                              {evento.descripcion && (
-                                <p className="mt-3 whitespace-pre-wrap break-words text-texto">
-                                  {evento.descripcion}
-                                </p>
-                              )}
-
-                              {evento.imagenId && (
-                                <div className="mt-3">
-                                  <a
-                                    href={obtenerUrlDescargaArchivo(
-                                      proyectoId,
-                                      evento.imagenId,
-                                    )}
-                                    download={`imagen-${evento.titulo}`}
-                                    onClick={(e) =>
-                                      manejarDescargaImagen(e, evento)
-                                    }
-                                    className="inline-flex items-center gap-2 rounded-sm border border-borde bg-fondo px-3 py-1.5 text-sm font-semibold text-primario hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primario"
-                                  >
-                                    <FileImage
-                                      size={18}
-                                      aria-hidden="true"
-                                      className="shrink-0 text-primario"
-                                    />
-                                    <span>Imagen del evento</span>
-                                  </a>
-                                </div>
-                              )}
-
-                              {autorNombre && (
-                                <p className="mt-3 text-xs text-texto-suave">
-                                  Cargado por: {autorNombre}
-                                </p>
-                              )}
-                            </div>
-
-                            {puedeModificar && (
-                              <div className="flex shrink-0 flex-wrap items-center gap-2">
-                                <Boton
-                                  variant="secondary"
-                                  onClick={() => abrirEditarEvento(evento)}
-                                  aria-label={`Editar ${evento.titulo}`}
-                                >
-                                  <PencilSimple
-                                    size={16}
-                                    aria-hidden="true"
-                                  />
-                                  Editar
-                                </Boton>
-                                <Boton
-                                  variant="danger"
-                                  onClick={() => manejarEliminarEvento(evento)}
-                                  disabled={eliminandoId === evento.id}
-                                  aria-label={`Eliminar ${evento.titulo}`}
-                                >
-                                  <Trash size={16} aria-hidden="true" />
-                                  {eliminandoId === evento.id
-                                    ? 'Eliminando…'
-                                    : 'Eliminar'}
-                                </Boton>
-                              </div>
-                            )}
-                          </div>
-                        </article>
+                        <TarjetaEvento
+                          key={`${evento.id}-${fechaVisible}`}
+                          proyectoId={proyectoId}
+                          evento={evento}
+                          autorNombre={resolverAutorEvento(
+                            evento.autorId,
+                            miembros,
+                          )}
+                          puedeModificar={puedeModificarEvento(evento)}
+                          eliminando={eliminandoId === evento.id}
+                          onEditar={solicitarEditarEvento}
+                          onEliminar={solicitarEliminarEvento}
+                          onDescargarImagen={manejarDescargaImagen}
+                        />
                       )
                     })}
                   </div>
@@ -365,8 +295,18 @@ export default function CalendarioPage() {
                 abierto={modalAbierto}
                 proyectoId={proyectoId}
                 evento={eventoEnEdicion}
+                alcance={alcanceEdicion}
                 onCerrar={cerrarModal}
                 onGuardar={manejarGuardarEvento}
+              />
+
+              <ModalAlcanceRecurrente
+                abierto={Boolean(dialogoAlcance)}
+                accion={dialogoAlcance?.accion}
+                evento={dialogoAlcance?.evento}
+                procesando={Boolean(eliminandoId)}
+                onCerrar={() => setDialogoAlcance(null)}
+                onElegir={manejarEleccionAlcance}
               />
             </>
           )
@@ -375,4 +315,3 @@ export default function CalendarioPage() {
     </main>
   )
 }
-

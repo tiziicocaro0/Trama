@@ -248,6 +248,9 @@ describe('Calendario y eventos del niño (Tarea 5.0)', () => {
           horaInicio: '10:00',
           horaFin: '12:30',
           imagenId: 'archivo-imagen-123',
+          recurrente: false,
+          diaSemana: null,
+          fechaFinRecurrencia: null,
         },
       )
     })
