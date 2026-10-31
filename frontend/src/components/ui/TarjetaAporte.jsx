@@ -6,6 +6,7 @@ import {
 import { formatearFechaCalendario, formatearFechaHora } from '../../utils/fechas.js'
 import { etiquetaEspecialidad } from '../../features/perfil/especialidades.js'
 import { leerDatosAporte, TIPOS_NOTA } from '../../features/perfil/perfil.js'
+import ConfirmacionAporte from '../../features/perfil/components/ConfirmacionAporte.jsx'
 
 const ETIQUETAS_TIPO_NOTA = Object.fromEntries(TIPOS_NOTA)
 
@@ -170,6 +171,9 @@ export default function TarjetaAporte({
             )}
           </div>
         )}
+
+        {/* 3.3: confirmar el aporte de otra persona */}
+        <ConfirmacionAporte aporte={aporte} />
 
         {esNota && (
           <div className="mt-3 space-y-1 text-sm text-texto-suave">
