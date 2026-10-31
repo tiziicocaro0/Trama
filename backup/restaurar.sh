@@ -12,7 +12,7 @@
 set -eu
 
 : "${MYSQL_ROOT_PASSWORD:?Falta MYSQL_ROOT_PASSWORD}"
-: "${TRAMA_BACKUP_KEY:?Falta TRAMA_BACKUP_KEY}"
+. /scripts/clave.sh
 
 NOMBRE="${1:?Indicá el archivo de backup, por ejemplo trama-20261022-201500.tar.gz.gpg}"
 ARCHIVO="/backups/$(basename "$NOMBRE")"

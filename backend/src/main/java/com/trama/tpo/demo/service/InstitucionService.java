@@ -38,18 +38,21 @@ public class InstitucionService {
     private final LicenciaProfesionalRepository licenciaRepository;
     private final UsuarioRepository usuarioRepository;
     private final UsuarioActual usuarioActual;
+    private final NotificacionService notificacionService;
 
     public InstitucionService(
             InstitucionRepository institucionRepository,
             PaqueteRepository paqueteRepository,
             LicenciaProfesionalRepository licenciaRepository,
             UsuarioRepository usuarioRepository,
-            UsuarioActual usuarioActual) {
+            UsuarioActual usuarioActual,
+            NotificacionService notificacionService) {
         this.institucionRepository = institucionRepository;
         this.paqueteRepository = paqueteRepository;
         this.licenciaRepository = licenciaRepository;
         this.usuarioRepository = usuarioRepository;
         this.usuarioActual = usuarioActual;
+        this.notificacionService = notificacionService;
     }
 
     @Transactional(readOnly = true)
@@ -118,15 +121,6 @@ public class InstitucionService {
         return respuesta(institucion);
     }
 
-    // 9.3: el responsable cerró el aviso de cambio de paquete.
-    @Transactional
-    public InstitucionResponse cerrarAviso() {
-        Institucion institucion = miInstitucion();
-        institucion.setAvisoPaqueteAnterior(null);
-        institucion.setAvisoMotivo(null);
-        return respuesta(institucionRepository.save(institucion));
-    }
-
     // 9.3: un profesional con licencia sumó un niño (aceptó una invitación): se revisan los
     // cupos de cada institución que lo cubre.
     @Transactional
@@ -158,9 +152,17 @@ public class InstitucionService {
         }
 
         institucion.setPaquete(paquete);
-        institucion.setAvisoPaqueteAnterior(original.getNombre());
-        institucion.setAvisoMotivo(motivo);
         institucionRepository.save(institucion);
+
+        // 6.0: el responsable se entera por una notificación (antes era un cartel de prueba).
+        notificacionService.notificar(
+                List.of(institucion.getResponsableId()),
+                "CAMBIO_PAQUETE",
+                "Superaste " + (motivo == MotivoCambioPaquete.NINOS
+                        ? "el cupo de niños" : "el cupo de profesionales")
+                        + " del paquete " + original.getNombre()
+                        + ": tu institución pasó al paquete " + paquete.getNombre() + ".",
+                "/institucion");
     }
 
     private static MotivoCambioPaquete motivo(Paquete paquete, long ninos, long profesionales) {
@@ -204,9 +206,6 @@ public class InstitucionService {
                 PaqueteResponse.from(institucion.getPaquete()),
                 contarNinos(institucion.getId(), hoy),
                 licenciaRepository.contarProfesionales(institucion.getId(), hoy),
-                profesionales,
-                institucion.getAvisoMotivo() == null ? null
-                        : new InstitucionResponse.AvisoCambioPaquete(
-                                institucion.getAvisoPaqueteAnterior(), institucion.getAvisoMotivo()));
+                profesionales);
     }
 }

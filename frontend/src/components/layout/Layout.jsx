@@ -1,6 +1,7 @@
 import { NavLink, Outlet } from 'react-router-dom';
 import logoTrama from '../../assets/logo.png';
 import { useAuth } from '../../hooks/useAuth';
+import CampanaNotificaciones from '../../features/notificaciones/CampanaNotificaciones.jsx';
 import {
   obtenerItemsMenuPorRol,
   useProyectoActual,
@@ -191,26 +192,7 @@ export function Layout() {
         {/* Encabezado con selector de proyecto y controles móviles */}
         <header className="flex flex-wrap items-center justify-between gap-4 border-b border-oliva/10 bg-crema px-5 py-3.5 md:px-8">
           <div className="flex items-center gap-3 md:hidden">
-            <button
-              type="button"
-              aria-label="Notificaciones"
-              className="relative flex h-10 w-10 items-center justify-center rounded-full text-oliva/80 hover:bg-oliva/10"
-            >
-              <svg
-                viewBox="0 0 24 24"
-                className="h-5 w-5 fill-none stroke-current stroke-2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                aria-hidden="true"
-              >
-                <path d="M18 9a6 6 0 0 0-12 0c0 7-3 7-3 8.5h18C21 16 18 16 18 9Z" />
-                <path d="M9.5 20a3 3 0 0 0 5 0" />
-              </svg>
-              <span
-                aria-hidden="true"
-                className="absolute right-2 top-2 h-2 w-2 rounded-full bg-miel"
-              />
-            </button>
+            <CampanaNotificaciones />
           </div>
 
           {opcionesSelector.length > 0 && (
@@ -239,6 +221,9 @@ export function Layout() {
             >
               Cerrar sesión
             </button>
+          </div>
+          <div className="hidden items-center gap-3 md:flex">
+            <CampanaNotificaciones />
           </div>
         </header>
 
