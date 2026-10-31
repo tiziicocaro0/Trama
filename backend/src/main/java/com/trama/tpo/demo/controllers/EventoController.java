@@ -2,7 +2,9 @@ package com.trama.tpo.demo.controllers;
 
 import com.trama.tpo.demo.entity.dto.EventoRequest;
 import com.trama.tpo.demo.entity.dto.EventoResponse;
+import com.trama.tpo.demo.entity.dto.EventoOcurrenciaRequest;
 import com.trama.tpo.demo.service.EventoService;
+import com.trama.tpo.demo.service.EventoOcurrenciaService;
 
 import jakarta.validation.Valid;
 
@@ -20,12 +22,17 @@ import java.util.UUID;
 public class EventoController {
 
     private final EventoService eventoService;
+    private final EventoOcurrenciaService ocurrenciaService;
 
-    public EventoController(EventoService eventoService) {
+    public EventoController(
+            EventoService eventoService,
+            EventoOcurrenciaService ocurrenciaService) {
+
         this.eventoService = eventoService;
+        this.ocurrenciaService = ocurrenciaService;
     }
 
-    // CREAR EVENTO
+    // CREAR EVENTO UNICO O RECURRENTE
     @PostMapping
     public ResponseEntity<EventoResponse> crear(
             @PathVariable UUID proyectoId,
@@ -38,9 +45,7 @@ public class EventoController {
                 .body(evento);
     }
 
-    // LISTAR EVENTOS ENTRE DOS FECHAS
-    // desde y hasta son obligatorios, pero los valida el service después de verificar
-    // la membresía: así alguien ajeno recibe 403 y no un 400 (0.21).
+    // LISTAR EVENTOS Y OCURRENCIAS ENTRE DOS FECHAS
     @GetMapping
     public ResponseEntity<List<EventoResponse>> listar(
             @PathVariable UUID proyectoId,
@@ -56,7 +61,7 @@ public class EventoController {
         );
     }
 
-    // EDITAR EVENTO
+    // EDITAR EVENTO UNICO O TODA LA SERIE
     @PutMapping("/{eventoId}")
     public ResponseEntity<EventoResponse> editar(
             @PathVariable UUID proyectoId,
@@ -68,13 +73,44 @@ public class EventoController {
         );
     }
 
-    // ELIMINAR EVENTO
+    // ELIMINAR EVENTO UNICO O TODA LA SERIE
     @DeleteMapping("/{eventoId}")
     public ResponseEntity<Void> eliminar(
             @PathVariable UUID proyectoId,
             @PathVariable UUID eventoId) {
 
         eventoService.eliminar(proyectoId, eventoId);
+
+        return ResponseEntity.noContent().build();
+    }
+
+    // EDITAR UNA SOLA OCURRENCIA
+    @PutMapping("/{eventoId}/ocurrencias/{fecha}")
+    public ResponseEntity<Void> editarOcurrencia(
+            @PathVariable("id") UUID proyectoId,
+            @PathVariable UUID eventoId,
+            @PathVariable
+            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
+            LocalDate fecha,
+            @Valid @RequestBody EventoOcurrenciaRequest request) {
+
+        ocurrenciaService.editarOcurrencia(
+                proyectoId, eventoId, fecha, request);
+
+        return ResponseEntity.noContent().build();
+    }
+
+    // CANCELAR UNA SOLA OCURRENCIA
+    @DeleteMapping("/{eventoId}/ocurrencias/{fecha}")
+    public ResponseEntity<Void> cancelarOcurrencia(
+            @PathVariable("id") UUID proyectoId,
+            @PathVariable UUID eventoId,
+            @PathVariable
+            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
+            LocalDate fecha) {
+
+        eventoService.cancelarOcurrencia(
+                proyectoId, eventoId, fecha);
 
         return ResponseEntity.noContent().build();
     }
