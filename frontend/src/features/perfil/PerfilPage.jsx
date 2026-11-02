@@ -9,6 +9,9 @@ import usePerfil from './hooks/usePerfil.js'
 import { LEYENDA_NOTAS, seccionesPerfil, seccionNotas } from './perfil.js'
 import NavegacionPerfil from './components/NavegacionPerfil.jsx'
 import { listarAportes } from '../../api/aportes.js'
+import useAuth from '../../hooks/useAuth.js'
+import { leerDatosAporte } from './perfil.js'
+import { CATEGORIAS_COMUNICACION } from './camposAporte.js'
 
 export default function PerfilPage() {
   const { id, seccion: slug } = useParams()
@@ -17,10 +20,29 @@ export default function PerfilPage() {
     listarAportes,
   )
   const [mensajeGuardado, setMensajeGuardado] = useState('')
+  const { usuario } = useAuth()
+  const [busqueda, setBusqueda] = useState('')
+  const [categoria, setCategoria] = useState('')
+  const [visibilidad, setVisibilidad] = useState('')
+  const [orden, setOrden] = useState('recientes')
+  const [soloMios, setSoloMios] = useState(false)
+  const [filtrosAbiertos, setFiltrosAbiertos] = useState(false)
   const seccion =
     slug === seccionNotas.slug
       ? seccionNotas
       : seccionesPerfil.find((item) => item.slug === slug)
+  const esComunicacion = seccion?.tipo === 'COMUNICACION'
+  const aportesComunicacion = esComunicacion && datos?.aportes
+    ? datos.aportes.filter((aporte) => aporte.tipo === 'COMUNICACION'
+      && (!categoria || leerDatosAporte(aporte.datos).categoria === categoria)
+      && (!visibilidad || aporte.visibilidad === visibilidad)
+      && (!soloMios || aporte.autorId === usuario?.id)
+      && (!busqueda.trim() || [aporte.titulo, aporte.contenido, ...Object.values(leerDatosAporte(aporte.datos))]
+        .join(' ').toLocaleLowerCase('es').includes(busqueda.trim().toLocaleLowerCase('es'))))
+      .sort((a, b) => orden === 'recientes'
+        ? new Date(b.creadoEn) - new Date(a.creadoEn)
+        : new Date(a.creadoEn) - new Date(b.creadoEn))
+    : null
   return (
     <div className="min-h-svh bg-fondo text-texto">
       <a href="#contenido-perfil" className="skip-link">
@@ -116,6 +138,28 @@ export default function PerfilPage() {
                 Podés consultar este perfil en modo de solo lectura.
               </p>
             )}
+            {esComunicacion && (
+              <section aria-label="Buscar y filtrar aportes de comunicación" className="mb-5 space-y-4">
+                <div>
+                  <p className="font-display text-h1 text-secundario">Comunicación</p>
+                  <p className="text-texto-suave">Cómo comprende, expresa lo que necesita y se comunica mejor en distintos contextos.</p>
+                </div>
+                <label className="block">
+                  <span className="sr-only">Buscar en comunicación</span>
+                  <input type="search" value={busqueda} onChange={(event) => setBusqueda(event.target.value)} placeholder="Buscar en comunicación…" className="min-h-11 w-full rounded-md border border-borde bg-superficie px-4 py-2 text-texto focus-visible:outline-2 focus-visible:outline-primario" />
+                </label>
+                <div className="flex flex-wrap gap-3">
+                  <label><span className="sr-only">Visibilidad</span><select aria-label="Visibilidad" value={visibilidad} onChange={(event) => setVisibilidad(event.target.value)} className="min-h-11 rounded-sm border border-borde bg-superficie px-3"><option value="">Toda visibilidad</option><option value="TODOS">Toda la red</option><option value="SOLO_SALUD">Solo salud</option><option value="SOLO_EDUCACION">Solo educación</option><option value="SOLO_TUTORES">Solo tutores</option></select></label>
+                  <label><span className="sr-only">Ordenar por fecha</span><select aria-label="Ordenar por fecha" value={orden} onChange={(event) => setOrden(event.target.value)} className="min-h-11 rounded-sm border border-borde bg-superficie px-3"><option value="recientes">Más recientes</option><option value="antiguos">Más antiguos</option></select></label>
+                  <button type="button" onClick={() => setFiltrosAbiertos(true)} className="min-h-11 rounded-sm border border-borde bg-superficie px-3">Más filtros</button>
+                  <label className="hidden items-center gap-2 md:flex"><input type="checkbox" checked={soloMios} onChange={(event) => setSoloMios(event.target.checked)} />Solo mis aportes</label>
+                </div>
+                <div className="flex flex-wrap gap-2" aria-label="Categorías de comunicación">
+                  {[["", "Todos"], ...CATEGORIAS_COMUNICACION].map(([valor, etiqueta]) => <button key={valor} type="button" onClick={() => setCategoria(valor)} aria-pressed={categoria === valor} className={`min-h-11 rounded-full border px-4 py-2 ${categoria === valor ? 'border-primario bg-primario text-superficie' : 'border-borde bg-superficie text-secundario'}`}>{etiqueta}</button>)}
+                </div>
+                {filtrosAbiertos && <div className="fixed inset-0 z-40 flex items-end bg-texto/40 md:items-center md:justify-center"><div role="dialog" aria-modal="true" aria-label="Filtros" className="w-full rounded-lg bg-superficie p-6 md:max-w-md"><div className="flex items-center justify-between"><h3 className="font-display text-h2">Filtros</h3><button type="button" onClick={() => setFiltrosAbiertos(false)} aria-label="Cerrar filtros" className="min-h-11 px-3">Cerrar</button></div><label className="mt-5 flex min-h-11 items-center gap-3"><input type="checkbox" checked={soloMios} onChange={(event) => setSoloMios(event.target.checked)} />Solo mis aportes</label></div></div>}
+              </section>
+            )}
             <div
               className={
                 seccion ? 'grid gap-5' : 'grid grid-cols-1 gap-5 md:grid-cols-2'
@@ -125,7 +169,7 @@ export default function PerfilPage() {
                 <BloquePerfil
                   key={item.slug}
                   seccion={item}
-                  aportes={datos.aportes.filter(
+                  aportes={esComunicacion ? aportesComunicacion : datos.aportes.filter(
                     (aporte) => aporte.tipo === item.tipo,
                   )}
                   proyectoId={id}

@@ -1,8 +1,11 @@
-import { FileImage, FilePdf, Lock } from '@phosphor-icons/react'
+import { ChatCircle, Ear, FileImage, FilePdf, HandPointing, Hourglass, Image, Lock, UsersThree } from '@phosphor-icons/react'
+import { useState } from 'react'
 import {
   descargarArchivo,
   obtenerUrlDescargaArchivo,
+  obtenerVistaArchivo,
 } from '../../api/archivos.js'
+import { Modal } from './Modal.jsx'
 import { formatearFechaCalendario, formatearFechaHora } from '../../utils/fechas.js'
 import { etiquetaEspecialidad } from '../../features/perfil/especialidades.js'
 import {
@@ -11,8 +14,10 @@ import {
   TIPOS_NOTA,
 } from '../../features/perfil/perfil.js'
 import ConfirmacionAporte from '../../features/perfil/components/ConfirmacionAporte.jsx'
+import { CATEGORIAS_COMUNICACION, FORMAS_COMUNICACION } from '../../features/perfil/camposAporte.js'
 
 const ETIQUETAS_TIPO_NOTA = Object.fromEntries(TIPOS_NOTA)
+const ICONOS_COMUNICACION = { EXPRESION: ChatCircle, COMPRENSION: Ear, NO_VERBAL: HandPointing, INTERACCION_SOCIAL: UsersThree, TIEMPO_ESPERA: Hourglass, APOYOS: Image }
 
 // 4.2: especialidades que declaró el autor en el proyecto, para mostrarlas a su lado
 function obtenerEspecialidades(aporte) {
@@ -57,6 +62,8 @@ export default function TarjetaAporte({
   archivando = false,
   resumen = false,
 }) {
+  const [errorAdjunto, setErrorAdjunto] = useState('')
+  const [vistaAdjunto, setVistaAdjunto] = useState(null)
   const esNota = aporte.tipo === 'NOTA_PROFESIONAL'
   const fechaBase = aporte.creadoEn ?? aporte.fecha ?? null
   const fechaCreacion = fechaBase ? formatearFechaHora(fechaBase) : null
@@ -72,6 +79,12 @@ export default function TarjetaAporte({
   const tipoNota = ETIQUETAS_TIPO_NOTA[datosNota.tipoNota] ?? null
   const fechaNota = formatearFechaCalendario(datosNota.fecha)
   const fortaleza = leerFortaleza(aporte)
+  const comunicacion = aporte.tipo === 'COMUNICACION' ? leerDatosAporte(aporte.datos) : null
+  const categoriaComunicacion = CATEGORIAS_COMUNICACION.find(([valor]) => valor === comunicacion?.categoria)?.[1]
+  const IconoComunicacion = ICONOS_COMUNICACION[comunicacion?.categoria]
+  const formasComunicacion = Array.isArray(comunicacion?.formasComunicacion)
+    ? comunicacion.formasComunicacion.map((forma) => forma === 'OTRA' ? comunicacion.otraForma : FORMAS_COMUNICACION.find(([valor]) => valor === forma)?.[1]).filter(Boolean)
+    : []
 
   // 3.1: Identificar aportes con visibilidad restringida
   const esRestringido =
@@ -83,14 +96,16 @@ export default function TarjetaAporte({
   async function manejarClickAdjunto(evento, archivo) {
     if (!aporte.proyectoId) return
     evento.preventDefault()
+    setErrorAdjunto('')
     try {
-      await descargarArchivo(
-        aporte.proyectoId,
-        archivo.id,
-        archivo.nombreOriginal,
-      )
-    } catch {
-      // Si falla la descarga programática, no interrumpe la vista
+      if (aporte.tipo === 'COMUNICACION' && !esArchivoPdf(archivo)) {
+        const url = await obtenerVistaArchivo(aporte.proyectoId, archivo.id)
+        setVistaAdjunto({ url, nombre: archivo.nombreOriginal || 'Pictograma' })
+      } else {
+        await descargarArchivo(aporte.proyectoId, archivo.id, archivo.nombreOriginal)
+      }
+    } catch (error) {
+      setErrorAdjunto(error.message)
     }
   }
 
@@ -104,7 +119,8 @@ export default function TarjetaAporte({
         className="mt-2 size-1.5 shrink-0 rounded-full bg-miel"
       />
       <div className="min-w-0 flex-1">
-        <h3 className="flex items-center gap-2 break-words text-base font-semibold leading-relaxed">
+        {categoriaComunicacion && <p className="mb-2 flex items-center gap-2 text-xs font-semibold text-secundario">{IconoComunicacion && <IconoComunicacion size={24} aria-hidden="true" className="text-agua" />}{categoriaComunicacion}</p>}
+        <h3 className={`flex items-center gap-2 break-words leading-relaxed ${comunicacion ? 'font-display text-subtitulo' : 'text-base font-semibold'}`}>
           <span className="min-w-0">{aporte.titulo}</span>
 
           {/* 3.1: Candado para aportes restringidos */}
@@ -140,6 +156,9 @@ export default function TarjetaAporte({
             Ejemplo: {fortaleza.ejemplo}
           </p>
         )}
+        {formasComunicacion.length > 0 && <p className="mt-2 text-sm"><strong>Cómo se comunica:</strong> {formasComunicacion.join(', ')}</p>}
+        {comunicacion?.comoHablarle && <p className="mt-2 whitespace-pre-wrap break-words text-sm"><strong>Cómo conviene hablarle:</strong> {comunicacion.comoHablarle}</p>}
+        {comunicacion?.queEvitar && <p className="mt-2 whitespace-pre-wrap break-words text-sm"><strong>Qué evitar:</strong> {comunicacion.queEvitar}</p>}
 
         {adjuntos.length > 0 && (
           <ul
@@ -175,6 +194,8 @@ export default function TarjetaAporte({
             })}
           </ul>
         )}
+        {errorAdjunto && <p role="alert" className="mt-2 text-sm text-error">{errorAdjunto}</p>}
+        {vistaAdjunto && <Modal abierto titulo={vistaAdjunto.nombre} onCerrar={() => { window.URL.revokeObjectURL(vistaAdjunto.url); setVistaAdjunto(null) }}><img src={vistaAdjunto.url} alt={vistaAdjunto.nombre} className="max-h-96 w-full object-contain" /></Modal>}
 
         {(nombreAutor || (!esNota && fechaCreacion)) && (
           <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-texto-suave">

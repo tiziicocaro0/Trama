@@ -23,6 +23,7 @@ import com.trama.tpo.demo.repository.ProyectoRepository;
 import com.trama.tpo.demo.repository.UsuarioRepository;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.trama.tpo.demo.aporte.observacion.DatosObservacion;
 import java.util.ArrayList;
 import java.util.Objects;
@@ -97,6 +98,7 @@ public class AporteService {
         validarFortaleza(request);
         validarObservacion(request);
         validarNota(request);
+        validarComunicacion(request);
 
         UUID usuarioId = usuarioActual.obtenerId();
 
@@ -243,6 +245,7 @@ public class AporteService {
         validarFortaleza(request);
         validarObservacion(request);
         validarNota(request);
+        validarComunicacion(request);
 
         // Guardar la versión anterior antes de editar
         AporteVersion version = AporteVersion.builder()
@@ -425,6 +428,39 @@ public class AporteService {
 
     private static String nombreCompleto(Usuario usuario) {
         return (usuario.getNombre() + " " + usuario.getApellido()).trim();
+    }
+
+    private void validarComunicacion(AporteRequest request) {
+        if (request.tipo() != TipoAporte.COMUNICACION) return;
+        try {
+            JsonNode datos = mapper.readTree(request.datos());
+            if (datos == null || !datos.isObject()
+                    || !List.of("EXPRESION", "COMPRENSION", "NO_VERBAL", "INTERACCION_SOCIAL", "TIEMPO_ESPERA", "APOYOS")
+                            .contains(datos.path("categoria").asText())
+                    || !datos.path("formasComunicacion").isArray()
+                    || datos.path("formasComunicacion").isEmpty()
+                    || !datos.path("comoHablarle").isTextual()
+                    || datos.path("comoHablarle").asText().isBlank()
+                    || datos.path("comoHablarle").asText().length() > 2000
+                    || !datos.path("queEvitar").isTextual()
+                    || datos.path("queEvitar").asText().isBlank()
+                    || datos.path("queEvitar").asText().length() > 2000) {
+                throw new ApiException("DATOS_COMUNICACION_INVALIDOS", "Completá la categoría, las formas de comunicación, cómo hablarle y qué evitar", HttpStatus.BAD_REQUEST);
+            }
+            boolean otra = false;
+            for (JsonNode forma : datos.path("formasComunicacion")) {
+                if (!forma.isTextual() || !List.of("VERBAL", "PICTOGRAMAS", "GESTOS", "SENAS", "OTRA").contains(forma.asText())) {
+                    throw new ApiException("DATOS_COMUNICACION_INVALIDOS", "Elegí formas de comunicación válidas", HttpStatus.BAD_REQUEST);
+                }
+                otra |= forma.asText().equals("OTRA");
+            }
+            if (otra && (!datos.path("otraForma").isTextual() || datos.path("otraForma").asText().isBlank()
+                    || datos.path("otraForma").asText().length() > 150)) {
+                throw new ApiException("DATOS_COMUNICACION_INVALIDOS", "Indicá cuál es la otra forma de comunicación", HttpStatus.BAD_REQUEST);
+            }
+        } catch (JsonProcessingException | IllegalArgumentException e) {
+            throw new ApiException("DATOS_COMUNICACION_INVALIDOS", "Los datos de comunicación no son válidos", HttpStatus.BAD_REQUEST);
+        }
     }
 
     // 4.2: una nota profesional necesita su tipo y su fecha dentro de "datos"

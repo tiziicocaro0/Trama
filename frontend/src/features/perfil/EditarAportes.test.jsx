@@ -76,7 +76,6 @@ describe('Crear y editar aportes de las seis secciones', () => {
   it.each([
     ['fortalezas', 'FORTALEZA', TITULO_FORTALEZA, DESCRIPCION_FORTALEZA],
     ['intereses', 'INTERES', 'Título', 'Descripción (opcional)'],
-    ['comunicacion', 'COMUNICACION', 'Título', 'Descripción (opcional)'],
     ['perfil-sensorial', 'SENSORIAL', 'Título', 'Descripción (opcional)'],
     ['estrategias', 'ESTRATEGIA', 'Título', 'Descripción (opcional)'],
     ['rutinas', 'RUTINA', 'Título', 'Descripción (opcional)'],

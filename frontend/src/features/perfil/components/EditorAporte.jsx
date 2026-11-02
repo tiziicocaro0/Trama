@@ -7,7 +7,7 @@ import SelectorVisibilidad from '../../../components/ui/SelectorVisibilidad.jsx'
 import SubirArchivo from '../../../components/ui/SubirArchivo.jsx'
 import { guardarAporte } from '../../../api/aportes.js'
 import { leerDatosAporte } from '../perfil.js'
-import { camposPorTipo, datosSinVacios, textosPorTipo } from '../camposAporte.js'
+import { CATEGORIAS_COMUNICACION, FORMAS_COMUNICACION, camposPorTipo, datosSinVacios, textosPorTipo } from '../camposAporte.js'
 import { hoyIso } from '../../../utils/fechas.js'
 
 const SECCIONES_CON_ADJUNTOS = ['NOTA_PROFESIONAL', 'COMUNICACION']
@@ -29,6 +29,7 @@ export default function EditorAporte({
   const [extra, setExtra] = useState(() => {
     const guardados = leerDatosAporte(aporte?.datos)
     return {
+      ...(seccion.tipo === 'COMUNICACION' ? { categoria: '', formasComunicacion: [], otraForma: '', comoHablarle: '', queEvitar: '' } : {}),
       ...guardados,
       ...Object.fromEntries(
         campos.map(({ nombre, inicial }) => [
@@ -40,11 +41,13 @@ export default function EditorAporte({
     }
   })
   const [error, setError] = useState('')
+  const [erroresCampos, setErroresCampos] = useState({})
   const [enviando, setEnviando] = useState(false)
   const pendiente = useRef(false)
   const formulario = useRef(null)
   const alerta = useRef(null)
   const esNota = seccion.tipo === 'NOTA_PROFESIONAL'
+  const esComunicacion = seccion.tipo === 'COMUNICACION'
   const permiteAdjuntos = SECCIONES_CON_ADJUNTOS.includes(seccion.tipo)
   const sustantivo = esNota ? 'nota' : 'aporte'
   const textos = textosPorTipo[seccion.tipo] ?? {}
@@ -56,14 +59,26 @@ export default function EditorAporte({
   async function guardar(event) {
     event.preventDefault()
     if (pendiente.current) return
+    if (esComunicacion) {
+      const errores = {
+        ...(!extra.categoria ? { categoria: 'Elegí una categoría.' } : {}),
+        ...(!Array.isArray(extra.formasComunicacion) || !extra.formasComunicacion.length
+          ? { formasComunicacion: 'Elegí al menos una forma de comunicación.' } : {}),
+        ...(extra.formasComunicacion?.includes('OTRA') && !extra.otraForma?.trim()
+          ? { otraForma: 'Contanos cuál es la otra forma.' } : {}),
+        ...(!extra.comoHablarle?.trim() ? { comoHablarle: 'Contanos cómo conviene hablarle.' } : {}),
+        ...(!extra.queEvitar?.trim() ? { queEvitar: 'Contanos qué conviene evitar.' } : {}),
+      }
+      setErroresCampos(errores)
+      if (Object.keys(errores).length) return
+    }
     if (
       !titulo.trim() ||
       titulo.trim().length > 150 ||
       contenido.length > 10000
     ) {
-      setError(
-        'Escribí un título de hasta 150 caracteres y una descripción de hasta 10000 caracteres.',
-      )
+      setErroresCampos((actual) => ({ ...actual, titulo: !titulo.trim() || titulo.trim().length > 150 ? 'Escribí un título de hasta 150 caracteres.' : '' }))
+      setError(contenido.length > 10000 ? 'La descripción no puede superar los 10000 caracteres.' : '')
       requestAnimationFrame(() => alerta.current?.focus())
       return
     }
@@ -82,7 +97,7 @@ export default function EditorAporte({
         titulo: titulo.trim(),
         contenido: contenido.trim(),
         visibilidad,
-        ...(campos.length ? { datos: JSON.stringify(datosSinVacios(extra)) } : {}),
+        ...(campos.length || esComunicacion ? { datos: JSON.stringify(datosSinVacios(esComunicacion && !extra.formasComunicacion?.includes('OTRA') ? { ...extra, otraForma: '' } : extra)) } : {}),
         ...(incluirArchivos
           ? { archivoIds: archivos.map((item) => item.id) }
           : {}),
@@ -128,6 +143,7 @@ export default function EditorAporte({
           disabled={enviando}
         />
       </CampoFormulario>
+      {erroresCampos.titulo && <p role="alert" className="text-sm text-error">{erroresCampos.titulo}</p>}
       <div>
         <label
           htmlFor={`contenido-aporte-${seccion.tipo}`}
@@ -147,6 +163,48 @@ export default function EditorAporte({
           className="w-full rounded-md border border-borde bg-superficie p-4 text-texto focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primario"
         />
       </div>
+      {esComunicacion && (
+        <div className="space-y-4">
+          <fieldset>
+            <legend className="mb-2 font-semibold">¿Sobre qué aspecto querés aportar?</legend>
+            <div className="flex flex-wrap gap-2">
+              {CATEGORIAS_COMUNICACION.map(([valor, etiqueta]) => (
+                <label key={valor} className="inline-flex cursor-pointer items-center gap-2 rounded-full border border-borde bg-superficie px-3 py-2 has-checked:border-primario has-checked:bg-fondo">
+                  <input type="radio" name="categoriaComunicacion" value={valor} checked={extra.categoria === valor} onChange={() => setExtra((actual) => ({ ...actual, categoria: valor }))} disabled={enviando} />
+                  {etiqueta}
+                </label>
+              ))}
+            </div>
+            {erroresCampos.categoria && <p role="alert" className="mt-1 text-sm text-error">{erroresCampos.categoria}</p>}
+          </fieldset>
+          <fieldset>
+            <legend className="mb-2 font-semibold">¿Cómo se comunica?</legend>
+            <div className="flex flex-wrap gap-2">
+              {FORMAS_COMUNICACION.map(([valor, etiqueta]) => (
+                <label key={valor} className="inline-flex cursor-pointer items-center gap-2 rounded-full border border-borde bg-superficie px-3 py-2 has-checked:border-primario has-checked:bg-fondo">
+                  <input type="checkbox" checked={extra.formasComunicacion?.includes(valor) ?? false} onChange={(event) => setExtra((actual) => ({ ...actual, formasComunicacion: event.target.checked ? [...(actual.formasComunicacion ?? []), valor] : (actual.formasComunicacion ?? []).filter((forma) => forma !== valor) }))} disabled={enviando} />
+                  {etiqueta}
+                </label>
+              ))}
+            </div>
+            {erroresCampos.formasComunicacion && <p role="alert" className="mt-1 text-sm text-error">{erroresCampos.formasComunicacion}</p>}
+          </fieldset>
+          {extra.formasComunicacion?.includes('OTRA') && (
+            <div>
+              <label htmlFor="otra-forma-comunicacion" className="mb-2 block font-semibold">Otra forma de comunicación</label>
+              <Campo id="otra-forma-comunicacion" value={extra.otraForma ?? ''} maxLength={150} onChange={(event) => setExtra((actual) => ({ ...actual, otraForma: event.target.value }))} disabled={enviando} aria-invalid={Boolean(erroresCampos.otraForma)} />
+              {erroresCampos.otraForma && <p role="alert" className="mt-1 text-sm text-error">{erroresCampos.otraForma}</p>}
+            </div>
+          )}
+          {[["comoHablarle", "¿Cómo conviene hablarle?"], ["queEvitar", "¿Qué evitar?"]].map(([nombre, etiqueta]) => (
+            <div key={nombre}>
+              <label htmlFor={nombre} className="mb-2 block font-semibold">{etiqueta}</label>
+              <textarea id={nombre} value={extra[nombre] ?? ''} onChange={(event) => setExtra((actual) => ({ ...actual, [nombre]: event.target.value }))} maxLength={2000} rows={3} disabled={enviando} aria-invalid={Boolean(erroresCampos[nombre])} className="w-full rounded-md border border-borde bg-superficie p-4 text-texto focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primario" />
+              {erroresCampos[nombre] && <p role="alert" className="mt-1 text-sm text-error">{erroresCampos[nombre]}</p>}
+            </div>
+          ))}
+        </div>
+      )}
       {campos.map(({ nombre, etiqueta, opciones, tipo, maximo }) => (
         <div key={nombre}>
           <label

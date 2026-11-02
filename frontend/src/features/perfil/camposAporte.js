@@ -1,6 +1,23 @@
 import { TIPOS_NOTA } from './perfil.js'
 import { hoyIso } from '../../utils/fechas.js'
 
+export const CATEGORIAS_COMUNICACION = [
+  ['EXPRESION', 'Expresión'],
+  ['COMPRENSION', 'Comprensión'],
+  ['NO_VERBAL', 'Comunicación no verbal'],
+  ['INTERACCION_SOCIAL', 'Interacción social'],
+  ['TIEMPO_ESPERA', 'Tiempo de espera'],
+  ['APOYOS', 'Apoyos comunicativos'],
+]
+
+export const FORMAS_COMUNICACION = [
+  ['VERBAL', 'Verbal'],
+  ['PICTOGRAMAS', 'Pictogramas'],
+  ['GESTOS', 'Gestos'],
+  ['SENAS', 'Señas'],
+  ['OTRA', 'Otra'],
+]
+
 // 2.1 y 2.2: campos propios que el back exige en "datos" para estos tipos.
 // Arrancan en un valor neutro para no frenar la carga; se pueden cambiar.
 export const camposPorTipo = {

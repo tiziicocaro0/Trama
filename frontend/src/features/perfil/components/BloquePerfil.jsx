@@ -7,6 +7,7 @@ import {
   NotePencil,
   Palette,
   Star,
+  X,
 } from '@phosphor-icons/react'
 import { useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
@@ -68,12 +69,13 @@ export default function BloquePerfil({
 
   const Icon = iconos[seccion.tipo]
   const esNota = seccion.tipo === 'NOTA_PROFESIONAL'
+  const esComunicacion = seccion.tipo === 'COMUNICACION' && completo
   const visibles = completo ? aportes : aportes.slice(0, 3)
 
   return (
     <section
       aria-labelledby={`titulo-${seccion.slug}`}
-      className="flex min-w-0 flex-col rounded-lg bg-superficie p-5 shadow-sm sm:p-6"
+      className={esComunicacion ? 'flex min-w-0 flex-col' : 'flex min-w-0 flex-col rounded-lg bg-superficie p-5 shadow-sm sm:p-6'}
     >
       <div className="mb-3 flex items-center gap-3">
         <span
@@ -94,9 +96,9 @@ export default function BloquePerfil({
         </p>
       )}
       {visibles.length ? (
-        <ul className="mb-4 flex-1 divide-y divide-borde/40">
+        <ul className={esComunicacion ? 'mb-4 grid flex-1 grid-cols-1 gap-4 md:grid-cols-2' : 'mb-4 flex-1 divide-y divide-borde/40'}>
           {visibles.map((aporte) => (
-            <li key={aporte.id}>
+            <li key={aporte.id} className={esComunicacion ? 'rounded-lg bg-superficie p-5 shadow-sm' : ''}>
               <TarjetaAporte
                 aporte={aporte}
                 resumen={!completo}
@@ -125,7 +127,7 @@ export default function BloquePerfil({
         </div>
       )}
       {puedeCrear && !editor && (
-        <Boton variant="secondary" onClick={abrirEditor} className="mb-4">
+        <Boton variant={esComunicacion ? 'primary' : 'secondary'} onClick={abrirEditor} className={esComunicacion ? 'fixed bottom-20 right-4 z-30 shadow-md md:static md:mb-4 md:self-end' : 'mb-4'}>
           {esNota ? 'Agregar nota' : 'Agregar aporte'}
         </Boton>
       )}
@@ -141,17 +143,36 @@ export default function BloquePerfil({
         />
       )}
       {editor && (
-        <EditorAporte
-          key={editor.id ?? 'nuevo'}
-          seccion={seccion}
-          proyectoId={proyectoId}
-          aporte={editor.id ? editor : null}
-          alCancelar={cancelar}
-          alGuardar={() => {
-            setEditor(null)
-            alGuardar?.('guardado')
-          }}
-        />
+        <div className={esComunicacion ? 'fixed inset-0 z-60 flex justify-end bg-texto/40' : ''}>
+          <div
+            role={esComunicacion ? 'dialog' : undefined}
+            aria-modal={esComunicacion ? 'true' : undefined}
+            aria-labelledby={esComunicacion ? 'titulo-panel-aporte' : undefined}
+            className={esComunicacion ? 'h-full w-full overflow-y-auto bg-superficie p-4 shadow-md sm:max-w-xl' : ''}
+          >
+            {esComunicacion && (
+              <div className="flex items-center justify-between border-b border-borde pb-3">
+                <h2 id="titulo-panel-aporte" className="font-display text-h2 text-secundario">
+                  {editor.id ? 'Editar aporte' : 'Agregar aporte'}
+                </h2>
+                <button type="button" onClick={cancelar} aria-label="Cerrar panel de aporte" className="flex min-h-11 min-w-11 items-center justify-center rounded-sm text-primario focus-visible:outline-2 focus-visible:outline-primario">
+                  <X size={24} aria-hidden="true" />
+                </button>
+              </div>
+            )}
+            <EditorAporte
+              key={editor.id ?? 'nuevo'}
+              seccion={seccion}
+              proyectoId={proyectoId}
+              aporte={editor.id ? editor : null}
+              alCancelar={cancelar}
+              alGuardar={() => {
+                setEditor(null)
+                alGuardar?.('guardado')
+              }}
+            />
+          </div>
+        </div>
       )}
       {!completo && (
         <Link

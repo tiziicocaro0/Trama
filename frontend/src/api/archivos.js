@@ -147,3 +147,18 @@ export async function descargarArchivo(proyectoId, archivoId, nombreOriginal) {
   }
 }
 
+export async function obtenerVistaArchivo(proyectoId, archivoId) {
+  if (!cliente.defaults.baseURL) throw new Error('Falta configurar la conexión con TRAMA.')
+  try {
+    const { data } = await cliente.get(
+      `/proyectos/${encodeURIComponent(proyectoId)}/archivos/${encodeURIComponent(archivoId)}`,
+      { responseType: 'blob' },
+    )
+    return window.URL.createObjectURL(data instanceof Blob ? data : new Blob([data]))
+  } catch (error) {
+    throw new Error(error.response?.status === 403
+      ? 'No tenés permiso para ver este archivo.'
+      : 'No pudimos mostrar el archivo. Intentá nuevamente.', { cause: error })
+  }
+}
+
