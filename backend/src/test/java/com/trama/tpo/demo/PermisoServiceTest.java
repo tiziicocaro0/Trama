@@ -22,6 +22,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.AccessDeniedException;
 
+import com.trama.tpo.demo.aporte.TipoAporte;
 import com.trama.tpo.demo.aporte.Visibilidad;
 import com.trama.tpo.demo.entity.membresia.Membresia;
 import com.trama.tpo.demo.entity.membresia.Rol;
@@ -235,9 +236,9 @@ class PermisoServiceTest {
         when(membresiaRepository.findByUsuarioIdAndProyectoId(usuarioId, proyectoId))
                 .thenReturn(Optional.of(salud));
 
-        assertDoesNotThrow(() -> permisoService.verificarPuedeVerAporte(proyectoId, Visibilidad.SOLO_SALUD));
+        assertDoesNotThrow(() -> permisoService.verificarPuedeVerAporte(proyectoId, Visibilidad.SOLO_SALUD, TipoAporte.FORTALEZA));
         assertThrows(AccessDeniedException.class,
-                () -> permisoService.verificarPuedeVerAporte(proyectoId, Visibilidad.SOLO_EDUCACION));
+                () -> permisoService.verificarPuedeVerAporte(proyectoId, Visibilidad.SOLO_EDUCACION, TipoAporte.FORTALEZA));
     }
 
     @Test
@@ -246,9 +247,9 @@ class PermisoServiceTest {
         when(membresiaRepository.findByUsuarioIdAndProyectoId(usuarioId, proyectoId))
                 .thenReturn(Optional.of(familiar));
 
-        assertDoesNotThrow(() -> permisoService.verificarPuedeVerAporte(proyectoId, Visibilidad.TODOS));
+        assertDoesNotThrow(() -> permisoService.verificarPuedeVerAporte(proyectoId, Visibilidad.TODOS, TipoAporte.FORTALEZA));
         assertThrows(AccessDeniedException.class,
-                () -> permisoService.verificarPuedeVerAporte(proyectoId, Visibilidad.SOLO_TUTORES));
+                () -> permisoService.verificarPuedeVerAporte(proyectoId, Visibilidad.SOLO_TUTORES, TipoAporte.FORTALEZA));
     }
 
     // 4.2: notas profesionales (aporte de Tiziana en el #48, adaptado al método de develop)

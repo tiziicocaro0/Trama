@@ -141,7 +141,7 @@ public class ConfirmacionAporteService {
                         "El aporte no existe",
                         HttpStatus.NOT_FOUND));
 
-        permisoService.verificarPuedeVerAporte(proyectoId, aporte.getVisibilidad());
+        permisoService.verificarPuedeVerAporte(proyectoId, aporte.getVisibilidad(), aporte.getTipo());
 
         return aporte;
     }
