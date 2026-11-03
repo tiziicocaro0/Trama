@@ -9,13 +9,14 @@ import {
   Star,
   X,
 } from '@phosphor-icons/react'
-import { useRef, useState } from 'react'
+import { Fragment, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { archivarAporte } from '../../../api/aportes.js'
 import Boton from '../../../components/ui/Boton.jsx'
 import TarjetaAporte from '../../../components/ui/TarjetaAporte.jsx'
 import EditorAporte from './EditorAporte.jsx'
 import HistorialAporte from './HistorialAporte.jsx'
+import { leerDatosAporte } from '../perfil.js'
 
 const iconos = {
   FORTALEZA: Star,
@@ -70,14 +71,20 @@ export default function BloquePerfil({
   const Icon = iconos[seccion.tipo]
   const esNota = seccion.tipo === 'NOTA_PROFESIONAL'
   const esComunicacion = seccion.tipo === 'COMUNICACION' && completo
+  const esSensorial = seccion.tipo === 'SENSORIAL' && completo
+  const esEstrategia = seccion.tipo === 'ESTRATEGIA' && completo
+  const esPanel = esComunicacion || esSensorial || esEstrategia
   const visibles = completo ? aportes : aportes.slice(0, 3)
+  const agrupados = esSensorial
+    ? ['AYUDA', 'CUESTA', ''].flatMap((lista) => visibles.filter((aporte) => (leerDatosAporte(aporte.datos).lista || '') === lista))
+    : visibles
 
   return (
     <section
       aria-labelledby={`titulo-${seccion.slug}`}
-      className={esComunicacion ? 'flex min-w-0 flex-col' : 'flex min-w-0 flex-col rounded-lg bg-superficie p-5 shadow-sm sm:p-6'}
+      className={esPanel ? 'flex min-w-0 flex-col' : 'flex min-w-0 flex-col rounded-lg bg-superficie p-5 shadow-sm sm:p-6'}
     >
-      <div className="mb-3 flex items-center gap-3">
+      <div className={esSensorial || esEstrategia ? 'sr-only' : 'mb-3 flex items-center gap-3'}>
         <span
           className={`flex size-10 shrink-0 items-center justify-center rounded-sm ${seccion.tono}`}
         >
@@ -96,9 +103,11 @@ export default function BloquePerfil({
         </p>
       )}
       {visibles.length ? (
-        <ul className={esComunicacion ? 'mb-4 grid flex-1 grid-cols-1 gap-4 md:grid-cols-2' : 'mb-4 flex-1 divide-y divide-borde/40'}>
-          {visibles.map((aporte) => (
-            <li key={aporte.id} className={esComunicacion ? 'rounded-lg bg-superficie p-5 shadow-sm' : ''}>
+        <ul className={esPanel ? 'mb-4 grid flex-1 grid-cols-1 gap-4 md:grid-cols-2' : 'mb-4 flex-1 divide-y divide-borde/40'}>
+          {agrupados.map((aporte, indice) => (
+            <Fragment key={aporte.id}>
+            {esSensorial && (indice === 0 || leerDatosAporte(agrupados[indice - 1].datos).lista !== leerDatosAporte(aporte.datos).lista) && <li className="col-span-full"><h3 className="font-display text-h2 text-secundario">{leerDatosAporte(aporte.datos).lista === 'AYUDA' ? 'Le ayuda' : leerDatosAporte(aporte.datos).lista === 'CUESTA' ? 'Le cuesta' : 'Sin clasificar'}</h3></li>}
+            <li className={esPanel ? 'rounded-lg bg-superficie p-5 shadow-sm' : ''}>
               <TarjetaAporte
                 aporte={aporte}
                 resumen={!completo}
@@ -111,6 +120,7 @@ export default function BloquePerfil({
                 }}
               />
             </li>
+            </Fragment>
           ))}
         </ul>
       ) : (
@@ -127,7 +137,7 @@ export default function BloquePerfil({
         </div>
       )}
       {puedeCrear && !editor && (
-        <Boton variant={esComunicacion ? 'primary' : 'secondary'} onClick={abrirEditor} className={esComunicacion ? 'fixed bottom-20 right-4 z-30 shadow-md md:static md:mb-4 md:self-end' : 'mb-4'}>
+        <Boton variant={esPanel ? 'primary' : 'secondary'} onClick={abrirEditor} className={esPanel ? 'fixed bottom-20 right-4 z-30 shadow-md md:static md:mb-4 md:self-end' : 'mb-4'}>
           {esNota ? 'Agregar nota' : 'Agregar aporte'}
         </Boton>
       )}
@@ -143,14 +153,14 @@ export default function BloquePerfil({
         />
       )}
       {editor && (
-        <div className={esComunicacion ? 'fixed inset-0 z-60 flex justify-end bg-texto/40' : ''}>
+        <div className={esPanel ? 'fixed inset-0 z-60 flex justify-end bg-texto/40' : ''}>
           <div
-            role={esComunicacion ? 'dialog' : undefined}
-            aria-modal={esComunicacion ? 'true' : undefined}
-            aria-labelledby={esComunicacion ? 'titulo-panel-aporte' : undefined}
-            className={esComunicacion ? 'h-full w-full overflow-y-auto bg-superficie p-4 shadow-md sm:max-w-xl' : ''}
+            role={esPanel ? 'dialog' : undefined}
+            aria-modal={esPanel ? 'true' : undefined}
+            aria-labelledby={esPanel ? 'titulo-panel-aporte' : undefined}
+            className={esPanel ? 'h-full w-full overflow-y-auto bg-superficie p-4 shadow-md sm:max-w-xl' : ''}
           >
-            {esComunicacion && (
+            {esPanel && (
               <div className="flex items-center justify-between border-b border-borde pb-3">
                 <h2 id="titulo-panel-aporte" className="font-display text-h2 text-secundario">
                   {editor.id ? 'Editar aporte' : 'Agregar aporte'}

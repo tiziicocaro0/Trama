@@ -232,9 +232,9 @@ public class PermisoService {
             // Los tutores siempre pueden ver todos los aportes
             case TUTOR -> List.of(Visibilidad.values());
 
-            case SALUD -> List.of(Visibilidad.TODOS, Visibilidad.SOLO_SALUD);
+            case SALUD -> List.of(Visibilidad.TODOS, Visibilidad.SOLO_SALUD, Visibilidad.PROFESIONALES);
 
-            case EDUCACION -> List.of(Visibilidad.TODOS, Visibilidad.SOLO_EDUCACION);
+            case EDUCACION -> List.of(Visibilidad.TODOS, Visibilidad.SOLO_EDUCACION, Visibilidad.PROFESIONALES);
 
             case FAMILIAR -> List.of(Visibilidad.TODOS);
         };

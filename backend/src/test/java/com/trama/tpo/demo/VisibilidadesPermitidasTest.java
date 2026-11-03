@@ -21,13 +21,13 @@ class VisibilidadesPermitidasTest {
 
     @Test
     void saludVeTodosYSoloSalud() {
-        assertEquals(List.of(Visibilidad.TODOS, Visibilidad.SOLO_SALUD),
+        assertEquals(List.of(Visibilidad.TODOS, Visibilidad.SOLO_SALUD, Visibilidad.PROFESIONALES),
                 PermisoService.visibilidadesPermitidas(Rol.SALUD));
     }
 
     @Test
     void educacionVeTodosYSoloEducacion() {
-        assertEquals(List.of(Visibilidad.TODOS, Visibilidad.SOLO_EDUCACION),
+        assertEquals(List.of(Visibilidad.TODOS, Visibilidad.SOLO_EDUCACION, Visibilidad.PROFESIONALES),
                 PermisoService.visibilidadesPermitidas(Rol.EDUCACION));
     }
 

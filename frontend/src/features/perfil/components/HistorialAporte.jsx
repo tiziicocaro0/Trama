@@ -3,6 +3,7 @@ import { listarVersiones } from '../../../api/aportes.js'
 import { Modal } from '../../../components/ui/Modal.jsx'
 import { formatearFechaHora } from '../../../utils/fechas.js'
 import { leerDatosAporte } from '../perfil.js'
+import { CATEGORIAS_SENSORIALES, CONTEXTOS_SENSORIALES, CATEGORIAS_ESTRATEGIA, CONTEXTOS_ESTRATEGIA, RESULTADOS_ESTRATEGIA } from '../camposAporte.js'
 
 function cambios(version, anterior) {
   if (!anterior) return []
@@ -11,7 +12,7 @@ function cambios(version, anterior) {
   if (version.contenido !== anterior.contenido) nombres.push('descripción')
   const actual = leerDatosAporte(version.datos)
   const previo = leerDatosAporte(anterior.datos)
-  for (const [campo, etiqueta] of [['categoria', 'categoría'], ['formasComunicacion', 'formas de comunicación'], ['otraForma', 'otra forma'], ['comoHablarle', 'cómo hablarle'], ['queEvitar', 'qué evitar']]) {
+  for (const [campo, etiqueta] of [['lista', 'lista'], ['categoria', 'categoría'], ['contexto', 'contexto'], ['situacion', 'situación'], ['resultado', 'resultado'], ['contextos', 'contextos'], ['formasComunicacion', 'formas de comunicación'], ['otraForma', 'otra forma'], ['comoHablarle', 'cómo hablarle'], ['queEvitar', 'qué evitar']]) {
     if (JSON.stringify(actual[campo]) !== JSON.stringify(previo[campo])) nombres.push(etiqueta)
   }
   return nombres
@@ -73,6 +74,8 @@ export default function HistorialAporte({ proyectoId, aporte, onCerrar }) {
                   </p>
                 )}
                 {aporte.tipo === 'COMUNICACION' && Object.entries(leerDatosAporte(version.datos)).filter(([clave]) => ['categoria', 'formasComunicacion', 'otraForma', 'comoHablarle', 'queEvitar'].includes(clave)).map(([clave, valor]) => <p key={clave} className="mt-1 break-words text-sm text-texto-suave">{({ categoria: 'Categoría', formasComunicacion: 'Formas de comunicación', otraForma: 'Otra forma', comoHablarle: 'Cómo conviene hablarle', queEvitar: 'Qué evitar' })[clave]}: {Array.isArray(valor) ? valor.join(', ') : valor}</p>)}
+                {aporte.tipo === 'SENSORIAL' && Object.entries(leerDatosAporte(version.datos)).filter(([clave]) => ['lista', 'categoria', 'contexto'].includes(clave)).map(([clave, valor]) => <p key={clave} className="mt-1 break-words text-sm text-texto-suave">{({ lista: 'Lista', categoria: 'Categoría', contexto: 'Contexto' })[clave]}: {clave === 'lista' ? ({ AYUDA: 'Le ayuda', CUESTA: 'Le cuesta' })[valor] : clave === 'categoria' ? CATEGORIAS_SENSORIALES.find(([codigo]) => codigo === valor)?.[1] : CONTEXTOS_SENSORIALES.find(([codigo]) => codigo === valor)?.[1]}</p>)}
+                {aporte.tipo === 'ESTRATEGIA' && Object.entries(leerDatosAporte(version.datos)).filter(([clave]) => ['categoria', 'situacion', 'resultado', 'contextos'].includes(clave)).map(([clave, valor]) => <p key={clave} className="mt-1 break-words text-sm text-texto-suave">{({ categoria: 'Categoría', situacion: 'En qué situación', resultado: 'Resultado', contextos: 'Dónde suele funcionar' })[clave]}: {clave === 'categoria' ? CATEGORIAS_ESTRATEGIA.find(([codigo]) => codigo === valor)?.[1] : clave === 'resultado' ? RESULTADOS_ESTRATEGIA.find(([codigo]) => codigo === valor)?.[1] : clave === 'contextos' ? valor.map((codigo) => CONTEXTOS_ESTRATEGIA.find(([item]) => item === codigo)?.[1]).filter(Boolean).join(', ') : valor}</p>)}
                 <p className="mt-2 text-xs text-texto-suave">
                   {version.autorNombre && `${version.autorNombre} · `}
                   <time dateTime={version.fechaCreacion}>

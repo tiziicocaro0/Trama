@@ -42,7 +42,7 @@ function abrir(slug = 'fortalezas') {
     <MemoryRouter initialEntries={[`/proyectos/${id}/${slug}`]}>
       <AuthContext.Provider
         value={{
-          usuario: { nombre: 'Tutora ficticia' },
+          usuario: { id: 'autor-1', nombre: 'Tutora ficticia' },
           estado: 'autenticado',
         }}
       >
@@ -76,8 +76,6 @@ describe('Crear y editar aportes de las seis secciones', () => {
   it.each([
     ['fortalezas', 'FORTALEZA', TITULO_FORTALEZA, DESCRIPCION_FORTALEZA],
     ['intereses', 'INTERES', 'Título', 'Descripción (opcional)'],
-    ['perfil-sensorial', 'SENSORIAL', 'Título', 'Descripción (opcional)'],
-    ['estrategias', 'ESTRATEGIA', 'Título', 'Descripción (opcional)'],
     ['rutinas', 'RUTINA', 'Título', 'Descripción (opcional)'],
   ])(
     'agrega un aporte en %s y lo muestra al volver a consultar el servidor',
@@ -120,6 +118,65 @@ describe('Crear y editar aportes de las seis secciones', () => {
       expect(screen.getByRole('status')).toHaveTextContent('Aporte guardado')
     },
   )
+
+  it('exige lista y categoría sensorial, y guarda la observación opcional en la API', async () => {
+    abrir('sensorial')
+    await userEvent.click(await screen.findByRole('button', { name: 'Agregar aporte' }))
+    await userEvent.type(screen.getByRole('textbox', { name: 'Título' }), 'Busca balancearse')
+    await userEvent.click(screen.getByRole('button', { name: 'Guardar aporte' }))
+    expect(screen.getByText('Elegí una lista.')).toBeInTheDocument()
+    expect(screen.getByText('Elegí una categoría sensorial.')).toBeInTheDocument()
+    expect(cliente.post).not.toHaveBeenCalled()
+    await userEvent.click(screen.getByRole('radio', { name: 'Le ayuda' }))
+    await userEvent.click(screen.getByRole('radio', { name: 'Movimiento y equilibrio' }))
+    await userEvent.click(screen.getByRole('radio', { name: 'Casa' }))
+    await userEvent.click(screen.getByRole('radio', { name: /Solo equipo profesional/ }))
+    await userEvent.click(screen.getByRole('button', { name: 'Guardar aporte' }))
+    expect(cliente.post).toHaveBeenCalledWith(`/proyectos/${id}/aportes`, expect.objectContaining({
+      tipo: 'SENSORIAL', titulo: 'Busca balancearse', contenido: '', visibilidad: 'PROFESIONALES',
+      datos: '{"lista":"AYUDA","categoria":"MOVIMIENTO_EQUILIBRIO","contexto":"CASA"}',
+    }))
+    expect(lista).toHaveLength(1)
+    expect(await screen.findByText('Aporte guardado.')).toBeInTheDocument()
+    expect(await screen.findByRole('heading', { name: /Busca balancearse/ })).toBeInTheDocument()
+  })
+
+  it('filtra aportes sensoriales reales por lista, categoría y autor', async () => {
+    lista = [
+      { ...aporteOriginal, id: 'a', tipo: 'SENSORIAL', titulo: 'Busca balancearse', datos: '{"lista":"AYUDA","categoria":"MOVIMIENTO_EQUILIBRIO"}', autorId: 'autor-1' },
+      { ...aporteOriginal, id: 'b', tipo: 'SENSORIAL', titulo: 'Le molesta el ruido', datos: '{"lista":"CUESTA","categoria":"AUDICION"}', autorId: 'autor-2', puedeEditar: false },
+    ]
+    abrir('sensorial')
+    await screen.findByRole('heading', { name: 'Busca balancearse' })
+    expect(screen.getAllByRole('article')).toHaveLength(2)
+    await userEvent.selectOptions(screen.getByRole('combobox', { name: 'Lista' }), 'CUESTA')
+    expect(screen.queryByRole('heading', { name: 'Busca balancearse' })).not.toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'Le molesta el ruido' })).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Editar aporte: Le molesta el ruido' })).not.toBeInTheDocument()
+    await userEvent.selectOptions(screen.getByRole('combobox', { name: 'Lista' }), '')
+    await userEvent.click(screen.getByRole('button', { name: 'Movimiento y equilibrio' }))
+    expect(screen.getAllByRole('article')).toHaveLength(1)
+    await userEvent.click(screen.getAllByRole('checkbox', { name: 'Solo mis aportes' })[0])
+    expect(screen.getByRole('heading', { name: 'Busca balancearse' })).toBeInTheDocument()
+  })
+
+  it('vincula un pictograma al aporte sensorial mediante los endpoints de archivos y aportes', async () => {
+    cliente.post.mockImplementation(async (ruta, datos) => {
+      if (ruta.endsWith('/archivos')) return { data: { id: 'archivo-ficticio', nombreOriginal: 'pictograma.png', tipoMime: 'image/png', tamanoBytes: 1024 } }
+      const aporte = { ...datos, id: 'aporte-sensorial', puedeEditar: true }
+      lista = [aporte]
+      return { data: aporte }
+    })
+    abrir('sensorial')
+    await userEvent.click(await screen.findByRole('button', { name: 'Agregar aporte' }))
+    await userEvent.click(screen.getByRole('radio', { name: 'Le cuesta' }))
+    await userEvent.click(screen.getByRole('radio', { name: 'Tacto' }))
+    await userEvent.type(screen.getByRole('textbox', { name: 'Título' }), 'Le incomoda el agua en la cara')
+    fireEvent.drop(screen.getByTestId('zona-soltar-archivo'), { dataTransfer: { files: [new File(['imagen'], 'pictograma.png', { type: 'image/png' })] } })
+    expect(await screen.findByText('pictograma.png')).toBeInTheDocument()
+    await userEvent.click(screen.getByRole('button', { name: 'Guardar aporte' }))
+    expect(cliente.post).toHaveBeenCalledWith(`/proyectos/${id}/aportes`, expect.objectContaining({ archivoIds: ['archivo-ficticio'] }))
+  })
 
   it('un interés manda la categoría y la intensidad elegidas', async () => {
     abrir('intereses')

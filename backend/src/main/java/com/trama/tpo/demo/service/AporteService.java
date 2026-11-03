@@ -99,6 +99,8 @@ public class AporteService {
         validarObservacion(request);
         validarNota(request);
         validarComunicacion(request);
+        validarSensorial(request);
+        validarEstrategia(request);
 
         UUID usuarioId = usuarioActual.obtenerId();
 
@@ -246,6 +248,8 @@ public class AporteService {
         validarObservacion(request);
         validarNota(request);
         validarComunicacion(request);
+        validarSensorial(request);
+        validarEstrategia(request);
 
         // Guardar la versión anterior antes de editar
         AporteVersion version = AporteVersion.builder()
@@ -460,6 +464,58 @@ public class AporteService {
             }
         } catch (JsonProcessingException | IllegalArgumentException e) {
             throw new ApiException("DATOS_COMUNICACION_INVALIDOS", "Los datos de comunicación no son válidos", HttpStatus.BAD_REQUEST);
+        }
+    }
+
+    private void validarSensorial(AporteRequest request) {
+        if (request.tipo() != TipoAporte.SENSORIAL) return;
+        try {
+            JsonNode datos = mapper.readTree(request.datos());
+            if (datos == null || !datos.isObject()
+                    || !List.of("AYUDA", "CUESTA").contains(datos.path("lista").asText())
+                    || !List.of("VISION", "AUDICION", "TACTO", "GUSTO_OLFATO", "CONCIENCIA_CORPORAL", "MOVIMIENTO_EQUILIBRIO")
+                            .contains(datos.path("categoria").asText())
+                    || (datos.has("contexto") && !List.of("CASA", "ESCUELA", "CONSULTORIO", "OTRO")
+                            .contains(datos.path("contexto").asText()))) {
+                throw new ApiException("DATOS_SENSORIALES_INVALIDOS",
+                        "Elegí una lista y una categoría sensorial válidas", HttpStatus.BAD_REQUEST);
+            }
+        } catch (JsonProcessingException | IllegalArgumentException e) {
+            throw new ApiException("DATOS_SENSORIALES_INVALIDOS",
+                    "Los datos sensoriales no son válidos", HttpStatus.BAD_REQUEST);
+        }
+    }
+
+    private void validarEstrategia(AporteRequest request) {
+        if (request.tipo() != TipoAporte.ESTRATEGIA) return;
+        if (request.contenido() == null || request.contenido().isBlank()) {
+            throw new ApiException("ESTRATEGIA_INVALIDA", "Contá qué se hizo", HttpStatus.BAD_REQUEST);
+        }
+        try {
+            JsonNode datos = mapper.readTree(request.datos());
+            if (datos == null || !datos.isObject()
+                    || !List.of("ANTICIPACION_SECUENCIACION", "APOYOS_VISUALES_COMUNICATIVOS", "ORGANIZACION_ENTORNO",
+                            "ADAPTACION_ACTIVIDADES", "REGULACION_PAUSAS", "PARTICIPACION_AUTONOMIA", "MOTIVACION_INTERESES")
+                            .contains(datos.path("categoria").asText())
+                    || !datos.path("situacion").isTextual() || datos.path("situacion").asText().isBlank()
+                    || datos.path("situacion").asText().length() > 2000
+                    || !List.of("FUNCIONO", "FUNCIONO_EN_PARTE", "NO_FUNCIONO")
+                            .contains(datos.path("resultado").asText())) {
+                throw new ApiException("DATOS_ESTRATEGIA_INVALIDOS",
+                        "Completá la categoría, la situación y el resultado", HttpStatus.BAD_REQUEST);
+            }
+            JsonNode contextos = datos.path("contextos");
+            if (!contextos.isMissingNode() && (!contextos.isArray() || contextos.size() > 6)) {
+                throw new ApiException("DATOS_ESTRATEGIA_INVALIDOS", "Elegí contextos válidos", HttpStatus.BAD_REQUEST);
+            }
+            for (JsonNode contexto : contextos) {
+                if (!contexto.isTextual() || !List.of("CASA", "ESCUELA", "CONSULTORIO",
+                        "ACTIVIDAD_EXTRACURRICULAR", "DISTINTOS_CONTEXTOS", "OTRO").contains(contexto.asText())) {
+                    throw new ApiException("DATOS_ESTRATEGIA_INVALIDOS", "Elegí contextos válidos", HttpStatus.BAD_REQUEST);
+                }
+            }
+        } catch (JsonProcessingException | IllegalArgumentException e) {
+            throw new ApiException("DATOS_ESTRATEGIA_INVALIDOS", "Los datos de la estrategia no son válidos", HttpStatus.BAD_REQUEST);
         }
     }
 

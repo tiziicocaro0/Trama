@@ -18,7 +18,7 @@ export const seccionesPerfil = [
     tono: 'bg-agua text-superficie',
   },
   {
-    slug: 'perfil-sensorial',
+    slug: 'sensorial',
     titulo: 'Perfil sensorial',
     tipo: 'SENSORIAL',
     tono: 'bg-primario text-superficie',
