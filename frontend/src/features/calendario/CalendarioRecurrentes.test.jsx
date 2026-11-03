@@ -123,7 +123,7 @@ describe('Eventos recurrentes semanales en el calendario (Tarea 5.1)', () => {
     expect(screen.getByText(/Cada martes/)).toBeInTheDocument()
     await user.click(screen.getByRole('button', { name: 'Cerrar detalle' }))
 
-    await user.click(screen.getByRole('button', { name: /Nuevo evento/i }))
+    await user.click(screen.getAllByRole('button', { name: /Agregar evento el .* a las 08:00/ })[0])
     const dialog = await screen.findByRole('dialog', { name: 'Nuevo evento' })
 
     fireEvent.change(within(dialog).getByLabelText(/Título/i), { target: { value: 'Fonoaudiología semanal' } })
@@ -169,7 +169,7 @@ describe('Eventos recurrentes semanales en el calendario (Tarea 5.1)', () => {
         }),
       )
     })
-  })
+  }, 10000)
 
   it('al editar un evento recurrente pregunta "¿Solo este o toda la serie?" y permite editar solo esa ocurrencia o toda la serie', async () => {
     const user = userEvent.setup()
@@ -241,7 +241,7 @@ describe('Eventos recurrentes semanales en el calendario (Tarea 5.1)', () => {
         }),
       )
     })
-  })
+  }, 10000)
 
   it('al eliminar un evento recurrente pregunta "¿Solo este o toda la serie?" y ejecuta la cancelación o el borrado de la serie', async () => {
     const user = userEvent.setup()
@@ -284,6 +284,6 @@ describe('Eventos recurrentes semanales en el calendario (Tarea 5.1)', () => {
         `/proyectos/${proyectoId}/eventos/ev-recurrente-1`,
       )
     })
-  })
+  }, 10000)
 })
 

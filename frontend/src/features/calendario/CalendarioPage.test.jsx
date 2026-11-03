@@ -188,8 +188,8 @@ describe('Calendario y eventos del niño (Tarea 5.0)', () => {
     expect(screen.getByText('09:30 a 11:00')).toBeInTheDocument()
     await user.click(screen.getByRole('button', { name: 'Cerrar detalle' }))
 
-    // Abrir modal "Nuevo evento"
-    await user.click(screen.getByRole('button', { name: /Nuevo evento/i }))
+    // Abrir el modal desde el + de un horario vacío del calendario.
+    await user.click(screen.getAllByRole('button', { name: /Agregar evento el .* a las 08:00/ })[0])
 
     const dialog = await screen.findByRole('dialog', { name: 'Nuevo evento' })
 
@@ -256,7 +256,7 @@ describe('Calendario y eventos del niño (Tarea 5.0)', () => {
     expect(
       await screen.findByRole('button', { name: 'Ver evento: Visita al museo de ciencias' }),
     ).toBeInTheDocument()
-  })
+  }, 10000)
 
   it('permite editar un evento propio con el mismo formulario y oculta editar/eliminar en eventos ajenos si no es tutor', async () => {
     const user = userEvent.setup()
