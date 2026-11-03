@@ -1,14 +1,15 @@
-import { CaretRight, User } from '@phosphor-icons/react'
+import { CalendarBlank, CaretRight, User } from '@phosphor-icons/react'
 import { Link } from 'react-router-dom'
 import { calcularEdad } from '../../perfil/perfil.js'
 
 export default function TarjetaProyecto({ proyecto }) {
   const edad = calcularEdad(proyecto.fechaNacimiento)
   return (
-    <Link
+    <article className="flex min-w-0 flex-col gap-3 rounded-lg bg-superficie p-4 shadow-sm sm:flex-row sm:items-center sm:gap-4 sm:p-5">
+      <Link
       to={`/proyectos/${proyecto.id}`}
       aria-label={`Ver perfil de ${proyecto.nombre}`}
-      className="flex min-w-0 items-center gap-4 rounded-lg bg-superficie p-5 shadow-sm transition-colors hover:bg-bienvenida-luz focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-primario motion-reduce:transition-none sm:gap-6 sm:p-6"
+      className="flex min-w-0 flex-1 items-center gap-4 rounded-md p-1 transition-colors hover:bg-bienvenida-luz focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primario motion-reduce:transition-none sm:gap-6"
     >
       <span
         role="img"
@@ -32,6 +33,15 @@ export default function TarjetaProyecto({ proyecto }) {
         aria-hidden="true"
         className="shrink-0 text-primario"
       />
-    </Link>
+      </Link>
+      <Link
+        to={`/proyectos/${proyecto.id}/calendario`}
+        aria-label={`Ver calendario de ${proyecto.nombre}`}
+        className="inline-flex min-h-11 items-center justify-center gap-2 rounded-sm border border-contorno-accion px-4 font-semibold text-primario hover:bg-decoracion focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primario"
+      >
+        <CalendarBlank size={20} aria-hidden="true" />
+        Calendario
+      </Link>
+    </article>
   )
 }

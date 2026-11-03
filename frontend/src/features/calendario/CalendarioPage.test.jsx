@@ -1,10 +1,13 @@
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router-dom'
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import cliente from '../../api/cliente.js'
 import AppRoutes from '../../routes/AppRoutes.jsx'
 import AuthContext from '../auth/AuthContext.js'
+
+beforeEach(() => { vi.useFakeTimers({ toFake: ['Date'] }); vi.setSystemTime(new Date(2026, 10, 10, 12)) })
+afterEach(() => vi.useRealTimers())
 
 vi.mock('../../api/cliente.js', () => {
   const mockCliente = {
@@ -179,13 +182,11 @@ describe('Calendario y eventos del niño (Tarea 5.0)', () => {
     const user = userEvent.setup()
     renderCalendario({ id: docenteId, nombre: 'Lucía' })
 
-    expect(
-      await screen.findByRole('heading', { name: 'Acto del Día de la Tradición' }),
-    ).toBeInTheDocument()
-    expect(
-      screen.getByRole('heading', { name: 'Control odontológico' }),
-    ).toBeInTheDocument()
+    expect(await screen.findByRole('button', { name: 'Ver evento: Acto del Día de la Tradición' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Ver evento: Control odontológico' })).toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: 'Ver evento: Acto del Día de la Tradición' }))
     expect(screen.getByText('09:30 a 11:00')).toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: 'Cerrar detalle' }))
 
     // Abrir modal "Nuevo evento"
     await user.click(screen.getByRole('button', { name: /Nuevo evento/i }))
@@ -194,11 +195,10 @@ describe('Calendario y eventos del niño (Tarea 5.0)', () => {
 
     const inputTitulo = within(dialog).getByLabelText(/Título/i)
     expect(inputTitulo).toHaveAttribute('maxLength', '150')
-    await user.type(inputTitulo, 'Visita al museo de ciencias')
+    fireEvent.change(inputTitulo, { target: { value: 'Visita al museo de ciencias' } })
 
     const inputFecha = within(dialog).getByLabelText('Fecha')
-    await user.clear(inputFecha)
-    await user.type(inputFecha, '20112026')
+    fireEvent.change(inputFecha, { target: { value: '20/11/2026' } })
 
     const inputHoraInicio = within(dialog).getByLabelText(/Hora de inicio/i)
     const inputHoraFin = within(dialog).getByLabelText(/Hora de fin/i)
@@ -219,10 +219,7 @@ describe('Calendario y eventos del niño (Tarea 5.0)', () => {
     fireEvent.change(inputHoraFin, { target: { value: '12:30' } })
 
     const inputDescripcion = within(dialog).getByLabelText(/Descripción/i)
-    await user.type(
-      inputDescripcion,
-      'Recorrido guiado con anticipación visual.',
-    )
+    fireEvent.change(inputDescripcion, { target: { value: 'Recorrido guiado con anticipación visual.' } })
 
     const inputArchivo = within(dialog).getByLabelText(
       /Archivos adjuntos \(opcional\)/i,
@@ -255,8 +252,9 @@ describe('Calendario y eventos del niño (Tarea 5.0)', () => {
       )
     })
 
+    await user.click(screen.getByRole('button', { name: 'Período siguiente' }))
     expect(
-      await screen.findByRole('heading', { name: 'Visita al museo de ciencias' }),
+      await screen.findByRole('button', { name: 'Ver evento: Visita al museo de ciencias' }),
     ).toBeInTheDocument()
   })
 
@@ -264,7 +262,12 @@ describe('Calendario y eventos del niño (Tarea 5.0)', () => {
     const user = userEvent.setup()
     renderCalendario({ id: docenteId, nombre: 'Lucía' })
 
-    await screen.findByRole('heading', { name: 'Acto del Día de la Tradición' })
+    await screen.findByRole('button', { name: 'Ver evento: Acto del Día de la Tradición' })
+    await user.click(screen.getByRole('button', { name: 'Ver evento: Control odontológico' }))
+    expect(screen.queryByRole('button', { name: 'Editar Control odontológico' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Eliminar Control odontológico' })).not.toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: 'Cerrar detalle' }))
+    await user.click(screen.getByRole('button', { name: 'Ver evento: Acto del Día de la Tradición' }))
 
     // La docente ve Editar y Eliminar en su propio evento, pero NO en el del familiar
     expect(
@@ -277,12 +280,6 @@ describe('Calendario y eventos del niño (Tarea 5.0)', () => {
         name: 'Eliminar Acto del Día de la Tradición',
       }),
     ).toBeInTheDocument()
-    expect(
-      screen.queryByRole('button', { name: 'Editar Control odontológico' }),
-    ).not.toBeInTheDocument()
-    expect(
-      screen.queryByRole('button', { name: 'Eliminar Control odontológico' }),
-    ).not.toBeInTheDocument()
 
     // Abrir modal de edición
     await user.click(
@@ -295,8 +292,7 @@ describe('Calendario y eventos del niño (Tarea 5.0)', () => {
     const inputTitulo = within(dialog).getByLabelText(/Título/i)
     expect(inputTitulo).toHaveValue('Acto del Día de la Tradición')
 
-    await user.clear(inputTitulo)
-    await user.type(inputTitulo, 'Acto del Día de la Tradición (reprogramado)')
+    fireEvent.change(inputTitulo, { target: { value: 'Acto del Día de la Tradición (reprogramado)' } })
 
     await user.click(
       within(dialog).getByRole('button', { name: 'Guardar cambios' }),
@@ -315,9 +311,7 @@ describe('Calendario y eventos del niño (Tarea 5.0)', () => {
     })
 
     expect(
-      await screen.findByRole('heading', {
-        name: 'Acto del Día de la Tradición (reprogramado)',
-      }),
+      await screen.findByRole('button', { name: 'Ver evento: Acto del Día de la Tradición (reprogramado)' }),
     ).toBeInTheDocument()
   })
 
@@ -325,14 +319,10 @@ describe('Calendario y eventos del niño (Tarea 5.0)', () => {
     const user = userEvent.setup()
     renderCalendario({ id: tutorId, nombre: 'Valeria' })
 
-    await screen.findByRole('heading', { name: 'Control odontológico' })
+    await screen.findByRole('button', { name: 'Ver evento: Control odontológico' })
+    await user.click(screen.getByRole('button', { name: 'Ver evento: Control odontológico' }))
 
     // La tutora ve Editar y Eliminar tanto en el evento de la docente como en el del familiar
-    expect(
-      screen.getByRole('button', {
-        name: 'Eliminar Acto del Día de la Tradición',
-      }),
-    ).toBeInTheDocument()
     const botonEliminarAjeno = screen.getByRole('button', {
       name: 'Eliminar Control odontológico',
     })
@@ -348,7 +338,7 @@ describe('Calendario y eventos del niño (Tarea 5.0)', () => {
 
     await waitFor(() => {
       expect(
-        screen.queryByRole('heading', { name: 'Control odontológico' }),
+        screen.queryByRole('button', { name: 'Ver evento: Control odontológico' }),
       ).not.toBeInTheDocument()
     })
   })

@@ -34,7 +34,7 @@ export default function TarjetaEvento({
   const diaTexto = nombreDiaSemana(evento.diaSemana)
 
   return (
-    <article className="rounded-lg border border-borde bg-superficie p-5 shadow-sm">
+    <article className={`rounded-lg border bg-superficie p-5 shadow-sm ${evento.esCambio ? 'border-primario' : 'border-borde'}`}>
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-2">
@@ -49,6 +49,7 @@ export default function TarjetaEvento({
                   : 'Se repite cada semana'}
               </span>
             )}
+            {evento.esCambio && <span className="inline-flex items-center gap-1 rounded-pill bg-primario/10 px-2.5 py-0.5 text-xs font-semibold text-primario"><CalendarBlank size={14} aria-hidden="true" />Cambio de rutina</span>}
           </div>
 
           <div className="mt-2 flex flex-wrap items-center gap-4 text-sm font-semibold text-primario">

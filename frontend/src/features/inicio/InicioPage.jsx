@@ -5,6 +5,7 @@ import InicioSidebar from './InicioSidebar.jsx'
 import { Acompanamientos, Eventos, Recursos } from './InicioSecciones.jsx'
 import HiloInicio from './HiloInicio.jsx'
 import { seccionesFuturas } from './inicio.mock.js'
+import CalendarioUsuarioPage from '../calendario/CalendarioUsuarioPage.jsx'
 
 export default function InicioPage() {
   const { usuario, cerrarSesion } = useAuth()
@@ -45,7 +46,7 @@ export default function InicioPage() {
             </p>
             <HiloInicio />
           </header>
-          {seccion && (
+          {seleccion === 'calendario' ? <CalendarioUsuarioPage /> : seccion && (
             <section
               aria-labelledby="seccion-pendiente"
               className="mb-6 rounded-lg border border-borde bg-superficie p-5"
@@ -59,8 +60,18 @@ export default function InicioPage() {
                 {seccion} · Próximamente
               </h2>
               <p className="mt-2 text-texto-suave">
-                Este espacio todavía no está disponible.
+                {seleccion === 'calendario'
+                  ? 'El calendario se consulta dentro de cada acompañamiento.'
+                  : 'Este espacio todavía no está disponible.'}
               </p>
+              {seleccion === 'calendario' && (
+                <Link
+                  to="/acompanamientos"
+                  className="mt-3 inline-flex min-h-11 items-center rounded-sm border border-contorno-accion px-4 font-bold text-primario hover:bg-decoracion focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-primario"
+                >
+                  Elegir un acompañamiento
+                </Link>
+              )}
               <Link
                 to="/inicio"
                 className="mt-3 inline-flex min-h-11 items-center font-bold text-primario underline underline-offset-4 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-primario"
@@ -69,15 +80,17 @@ export default function InicioPage() {
               </Link>
             </section>
           )}
-          <p id="aviso-ejemplos" className="mb-3 text-xs text-texto-suave">
-            Vista de ejemplo: los acompañamientos y eventos son ficticios y no
-            corresponden a tu cuenta.
-          </p>
-          <Acompanamientos />
-          <div className="mt-4 grid min-w-0 gap-4 lg:grid-cols-2">
-            <Eventos />
-            <Recursos />
-          </div>
+          {seleccion !== 'calendario' && <>
+            <p id="aviso-ejemplos" className="mb-3 text-xs text-texto-suave">
+              Vista de ejemplo: los acompañamientos y eventos son ficticios y no
+              corresponden a tu cuenta.
+            </p>
+            <Acompanamientos />
+            <div className="mt-4 grid min-w-0 gap-4 lg:grid-cols-2">
+              <Eventos />
+              <Recursos />
+            </div>
+          </>}
         </div>
       </main>
     </div>

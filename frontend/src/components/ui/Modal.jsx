@@ -7,7 +7,7 @@ export function Modal({ abierto, titulo, onCerrar, children }) {
       aria-labelledby="modal-titulo"
       className="fixed inset-0 z-50 flex items-center justify-center bg-oliva/40 p-4"
     >
-      <div className="w-full max-w-lg rounded-3xl border border-oliva/20 bg-crema p-6 shadow-lg">
+      <div className="max-h-full w-full max-w-lg overflow-y-auto overscroll-contain rounded-3xl border border-oliva/20 bg-crema p-4 shadow-lg sm:p-6">
         <div className="mb-4 flex items-center justify-between gap-4">
           <h2
             id="modal-titulo"

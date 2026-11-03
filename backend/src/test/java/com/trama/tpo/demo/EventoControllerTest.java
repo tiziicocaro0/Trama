@@ -201,6 +201,27 @@ class EventoControllerTest {
                         .value("Visita al museo"));
     }
 
+    @Test
+    void listarExponeCambiosDeRutinaSoloAMiembros() throws Exception {
+        UUID eventoId = UUID.fromString(crearEvento(familiar));
+        var evento = eventoRepository.findById(eventoId).orElseThrow();
+        evento.setEsCambio(true);
+        eventoRepository.saveAndFlush(evento);
+
+        mockMvc.perform(get(rutaEventos())
+                .param("desde", "2026-11-01")
+                .param("hasta", "2026-11-30")
+                .header("Authorization", token(docente)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].esCambio").value(true));
+
+        mockMvc.perform(get(rutaEventos())
+                .param("desde", "2026-11-01")
+                .param("hasta", "2026-11-30")
+                .header("Authorization", token(usuarioAjeno)))
+                .andExpect(status().isForbidden());
+    }
+
     // TEST 7: HORARIOS INVÁLIDOS
 
     @Test
