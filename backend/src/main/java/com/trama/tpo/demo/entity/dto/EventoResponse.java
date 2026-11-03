@@ -21,6 +21,9 @@ public record EventoResponse(
         Boolean recurrente,
         Byte diaSemana,
         LocalDate fechaFinRecurrencia,
-        LocalDate fechaOcurrencia
+        LocalDate fechaOcurrencia,
+
+        // 5.6: COMUN o REUNION
+        String tipo
 
 ) {}

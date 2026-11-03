@@ -31,6 +31,7 @@ public class EventoService {
     private final ArchivoRepository archivoRepository;
     private final PermisoService permisoService;
     private final UsuarioActual usuarioActual;
+    private final AcuerdoRepository acuerdoRepository;
 
     public EventoService(
             EventoRepository eventoRepository,
@@ -39,7 +40,8 @@ public class EventoService {
             UsuarioRepository usuarioRepository,
             ArchivoRepository archivoRepository,
             PermisoService permisoService,
-            UsuarioActual usuarioActual) {
+            UsuarioActual usuarioActual,
+            AcuerdoRepository acuerdoRepository) {
 
         this.eventoRepository = eventoRepository;
         this.excepcionRepository = excepcionRepository;
@@ -48,6 +50,7 @@ public class EventoService {
         this.archivoRepository = archivoRepository;
         this.permisoService = permisoService;
         this.usuarioActual = usuarioActual;
+        this.acuerdoRepository = acuerdoRepository;
     }
 
     // CREAR EVENTO UNICO O RECURRENTE
@@ -75,7 +78,7 @@ public class EventoService {
                 .horaInicio(request.horaInicio())
                 .horaFin(request.horaFin())
                 .imagen(obtenerImagen(request.imagenId(), proyectoId))
-                .tipo("COMUN")
+                .tipo(request.tipo() != null ? request.tipo() : "COMUN")
                 .recurrente(recurrente)
                 .diaSemana(recurrente ? request.diaSemana() : null)
                 .fechaFinRecurrencia(recurrente
@@ -183,6 +186,16 @@ public class EventoService {
         evento.setDiaSemana(recurrente ? request.diaSemana() : null);
         evento.setFechaFinRecurrencia(recurrente
                 ? request.fechaFinRecurrencia() : null);
+
+        // 5.6: si no viene el tipo se mantiene el que tenía (así una reunión no pasa a común sin querer)
+        if (request.tipo() != null) {
+            if ("COMUN".equals(request.tipo()) && "REUNION".equals(evento.getTipo())
+                    && acuerdoRepository.existsByReunionId(eventoId)) {
+                throw error("REUNION_CON_ACUERDOS", HttpStatus.CONFLICT,
+                        "La reunión tiene acuerdos: no puede pasar a ser un evento común");
+            }
+            evento.setTipo(request.tipo());
+        }
 
         return convertir(eventoRepository.saveAndFlush(evento));
     }
@@ -338,7 +351,8 @@ public class EventoService {
                 evento.getRecurrente(),
                 evento.getDiaSemana(),
                 evento.getFechaFinRecurrencia(),
-                fecha
+                fecha,
+                evento.getTipo()
         );
     }
 }
