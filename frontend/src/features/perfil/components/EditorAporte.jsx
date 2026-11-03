@@ -4,14 +4,15 @@ import CampoFecha from '../../../components/ui/CampoFecha.jsx'
 import CampoFormulario from '../../../components/ui/CampoFormulario.jsx'
 import { guardarAporte } from '../../../api/aportes.js'
 import { leerDatosAporte } from '../perfil.js'
-import { CATEGORIAS_COMUNICACION, FORMAS_COMUNICACION, camposPorTipo, datosSinVacios, textosPorTipo, validarCamposSensoriales, validarCamposEstrategia } from '../camposAporte.js'
+import { CATEGORIAS_COMUNICACION, FORMAS_COMUNICACION, camposPorTipo, datosSinVacios, textosPorTipo, validarCamposSensoriales, validarCamposEstrategia, validarCamposRutina } from '../camposAporte.js'
 import CamposSensoriales from './CamposSensoriales.jsx'
 import CamposEstrategia from './CamposEstrategia.jsx'
+import CamposRutina from './CamposRutina.jsx'
 import AdjuntosAporte from './AdjuntosAporte.jsx'
 import PieEditorAporte from './PieEditorAporte.jsx'
 import { hoyIso } from '../../../utils/fechas.js'
 
-const SECCIONES_CON_ADJUNTOS = ['NOTA_PROFESIONAL', 'COMUNICACION', 'SENSORIAL', 'ESTRATEGIA']
+const SECCIONES_CON_ADJUNTOS = ['NOTA_PROFESIONAL', 'COMUNICACION', 'SENSORIAL', 'ESTRATEGIA', 'RUTINA']
 
 export default function EditorAporte({
   seccion,
@@ -22,7 +23,7 @@ export default function EditorAporte({
 }) {
   const [titulo, setTitulo] = useState(aporte?.titulo ?? '')
   const [contenido, setContenido] = useState(aporte?.contenido ?? '')
-  const [visibilidad, setVisibilidad] = useState(aporte?.visibilidad ?? 'TODOS')
+  const [visibilidad, setVisibilidad] = useState(aporte?.visibilidad ?? (seccion.tipo === 'RUTINA' ? '' : 'TODOS'))
   const [archivos, setArchivos] = useState(() =>
     Array.isArray(aporte?.archivos) ? aporte.archivos : [],
   )
@@ -33,6 +34,7 @@ export default function EditorAporte({
       ...(seccion.tipo === 'COMUNICACION' ? { categoria: '', formasComunicacion: [], otraForma: '', comoHablarle: '', queEvitar: '' } : {}),
       ...(seccion.tipo === 'SENSORIAL' ? { lista: '', categoria: '', contexto: '' } : {}),
       ...(seccion.tipo === 'ESTRATEGIA' ? { categoria: '', situacion: '', resultado: '', contextos: [] } : {}),
+      ...(seccion.tipo === 'RUTINA' ? { categoria: '', contextos: [] } : {}),
       ...guardados,
       ...Object.fromEntries(
         campos.map(({ nombre, inicial }) => [
@@ -53,10 +55,11 @@ export default function EditorAporte({
   const esComunicacion = seccion.tipo === 'COMUNICACION'
   const esSensorial = seccion.tipo === 'SENSORIAL'
   const esEstrategia = seccion.tipo === 'ESTRATEGIA'
+  const esRutina = seccion.tipo === 'RUTINA'
   const permiteAdjuntos = SECCIONES_CON_ADJUNTOS.includes(seccion.tipo)
   const sustantivo = esNota ? 'nota' : 'aporte'
   const textos = textosPorTipo[seccion.tipo] ?? {}
-  const etiquetaTitulo = textos.titulo ?? 'Título'
+  const etiquetaTitulo = esRutina ? 'Título del aporte' : textos.titulo ?? 'Título'
   useEffect(() => {
     formulario.current?.querySelector('input')?.focus()
   }, [])
@@ -87,6 +90,11 @@ export default function EditorAporte({
       setErroresCampos(errores)
       if (Object.keys(errores).length) return
     }
+    if (esRutina) {
+      const errores = validarCamposRutina(extra, titulo, contenido, visibilidad)
+      setErroresCampos(errores)
+      if (Object.keys(errores).length) return
+    }
     if (
       !titulo.trim() ||
       titulo.trim().length > 150 ||
@@ -106,13 +114,14 @@ export default function EditorAporte({
         (Array.isArray(aporte?.archivoIds) && aporte.archivoIds.length > 0)
       const incluirArchivos =
         permiteAdjuntos && (archivos.length > 0 || teniaArchivos)
+      const extraRutina = esRutina && !extra.contextos?.length ? { ...extra, contextos: '' } : extra
 
       await guardarAporte(proyectoId, aporte?.id, {
         tipo: seccion.tipo,
         titulo: titulo.trim(),
         contenido: contenido.trim(),
         visibilidad,
-        ...(campos.length || esComunicacion || esSensorial || esEstrategia ? { datos: JSON.stringify(datosSinVacios(esComunicacion && !extra.formasComunicacion?.includes('OTRA') ? { ...extra, otraForma: '' } : extra)) } : {}),
+        ...(campos.length || esComunicacion || esSensorial || esEstrategia || esRutina ? { datos: JSON.stringify(datosSinVacios(esComunicacion && !extra.formasComunicacion?.includes('OTRA') ? { ...extra, otraForma: '' } : extraRutina)) } : {}),
         ...(incluirArchivos
           ? { archivoIds: archivos.map((item) => item.id) }
           : {}),
@@ -145,17 +154,23 @@ export default function EditorAporte({
       </p>
       {esSensorial && <CamposSensoriales extra={extra} setExtra={setExtra} errores={erroresCampos} disabled={enviando} />}
       {esEstrategia && <CamposEstrategia parte="categoria" extra={extra} setExtra={setExtra} errores={erroresCampos} disabled={enviando} />}
+      {esRutina && <>
+        <p className="text-sm text-texto-suave">Compartí una observación sobre cómo participa en una actividad cotidiana y qué suele ayudarle. No es una evaluación ni una lista de pasos.</p>
+        <p className="text-sm text-texto-suave">Todos los campos son obligatorios, salvo el contexto y el archivo adjunto.</p>
+        <CamposRutina parte="categoria" extra={extra} setExtra={setExtra} errores={erroresCampos} disabled={enviando} />
+      </>}
       <CampoFormulario
         id={`titulo-aporte-${seccion.tipo}`}
         label={etiquetaTitulo}
-        hint={esSensorial ? 'Resumí lo que observaste en una frase, hasta 150 caracteres' : esEstrategia ? 'Resumí la estrategia en una frase breve, hasta 150 caracteres' : 'Obligatorio, hasta 150 caracteres'}
+        hint={esSensorial ? 'Resumí lo que observaste en una frase, hasta 150 caracteres' : esEstrategia ? 'Resumí la estrategia en una frase breve, hasta 150 caracteres' : esRutina ? 'Resumí lo observado en una frase.' : 'Obligatorio, hasta 150 caracteres'}
       >
-        <Campo
+          <Campo
           name="titulo"
           placeholder={etiquetaTitulo}
           value={titulo}
           onChange={(event) => setTitulo(event.target.value)}
           required
+          aria-invalid={Boolean(erroresCampos.titulo)}
           maxLength={150}
           disabled={enviando}
         />
@@ -166,7 +181,7 @@ export default function EditorAporte({
           htmlFor={`contenido-aporte-${seccion.tipo}`}
           className="mb-2 block font-semibold"
         >
-          {esSensorial ? 'Descripción u observación (opcional)' : textos.contenido ??
+          {esSensorial ? 'Descripción u observación (opcional)' : esRutina ? 'Descripción' : textos.contenido ??
             (esNota ? 'Texto de la nota (opcional)' : 'Descripción (opcional)')}
         </label>
         <textarea
@@ -177,12 +192,15 @@ export default function EditorAporte({
           maxLength={10000}
           rows={4}
           disabled={enviando}
+          aria-required={esRutina}
           aria-invalid={Boolean(erroresCampos.contenido)}
           className="w-full rounded-md border border-borde bg-superficie p-4 text-texto focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primario"
         />
       </div>
       {erroresCampos.contenido && <p role="alert" className="text-sm text-error">{erroresCampos.contenido}</p>}
+      {esRutina && <p className="text-sm text-texto-suave">Contá lo que ya puede hacer, dónde necesita apoyo o qué lo ayuda. No hace falta detallar cada paso.</p>}
       {esEstrategia && <CamposEstrategia extra={extra} setExtra={setExtra} errores={erroresCampos} disabled={enviando} />}
+      {esRutina && <CamposRutina extra={extra} setExtra={setExtra} errores={erroresCampos} disabled={enviando} />}
       {esSensorial && <CamposSensoriales parte="contexto" extra={extra} setExtra={setExtra} disabled={enviando} />}
       {esComunicacion && (
         <div className="space-y-4">
@@ -294,6 +312,7 @@ export default function EditorAporte({
           disabled={enviando}
           sensorial={esSensorial}
           estrategia={esEstrategia}
+          rutina={esRutina}
         />
       )}
       {error && (
@@ -301,7 +320,8 @@ export default function EditorAporte({
           {error}
         </p>
       )}
-      <PieEditorAporte tipo={seccion.tipo} visibilidad={visibilidad} onVisibilidad={(event) => setVisibilidad(event.target.value)} disabled={enviando} sensorial={esSensorial || esEstrategia} sustantivo={sustantivo} alCancelar={alCancelar} />
+      {esRutina && <p className="rounded-sm bg-agua/15 p-3 text-sm text-secundario">Tu nombre, rol o especialidad y la fecha se agregarán automáticamente al guardar.</p>}
+      <PieEditorAporte tipo={seccion.tipo} visibilidad={visibilidad} onVisibilidad={(event) => setVisibilidad(event.target.value)} disabled={enviando} sensorial={esSensorial || esEstrategia || esRutina} errorVisibilidad={erroresCampos.visibilidad} sustantivo={sustantivo} alCancelar={alCancelar} />
     </form>
   )
 }

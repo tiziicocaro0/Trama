@@ -69,6 +69,7 @@ it('abre el detalle y diferencia los cambios de rutina', async () => {
   expect(within(detalle).getByRole('heading', { name: 'Cambio de docente' })).toBeInTheDocument()
   expect(within(detalle).getByText('Cambio de rutina')).toBeInTheDocument()
   expect(within(detalle).getByText('Cargado por: Ana Ficticia')).toBeInTheDocument()
+  expect(within(detalle).getByRole('link', { name: 'Mostrarle el día' })).toHaveAttribute('href', `/proyectos/${proyectoId}/hoy?fecha=2026-10-23`)
 })
 
 it('muestra el estado vacío del período consultado', async () => {

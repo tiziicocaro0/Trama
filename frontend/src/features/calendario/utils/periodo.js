@@ -5,6 +5,13 @@ export function fechaLocal(valor) {
   return new Date(anio, mes - 1, dia)
 }
 
+export function esFechaIsoValida(valor) {
+  if (typeof valor !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(valor)) return false
+  const fecha = fechaLocal(valor)
+  const [anio, mes, dia] = valor.split('-').map(Number)
+  return fecha.getFullYear() === anio && fecha.getMonth() === mes - 1 && fecha.getDate() === dia
+}
+
 export function sumarDias(valor, cantidad) {
   const fecha = fechaLocal(valor)
   fecha.setDate(fecha.getDate() + cantidad)

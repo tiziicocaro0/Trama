@@ -7,6 +7,7 @@ import {
   NotePencil,
   Palette,
   Star,
+  Plus,
   X,
 } from '@phosphor-icons/react'
 import { Fragment, useRef, useState } from 'react'
@@ -35,6 +36,7 @@ export default function BloquePerfil({
   completo = false,
   puedeCrear = false,
   alGuardar,
+  encabezado,
 }) {
   const [editor, setEditor] = useState(null)
   const [archivandoId, setArchivandoId] = useState(null)
@@ -52,6 +54,11 @@ export default function BloquePerfil({
   function cancelar() {
     setEditor(null)
     disparador.current?.focus()
+  }
+
+  function abrirDesdeEncabezado() {
+    setErrorArchivo('')
+    setEditor({})
   }
 
   async function archivar(aporte) {
@@ -73,7 +80,8 @@ export default function BloquePerfil({
   const esComunicacion = seccion.tipo === 'COMUNICACION' && completo
   const esSensorial = seccion.tipo === 'SENSORIAL' && completo
   const esEstrategia = seccion.tipo === 'ESTRATEGIA' && completo
-  const esPanel = esComunicacion || esSensorial || esEstrategia
+  const esRutina = seccion.tipo === 'RUTINA' && completo
+  const esPanel = esComunicacion || esSensorial || esEstrategia || esRutina
   const visibles = completo ? aportes : aportes.slice(0, 3)
   const agrupados = esSensorial
     ? ['AYUDA', 'CUESTA', ''].flatMap((lista) => visibles.filter((aporte) => (leerDatosAporte(aporte.datos).lista || '') === lista))
@@ -84,7 +92,7 @@ export default function BloquePerfil({
       aria-labelledby={`titulo-${seccion.slug}`}
       className={esPanel ? 'flex min-w-0 flex-col' : 'flex min-w-0 flex-col rounded-lg bg-superficie p-5 shadow-sm sm:p-6'}
     >
-      <div className={esSensorial || esEstrategia ? 'sr-only' : 'mb-3 flex items-center gap-3'}>
+      <div className={esSensorial || esEstrategia || esRutina ? 'sr-only' : 'mb-3 flex items-center gap-3'}>
         <span
           className={`flex size-10 shrink-0 items-center justify-center rounded-sm ${seccion.tono}`}
         >
@@ -97,6 +105,7 @@ export default function BloquePerfil({
           {seccion.titulo}
         </h2>
       </div>
+      {encabezado?.(abrirDesdeEncabezado)}
       {errorArchivo && (
         <p role="alert" className="mb-3 text-sm text-error">
           {errorArchivo}
@@ -136,11 +145,12 @@ export default function BloquePerfil({
           </p>
         </div>
       )}
-      {puedeCrear && !editor && (
+      {puedeCrear && !editor && !esRutina && (
         <Boton variant={esPanel ? 'primary' : 'secondary'} onClick={abrirEditor} className={esPanel ? 'fixed bottom-20 right-4 z-30 shadow-md md:static md:mb-4 md:self-end' : 'mb-4'}>
           {esNota ? 'Agregar nota' : 'Agregar aporte'}
         </Boton>
       )}
+      {puedeCrear && !editor && esRutina && <button type="button" onClick={abrirEditor} className="fixed bottom-20 right-4 z-30 inline-flex min-h-14 items-center gap-2 rounded-full bg-primario px-5 font-semibold text-superficie shadow-md focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primario md:hidden"><Plus size={20} aria-hidden="true" /><span>Agregar aporte</span></button>}
       {historialDe && (
         <HistorialAporte
           key={historialDe.id}

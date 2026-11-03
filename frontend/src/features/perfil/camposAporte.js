@@ -1,6 +1,6 @@
 import { TIPOS_NOTA } from './perfil.js'
 import { hoyIso } from '../../utils/fechas.js'
-import { Ear, Eye, Footprints, ForkKnife, Hand, Image, ListNumbers, PauseCircle, PersonSimple, PersonSimpleRun, SlidersHorizontal, Sparkle, SquaresFour } from '@phosphor-icons/react'
+import { Ear, Eye, Footprints, ForkKnife, Hand, Image, ListNumbers, MoonStars, PauseCircle, PersonSimple, PersonSimpleRun, PersonSimpleWalk, Shower, SlidersHorizontal, Sparkle, SquaresFour, TShirt, Toilet } from '@phosphor-icons/react'
 
 export const CATEGORIAS_COMUNICACION = [
   ['EXPRESION', 'Expresión'],
@@ -67,6 +67,45 @@ export const CONTEXTOS_ESTRATEGIA = [
   ['ACTIVIDAD_EXTRACURRICULAR', 'Actividad extracurricular'],
   ['DISTINTOS_CONTEXTOS', 'En distintos contextos'], ['OTRO', 'Otro'],
 ]
+
+export const CATEGORIAS_RUTINA = [
+  ['ALIMENTACION', 'Alimentación'],
+  ['HIGIENE_CUIDADO_PERSONAL', 'Higiene y cuidado personal'],
+  ['VESTIDO', 'Vestido'],
+  ['USO_BANO', 'Uso del baño'],
+  ['SUENO_DESCANSO', 'Sueño y descanso'],
+  ['MOVILIDAD_AUTONOMIA', 'Movilidad y autonomía'],
+]
+export const ICONOS_RUTINA = { ALIMENTACION: ForkKnife, HIGIENE_CUIDADO_PERSONAL: Shower, VESTIDO: TShirt, USO_BANO: Toilet, SUENO_DESCANSO: MoonStars, MOVILIDAD_AUTONOMIA: PersonSimpleWalk }
+export const TONOS_RUTINA = { ALIMENTACION: 'bg-miel/20 text-secundario', HIGIENE_CUIDADO_PERSONAL: 'bg-agua/20 text-secundario', VESTIDO: 'bg-primario/15 text-primario', USO_BANO: 'bg-miel/15 text-secundario', SUENO_DESCANSO: 'bg-agua/15 text-secundario', MOVILIDAD_AUTONOMIA: 'bg-secundario/15 text-secundario' }
+export const CONTEXTOS_RUTINA = [
+  ['CASA', 'Casa'], ['ESCUELA', 'Escuela'], ['CONSULTORIO', 'Consultorio'],
+  ['DISTINTOS_CONTEXTOS', 'En distintos contextos'], ['OTRO', 'Otro'],
+]
+export const CATEGORIA_RUTINA_PERSONALIZADA = 'PERSONALIZADA'
+
+export function claveCategoriaRutina(datos) {
+  return datos.categoria === CATEGORIA_RUTINA_PERSONALIZADA && datos.categoriaNombre?.trim()
+    ? `PERSONALIZADA:${datos.categoriaNombre.trim().toLocaleLowerCase('es')}`
+    : datos.categoria ?? ''
+}
+
+export function etiquetaCategoriaRutina(datos) {
+  return datos.categoria === CATEGORIA_RUTINA_PERSONALIZADA
+    ? datos.categoriaNombre?.trim() ?? ''
+    : CATEGORIAS_RUTINA.find(([valor]) => valor === datos.categoria)?.[1] ?? ''
+}
+
+export function validarCamposRutina(extra, titulo, contenido, visibilidad) {
+  return {
+    ...(!(CATEGORIAS_RUTINA.some(([valor]) => valor === extra.categoria) || extra.categoria === CATEGORIA_RUTINA_PERSONALIZADA) ? { categoria: 'Elegí una actividad o escribí una categoría.' } : {}),
+    ...(extra.categoria === CATEGORIA_RUTINA_PERSONALIZADA && !extra.categoriaNombre?.trim() ? { categoriaNombre: 'Escribí el nombre de la categoría.' } : {}),
+    ...(extra.categoria === CATEGORIA_RUTINA_PERSONALIZADA && extra.categoriaNombre?.trim().length > 60 ? { categoriaNombre: 'Usá hasta 60 caracteres.' } : {}),
+    ...(!titulo.trim() ? { titulo: 'Escribí un título para el aporte.' } : {}),
+    ...(!contenido.trim() ? { contenido: 'Contá brevemente cómo realiza la actividad.' } : {}),
+    ...(!['TODOS', 'PROFESIONALES', 'SOLO_TUTORES'].includes(visibilidad) ? { visibilidad: 'Elegí quién puede ver este aporte.' } : {}),
+  }
+}
 
 export function validarCamposEstrategia(extra, contenido) {
   return {

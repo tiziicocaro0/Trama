@@ -1,5 +1,5 @@
 import { useCallback, useState } from 'react'
-import { useParams } from 'react-router-dom'
+import { useParams, useSearchParams } from 'react-router-dom'
 import { descargarArchivo } from '../../api/archivos.js'
 import {
   cancelarOcurrenciaEvento,
@@ -26,10 +26,13 @@ import CabeceraCalendario from './components/CabeceraCalendario.jsx'
 import PanelCalendario from './components/PanelCalendario.jsx'
 import VistaCalendario from './components/VistaCalendario.jsx'
 import { hoyIso } from '../../utils/fechas.js'
-import { eventosDelDia, moverPeriodo, obtenerPeriodo } from './utils/periodo.js'
+import { esFechaIsoValida, eventosDelDia, moverPeriodo, obtenerPeriodo } from './utils/periodo.js'
 
 export default function CalendarioPage() {
   const { id: idRuta } = useParams()
+  const [searchParams] = useSearchParams()
+  const fechaConsulta = searchParams.get('fecha')
+  const fechaInicial = esFechaIsoValida(fechaConsulta) ? fechaConsulta : hoyIso()
   const { proyectoActual, rol: rolSelector } = useProyectoActual()
   const proyectoId = idRuta || proyectoActual?.id || ''
 
@@ -39,8 +42,8 @@ export default function CalendarioPage() {
 
   const [modalAbierto, setModalAbierto] = useState(false)
   const [vista, setVista] = useState('semana')
-  const [referencia, setReferencia] = useState(() => hoyIso())
-  const [diaSeleccionado, setDiaSeleccionado] = useState(() => hoyIso())
+  const [referencia, setReferencia] = useState(fechaInicial)
+  const [diaSeleccionado, setDiaSeleccionado] = useState(fechaInicial)
   const [panelDia, setPanelDia] = useState(null)
   const [eventoSeleccionado, setEventoSeleccionado] = useState(null)
   const [fechaNuevoEvento, setFechaNuevoEvento] = useState(null)
@@ -265,7 +268,7 @@ export default function CalendarioPage() {
               <NavegacionPerfil proyectoId={proyectoId} />
 
               <section aria-labelledby="titulo-calendario">
-                <CabeceraCalendario nombreProyecto={proyecto.nombre} vista={vista} referencia={referencia} periodo={periodo} onAnterior={() => cambiarPeriodo(-1)} onSiguiente={() => cambiarPeriodo(1)} onHoy={volverHoy} onVista={(valor) => { setVista(valor); setPanelDia(null); setEventoSeleccionado(null) }} mostrarNuevo={false} />
+                <CabeceraCalendario nombreProyecto={proyecto.nombre} vista={vista} referencia={referencia} periodo={periodo} onAnterior={() => cambiarPeriodo(-1)} onSiguiente={() => cambiarPeriodo(1)} onHoy={volverHoy} onVista={(valor) => { setVista(valor); setPanelDia(null); setEventoSeleccionado(null) }} mostrarNuevo={false} proyectoId={proyectoId} fechaSeleccionada={diaSeleccionado} mostrarIrAlDia={!panelDia} />
 
                 {mensajeExito && (
                   <div className="mb-6">

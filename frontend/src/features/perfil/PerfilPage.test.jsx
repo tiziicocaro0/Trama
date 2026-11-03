@@ -42,7 +42,7 @@ const aportes = [
   })),
 )
 const sesion = {
-  usuario: { nombre: 'Tutora' },
+  usuario: { id: 'autor-1', nombre: 'Tutora' },
   estado: 'autenticado',
   cerrarSesion: vi.fn(),
 }
@@ -144,6 +144,27 @@ describe('Portada y navegación de lectura', () => {
     await screen.findByRole('heading', { level: 2 })
     expect(screen.getAllByRole('heading', { level: 2 })).toHaveLength(1)
     expect(screen.queryByText(/Aportes de ejemplo/)).not.toBeInTheDocument()
+  })
+
+  it('muestra los filtros de Rutinas con iconos y combina categoría, texto, visibilidad y autor', async () => {
+    const rutinas = [
+      { id: 'r1', tipo: 'RUTINA', titulo: 'Se organiza mejor al comer', contenido: 'Con los elementos preparados', datos: '{"categoria":"ALIMENTACION","contextos":["CASA"]}', visibilidad: 'TODOS', autorId: 'autor-1', autorEspecialidades: [{ especialidad: 'PSICOLOGIA' }], creadoEn: '2026-10-30T12:00:00Z', puedeEditar: true },
+      { id: 'r2', tipo: 'RUTINA', titulo: 'Cepillado con secuencia visual', contenido: 'Completa la actividad', datos: '{"categoria":"HIGIENE_CUIDADO_PERSONAL","contextos":["ESCUELA"]}', visibilidad: 'SOLO_TUTORES', autorId: 'autor-2', autorEspecialidades: [{ especialidad: 'PSICOLOGIA' }], creadoEn: '2026-10-29T12:00:00Z', puedeEditar: false },
+    ]
+    cliente.get.mockImplementation(async (ruta) => ({ data: ruta.endsWith('/aportes') ? rutinas : { ...proyecto, puedeCargar: true } }))
+    abrir(`/proyectos/${id}/rutinas`)
+    await screen.findByRole('heading', { name: 'Se organiza mejor al comer' })
+    expect(screen.getByRole('button', { name: 'Agregar aporte' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Alimentación' })).toBeInTheDocument()
+    expect(screen.getByRole('combobox', { name: 'Especialidad' })).toBeInTheDocument()
+    expect(screen.getByRole('combobox', { name: 'Visibilidad' })).toBeInTheDocument()
+    await userEvent.click(screen.getByRole('button', { name: 'Higiene y cuidado personal' }))
+    expect(screen.queryByRole('heading', { name: 'Se organiza mejor al comer' })).not.toBeInTheDocument()
+    expect(screen.getByText('Cepillado con secuencia visual')).toBeInTheDocument()
+    await userEvent.click(screen.getByRole('button', { name: 'Higiene y cuidado personal' }))
+    await userEvent.type(screen.getByRole('searchbox', { name: 'Buscar en rutinas' }), 'elementos preparados')
+    expect(screen.getByText('Se organiza mejor al comer')).toBeInTheDocument()
+    expect(screen.queryByText('Cepillado con secuencia visual')).not.toBeInTheDocument()
   })
 
   it.each([`/proyectos/${id}`, `/proyectos/${id}/fortalezas`])(

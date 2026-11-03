@@ -1,4 +1,4 @@
-import { ChatCircle, Ear, FileImage, FilePdf, HandPointing, Hourglass, Image, Lock, UsersThree } from '@phosphor-icons/react'
+import { ChatCircle, Ear, FileImage, FilePdf, HandPointing, Hourglass, Image, Lock, SquaresFour, UsersThree } from '@phosphor-icons/react'
 import { useState } from 'react'
 import {
   descargarArchivo,
@@ -15,7 +15,7 @@ import {
 } from '../../features/perfil/perfil.js'
 import ConfirmacionAporte from '../../features/perfil/components/ConfirmacionAporte.jsx'
 import DatosEstrategia from '../../features/perfil/components/DatosEstrategia.jsx'
-import { CATEGORIAS_COMUNICACION, CATEGORIAS_SENSORIALES, CONTEXTOS_SENSORIALES, FORMAS_COMUNICACION, ICONOS_SENSORIALES, TONOS_SENSORIALES } from '../../features/perfil/camposAporte.js'
+import { CATEGORIAS_COMUNICACION, CATEGORIAS_SENSORIALES, CONTEXTOS_SENSORIALES, FORMAS_COMUNICACION, ICONOS_SENSORIALES, TONOS_SENSORIALES, CONTEXTOS_RUTINA, ICONOS_RUTINA, TONOS_RUTINA, etiquetaCategoriaRutina } from '../../features/perfil/camposAporte.js'
 
 const ETIQUETAS_TIPO_NOTA = Object.fromEntries(TIPOS_NOTA)
 const ICONOS_COMUNICACION = { EXPRESION: ChatCircle, COMPRENSION: Ear, NO_VERBAL: HandPointing, INTERACCION_SOCIAL: UsersThree, TIEMPO_ESPERA: Hourglass, APOYOS: Image }
@@ -83,6 +83,7 @@ export default function TarjetaAporte({
   const comunicacion = aporte.tipo === 'COMUNICACION' ? leerDatosAporte(aporte.datos) : null
   const sensorial = aporte.tipo === 'SENSORIAL' ? leerDatosAporte(aporte.datos) : null
   const estrategia = aporte.tipo === 'ESTRATEGIA' ? leerDatosAporte(aporte.datos) : null
+  const rutina = aporte.tipo === 'RUTINA' ? leerDatosAporte(aporte.datos) : null
   const categoriaSensorial = CATEGORIAS_SENSORIALES.find(([valor]) => valor === sensorial?.categoria)?.[1]
   const contextoSensorial = CONTEXTOS_SENSORIALES.find(([valor]) => valor === sensorial?.contexto)?.[1]
   const IconoSensorial = ICONOS_SENSORIALES[sensorial?.categoria]
@@ -91,6 +92,9 @@ export default function TarjetaAporte({
   const formasComunicacion = Array.isArray(comunicacion?.formasComunicacion)
     ? comunicacion.formasComunicacion.map((forma) => forma === 'OTRA' ? comunicacion.otraForma : FORMAS_COMUNICACION.find(([valor]) => valor === forma)?.[1]).filter(Boolean)
     : []
+  const categoriaRutina = rutina ? etiquetaCategoriaRutina(rutina) : ''
+  const IconoRutina = ICONOS_RUTINA[rutina?.categoria] ?? (rutina?.categoria === 'PERSONALIZADA' ? SquaresFour : null)
+  const contextosRutina = Array.isArray(rutina?.contextos) ? rutina.contextos.map((valor) => CONTEXTOS_RUTINA.find(([codigo]) => codigo === valor)?.[1]).filter(Boolean) : []
 
   // 3.1: Identificar aportes con visibilidad restringida
   const esRestringido =
@@ -104,7 +108,7 @@ export default function TarjetaAporte({
     evento.preventDefault()
     setErrorAdjunto('')
     try {
-      if (['COMUNICACION', 'SENSORIAL', 'ESTRATEGIA'].includes(aporte.tipo) && !esArchivoPdf(archivo)) {
+      if (['COMUNICACION', 'SENSORIAL', 'ESTRATEGIA', 'RUTINA'].includes(aporte.tipo) && !esArchivoPdf(archivo)) {
         const url = await obtenerVistaArchivo(aporte.proyectoId, archivo.id)
         setVistaAdjunto({ url, nombre: archivo.nombreOriginal || 'Pictograma' })
       } else {
@@ -127,6 +131,7 @@ export default function TarjetaAporte({
       <div className="min-w-0 flex-1">
         {estrategia && <DatosEstrategia datos={estrategia} parte="categoria" />}
         {sensorial && <p className="mb-2 flex flex-wrap items-center gap-2 text-sm font-semibold text-secundario">{IconoSensorial && <span className={`inline-flex size-10 items-center justify-center rounded-sm ${TONOS_SENSORIALES[sensorial.categoria]}`}><IconoSensorial size={24} aria-hidden="true" /></span>}{categoriaSensorial}{sensorial.lista === 'AYUDA' && <span className="rounded-full bg-secundario/10 px-2 py-1 text-secundario">Le ayuda</span>}{sensorial.lista === 'CUESTA' && <span className="rounded-full bg-primario/10 px-2 py-1 text-primario">Le cuesta</span>}</p>}
+        {rutina && categoriaRutina && <p className="mb-2 flex items-center gap-2 text-sm font-semibold text-secundario"><span className={`inline-flex size-10 shrink-0 items-center justify-center rounded-sm ${TONOS_RUTINA[rutina.categoria] ?? 'bg-secundario/15 text-secundario'}`}>{IconoRutina && <IconoRutina size={24} aria-hidden="true" />}</span>{categoriaRutina}</p>}
         {categoriaComunicacion && <p className="mb-2 flex items-center gap-2 text-xs font-semibold text-secundario">{IconoComunicacion && <IconoComunicacion size={24} aria-hidden="true" className="text-agua" />}{categoriaComunicacion}</p>}
         <h3 className={`flex items-center gap-2 break-words leading-relaxed ${comunicacion ? 'font-display text-subtitulo' : 'text-base font-semibold'}`}>
           <span className="min-w-0">{aporte.titulo}</span>
@@ -152,7 +157,8 @@ export default function TarjetaAporte({
         )}
         {estrategia && <DatosEstrategia datos={estrategia} />}
         {contextoSensorial && <p className="mt-1 text-sm text-texto-suave">Lugar o contexto: {contextoSensorial}</p>}
-        {(sensorial || estrategia) && esRestringido && <p className="mt-2 text-xs font-semibold text-secundario">{aporte.visibilidad === 'PROFESIONALES' ? 'Solo equipo profesional' : aporte.visibilidad === 'SOLO_TUTORES' ? 'Solo tutores' : 'Visibilidad restringida'}</p>}
+        {contextosRutina.length > 0 && <p className="mt-1 text-sm text-texto-suave">Dónde suele ocurrir: {contextosRutina.join(', ')}</p>}
+        {(sensorial || estrategia || rutina) && esRestringido && <p className="mt-2 text-xs font-semibold text-secundario">{aporte.visibilidad === 'PROFESIONALES' ? 'Solo equipo profesional' : aporte.visibilidad === 'SOLO_TUTORES' ? 'Solo tutores' : aporte.visibilidad === 'SOLO_SALUD' ? 'Salud y tutores' : aporte.visibilidad === 'SOLO_EDUCACION' ? 'Educación y tutores' : 'Visibilidad restringida'}</p>}
 
         {/* 2.2: dónde lo hace y un ejemplo concreto */}
         {fortaleza.contexto && (
@@ -198,7 +204,7 @@ export default function TarjetaAporte({
                       aria-label={`Ícono ${etiquetaTipo}`}
                       className="shrink-0 text-primario"
                     />
-                    <span>{nombre}{(sensorial || estrategia) && <span className="ml-2 font-normal text-texto-suave">{archivo.tipoMime || 'Archivo'}{Number.isFinite(archivo.tamanoBytes) ? ` · ${(archivo.tamanoBytes / 1048576).toFixed(1)} MB` : ''}</span>}</span>
+                    <span>{nombre}{(sensorial || estrategia || rutina) && <span className="ml-2 font-normal text-texto-suave">{archivo.tipoMime || 'Archivo'}{Number.isFinite(archivo.tamanoBytes) ? ` · ${(archivo.tamanoBytes / 1048576).toFixed(1)} MB` : ''}</span>}</span>
                   </a>
                 </li>
               )

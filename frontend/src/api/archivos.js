@@ -162,3 +162,21 @@ export async function obtenerVistaArchivo(proyectoId, archivoId) {
   }
 }
 
+export async function obtenerVistaImagen(proyectoId, archivoId) {
+  if (!cliente.defaults.baseURL) throw new Error('Falta configurar la conexión con TRAMA.')
+  try {
+    const respuesta = await cliente.get(
+      `/proyectos/${encodeURIComponent(proyectoId)}/archivos/${encodeURIComponent(archivoId)}`,
+      { responseType: 'blob' },
+    )
+    const blob = respuesta.data instanceof Blob ? respuesta.data : new Blob([respuesta.data])
+    const tipoMime = (respuesta.headers?.['content-type'] || blob.type || '').split(';')[0].trim().toLowerCase()
+    if (!['image/jpeg', 'image/png'].includes(tipoMime)) return null
+    return window.URL.createObjectURL(blob)
+  } catch (error) {
+    throw new Error(error.response?.status === 403
+      ? 'No tenés permiso para ver esta imagen.'
+      : 'No pudimos mostrar esta imagen.', { cause: error })
+  }
+}
+

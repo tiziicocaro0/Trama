@@ -11,9 +11,10 @@ import NavegacionPerfil from './components/NavegacionPerfil.jsx'
 import { listarAportes } from '../../api/aportes.js'
 import useAuth from '../../hooks/useAuth.js'
 import { leerDatosAporte } from './perfil.js'
-import { CATEGORIAS_COMUNICACION } from './camposAporte.js'
+import { CATEGORIAS_COMUNICACION, CATEGORIAS_RUTINA, CONTEXTOS_RUTINA, claveCategoriaRutina } from './camposAporte.js'
 import { CATEGORIAS_SENSORIALES, ICONOS_SENSORIALES, CATEGORIAS_ESTRATEGIA, ICONOS_ESTRATEGIA, RESULTADOS_ESTRATEGIA, TONOS_ESTRATEGIA } from './camposAporte.js'
 import { ESPECIALIDADES_EDUCACION, ESPECIALIDADES_SALUD } from './especialidades.js'
+import FiltrosRutinas from './components/FiltrosRutinas.jsx'
 
 
 export default function PerfilPage() {
@@ -40,6 +41,18 @@ export default function PerfilPage() {
   const esComunicacion = seccion?.tipo === 'COMUNICACION'
   const esSensorial = seccion?.tipo === 'SENSORIAL'
   const esEstrategia = seccion?.tipo === 'ESTRATEGIA'
+  const esRutina = seccion?.tipo === 'RUTINA'
+  const aportesRutina = esRutina && datos?.aportes
+    ? datos.aportes.filter((aporte) => {
+      const datosRutina = leerDatosAporte(aporte.datos)
+      return aporte.tipo === 'RUTINA'
+        && (!categoria || claveCategoriaRutina(datosRutina) === categoria)
+        && (!visibilidad || aporte.visibilidad === visibilidad)
+        && (!especialidad || aporte.autorEspecialidades?.some((item) => item.especialidad === especialidad))
+        && (!soloMios || aporte.autorId === usuario?.id)
+        && (!busqueda.trim() || [aporte.titulo, aporte.contenido, CATEGORIAS_RUTINA.find(([valor]) => valor === datosRutina.categoria)?.[1], ...(datosRutina.contextos ?? []).map((valor) => CONTEXTOS_RUTINA.find(([codigo]) => codigo === valor)?.[1]), ...Object.values(datosRutina)].flat().join(' ').toLocaleLowerCase('es').includes(busqueda.trim().toLocaleLowerCase('es')))
+    }).sort((a, b) => orden === 'recientes' ? new Date(b.creadoEn) - new Date(a.creadoEn) : new Date(a.creadoEn) - new Date(b.creadoEn))
+    : null
   const aportesEstrategia = esEstrategia && datos?.aportes
     ? datos.aportes.filter((aporte) => aporte.tipo === 'ESTRATEGIA'
       && (!categoria || leerDatosAporte(aporte.datos).categoria === categoria)
@@ -242,11 +255,12 @@ export default function PerfilPage() {
                 <BloquePerfil
                   key={item.slug}
                   seccion={item}
-                  aportes={esComunicacion ? aportesComunicacion : esSensorial ? aportesSensoriales : esEstrategia ? aportesEstrategia : datos.aportes.filter(
+                  aportes={esComunicacion ? aportesComunicacion : esSensorial ? aportesSensoriales : esEstrategia ? aportesEstrategia : esRutina ? aportesRutina : datos.aportes.filter(
                     (aporte) => aporte.tipo === item.tipo,
                   )}
                   proyectoId={id}
                   completo={Boolean(seccion)}
+                  encabezado={esRutina ? (alAgregar) => <FiltrosRutinas busqueda={busqueda} setBusqueda={setBusqueda} categoria={categoria} setCategoria={setCategoria} especialidad={especialidad} setEspecialidad={setEspecialidad} visibilidad={visibilidad} setVisibilidad={setVisibilidad} orden={orden} setOrden={setOrden} soloMios={soloMios} setSoloMios={setSoloMios} filtrosAbiertos={filtrosAbiertos} setFiltrosAbiertos={setFiltrosAbiertos} alAgregar={alAgregar} puedeCrear={proyecto.puedeCargar === true} aportes={datos.aportes.filter((aporte) => aporte.tipo === 'RUTINA')} /> : undefined}
                   puedeCrear={
                     item.tipo === 'NOTA_PROFESIONAL'
                       ? proyecto.puedeCargarNotas === true

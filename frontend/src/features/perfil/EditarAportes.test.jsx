@@ -76,7 +76,7 @@ describe('Crear y editar aportes de las seis secciones', () => {
   it.each([
     ['fortalezas', 'FORTALEZA', TITULO_FORTALEZA, DESCRIPCION_FORTALEZA],
     ['intereses', 'INTERES', 'Título', 'Descripción (opcional)'],
-    ['rutinas', 'RUTINA', 'Título', 'Descripción (opcional)'],
+    ['rutinas', 'RUTINA', 'Título del aporte', 'Descripción'],
   ])(
     'agrega un aporte en %s y lo muestra al volver a consultar el servidor',
     async (slug, tipo, etiquetaTitulo, etiquetaContenido) => {
@@ -92,10 +92,17 @@ describe('Crear y editar aportes de las seis secciones', () => {
         screen.getByRole('textbox', { name: etiquetaContenido }),
         'Nueva descripción ficticia',
       )
-      await userEvent.selectOptions(
-        screen.getByRole('combobox', { name: '¿Quién puede verlo?' }),
-        'SOLO_TUTORES',
-      )
+      if (tipo === 'RUTINA') {
+        const formulario = screen.getByRole('form', { name: 'Agregar aporte en Rutinas' })
+        await userEvent.click(within(formulario).getByRole('button', { name: 'Alimentación' }))
+        await userEvent.click(within(formulario).getByRole('checkbox', { name: 'Casa' }))
+        await userEvent.click(within(formulario).getByRole('radio', { name: /Solo tutores/ }))
+      } else {
+        await userEvent.selectOptions(
+          screen.getByRole('combobox', { name: '¿Quién puede verlo?' }),
+          'SOLO_TUTORES',
+        )
+      }
       await userEvent.click(
         screen.getByRole('button', { name: 'Guardar aporte' }),
       )
@@ -106,6 +113,7 @@ describe('Crear y editar aportes de las seis secciones', () => {
           titulo: 'Nuevo título ficticio',
           contenido: 'Nueva descripción ficticia',
           visibilidad: 'SOLO_TUTORES',
+          ...(tipo === 'RUTINA' ? { datos: '{"categoria":"ALIMENTACION","contextos":["CASA"]}' } : {}),
           ...datosPorDefecto[tipo],
         },
       )
@@ -118,6 +126,34 @@ describe('Crear y editar aportes de las seis secciones', () => {
       expect(screen.getByRole('status')).toHaveTextContent('Aporte guardado')
     },
   )
+
+  it('valida los campos obligatorios de Rutinas antes de llamar a la API', async () => {
+    abrir('rutinas')
+    await userEvent.click(await screen.findByRole('button', { name: 'Agregar aporte' }))
+    await userEvent.click(screen.getByRole('button', { name: 'Guardar aporte' }))
+    expect(screen.getByText('Elegí una actividad o escribí una categoría.')).toBeInTheDocument()
+    expect(screen.getByText('Escribí un título para el aporte.')).toBeInTheDocument()
+    expect(screen.getByText('Contá brevemente cómo realiza la actividad.')).toBeInTheDocument()
+    expect(screen.getByText('Elegí quién puede ver este aporte.')).toBeInTheDocument()
+    expect(cliente.post).not.toHaveBeenCalled()
+  })
+
+  it('crea una categoría personalizada desde el chip y la persiste en el aporte', async () => {
+    abrir('rutinas')
+    await userEvent.click(await screen.findByRole('button', { name: 'Crear categoría de filtro' }))
+    const formulario = await screen.findByRole('form', { name: 'Agregar aporte en Rutinas' })
+    await userEvent.click(within(formulario).getByRole('button', { name: 'Otra categoría' }))
+    await userEvent.type(within(formulario).getByRole('textbox', { name: 'Nombre de la nueva categoría' }), 'Preparación para salir')
+    await userEvent.type(within(formulario).getByRole('textbox', { name: 'Título del aporte' }), 'Prepara su mochila')
+    await userEvent.type(within(formulario).getByRole('textbox', { name: 'Descripción' }), 'Revisa sus cosas con una lista visual')
+    await userEvent.click(within(formulario).getByRole('radio', { name: /Toda la red/ }))
+    await userEvent.click(within(formulario).getByRole('button', { name: 'Guardar aporte' }))
+    expect(cliente.post).toHaveBeenCalledWith(`/proyectos/${id}/aportes`, expect.objectContaining({
+      tipo: 'RUTINA',
+      datos: '{"categoria":"PERSONALIZADA","categoriaNombre":"Preparación para salir"}',
+    }))
+    expect(await screen.findByRole('button', { name: /Preparación para salir/ })).toBeInTheDocument()
+  })
 
   it('exige lista y categoría sensorial, y guarda la observación opcional en la API', async () => {
     abrir('sensorial')
