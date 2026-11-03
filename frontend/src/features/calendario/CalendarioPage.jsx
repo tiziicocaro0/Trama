@@ -8,6 +8,7 @@ import {
   editarEvento,
   editarOcurrenciaEvento,
   eliminarEvento,
+  guardarActaReunion,
   listarEventos,
 } from '../../api/eventos.js'
 import { listarMiembros } from '../../api/miembros.js'
@@ -74,6 +75,17 @@ export default function CalendarioPage() {
     if (typeof evento?.puedeEditar === 'boolean') return evento.puedeEditar
     if (esTutor) return true
     return Boolean(usuario?.id && evento?.autorId === usuario.id)
+  }
+
+  function puedeEditarActa(evento) {
+    if (evento.tipo !== 'REUNION') return false
+    const idUsuario = usuario?.id
+    if (!idUsuario) return false
+    if (evento.autorId === idUsuario) return true
+    if (Array.isArray(evento.participanteIds) && evento.participanteIds.includes(idUsuario)) {
+      return true
+    }
+    return false
   }
 
   function abrirNuevoEvento() {
@@ -173,6 +185,12 @@ export default function CalendarioPage() {
       return
     }
     ejecutarEliminacion(evento, alcance)
+  }
+
+  async function manejarGuardarActa(evento, textoActa) {
+    await guardarActaReunion(proyectoId, evento.id, textoActa)
+    setMensajeExito('Acta guardada correctamente.')
+    reintentar()
   }
 
   async function manejarDescargaImagen(e, evento) {
@@ -275,11 +293,14 @@ export default function CalendarioPage() {
                             evento.autorId,
                             miembros,
                           )}
+                          miembros={miembros}
                           puedeModificar={puedeModificarEvento(evento)}
+                          puedeEditarActa={puedeEditarActa(evento)}
                           eliminando={eliminandoId === evento.id}
                           onEditar={solicitarEditarEvento}
                           onEliminar={solicitarEliminarEvento}
                           onDescargarImagen={manejarDescargaImagen}
+                          onGuardarActa={manejarGuardarActa}
                         />
                       )
                     })}
@@ -295,6 +316,7 @@ export default function CalendarioPage() {
                 abierto={modalAbierto}
                 proyectoId={proyectoId}
                 evento={eventoEnEdicion}
+                miembros={miembros}
                 alcance={alcanceEdicion}
                 onCerrar={cerrarModal}
                 onGuardar={manejarGuardarEvento}

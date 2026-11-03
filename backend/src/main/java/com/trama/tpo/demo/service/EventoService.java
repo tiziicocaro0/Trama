@@ -1,6 +1,7 @@
 package com.trama.tpo.demo.service;
 
 import com.trama.tpo.demo.entity.archivo.Archivo;
+import com.trama.tpo.demo.entity.dto.ActaRequest;
 import com.trama.tpo.demo.entity.dto.EventoRequest;
 import com.trama.tpo.demo.entity.dto.EventoResponse;
 import com.trama.tpo.demo.entity.evento.Evento;
@@ -11,6 +12,7 @@ import com.trama.tpo.demo.repository.*;
 
 import com.trama.tpo.demo.exceptions.ApiException;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -28,6 +30,7 @@ public class EventoService {
     private final EventoExcepcionRepository excepcionRepository;
     private final ProyectoRepository proyectoRepository;
     private final UsuarioRepository usuarioRepository;
+    private final MembresiaRepository membresiaRepository;
     private final ArchivoRepository archivoRepository;
     private final PermisoService permisoService;
     private final UsuarioActual usuarioActual;
@@ -37,6 +40,7 @@ public class EventoService {
             EventoExcepcionRepository excepcionRepository,
             ProyectoRepository proyectoRepository,
             UsuarioRepository usuarioRepository,
+            MembresiaRepository membresiaRepository,
             ArchivoRepository archivoRepository,
             PermisoService permisoService,
             UsuarioActual usuarioActual) {
@@ -45,12 +49,13 @@ public class EventoService {
         this.excepcionRepository = excepcionRepository;
         this.proyectoRepository = proyectoRepository;
         this.usuarioRepository = usuarioRepository;
+        this.membresiaRepository = membresiaRepository;
         this.archivoRepository = archivoRepository;
         this.permisoService = permisoService;
         this.usuarioActual = usuarioActual;
     }
 
-    // CREAR EVENTO UNICO O RECURRENTE
+    // CREAR EVENTO UNICO O RECURRENTE (COMUN O REUNION)
     @Transactional
     public EventoResponse crear(UUID proyectoId, EventoRequest request) {
         permisoService.verificarMiembro(proyectoId);
@@ -65,6 +70,8 @@ public class EventoService {
                         "Usuario no encontrado"));
 
         boolean recurrente = Boolean.TRUE.equals(request.recurrente());
+        String tipo = "REUNION".equalsIgnoreCase(request.tipo()) ? "REUNION" : "COMUN";
+        List<Usuario> participantes = resolverParticipantes(proyectoId, request.participanteIds(), tipo);
 
         Evento evento = Evento.builder()
                 .proyecto(proyecto)
@@ -75,12 +82,13 @@ public class EventoService {
                 .horaInicio(request.horaInicio())
                 .horaFin(request.horaFin())
                 .imagen(obtenerImagen(request.imagenId(), proyectoId))
-                .tipo("COMUN")
+                .tipo(tipo)
                 .recurrente(recurrente)
                 .diaSemana(recurrente ? request.diaSemana() : null)
                 .fechaFinRecurrencia(recurrente
                         ? request.fechaFinRecurrencia() : null)
                 .esCambio(false)
+                .participantes(participantes)
                 .build();
 
         return convertir(eventoRepository.saveAndFlush(evento));
@@ -173,6 +181,14 @@ public class EventoService {
             excepcionRepository.flush();
         }
 
+        String tipo = request.tipo() != null
+                ? ("REUNION".equalsIgnoreCase(request.tipo()) ? "REUNION" : "COMUN")
+                : evento.getTipo();
+
+        List<Usuario> participantes = request.participanteIds() != null
+                ? resolverParticipantes(proyectoId, request.participanteIds(), tipo)
+                : evento.getParticipantes();
+
         evento.setTitulo(request.titulo().trim());
         evento.setDescripcion(request.descripcion());
         evento.setFecha(request.fecha());
@@ -183,6 +199,8 @@ public class EventoService {
         evento.setDiaSemana(recurrente ? request.diaSemana() : null);
         evento.setFechaFinRecurrencia(recurrente
                 ? request.fechaFinRecurrencia() : null);
+        evento.setTipo(tipo);
+        evento.setParticipantes(participantes);
 
         return convertir(eventoRepository.saveAndFlush(evento));
     }
@@ -219,6 +237,53 @@ public class EventoService {
         excepcion.setHoraInicio(null);
         excepcion.setHoraFin(null);
         excepcionRepository.saveAndFlush(excepcion);
+    }
+
+    // 5.5: REGISTRAR O ACTUALIZAR EL ACTA DE UNA REUNIÓN (SOLO PARTICIPANTES)
+    @Transactional
+    public void guardarActa(UUID proyectoId, UUID eventoId, ActaRequest request) {
+        permisoService.verificarMiembro(proyectoId);
+        Evento evento = buscarEvento(proyectoId, eventoId);
+
+        if (!"REUNION".equalsIgnoreCase(evento.getTipo())) {
+            throw error("NO_ES_REUNION", HttpStatus.BAD_REQUEST, "Solo las reuniones tienen acta");
+        }
+
+        UUID usuarioId = usuarioActual.obtenerId();
+        boolean esParticipante = evento.getParticipantes().stream()
+                .anyMatch(u -> u.getId().equals(usuarioId))
+                || (evento.getAutor() != null && evento.getAutor().getId().equals(usuarioId));
+
+        if (!esParticipante) {
+            throw new AccessDeniedException("Solo los participantes de la reunión pueden registrar el acta");
+        }
+
+        if (request == null || request.acta() == null || request.acta().isBlank()) {
+            throw error("ACTA_INVALIDA", HttpStatus.BAD_REQUEST, "El acta no puede estar vacía");
+        }
+
+        evento.setActa(request.acta().trim());
+        eventoRepository.saveAndFlush(evento);
+    }
+
+    private List<Usuario> resolverParticipantes(UUID proyectoId, List<UUID> participanteIds, String tipo) {
+        if (!"REUNION".equalsIgnoreCase(tipo) || participanteIds == null || participanteIds.isEmpty()) {
+            return new ArrayList<>();
+        }
+
+        Set<UUID> miembrosValidos = membresiaRepository.findByProyectoId(proyectoId).stream()
+                .map(m -> m.getUsuario().getId())
+                .collect(Collectors.toSet());
+
+        List<Usuario> lista = new ArrayList<>();
+        for (UUID uId : participanteIds) {
+            if (uId == null || !miembrosValidos.contains(uId)) {
+                throw error("PARTICIPANTE_INVALIDO", HttpStatus.BAD_REQUEST,
+                        "Los participantes deben ser miembros de la red del niño");
+            }
+            usuarioRepository.findById(uId).ifPresent(lista::add);
+        }
+        return lista;
     }
 
     private void validarOcurrencia(
@@ -323,6 +388,10 @@ public class EventoService {
                 && excepcion.getHoraFin() != null
                 ? excepcion.getHoraFin() : evento.getHoraFin();
 
+        List<UUID> participanteIds = evento.getParticipantes() != null
+                ? evento.getParticipantes().stream().map(Usuario::getId).toList()
+                : List.of();
+
         return new EventoResponse(
                 evento.getId(),
                 evento.getProyecto().getId(),
@@ -338,7 +407,10 @@ public class EventoService {
                 evento.getRecurrente(),
                 evento.getDiaSemana(),
                 evento.getFechaFinRecurrencia(),
-                fecha
+                fecha,
+                evento.getTipo(),
+                evento.getActa(),
+                participanteIds
         );
     }
 }

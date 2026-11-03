@@ -5,26 +5,42 @@ import {
   FileImage,
   PencilSimple,
   Trash,
+  Users,
 } from '@phosphor-icons/react'
 import { obtenerUrlDescargaArchivo } from '../../../api/archivos.js'
 import Boton from '../../../components/ui/Boton.jsx'
-import { formatearFechaCalendario } from '../../../utils/fechas.js'
+import { formatearFechaCalendario, hoyIso } from '../../../utils/fechas.js'
 import { nombreDiaSemana } from '../utils/recurrencia.js'
+import SeccionActa from './SeccionActa.jsx'
 
 function formatearHora(valor) {
   if (typeof valor !== 'string' || !valor.trim()) return ''
   return valor.trim().slice(0, 5)
 }
 
+function resolverNombresParticipantes(participanteIds, miembros) {
+  if (!Array.isArray(participanteIds) || !Array.isArray(miembros)) return []
+  return participanteIds
+    .map((id) => {
+      const encontrado = miembros.find((m) => m.usuarioId === id || m.id === id)
+      if (!encontrado) return null
+      return [encontrado.nombre, encontrado.apellido].filter(Boolean).join(' ').trim()
+    })
+    .filter(Boolean)
+}
+
 export default function TarjetaEvento({
   proyectoId,
   evento,
   autorNombre,
+  miembros = [],
   puedeModificar,
+  puedeEditarActa,
   eliminando,
   onEditar,
   onEliminar,
   onDescargarImagen,
+  onGuardarActa,
 }) {
   const fechaVisible = evento.fechaOcurrencia || evento.fecha
   const fechaFormateada =
@@ -32,6 +48,9 @@ export default function TarjetaEvento({
   const inicio = formatearHora(evento.horaInicio)
   const fin = formatearHora(evento.horaFin)
   const diaTexto = nombreDiaSemana(evento.diaSemana)
+  const esReunion = evento.tipo === 'REUNION'
+  const nombresParticipantes = resolverNombresParticipantes(evento.participanteIds, miembros)
+  const esPasada = fechaVisible <= hoyIso()
 
   return (
     <article className="rounded-lg border border-borde bg-superficie p-5 shadow-sm">
@@ -41,6 +60,12 @@ export default function TarjetaEvento({
             <h3 className="break-words font-display text-h2 text-secundario">
               {evento.titulo}
             </h3>
+            {esReunion && (
+              <span className="inline-flex items-center gap-1 rounded-pill bg-primario px-2.5 py-0.5 text-xs font-semibold text-superficie">
+                <Users size={14} aria-hidden="true" />
+                Reunión
+              </span>
+            )}
             {evento.recurrente && (
               <span className="inline-flex items-center gap-1 rounded-pill bg-acento-suave px-2.5 py-0.5 text-xs font-semibold text-secundario">
                 <ArrowsClockwise size={14} aria-hidden="true" />
@@ -73,6 +98,13 @@ export default function TarjetaEvento({
             </p>
           )}
 
+          {esReunion && nombresParticipantes.length > 0 && (
+            <div className="mt-3 text-xs text-texto-suave">
+              <span className="font-semibold text-secundario">Participantes: </span>
+              <span>{nombresParticipantes.join(', ')}</span>
+            </div>
+          )}
+
           {evento.imagenId && (
             <div className="mt-3">
               <a
@@ -95,6 +127,14 @@ export default function TarjetaEvento({
             <p className="mt-3 text-xs text-texto-suave">
               Cargado por: {autorNombre}
             </p>
+          )}
+
+          {esReunion && (esPasada || evento.acta) && (
+            <SeccionActa
+              evento={evento}
+              puedeEditarActa={puedeEditarActa}
+              onGuardarActa={onGuardarActa}
+            />
           )}
         </div>
 
@@ -123,4 +163,3 @@ export default function TarjetaEvento({
     </article>
   )
 }
-

@@ -3,6 +3,7 @@ package com.trama.tpo.demo.entity.dto;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalTime;
+import java.util.List;
 import java.util.UUID;
 
 public record EventoResponse(
@@ -21,6 +22,10 @@ public record EventoResponse(
         Boolean recurrente,
         Byte diaSemana,
         LocalDate fechaFinRecurrencia,
-        LocalDate fechaOcurrencia
+        LocalDate fechaOcurrencia,
+
+        String tipo,
+        String acta,
+        List<UUID> participanteIds
 
 ) {}

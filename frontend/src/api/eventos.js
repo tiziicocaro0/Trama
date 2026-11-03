@@ -16,7 +16,9 @@ function traducirErrorEvento(error, accion = 'guardar') {
     return new Error(
       accion === 'eliminar'
         ? 'No tenés permiso para eliminar este evento. Solo su autor o un tutor pueden borrarlo.'
-        : 'No tenés permiso para modificar este evento. Solo su autor o un tutor pueden editarlo.',
+        : accion === 'acta'
+          ? 'No tenés permiso para modificar el acta. Solo los participantes de la reunión pueden hacerlo.'
+          : 'No tenés permiso para modificar este evento. Solo su autor o un tutor pueden editarlo.',
       { cause: error },
     )
   }
@@ -36,7 +38,9 @@ function traducirErrorEvento(error, accion = 'guardar') {
   return new Error(
     accion === 'eliminar'
       ? 'No pudimos eliminar el evento. Intentá nuevamente.'
-      : 'No pudimos guardar el evento. Intentá nuevamente.',
+      : accion === 'acta'
+        ? 'No pudimos guardar el acta. Intentá nuevamente.'
+        : 'No pudimos guardar el evento. Intentá nuevamente.',
     { cause: error },
   )
 }
@@ -55,6 +59,8 @@ function armarCuerpoEvento({
   recurrente,
   diaSemana,
   fechaFinRecurrencia,
+  tipo,
+  participanteIds,
 }) {
   const textoDescripcion =
     typeof descripcion === 'string' && descripcion.trim()
@@ -71,6 +77,11 @@ function armarCuerpoEvento({
     fechaFinRecurrencia.trim()
       ? fechaFinRecurrencia.trim()
       : null
+  const tipoEvento = tipo === 'REUNION' ? 'REUNION' : 'COMUN'
+  const listaParticipantes =
+    tipoEvento === 'REUNION' && Array.isArray(participanteIds)
+      ? participanteIds
+      : []
 
   return {
     titulo: typeof titulo === 'string' ? titulo.trim() : '',
@@ -82,6 +93,8 @@ function armarCuerpoEvento({
     recurrente: esRecurrente,
     diaSemana: diaNumero,
     fechaFinRecurrencia: fechaFinLimpia,
+    tipo: tipoEvento,
+    participanteIds: listaParticipantes,
   }
 }
 
@@ -172,3 +185,12 @@ export async function cancelarOcurrenciaEvento(proyectoId, eventoId, fecha) {
   }
 }
 
+export async function guardarActaReunion(proyectoId, eventoId, acta) {
+  try {
+    await cliente.put(`${rutaEventos(proyectoId, eventoId)}/acta`, {
+      acta: typeof acta === 'string' ? acta.trim() : '',
+    })
+  } catch (error) {
+    throw traducirErrorEvento(error, 'acta')
+  }
+}

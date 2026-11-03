@@ -6,6 +6,7 @@ import jakarta.validation.constraints.Size;
 
 import java.time.LocalDate;
 import java.time.LocalTime;
+import java.util.List;
 import java.util.UUID;
 
 public record EventoRequest(
@@ -31,6 +32,10 @@ public record EventoRequest(
 
         Byte diaSemana,
 
-        LocalDate fechaFinRecurrencia
+        LocalDate fechaFinRecurrencia,
+
+        String tipo,
+
+        List<UUID> participanteIds
 
 ) {}
