@@ -445,10 +445,19 @@ Antes de usarlo, el `.env` necesita:
 Cómo funciona:
 
 - **`backend-demo`** usa el perfil `dev` con las claves del `.env`. Comparte la base y la carpeta `backend/uploads` con el back que se corre con `mvnw`, así que se ven los mismos datos en los dos modos. No corren los dos a la vez: hay que frenar el back de `mvnw` antes de levantar la demo.
-- **`frontend-demo`** sirve el front compilado con nginx, que reenvía `/api` al back. Para el navegador, front y back son el mismo dominio, así que no hace falta tocar CORS.
+- **`frontend-demo`** sirve el front compilado con nginx, que reenvía `/api` al back que indique `DEMO_BACKEND_URL` (por defecto, `backend-demo`). Para el navegador, front y back son el mismo dominio, así que no hace falta tocar CORS.
 - **`ngrok`** expone `frontend-demo` en `NGROK_URL`. El panel con los pedidos que entran está en http://localhost:4040.
 
 Para probar en la misma PC sin pasar por el túnel: http://localhost:4173.
+
+**Si el mail no sale desde Docker** (el log de `backend-demo` muestra `MailSendException ... Read timed out`): en algunas PCs, Docker Desktop no deja pasar el SMTP hacia Gmail. En ese caso el back corre en Windows con `mvnw`, como siempre, y Docker levanta solo el front y ngrok, apuntando a ese back:
+
+1. En el `.env`: `DEMO_BACKEND_URL=http://host.docker.internal:4002`.
+2. Desde la raíz: `powershell -ExecutionPolicy Bypass -File scripts\demo.ps1`. El script levanta MySQL, abre el back en otra ventana, espera a que responda y después levanta el front y ngrok.
+
+A mano son tres pasos: `docker compose up -d --wait mysql`, el back con `mvnw` y `docker compose --profile demo up -d --build frontend-demo ngrok`.
+
+Para volver a tener todo en Docker, se borra `DEMO_BACKEND_URL` del `.env`.
 
 Para ver qué pasa en el back:
 
