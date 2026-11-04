@@ -422,6 +422,48 @@ docker compose --profile app up -d --force-recreate backend
 
 **Estado actual:** el despliegue mediante Docker Compose incluye MySQL y Spring Boot. La incorporación del frontend con Nginx queda pendiente hasta que el equipo integre su estructura en `develop`.
 
+### 10. Demo para testers (ngrok)
+
+Para que otras personas prueben TRAMA desde su navegador, el perfil `demo` levanta todo con un solo comando: MySQL, el back, el front compilado y un túnel de ngrok con el dominio fijo de TRAMA.
+
+```bash
+docker compose --profile demo up -d --build
+```
+
+La primera vez tarda unos minutos porque compila el back y el front. Después, TRAMA queda disponible en la dirección de `NGROK_URL`. Mientras la PC esté prendida, cualquiera puede entrar desde otra computadora o un celular. La primera vez, ngrok muestra una advertencia con el botón *Visit Site*.
+
+Antes de usarlo, el `.env` necesita:
+
+| Variable | Para qué |
+|---|---|
+| `NGROK_AUTHTOKEN` | Token de la cuenta de ngrok de TRAMA. Es secreto, como el resto del `.env`. |
+| `NGROK_URL` | El dominio fijo de esa cuenta (`https://...ngrok-free.dev`). |
+| `APP_URL` | El mismo dominio, para los links de los mails. |
+| `INVITACION_URL_BASE` | El mismo dominio terminado en `/invitaciones`. |
+| `SPRING_MAIL_PASSWORD` | Sin ella no llega el código del registro. |
+
+Cómo funciona:
+
+- **`backend-demo`** usa el perfil `dev` con las claves del `.env`. Comparte la base y la carpeta `backend/uploads` con el back que se corre con `mvnw`, así que se ven los mismos datos en los dos modos. No corren los dos a la vez: hay que frenar el back de `mvnw` antes de levantar la demo.
+- **`frontend-demo`** sirve el front compilado con nginx, que reenvía `/api` al back. Para el navegador, front y back son el mismo dominio, así que no hace falta tocar CORS.
+- **`ngrok`** expone `frontend-demo` en `NGROK_URL`. El panel con los pedidos que entran está en http://localhost:4040.
+
+Para probar en la misma PC sin pasar por el túnel: http://localhost:4173.
+
+Para ver qué pasa en el back:
+
+```bash
+docker compose logs -f backend-demo
+```
+
+Para apagar la demo sin perder datos:
+
+```bash
+docker compose --profile demo stop
+```
+
+> El plan gratis de ngrok admite un túnel a la vez por cuenta y unas 20.000 visitas por mes. Coordinar quién levanta la demo. Los testers tienen que cargar datos inventados, nunca de un nene real.
+
 ## Ejecución local
 
 ### Backend

@@ -119,6 +119,64 @@ services:
       interval: 10s
       timeout: 5s
       retries: 3
+  # Demo para testers: back + front + túnel de ngrok con un solo comando.
+  #   docker compose --profile demo up -d --build
+  # Usa el perfil dev del back con las claves del .env, la misma base y la
+  # misma carpeta de archivos que correr el back con mvnw. Ver README, sección 10.
+  backend-demo:
+    profiles: ["demo"]
+    build:
+      context: ./backend
+    image: trama-backend:local
+    container_name: trama-backend-demo
+    restart: unless-stopped
+    depends_on:
+      mysql:
+        condition: service_healthy
+    environment:
+      SPRING_PROFILES_ACTIVE: dev
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/trama
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+      JWT_SECRET: ${JWT_SECRET}
+      TRAMA_CRYPTO_KEY: ${TRAMA_CRYPTO_KEY}
+      SERVER_PORT: 8080
+      UPLOADS_DIR: /app/uploads
+      MAIL_FROM: ${MAIL_FROM:-}
+      INVITACION_URL_BASE: ${INVITACION_URL_BASE:-}
+      APP_URL: ${APP_URL:-}
+      SPRING_MAIL_HOST: ${SPRING_MAIL_HOST:-}
+      SPRING_MAIL_PORT: ${SPRING_MAIL_PORT:-587}
+      SPRING_MAIL_USERNAME: ${SPRING_MAIL_USERNAME:-}
+      SPRING_MAIL_PASSWORD: ${SPRING_MAIL_PASSWORD:-}
+      SPRING_MAIL_SMTP_AUTH: ${SPRING_MAIL_SMTP_AUTH:-false}
+      SPRING_MAIL_SMTP_STARTTLS: ${SPRING_MAIL_SMTP_STARTTLS:-false}
+    volumes:
+      # La misma carpeta que usa el back corriendo con mvnw (backend/uploads).
+      - ./backend/uploads:/app/uploads
+  frontend-demo:
+    profiles: ["demo"]
+    build:
+      context: ./frontend
+    image: trama-frontend:local
+    container_name: trama-frontend-demo
+    restart: unless-stopped
+    depends_on:
+      - backend-demo
+    ports:
+      - "127.0.0.1:4173:80"
+  ngrok:
+    image: ngrok/ngrok:latest
+    profiles: ["demo"]
+    container_name: trama-ngrok
+    restart: unless-stopped
+    depends_on:
+      - frontend-demo
+    environment:
+      NGROK_AUTHTOKEN: ${NGROK_AUTHTOKEN}
+    command: ["http", "frontend-demo:80", "--url=${NGROK_URL}"]
+    ports:
+      # Panel de ngrok con los pedidos que entran: http://localhost:4040
+      - "127.0.0.1:4040:4040"
 volumes:
   trama-mysql-data:
   trama-uploads:
