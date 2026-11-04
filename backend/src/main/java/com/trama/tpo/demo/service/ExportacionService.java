@@ -4,7 +4,6 @@ import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import java.util.UUID;
@@ -22,7 +21,10 @@ import com.trama.tpo.demo.entity.dto.ProyectoResponse;
 import com.trama.tpo.demo.entity.registro.AccionRegistro;
 import com.trama.tpo.demo.exceptions.ApiException;
 import com.trama.tpo.demo.repository.ProyectoRepository;
+import com.trama.tpo.demo.service.PdfService.Bloque;
 import com.trama.tpo.demo.service.PdfService.Seccion;
+import com.trama.tpo.demo.service.PdfService.Tabla;
+import com.trama.tpo.demo.service.PdfService.Tarjeta;
 
 /**
  * Descargar toda la información del niño en JSON o PDF (8.1), para ejercer el derecho de acceso.
@@ -125,59 +127,62 @@ public class ExportacionService {
         ProyectoResponse p = datos.proyecto();
 
         List<Seccion> secciones = List.of(
-                new Seccion("Perfil", List.of(
-                        "Nombre: " + p.nombre() + " " + p.apellido(),
-                        "Apodo: " + valor(p.apodo()),
-                        "Fecha de nacimiento: " + fecha(p.fechaNacimiento()),
-                        "Escuela: " + valor(p.escuela()),
-                        "Grado: " + valor(p.grado()))),
-                new Seccion("Miembros", datos.miembros().stream().map(this::linea).toList()),
-                new Seccion("Aportes y notas", datos.aportes().stream().map(this::linea).toList()),
-                new Seccion("Eventos y reuniones", datos.eventos().stream().flatMap(this::lineas).toList()),
-                new Seccion("Acuerdos", datos.acuerdos().stream().map(this::linea).toList()));
+                new Seccion("Perfil", List.of(new Tabla(List.of("Dato", "Valor"), List.of(
+                        List.of("Nombre", p.nombre() + " " + p.apellido()),
+                        List.of("Apodo", valor(p.apodo())),
+                        List.of("Fecha de nacimiento", fecha(p.fechaNacimiento())),
+                        List.of("Escuela", valor(p.escuela())),
+                        List.of("Grado", valor(p.grado())))))),
+                new Seccion("Miembros", datos.miembros().isEmpty() ? List.of() : List.of(new Tabla(
+                        List.of("Nombre", "Rol", "Especialidades", "Administra"),
+                        datos.miembros().stream().map(this::fila).toList()))),
+                new Seccion("Aportes y notas", datos.aportes().stream().<Bloque>map(this::tarjeta).toList()),
+                new Seccion("Eventos y reuniones", datos.eventos().stream().<Bloque>map(this::tarjeta).toList()),
+                new Seccion("Acuerdos", datos.acuerdos().isEmpty() ? List.of() : List.of(new Tabla(
+                        List.of("Acuerdo", "Responsable", "Revisión", "Estado"),
+                        datos.acuerdos().stream().map(this::fila).toList()))));
 
-        return pdfService.generar("Información de " + p.nombre() + " en TRAMA", secciones);
+        return pdfService.generar("Información de " + p.nombre(), secciones);
     }
 
-    // ---------- Renglones del PDF ----------
+    // ---------- Bloques del PDF ----------
 
-    private String linea(MiembroResponse m) {
+    private List<String> fila(MiembroResponse m) {
         String especialidades = m.getEspecialidades() == null || m.getEspecialidades().isEmpty()
-                ? ""
-                : " (" + String.join(", ", m.getEspecialidades().stream()
-                        .map(e -> legible(e.especialidad())).toList()) + ")";
-        return m.getNombre() + " " + m.getApellido() + ": " + legible(m.getRol().name())
-                + especialidades + (Boolean.TRUE.equals(m.getEsAdmin()) ? ", administra" : "");
+                ? "-"
+                : String.join(", ", m.getEspecialidades().stream().map(e -> legible(e.especialidad())).toList());
+        return List.of(
+                m.getNombre() + " " + m.getApellido(),
+                legible(m.getRol().name()),
+                especialidades,
+                Boolean.TRUE.equals(m.getEsAdmin()) ? "Sí" : "No");
     }
 
-    private String linea(AporteResponse a) {
-        String fecha = a.creadoEn() == null ? "" : FECHA.format(a.creadoEn().atZone(ZONA));
+    private Tarjeta tarjeta(AporteResponse a) {
+        String fecha = a.creadoEn() == null ? "-" : FECHA.format(a.creadoEn().atZone(ZONA));
         String archivos = a.archivos() == null || a.archivos().isEmpty()
                 ? ""
-                : " Adjuntos: " + String.join(", ", a.archivos().stream().map(ArchivoResponse::nombreOriginal).toList()) + ".";
-        return "[" + legible(a.tipo().name()) + "] " + a.titulo()
-                + " (" + fecha + ", " + valor(a.autorNombre()) + ")"
-                + (Boolean.TRUE.equals(a.archivado()) ? " [archivado]" : "")
-                + ": " + valor(a.contenido()) + archivos;
+                : "\nAdjuntos: " + String.join(", ", a.archivos().stream().map(ArchivoResponse::nombreOriginal).toList());
+        String etiqueta = legible(a.tipo().name()).toUpperCase(Locale.ROOT) + " · " + fecha + " · "
+                + valor(a.autorNombre()) + (Boolean.TRUE.equals(a.archivado()) ? " · ARCHIVADO" : "");
+        return new Tarjeta(etiqueta, a.titulo(), valor(a.contenido()) + archivos);
     }
 
-    private Stream<String> lineas(EventoResponse e) {
-        List<String> lineas = new ArrayList<>();
+    private Tarjeta tarjeta(EventoResponse e) {
         String cuando = Boolean.TRUE.equals(e.recurrente())
                 ? "todas las semanas desde el " + fecha(e.fecha())
                 : fecha(e.fecha());
-        lineas.add("[" + legible(e.tipo()) + "] " + e.titulo() + " (" + cuando + ")"
-                + (e.descripcion() == null || e.descripcion().isBlank() ? "" : ": " + e.descripcion()));
-        if (e.acta() != null && !e.acta().isBlank()) {
-            lineas.add("    Acta: " + e.acta());
-        }
-        return lineas.stream();
+        String cuerpo = (e.descripcion() == null || e.descripcion().isBlank() ? "" : e.descripcion())
+                + (e.acta() == null || e.acta().isBlank() ? "" : "\nActa: " + e.acta());
+        return new Tarjeta(legible(e.tipo()).toUpperCase(Locale.ROOT) + " · " + cuando, e.titulo(), cuerpo.strip());
     }
 
-    private String linea(AcuerdoResponse a) {
-        return a.descripcion() + " (responsable: " + a.responsableNombre()
-                + ", revisión: " + fecha(a.fechaRevision())
-                + (Boolean.TRUE.equals(a.cumplido()) ? ", cumplido" : ", pendiente") + ")";
+    private List<String> fila(AcuerdoResponse a) {
+        return List.of(
+                a.descripcion(),
+                valor(a.responsableNombre()),
+                fecha(a.fechaRevision()),
+                Boolean.TRUE.equals(a.cumplido()) ? "Cumplido" : "Pendiente");
     }
 
     private static String legible(String constante) {
