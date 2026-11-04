@@ -29,12 +29,12 @@ export default function DatosPersonalesPage() {
   const { id } = useParams()
   const auth = useAuth()
   const usuario = auth?.usuario ?? auth
-  const esAdmin =
-    Boolean(auth?.esAdmin ?? usuario?.esAdmin)
 
   const { proyecto, cargando, error, reintentar } = usePerfil(id)
-  // 8.2: eliminar el perfil es solo para el tutor administrador de este niño
+  // Editar los datos y eliminar el perfil (8.2) son solo para el tutor administrador de este niño.
+  // Antes se leía un esAdmin de la sesión que el back no manda, así que el botón Editar no aparecía nunca.
   const { esAdmin: esAdminDelProyecto } = useProyectoActual()
+  const esAdmin = esAdminDelProyecto || Boolean(auth?.esAdmin ?? usuario?.esAdmin)
 
   const [editando, setEditando] = useState(false)
   const [valores, setValores] = useState({})
@@ -262,7 +262,7 @@ export default function DatosPersonalesPage() {
                 )}
               </section>
 
-              {esAdminDelProyecto && (
+              {esAdmin && (
                 <ZonaEliminarPerfil key={proyecto.id} proyecto={proyecto} />
               )}
             </>

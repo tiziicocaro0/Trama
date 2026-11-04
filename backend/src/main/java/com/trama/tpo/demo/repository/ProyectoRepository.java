@@ -18,7 +18,7 @@ public interface ProyectoRepository extends JpaRepository<Proyecto, UUID> {
     /** 1.10 Mis proyectos: solo los proyectos donde el usuario es miembro, con su rol en cada uno. */
     @Query("""
             select new com.trama.tpo.demo.entity.dto.MiProyectoDTO(
-                p.id, p.nombre, p.apodo, p.fotoArchivoId, m.rol, m.esAdmin, p.eliminacionProgramada)
+                p.id, p.nombre, p.apodo, p.fechaNacimiento, p.fotoArchivoId, m.rol, m.esAdmin, p.eliminacionProgramada)
             from Membresia m join m.proyecto p
             where m.usuario.id = :usuarioId
             order by p.nombre

@@ -26,12 +26,6 @@ public interface AporteRepository extends JpaRepository<Aporte, UUID> {
             Boolean archivado
     );
 
-    List<Aporte> findByProyectoIdAndTipoAndArchivadoOrderByCreadoEnDesc(
-            UUID proyectoId,
-            TipoAporte tipo,
-            Boolean archivado
-    );
-
     List<Aporte> findByProyectoIdAndArchivosId(
             UUID proyectoId,
             UUID archivoId
