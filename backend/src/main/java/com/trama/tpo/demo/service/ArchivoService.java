@@ -182,7 +182,8 @@ public class ArchivoService {
                 try {
                     permisoService.verificarPuedeVerAporte(
                             proyectoId,
-                            aporte.getVisibilidad()
+                            aporte.getVisibilidad(),
+                            aporte.getTipo()
                     );
                     return true;
                 } catch (AccessDeniedException sinPermiso) {

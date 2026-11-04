@@ -52,7 +52,7 @@ public class AporteVersionService {
                         HttpStatus.NOT_FOUND
                 ));
 
-        permisoService.verificarPuedeVerAporte(proyectoId, aporte.getVisibilidad());
+        permisoService.verificarPuedeVerAporte(proyectoId, aporte.getVisibilidad(), aporte.getTipo());
 
         List<AporteVersion> anteriores =
                 aporteVersionRepository.findByAporteIdOrderByCreadoEnAsc(aporteId);
