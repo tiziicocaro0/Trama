@@ -3,6 +3,7 @@ package com.trama.tpo.demo.service;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.trama.tpo.demo.aporte.TipoAporte;
+import com.trama.tpo.demo.aporte.abc.DatosAbc;
 import com.trama.tpo.demo.aporte.observacion.ContextoObservacion;
 import com.trama.tpo.demo.aporte.observacion.DatosObservacion;
 import com.trama.tpo.demo.aporte.observacion.EtiquetaObservacion;
@@ -13,8 +14,11 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
+import java.time.OffsetDateTime;
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 @Service
@@ -56,29 +60,38 @@ public class BitacoraService {
             );
         }
 
-        // Reutiliza los permisos y las restricciones de visibilidad.
+        // Reutiliza los permisos y las restricciones de visibilidad (4.1 y 4.4).
         List<AporteResponse> observaciones = aporteService.listar(
                 proyectoId,
                 TipoAporte.OBSERVACION,
                 false
         );
+        List<AporteResponse> registrosAbc = aporteService.listar(
+                proyectoId,
+                TipoAporte.ABC,
+                false
+        );
+
+        List<AporteResponse> entradas = new ArrayList<>(observaciones.size() + registrosAbc.size());
+        entradas.addAll(observaciones);
+        entradas.addAll(registrosAbc);
 
         // Filtrar antes de paginar.
-        List<AporteResponse> filtradas = observaciones.stream()
+        List<AporteResponse> filtradas = entradas.stream()
                 .filter(aporte -> {
-                    DatosObservacion datos = leerDatos(aporte);
+                    MetadatosBitacora meta = leerMetadatos(aporte);
 
-                    LocalDate fecha = datos.fecha().toLocalDate();
+                    LocalDate fecha = meta.fecha().toLocalDate();
 
                     return (desde == null || !fecha.isBefore(desde))
                             && (hasta == null || !fecha.isAfter(hasta))
-                            && (contexto == null || datos.contexto() == contexto)
-                            && (etiqueta == null || datos.etiquetas().contains(etiqueta))
+                            && (contexto == null || meta.contexto() == contexto)
+                            && (etiqueta == null || meta.etiquetas().contains(etiqueta))
                             && (autorId == null || autorId.equals(aporte.autorId()));
                 })
                 .sorted(Comparator.comparing(
                         (AporteResponse aporte) ->
-                                leerDatos(aporte).fecha().toInstant()
+                                leerMetadatos(aporte).fecha().toInstant()
                 ).reversed())
                 .toList();
 
@@ -97,7 +110,22 @@ public class BitacoraService {
         return filtradas.subList(desdeIndice, hastaIndice);
     }
 
-    private DatosObservacion leerDatos(AporteResponse aporte) {
+    private record MetadatosBitacora(
+            OffsetDateTime fecha,
+            ContextoObservacion contexto,
+            Set<EtiquetaObservacion> etiquetas
+    ) {
+    }
+
+    private MetadatosBitacora leerMetadatos(AporteResponse aporte) {
+        if (aporte.tipo() == TipoAporte.ABC) {
+            return leerMetadatosAbc(aporte);
+        }
+        DatosObservacion datos = leerDatosObservacion(aporte);
+        return new MetadatosBitacora(datos.fecha(), datos.contexto(), datos.etiquetas());
+    }
+
+    private DatosObservacion leerDatosObservacion(AporteResponse aporte) {
         try {
             DatosObservacion datos = mapper.readValue(
                     aporte.datos(),
@@ -120,6 +148,32 @@ public class BitacoraService {
             throw new ApiException(
                     "DATOS_OBSERVACION_INVALIDOS",
                     "No se pudieron leer los datos de la observación",
+                    HttpStatus.INTERNAL_SERVER_ERROR
+            );
+        }
+    }
+
+    private MetadatosBitacora leerMetadatosAbc(AporteResponse aporte) {
+        try {
+            DatosAbc datos = mapper.readValue(
+                    aporte.datos(),
+                    DatosAbc.class
+            );
+
+            if (datos.fecha() == null || datos.contexto() == null) {
+                throw new ApiException(
+                        "DATOS_ABC_INVALIDOS",
+                        "El registro ABC tiene datos incompletos",
+                        HttpStatus.INTERNAL_SERVER_ERROR
+                );
+            }
+
+            return new MetadatosBitacora(datos.fecha(), datos.contexto(), Set.of());
+
+        } catch (JsonProcessingException e) {
+            throw new ApiException(
+                    "DATOS_ABC_INVALIDOS",
+                    "No se pudieron leer los datos del registro ABC",
                     HttpStatus.INTERNAL_SERVER_ERROR
             );
         }

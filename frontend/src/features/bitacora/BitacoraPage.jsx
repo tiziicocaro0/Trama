@@ -1,26 +1,25 @@
-import { Lock } from '@phosphor-icons/react'
 import { useCallback, useState } from 'react'
 import { useParams } from 'react-router-dom'
 import { listarBitacora } from '../../api/aportes.js'
 import { listarMiembros } from '../../api/miembros.js'
 import Boton from '../../components/ui/Boton.jsx'
 import { useAuth } from '../../hooks/useAuth.js'
-import { formatearFechaHora } from '../../utils/fechas.js'
 import CabeceraPerfil from '../perfil/components/CabeceraPerfil.jsx'
 import NavegacionPerfil from '../perfil/components/NavegacionPerfil.jsx'
 import usePerfil from '../perfil/hooks/usePerfil.js'
 import {
-  ETIQUETAS_CONTEXTO,
-  ETIQUETAS_TAG,
+  esRegistroAbc,
   FILTROS_INICIALES_BITACORA,
   filtrarObservaciones,
-  leerDatosObservacion,
   ordenarObservacionesPorFecha,
   resolverNombreAutor,
   TAMANIO_PAGINA_BITACORA,
 } from './bitacora.js'
 import BarraFiltrosBitacora from './components/BarraFiltrosBitacora.jsx'
+import FormularioAbc from './components/FormularioAbc.jsx'
 import FormularioObservacion from './components/FormularioObservacion.jsx'
+import TarjetaAbc from './components/TarjetaAbc.jsx'
+import TarjetaObservacion from './components/TarjetaObservacion.jsx'
 
 export default function BitacoraPage() {
   const { id } = useParams()
@@ -32,6 +31,7 @@ export default function BitacoraPage() {
   const [cargandoMas, setCargandoMas] = useState(false)
   const [mostrandoFormulario, setMostrandoFormulario] = useState(false)
   const [observacionEnEdicion, setObservacionEnEdicion] = useState(null)
+  const [mostrandoAbc, setMostrandoAbc] = useState(false)
   const [mensajeGuardado, setMensajeGuardado] = useState('')
 
   const cargarBitacoraYMiembros = useCallback(
@@ -50,18 +50,29 @@ export default function BitacoraPage() {
     cargarBitacoraYMiembros,
   )
 
-  function actualizarFiltro(campo, valor) {
+  function reiniciarPaginas() {
     setObservacionesExtra([])
     setPaginaActual(0)
     setUltimaTandaCantidad(null)
+  }
+
+  function actualizarFiltro(campo, valor) {
+    reiniciarPaginas()
     setFiltros((actuales) => ({ ...actuales, [campo]: valor }))
   }
 
   function limpiarFiltros() {
-    setObservacionesExtra([])
-    setPaginaActual(0)
-    setUltimaTandaCantidad(null)
+    reiniciarPaginas()
     setFiltros(FILTROS_INICIALES_BITACORA)
+  }
+
+  function recargarTrasGuardar(mensaje) {
+    setMostrandoFormulario(false)
+    setObservacionEnEdicion(null)
+    setMostrandoAbc(false)
+    reiniciarPaginas()
+    setMensajeGuardado(mensaje)
+    reintentar()
   }
 
   async function cargarMas() {
@@ -96,6 +107,10 @@ export default function BitacoraPage() {
   )
   const miembros = datos?.miembros ?? []
   const puedeCrear = proyecto?.puedeCargar === true
+  // 4.4: el registro ABC lo cargan los profesionales (misma regla que las notas)
+  const puedeCrearAbc = proyecto?.puedeCargarNotas === true
+  const hayFormularioAbierto =
+    mostrandoFormulario || Boolean(observacionEnEdicion) || mostrandoAbc
   const cantidadUltimaPagina =
     ultimaTandaCantidad ?? baseObservaciones.length
   const hayMasPaginas = cantidadUltimaPagina >= TAMANIO_PAGINA_BITACORA
@@ -140,26 +155,39 @@ export default function BitacoraPage() {
                       Bitácora
                     </h2>
                     <p className="mt-1 text-texto-suave">
-                      Observaciones fechadas con contexto y etiquetas, ordenadas
-                      de la más nueva a la más antigua.
+                      Observaciones y registros ABC fechados, ordenados de la
+                      más nueva a la más antigua.
                     </p>
                   </div>
 
-                  {puedeCrear &&
-                    !mostrandoFormulario &&
-                    !observacionEnEdicion && (
-                      <Boton
-                        onClick={() => {
-                          setMensajeGuardado('')
-                          setMostrandoFormulario(true)
-                        }}
-                      >
-                        Nueva observación
-                      </Boton>
-                    )}
+                  {!hayFormularioAbierto && (puedeCrear || puedeCrearAbc) && (
+                    <div className="flex flex-wrap gap-3">
+                      {puedeCrearAbc && (
+                        <Boton
+                          variant="secondary"
+                          onClick={() => {
+                            setMensajeGuardado('')
+                            setMostrandoAbc(true)
+                          }}
+                        >
+                          Registro ABC
+                        </Boton>
+                      )}
+                      {puedeCrear && (
+                        <Boton
+                          onClick={() => {
+                            setMensajeGuardado('')
+                            setMostrandoFormulario(true)
+                          }}
+                        >
+                          Nueva observación
+                        </Boton>
+                      )}
+                    </div>
+                  )}
                 </div>
 
-                {!mostrandoFormulario && !observacionEnEdicion && (
+                {!hayFormularioAbierto && (
                   <BarraFiltrosBitacora
                     filtros={filtros}
                     miembros={miembros}
@@ -178,15 +206,7 @@ export default function BitacoraPage() {
                   <FormularioObservacion
                     proyectoId={id}
                     observacion={observacionEnEdicion}
-                    alGuardar={() => {
-                      setMostrandoFormulario(false)
-                      setObservacionEnEdicion(null)
-                      setObservacionesExtra([])
-                      setPaginaActual(0)
-                      setUltimaTandaCantidad(null)
-                      setMensajeGuardado('Observación guardada.')
-                      reintentar()
-                    }}
+                    alGuardar={() => recargarTrasGuardar('Observación guardada.')}
                     alCancelar={() => {
                       setMostrandoFormulario(false)
                       setObservacionEnEdicion(null)
@@ -194,72 +214,34 @@ export default function BitacoraPage() {
                   />
                 )}
 
+                {mostrandoAbc && (
+                  <FormularioAbc
+                    proyectoId={id}
+                    alGuardar={() => recargarTrasGuardar('Registro ABC guardado.')}
+                    alCancelar={() => setMostrandoAbc(false)}
+                  />
+                )}
+
                 {observacionesOrdenadas.length > 0 ? (
                   <div className="space-y-4">
-                    {observacionesOrdenadas.map((observacion) => {
-                      const info = leerDatosObservacion(observacion.datos)
-                      const fechaIso = info.fecha ?? observacion.creadoEn
-                      const fechaTexto = formatearFechaHora(fechaIso)
-                      const contextoTexto =
-                        ETIQUETAS_CONTEXTO[info.contexto] ??
-                        info.contexto ??
-                        'Sin contexto'
+                    {observacionesOrdenadas.map((aporte) => {
                       const autorTexto = resolverNombreAutor(
-                        observacion,
+                        aporte,
                         miembros,
                         usuario,
                       )
-                      const esRestringido =
-                        observacion.visibilidad != null &&
-                        observacion.visibilidad !== 'TODOS'
-
-                      return (
-                        <article
-                          key={observacion.id}
-                          className="rounded-lg bg-superficie p-6 shadow-sm"
-                        >
-                          <div className="flex flex-wrap items-center justify-between gap-2 text-sm text-texto-suave">
-                            <p className="font-semibold text-secundario">
-                              <span>Autor: </span>
-                              <span>{autorTexto}</span>
-                            </p>
-                            <div className="flex items-center gap-2">
-                              {fechaTexto ? (
-                                <time dateTime={fechaIso}>{fechaTexto}</time>
-                              ) : (
-                                <span>Fecha no disponible</span>
-                              )}
-                              {esRestringido && (
-                                <Lock
-                                  size={18}
-                                  weight="regular"
-                                  className="shrink-0 text-secundario"
-                                  role="img"
-                                  aria-label="Visibilidad restringida"
-                                />
-                              )}
-                            </div>
-                          </div>
-
-                          <p className="mt-3 whitespace-pre-wrap break-words text-base text-texto">
-                            {observacion.contenido || observacion.titulo}
-                          </p>
-
-                          <div className="mt-4 flex flex-wrap items-center gap-2">
-                            <span className="inline-flex items-center rounded-full bg-secundario px-3 py-1 text-xs font-semibold text-superficie">
-                              {contextoTexto}
-                            </span>
-                            {info.etiquetas.map((etiquetaCodigo) => (
-                              <span
-                                key={etiquetaCodigo}
-                                className="inline-flex items-center rounded-full bg-miel/30 px-3 py-1 text-xs font-semibold text-texto"
-                              >
-                                {ETIQUETAS_TAG[etiquetaCodigo] ??
-                                  etiquetaCodigo}
-                              </span>
-                            ))}
-                          </div>
-                        </article>
+                      return esRegistroAbc(aporte) ? (
+                        <TarjetaAbc
+                          key={aporte.id}
+                          registro={aporte}
+                          autorTexto={autorTexto}
+                        />
+                      ) : (
+                        <TarjetaObservacion
+                          key={aporte.id}
+                          observacion={aporte}
+                          autorTexto={autorTexto}
+                        />
                       )
                     })}
 

@@ -23,7 +23,9 @@ export default function NotificacionesGlobales() {
   }
 
   return (
-    <div className="fixed right-4 top-4 z-50 rounded-full bg-superficie p-1 shadow-md">
+    // z-30: por encima de la página, pero debajo de los modales y del panel del calendario (z-40/z-50),
+    // que si no quedaban con su botón de cerrar tapado por la campana
+    <div className="fixed right-4 top-4 z-30 rounded-full bg-superficie p-1 shadow-md">
       <CampanaNotificaciones />
     </div>
   )

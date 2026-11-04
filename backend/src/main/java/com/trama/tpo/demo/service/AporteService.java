@@ -4,6 +4,7 @@ import com.trama.tpo.demo.aporte.Aporte;
 import com.trama.tpo.demo.aporte.AporteVersion;
 import com.trama.tpo.demo.aporte.TipoAporte;
 import com.trama.tpo.demo.aporte.Visibilidad;
+import com.trama.tpo.demo.aporte.abc.DatosAbc;
 import com.trama.tpo.demo.entity.archivo.Archivo;
 import com.trama.tpo.demo.entity.dto.AporteRequest;
 import com.trama.tpo.demo.entity.dto.AporteResponse;
@@ -90,8 +91,9 @@ public class AporteService {
 
         permisoService.verificarMiembro(proyectoId);
         permisoService.verificarPuedeEditar(proyectoId);
-        // 4.2: las notas profesionales solo las cargan educación y salud
-        if (request.tipo() == TipoAporte.NOTA_PROFESIONAL) {
+        // 4.2 y 4.4: las notas profesionales y los registros ABC solo los cargan educación y salud
+        if (request.tipo() == TipoAporte.NOTA_PROFESIONAL
+                || request.tipo() == TipoAporte.ABC) {
             permisoService.verificarPuedeCargarNotas(proyectoId);
         }
         validarInteres(request);
@@ -101,6 +103,7 @@ public class AporteService {
         validarComunicacion(request);
         validarSensorial(request);
         validarEstrategia(request);
+        validarAbc(request);
 
         UUID usuarioId = usuarioActual.obtenerId();
 
@@ -205,6 +208,28 @@ public class AporteService {
                                 }
                         ).reversed()
                 );
+        } else if (tipo == TipoAporte.ABC) {
+                aportes.sort(
+                        Comparator.comparing(
+                                (Aporte aporte) -> {
+                                        try {
+                                        DatosAbc datos = mapper.readValue(
+                                                aporte.getDatos(),
+                                                DatosAbc.class
+                                        );
+
+                                        return datos.fecha().toInstant();
+
+                                        } catch (JsonProcessingException e) {
+                                        throw new ApiException(
+                                                "DATOS_ABC_INVALIDOS",
+                                                "No se pudo leer la fecha del registro ABC",
+                                                HttpStatus.INTERNAL_SERVER_ERROR
+                                        );
+                                        }
+                                }
+                        ).reversed()
+                );
         }
 
         // 3.3: las confirmaciones de todos los aportes del listado, en una sola búsqueda
@@ -250,6 +275,7 @@ public class AporteService {
         validarComunicacion(request);
         validarSensorial(request);
         validarEstrategia(request);
+        validarAbc(request);
 
         // Guardar la versión anterior antes de editar
         AporteVersion version = AporteVersion.builder()
@@ -696,6 +722,47 @@ public class AporteService {
                         "Los datos de la observación no son válidos",
                         HttpStatus.BAD_REQUEST
                 );
+        }
+    }
+
+    // 4.4: un registro ABC necesita antecedente, conducta, consecuencia, fecha y contexto
+    private void validarAbc(AporteRequest request) {
+
+        if (request.tipo() != TipoAporte.ABC) {
+            return;
+        }
+
+        if (request.datos() == null || request.datos().isBlank()) {
+            throw new ApiException(
+                    "DATOS_ABC_INVALIDOS",
+                    "El antecedente, la conducta, la consecuencia, la fecha y el contexto son obligatorios",
+                    HttpStatus.BAD_REQUEST
+            );
+        }
+
+        try {
+            DatosAbc datos = mapper.readValue(request.datos(), DatosAbc.class);
+
+            if (datos == null
+                    || datos.antecedente() == null || datos.antecedente().isBlank()
+                    || datos.conducta() == null || datos.conducta().isBlank()
+                    || datos.consecuencia() == null || datos.consecuencia().isBlank()
+                    || datos.fecha() == null
+                    || datos.contexto() == null) {
+
+                throw new ApiException(
+                        "DATOS_ABC_INVALIDOS",
+                        "El antecedente, la conducta, la consecuencia, la fecha y el contexto son obligatorios",
+                        HttpStatus.BAD_REQUEST
+                );
+            }
+
+        } catch (JsonProcessingException e) {
+            throw new ApiException(
+                    "DATOS_ABC_INVALIDOS",
+                    "Los datos del registro ABC no son válidos",
+                    HttpStatus.BAD_REQUEST
+            );
         }
     }
 }

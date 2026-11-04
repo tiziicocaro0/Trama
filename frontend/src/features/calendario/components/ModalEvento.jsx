@@ -1,4 +1,4 @@
-import { Clock } from '@phosphor-icons/react'
+import { Clock, Users } from '@phosphor-icons/react'
 import { useState } from 'react'
 import { Aviso } from '../../../components/ui/Aviso.jsx'
 import Boton from '../../../components/ui/Boton.jsx'
@@ -31,7 +31,7 @@ function archivosIniciales(evento) {
     : []
 }
 
-function FormularioEvento({ proyectoId, evento, alcance = 'serie', fechaPorDefecto, horaInicioPorDefecto, onCerrar, onGuardar }) {
+function FormularioEvento({ proyectoId, evento, miembros = [], alcance = 'serie', fechaPorDefecto, horaInicioPorDefecto, onCerrar, onGuardar }) {
   const esEdicion = Boolean(evento?.id)
   const esSoloOcurrencia = esEdicion && alcance === 'ocurrencia'
   const fechaInicial = esSoloOcurrencia
@@ -44,6 +44,10 @@ function FormularioEvento({ proyectoId, evento, alcance = 'serie', fechaPorDefec
   const [horaFin, setHoraFin] = useState(normalizarHora(evento?.horaFin) || (horaInicioPorDefecto ? horaFinDesdeInicio(horaInicioPorDefecto) : '10:00'))
   const [descripcion, setDescripcion] = useState(evento?.descripcion ?? '')
   const [archivos, setArchivos] = useState(() => archivosIniciales(evento))
+  const [esReunion, setEsReunion] = useState(evento?.tipo === 'REUNION')
+  const [participantesSeleccionados, setParticipantesSeleccionados] = useState(() =>
+    Array.isArray(evento?.participanteIds) ? evento.participanteIds : [],
+  )
   const [recurrente, setRecurrente] = useState(Boolean(evento?.recurrente))
   const [diaSemana, setDiaSemana] = useState(() =>
     evento?.diaSemana ? String(evento.diaSemana) : obtenerDiaSemanaIso(fechaInicial),
@@ -74,6 +78,14 @@ function FormularioEvento({ proyectoId, evento, alcance = 'serie', fechaPorDefec
     if (fecha) {
       setFecha(ajustarFechaADiaSemana(fecha, nuevoDia))
     }
+  }
+
+  function alternarParticipante(usuarioId) {
+    setParticipantesSeleccionados((prev) =>
+      prev.includes(usuarioId)
+        ? prev.filter((id) => id !== usuarioId)
+        : [...prev, usuarioId],
+    )
   }
 
   async function manejarSubmit(e) {
@@ -136,6 +148,12 @@ function FormularioEvento({ proyectoId, evento, alcance = 'serie', fechaPorDefec
           !esSoloOcurrencia && recurrente && fechaFinRecurrencia
             ? fechaFinRecurrencia
             : null,
+        tipo: esSoloOcurrencia ? evento?.tipo : esReunion ? 'REUNION' : 'COMUN',
+        participanteIds: esSoloOcurrencia
+          ? evento?.participanteIds
+          : esReunion
+            ? participantesSeleccionados
+            : [],
         alcance,
         fechaOcurrencia: evento?.fechaOcurrencia ?? evento?.fecha ?? fecha,
       })
@@ -166,7 +184,7 @@ function FormularioEvento({ proyectoId, evento, alcance = 'serie', fechaPorDefec
       >
         <Campo
           name="titulo"
-          placeholder="Ej. Acto escolar, turno con fonoaudiología…"
+          placeholder="Ej. Acto escolar, reunión de seguimiento…"
           value={titulo}
           onChange={(e) => setTitulo(e.target.value)}
           maxLength={150}
@@ -212,6 +230,60 @@ function FormularioEvento({ proyectoId, evento, alcance = 'serie', fechaPorDefec
           />
         </CampoFormulario>
       </div>
+
+      {!esSoloOcurrencia && (
+        <div className="space-y-3 rounded-md border border-borde bg-fondo p-4">
+          <CasillaOvillo
+            id="evento-es-reunion"
+            name="esReunion"
+            checked={esReunion}
+            onChange={(e) => setEsReunion(e.target.checked)}
+            disabled={enviando}
+          >
+            Es una reunión
+          </CasillaOvillo>
+
+          {esReunion && (
+            <div className="pt-2">
+              <label className="mb-2 flex items-center gap-1.5 text-sm font-semibold text-secundario">
+                <Users size={18} aria-hidden="true" />
+                Participantes de la reunión
+              </label>
+              {miembros.length > 0 ? (
+                <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                  {miembros.map((m) => {
+                    const idUsuario = m.usuarioId || m.id
+                    const nombreCompleto = [m.nombre, m.apellido].filter(Boolean).join(' ').trim() || 'Miembro'
+                    const marcado = participantesSeleccionados.includes(idUsuario)
+                    return (
+                      <label
+                        key={idUsuario}
+                        className={`flex cursor-pointer items-center gap-2 rounded-md border p-2.5 text-sm transition ${
+                          marcado
+                            ? 'border-primario bg-superficie font-semibold text-primario'
+                            : 'border-borde bg-superficie text-texto hover:bg-decoracion'
+                        }`}
+                      >
+                        <input
+                          type="checkbox"
+                          value={idUsuario}
+                          checked={marcado}
+                          onChange={() => alternarParticipante(idUsuario)}
+                          disabled={enviando}
+                          className="h-4 w-4 rounded border-borde text-primario focus:ring-primario"
+                        />
+                        <span>{nombreCompleto}</span>
+                      </label>
+                    )
+                  })}
+                </div>
+              ) : (
+                <p className="text-xs text-texto-suave">No hay otros miembros en la red.</p>
+              )}
+            </div>
+          )}
+        </div>
+      )}
 
       {!esSoloOcurrencia && (
         <div className="space-y-4 rounded-md border border-borde bg-fondo p-4">
@@ -312,6 +384,7 @@ export default function ModalEvento({
   abierto,
   proyectoId,
   evento = null,
+  miembros = [],
   alcance = 'serie',
   fechaPorDefecto,
   horaInicioPorDefecto,
@@ -331,6 +404,7 @@ export default function ModalEvento({
         key={claveFormulario}
         proyectoId={proyectoId}
         evento={evento}
+        miembros={miembros}
         alcance={alcance}
         fechaPorDefecto={fechaPorDefecto}
         horaInicioPorDefecto={horaInicioPorDefecto}

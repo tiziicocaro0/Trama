@@ -15,6 +15,8 @@ import org.hibernate.type.SqlTypes;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalTime;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 @Entity
@@ -78,10 +80,20 @@ public class Evento {
     @Column(name = "es_cambio", nullable = false)
     private Boolean esCambio = false;
 
+    @Convert(converter = CifradoConverter.class)
     @Column(name = "acta", columnDefinition = "MEDIUMBLOB")
-    private byte[] acta;
+    private String acta;
 
     @CreationTimestamp
     @Column(name = "creado_en", nullable = false, updatable = false)
     private Instant creadoEn;
+
+    @Builder.Default
+    @ManyToMany(fetch = FetchType.LAZY)
+    @JoinTable(
+            name = "evento_participante",
+            joinColumns = @JoinColumn(name = "evento_id"),
+            inverseJoinColumns = @JoinColumn(name = "usuario_id")
+    )
+    private List<Usuario> participantes = new ArrayList<>();
 }

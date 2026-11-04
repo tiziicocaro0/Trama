@@ -1,5 +1,6 @@
 package com.trama.tpo.demo.controllers;
 
+import com.trama.tpo.demo.entity.dto.ActaRequest;
 import com.trama.tpo.demo.entity.dto.EventoRequest;
 import com.trama.tpo.demo.entity.dto.EventoResponse;
 import com.trama.tpo.demo.entity.dto.EventoOcurrenciaRequest;
@@ -32,7 +33,7 @@ public class EventoController {
         this.ocurrenciaService = ocurrenciaService;
     }
 
-    // CREAR EVENTO UNICO O RECURRENTE
+    // CREAR EVENTO UNICO O RECURRENTE (O REUNION)
     @PostMapping
     public ResponseEntity<EventoResponse> crear(
             @PathVariable UUID proyectoId,
@@ -113,6 +114,18 @@ public class EventoController {
 
         eventoService.cancelarOcurrencia(
                 proyectoId, eventoId, fecha);
+
+        return ResponseEntity.noContent().build();
+    }
+
+    // 5.5: REGISTRAR O ACTUALIZAR ACTA DE UNA REUNIÓN (SOLO PARTICIPANTES)
+    @PutMapping("/{eventoId}/acta")
+    public ResponseEntity<Void> guardarActa(
+            @PathVariable UUID proyectoId,
+            @PathVariable UUID eventoId,
+            @Valid @RequestBody ActaRequest request) {
+
+        eventoService.guardarActa(proyectoId, eventoId, request);
 
         return ResponseEntity.noContent().build();
     }
