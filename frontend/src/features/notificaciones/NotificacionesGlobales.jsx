@@ -15,7 +15,10 @@ export default function NotificacionesGlobales() {
     pathname.startsWith('/cuenta/') ||
     pathname === '/institucion'
 
-  if (estado !== 'autenticado' || !usuario || !esRutaPrivada) {
+  // 5.3: "Mostrarle el día" es a pantalla completa, sin nada encima (la campana tapaba la X en el celular)
+  const esVistaDelDia = /^\/proyectos\/[^/]+\/hoy$/.test(pathname)
+
+  if (estado !== 'autenticado' || !usuario || !esRutaPrivada || esVistaDelDia) {
     return null
   }
 

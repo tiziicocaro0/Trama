@@ -45,14 +45,14 @@ function TarjetaActividad({ actividad, imagen }) {
   const Icono = actividad.esCambio ? CalendarCheck : CalendarBlank
   const hora = textoHora(actividad.horaInicio)
   return (
-    <li className={`flex min-h-32 items-center gap-4 rounded-lg border bg-superficie p-4 shadow-sm sm:gap-6 sm:p-6 ${actividad.esCambio ? 'border-agua' : 'border-borde'}`}>
-      <span className={`flex size-20 shrink-0 items-center justify-center overflow-hidden rounded-md border sm:size-24 md:size-28 ${actividad.esCambio ? 'border-agua bg-agua/15 text-secundario' : 'border-borde bg-fondo text-secundario'}`}>
+    <li className={`flex min-h-32 items-center gap-4 rounded-lg border bg-superficie p-4 shadow-sm sm:gap-6 sm:p-6 ${actividad.esCambio ? 'border-primario' : 'border-borde'}`}>
+      <span className={`flex size-20 shrink-0 items-center justify-center overflow-hidden rounded-md border sm:size-24 md:size-28 ${actividad.esCambio ? 'border-primario bg-primario/10 text-primario' : 'border-borde bg-fondo text-secundario'}`}>
         {imagen ? <img src={imagen} alt="" className="size-full object-cover" /> : <Icono size={48} aria-hidden="true" />}
       </span>
       <span className="min-w-0">
         <span className="block font-sans text-2xl font-semibold tabular-nums text-texto sm:text-3xl">{hora}</span>
         <span className="mt-1 block break-words font-display text-3xl leading-tight text-texto sm:text-4xl">{actividad.titulo}</span>
-        {actividad.esCambio && <span className="mt-2 inline-flex rounded-full bg-agua/15 px-3 py-1 text-sm font-semibold text-secundario">Cambio</span>}
+        {actividad.esCambio && <span className="mt-2 inline-flex rounded-full bg-primario/10 px-3 py-1 text-sm font-semibold text-primario">Cambio de rutina</span>}
       </span>
     </li>
   )
