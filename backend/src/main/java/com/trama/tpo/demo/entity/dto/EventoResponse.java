@@ -25,4 +25,8 @@ public record EventoResponse(
         LocalDate fechaFinRecurrencia,
         LocalDate fechaOcurrencia,
 
+        String tipo,
+        String acta,
+        List<UUID> participanteIds
+
 ) {}

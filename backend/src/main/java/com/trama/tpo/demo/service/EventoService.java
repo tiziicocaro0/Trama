@@ -185,6 +185,13 @@ public class EventoService {
                 ? ("REUNION".equalsIgnoreCase(request.tipo()) ? "REUNION" : "COMUN")
                 : evento.getTipo();
 
+        // 5.5: una reunión con acta no puede volver a ser un evento común (la base lo
+        // prohíbe con ck_evento_acta y daría un 500): se avisa con un error claro.
+        if (evento.getActa() != null && !"REUNION".equals(tipo)) {
+            throw error("REUNION_CON_ACTA", HttpStatus.CONFLICT,
+                    "Esta reunión ya tiene acta: no puede pasar a ser un evento común");
+        }
+
         List<Usuario> participantes = request.participanteIds() != null
                 ? resolverParticipantes(proyectoId, request.participanteIds(), tipo)
                 : evento.getParticipantes();

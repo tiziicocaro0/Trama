@@ -4,7 +4,7 @@ import Boton from '../../../components/ui/Boton.jsx'
 import { tituloDia } from '../utils/periodo.js'
 import TarjetaEvento from './TarjetaEvento.jsx'
 
-export default function PanelCalendario({ dia, evento, eventos, proyectoId, miembros, puedeModificar, eliminandoId, onCerrar, onEvento, onVolver, onNuevo, onEditar, onEliminar, onDescargarImagen, soloLectura = false }) {
+export default function PanelCalendario({ dia, evento, eventos, proyectoId, miembros, puedeModificar, eliminandoId, onCerrar, onEvento, onVolver, onNuevo, onEditar, onEliminar, onDescargarImagen, puedeEditarActa, onGuardarActa, soloLectura = false }) {
   const abierto = Boolean(dia || evento)
   const botonCerrar = useRef(null)
   const cerrarActual = useRef(onCerrar)
@@ -27,7 +27,7 @@ export default function PanelCalendario({ dia, evento, eventos, proyectoId, miem
         {evento ? <button type="button" onClick={onVolver} className="min-h-11 text-sm text-texto-suave">← Volver</button> : <span />}
         <button ref={botonCerrar} type="button" onClick={onCerrar} aria-label="Cerrar detalle" className="flex size-11 items-center justify-center rounded-sm hover:bg-fondo"><X size={22} aria-hidden="true" /></button>
       </div>
-      {evento ? <>{evento.proyectoNombre && <p className="mb-3 text-sm text-texto-suave">Acompañamiento: {evento.proyectoNombre}</p>}<TarjetaEvento proyectoId={proyectoId} evento={evento} autorNombre={autorNombre} puedeModificar={puedeModificar(evento)} eliminando={eliminandoId === evento.id} onEditar={onEditar} onEliminar={onEliminar} onDescargarImagen={onDescargarImagen} /></> : <>
+      {evento ? <>{evento.proyectoNombre && <p className="mb-3 text-sm text-texto-suave">Acompañamiento: {evento.proyectoNombre}</p>}<TarjetaEvento proyectoId={proyectoId} evento={evento} autorNombre={autorNombre} miembros={miembros} puedeModificar={puedeModificar(evento)} puedeEditarActa={Boolean(puedeEditarActa?.(evento))} onGuardarActa={onGuardarActa} eliminando={eliminandoId === evento.id} onEditar={onEditar} onEliminar={onEliminar} onDescargarImagen={onDescargarImagen} /></> : <>
         <h3 className="font-display text-h2 capitalize text-secundario">{tituloDia(dia)}</h3>
         <p className="mb-5 text-sm text-texto-suave">{eventos.length} {eventos.length === 1 ? 'actividad' : 'actividades'}</p>
         {eventos.length ? <div className="space-y-2">{eventos.map((item) => <button key={`${item.id}-${item.fechaOcurrencia || item.fecha}`} type="button" onClick={() => onEvento(item)} className={`w-full rounded-md border p-3 text-left ${item.esCambio ? 'border-primario bg-primario/10' : 'border-borde bg-fondo/40'}`}><span className="block text-xs text-texto-suave">{item.horaInicio?.slice(0, 5) || 'Sin horario'}</span><span className="font-semibold">{item.titulo}</span>{item.proyectoNombre && <span className="block text-xs text-texto-suave">{item.proyectoNombre}</span>}{item.esCambio && <span className="block text-xs text-primario">Cambio de rutina</span>}</button>)}</div> : <p className="text-texto-suave">No hay eventos este día.</p>}

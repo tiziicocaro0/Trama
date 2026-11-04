@@ -31,7 +31,7 @@ function archivosIniciales(evento) {
     : []
 }
 
-function FormularioEvento({ proyectoId, evento, alcance = 'serie', fechaPorDefecto, horaInicioPorDefecto, onCerrar, onGuardar }) {
+function FormularioEvento({ proyectoId, evento, miembros = [], alcance = 'serie', fechaPorDefecto, horaInicioPorDefecto, onCerrar, onGuardar }) {
   const esEdicion = Boolean(evento?.id)
   const esSoloOcurrencia = esEdicion && alcance === 'ocurrencia'
   const fechaInicial = esSoloOcurrencia

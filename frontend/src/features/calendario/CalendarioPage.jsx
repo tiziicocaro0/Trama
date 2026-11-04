@@ -48,6 +48,7 @@ export default function CalendarioPage() {
   const [panelDia, setPanelDia] = useState(null)
   const [eventoSeleccionado, setEventoSeleccionado] = useState(null)
   const [fechaNuevoEvento, setFechaNuevoEvento] = useState(null)
+  const [horaNuevoEvento, setHoraNuevoEvento] = useState(null)
   const [eventoEnEdicion, setEventoEnEdicion] = useState(null)
   const [alcanceEdicion, setAlcanceEdicion] = useState('serie')
   const [dialogoAlcance, setDialogoAlcance] = useState(null)
@@ -79,19 +80,36 @@ export default function CalendarioPage() {
     return Boolean(usuario?.id && evento?.autorId === usuario.id)
   }
 
-  function abrirNuevoEvento(fecha = null) {
+  function puedeEditarActa(evento) {
+    if (evento.tipo !== 'REUNION') return false
+    const idUsuario = usuario?.id
+    if (!idUsuario) return false
+    if (evento.autorId === idUsuario) return true
+    if (Array.isArray(evento.participanteIds) && evento.participanteIds.includes(idUsuario)) {
+      return true
+    }
+    return false
+  }
+
+  function abrirNuevoEvento(fecha = null, hora = null) {
     setErrorAccion('')
     setMensajeExito('')
     setEventoEnEdicion(null)
     setFechaNuevoEvento(fecha)
+    setHoraNuevoEvento(hora)
     setPanelDia(null)
     setEventoSeleccionado(null)
     setAlcanceEdicion('serie')
     setModalAbierto(true)
   }
 
-  function seleccionarDia(fecha) {
+  // En la vista semanal, un clic en un horario libre trae la hora: abre el alta con esa hora
+  function seleccionarDia(fecha, hora = null) {
     setDiaSeleccionado(fecha)
+    if (hora) {
+      abrirNuevoEvento(fecha, hora)
+      return
+    }
     const delDia = eventosDelDia(eventos, fecha)
     if (delDia.length === 0) abrirNuevoEvento(fecha)
     else { setPanelDia(fecha); setEventoSeleccionado(null) }
@@ -217,6 +235,10 @@ export default function CalendarioPage() {
 
   async function manejarGuardarActa(evento, textoActa) {
     await guardarActaReunion(proyectoId, evento.id, textoActa)
+    // El detalle abierto muestra el acta nueva sin esperar a que se recargue el calendario
+    setEventoSeleccionado((actual) =>
+      actual && actual.id === evento.id ? { ...actual, acta: textoActa } : actual,
+    )
     setMensajeExito('Acta guardada correctamente.')
     reintentar()
   }
@@ -310,6 +332,8 @@ export default function CalendarioPage() {
                 onEditar={solicitarEditarEvento}
                 onEliminar={solicitarEliminarEvento}
                 onDescargarImagen={manejarDescargaImagen}
+                puedeEditarActa={puedeEditarActa}
+                onGuardarActa={manejarGuardarActa}
               />
 
               <ModalEvento
@@ -317,6 +341,8 @@ export default function CalendarioPage() {
                 proyectoId={proyectoId}
                 evento={eventoEnEdicion}
                 fechaPorDefecto={fechaNuevoEvento}
+                horaInicioPorDefecto={horaNuevoEvento}
+                miembros={miembros}
                 alcance={alcanceEdicion}
                 onCerrar={cerrarModal}
                 onGuardar={manejarGuardarEvento}

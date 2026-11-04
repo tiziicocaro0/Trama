@@ -103,6 +103,7 @@ public class AporteService {
         validarComunicacion(request);
         validarSensorial(request);
         validarEstrategia(request);
+        validarAbc(request);
 
         UUID usuarioId = usuarioActual.obtenerId();
 
@@ -274,6 +275,7 @@ public class AporteService {
         validarComunicacion(request);
         validarSensorial(request);
         validarEstrategia(request);
+        validarAbc(request);
 
         // Guardar la versión anterior antes de editar
         AporteVersion version = AporteVersion.builder()

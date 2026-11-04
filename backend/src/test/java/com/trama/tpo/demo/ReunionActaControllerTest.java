@@ -126,6 +126,22 @@ class ReunionActaControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].tipo").value("REUNION"))
                 .andExpect(jsonPath("$[0].acta").value("Acordamos anticipar los cambios de aula con pictogramas."));
+
+        // 2. Con acta, la reunión no puede pasar a ser un evento común (409, no un 500)
+        String bodyComun = mapper.writeValueAsString(Map.of(
+                "titulo", "Reunión de seguimiento escolar",
+                "fecha", "2026-11-10",
+                "horaInicio", "10:00",
+                "horaFin", "11:00",
+                "tipo", "COMUN"
+        ));
+
+        mockMvc.perform(put(rutaEventos() + "/" + eventoId)
+                .header("Authorization", token(tutor))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(bodyComun))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.codigo").value("REUNION_CON_ACTA"));
     }
 
     @Test

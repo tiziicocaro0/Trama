@@ -62,9 +62,10 @@ const miembrosMock = [
 
 let eventosActuales = []
 
+// Abre en la semana de la reunión de prueba (el calendario arranca en la semana actual)
 function renderCalendario(usuario = { id: docenteId, nombre: 'Lucía' }) {
   return render(
-    <MemoryRouter initialEntries={[`/proyectos/${proyectoId}/calendario`]}>
+    <MemoryRouter initialEntries={[`/proyectos/${proyectoId}/calendario?fecha=2026-10-15`]}>
       <AuthContext.Provider
         value={{
           usuario,
@@ -76,6 +77,14 @@ function renderCalendario(usuario = { id: docenteId, nombre: 'Lucía' }) {
       </AuthContext.Provider>
     </MemoryRouter>,
   )
+}
+
+// El detalle de un evento se abre desde la grilla del calendario (5.2)
+async function abrirDetalle(user) {
+  await user.click(
+    await screen.findByRole('button', { name: 'Ver evento: Reunión con equipo de orientación' }),
+  )
+  return screen.findByRole('dialog', { name: 'Detalle de Reunión con equipo de orientación' })
 }
 
 describe('Reuniones con participantes y acta (Tarea 5.5)', () => {
@@ -137,11 +146,11 @@ describe('Reuniones con participantes y acta (Tarea 5.5)', () => {
     const user = userEvent.setup()
     renderCalendario({ id: docenteId, nombre: 'Lucía' })
 
-    await screen.findByRole('heading', { name: 'Reunión con equipo de orientación' })
-    expect(screen.getByText('Reunión')).toBeInTheDocument()
+    await screen.findByRole('button', { name: 'Ver evento: Reunión con equipo de orientación' })
 
     // Abrir modal de nuevo evento
-    await user.click(screen.getByRole('button', { name: /Nuevo evento/i }))
+    // En la grilla semanal se crea un evento desde un horario libre (5.2)
+    await user.click(screen.getAllByRole('button', { name: /Agregar evento el .* a las 14:00/ })[0])
     const dialog = await screen.findByRole('dialog', { name: 'Nuevo evento' })
 
     await user.type(within(dialog).getByLabelText(/Título/i), 'Reunión de seguimiento mensual')
@@ -186,10 +195,11 @@ describe('Reuniones con participantes y acta (Tarea 5.5)', () => {
     // La docente está como participante en la reunión pasada
     renderCalendario({ id: docenteId, nombre: 'Lucía' })
 
-    await screen.findByRole('heading', { name: 'Reunión con equipo de orientación' })
+    const detalle = await abrirDetalle(user)
+    expect(within(detalle).getByText('Reunión')).toBeInTheDocument()
 
     // Se ve el botón para registrar acta
-    const botonRegistrar = screen.getByRole('button', { name: /Registrar acta/i })
+    const botonRegistrar = within(detalle).getByRole('button', { name: /Registrar acta/i })
     expect(botonRegistrar).toBeInTheDocument()
 
     await user.click(botonRegistrar)
@@ -220,9 +230,10 @@ describe('Reuniones con participantes y acta (Tarea 5.5)', () => {
 
   it('un miembro no participante no ve el botón para registrar o editar el acta', async () => {
     // El familiar NO es participante en 'reunion-pasada-1'
+    const user = userEvent.setup()
     renderCalendario({ id: familiarId, nombre: 'Carlos' })
 
-    await screen.findByRole('heading', { name: 'Reunión con equipo de orientación' })
+    await abrirDetalle(user)
     expect(screen.queryByRole('button', { name: /Registrar acta/i })).not.toBeInTheDocument()
     expect(screen.queryByRole('button', { name: /Editar acta/i })).not.toBeInTheDocument()
   })

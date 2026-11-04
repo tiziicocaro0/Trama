@@ -60,6 +60,17 @@ it('abre creación con fecha preseleccionada al pulsar un día vacío', async ()
   expect(within(dialogo).getByLabelText('Fecha')).toHaveValue('21/10/2026')
 })
 
+it('un horario libre de la semana abre el alta con ese día y esa hora', async () => {
+  abrir()
+  await screen.findByRole('button', { name: 'Ver evento: Terapia ocupacional' })
+  // El martes 20 ya tiene un evento a las 9: un clic en las 14 igual abre el alta
+  await userEvent.click(screen.getByRole('button', { name: /Agregar evento el martes.*20 de octubre a las 14:00/ }))
+  const dialogo = await screen.findByRole('dialog', { name: 'Nuevo evento' })
+  expect(within(dialogo).getByLabelText('Fecha')).toHaveValue('20/10/2026')
+  expect(within(dialogo).getByLabelText(/Hora de inicio/i)).toHaveValue('14:00')
+  expect(within(dialogo).getByLabelText(/Hora de fin/i)).toHaveValue('15:00')
+})
+
 it('abre el detalle y diferencia los cambios de rutina', async () => {
   abrir()
   const boton = await screen.findByRole('button', { name: 'Ver evento: Cambio de docente' })
