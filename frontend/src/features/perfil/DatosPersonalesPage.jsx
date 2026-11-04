@@ -13,6 +13,8 @@ import useAuth from '../../hooks/useAuth.js'
 import { formatearFechaCalendario } from '../../utils/fechas.js'
 import { actualizarProyecto } from '../../api/proyectos.js'
 import { calcularEdad } from './perfil.js'
+import ZonaEliminarPerfil from './eliminacion/ZonaEliminarPerfil.jsx'
+import useProyectoActual from '../../hooks/useProyectoActual.js'
 
 const definicionesCampos = [
   { nombre: 'nombre', etiqueta: 'Nombre', maxLength: 80 },
@@ -31,6 +33,8 @@ export default function DatosPersonalesPage() {
     Boolean(auth?.esAdmin ?? usuario?.esAdmin)
 
   const { proyecto, cargando, error, reintentar } = usePerfil(id)
+  // 8.2: eliminar el perfil es solo para el tutor administrador de este niño
+  const { esAdmin: esAdminDelProyecto } = useProyectoActual()
 
   const [editando, setEditando] = useState(false)
   const [valores, setValores] = useState({})
@@ -257,6 +261,10 @@ export default function DatosPersonalesPage() {
                   </dl>
                 )}
               </section>
+
+              {esAdminDelProyecto && (
+                <ZonaEliminarPerfil key={proyecto.id} proyecto={proyecto} />
+              )}
             </>
           )
         )}

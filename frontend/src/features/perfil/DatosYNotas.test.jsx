@@ -125,7 +125,8 @@ describe('Datos personales y navegación compartida', () => {
     abrir('datos-personales')
     await screen.findByRole('heading', { name: 'Datos personales' })
     expect(screen.getByText('No informado')).toBeInTheDocument()
-    expect(cliente.get).toHaveBeenCalledTimes(1)
+    // Lee el proyecto (y la lista de proyectos para saber si es admin, 8.2), nunca los aportes
+    expect(cliente.get.mock.calls.some(([ruta]) => ruta.includes('/aportes'))).toBe(false)
     expect(cliente.get).toHaveBeenCalledWith(`/proyectos/${id}`, {
       signal: expect.any(AbortSignal),
     })

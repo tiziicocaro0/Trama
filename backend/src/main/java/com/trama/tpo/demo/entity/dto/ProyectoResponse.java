@@ -1,5 +1,6 @@
 package com.trama.tpo.demo.entity.dto;
 
+import java.time.Instant;
 import java.time.LocalDate;
 import java.util.UUID;
 
@@ -20,7 +21,9 @@ public record ProyectoResponse(
         // 4.2: true si además puede cargar notas profesionales (educación o salud)
         Boolean puedeCargarNotas,
         // 9.0: true si es un profesional en solo lectura por el límite del plan gratuito
-        Boolean soloLecturaPorPlan) {
+        Boolean soloLecturaPorPlan,
+        // 8.2: cuándo se borra el perfil si el tutor programó la eliminación (si no, null)
+        Instant eliminacionProgramada) {
 
     public static ProyectoResponse from(
             Proyecto proyecto,
@@ -46,6 +49,7 @@ public record ProyectoResponse(
                 proyecto.getFamiliarVeNotas(),
                 puedeCargar,
                 puedeCargarNotas,
-                soloLecturaPorPlan);
+                soloLecturaPorPlan,
+                proyecto.getEliminacionProgramada());
     }
 }

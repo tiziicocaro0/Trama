@@ -130,3 +130,21 @@ export async function guardarPermisosFamiliar(id, { familiarPuedeCargar, familia
   )
   return data
 }
+
+// 8.2: programar la eliminación del perfil (7 días para arrepentirse) y cancelarla.
+// Solo el tutor administrador. Devuelven el proyecto con su eliminacionProgramada.
+export async function programarEliminacion(id) {
+  if (!cliente.defaults.baseURL) {
+    throw new Error('Falta configurar la conexión con TRAMA. Revisá VITE_API_URL.')
+  }
+  const { data } = await cliente.post(`/proyectos/${encodeURIComponent(id)}/eliminacion`)
+  return data
+}
+
+export async function cancelarEliminacion(id) {
+  if (!cliente.defaults.baseURL) {
+    throw new Error('Falta configurar la conexión con TRAMA. Revisá VITE_API_URL.')
+  }
+  const { data } = await cliente.delete(`/proyectos/${encodeURIComponent(id)}/eliminacion`)
+  return data
+}

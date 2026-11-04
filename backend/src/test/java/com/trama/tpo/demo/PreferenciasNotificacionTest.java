@@ -72,12 +72,13 @@ class PreferenciasNotificacionTest {
     void porDefectoTodosLosAvisosConfigurablesLleganPorMail() throws Exception {
         mockMvc.perform(get(RUTA).header("Authorization", token(ana)))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.length()").value(5))
+                .andExpect(jsonPath("$.length()").value(6))
                 .andExpect(jsonPath("$[0].tipo").value("CAMBIO_CALENDARIO"))
                 .andExpect(jsonPath("$[1].tipo").value("NOTA_NUEVA"))
                 .andExpect(jsonPath("$[2].tipo").value("MENCION"))
                 .andExpect(jsonPath("$[3].tipo").value("REVISION"))
                 .andExpect(jsonPath("$[4].tipo").value("CAMBIO_PAQUETE"))
+                .andExpect(jsonPath("$[5].tipo").value("ELIMINACION_PERFIL"))
                 .andExpect(jsonPath("$[*].porEmail").value(org.hamcrest.Matchers.everyItem(
                         org.hamcrest.Matchers.is(true))));
     }

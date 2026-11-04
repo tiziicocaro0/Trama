@@ -3,6 +3,7 @@ package com.trama.tpo.demo.repository;
 import com.trama.tpo.demo.entity.dto.MiProyectoDTO;
 import com.trama.tpo.demo.entity.proyecto.Proyecto;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -26,4 +27,10 @@ public interface ProyectoRepository extends JpaRepository<Proyecto, UUID> {
 
     /** 8.2: tarea diaria que borra los proyectos cuya eliminación ya venció. */
     List<Proyecto> findByEliminacionProgramadaBefore(Instant ahora);
+
+    // 8.2: borra el proyecto con un DELETE directo; la base se lleva en cascada la red, los aportes,
+    // las versiones, los archivos, los eventos, las notificaciones y el registro de acciones
+    @Modifying
+    @Query("DELETE FROM Proyecto p WHERE p.id = :id")
+    int borrarDefinitivamente(@Param("id") UUID id);
 }
