@@ -5,4 +5,5 @@ export const TIPOS_AVISO = [
   ['MENCION', 'Menciones', 'Cuando alguien te nombra en un comentario.'],
   ['REVISION', 'Pedidos de revisión', 'Cuando un tutor te pide revisar algo que cargaste.'],
   ['CAMBIO_PAQUETE', 'Paquete de tu institución', 'Si sos responsable de una institución y cambia de paquete.'],
+  ['ELIMINACION_PERFIL', 'Eliminación de un perfil', 'Cuando un tutor programa o cancela el borrado de un acompañamiento.'],
 ]

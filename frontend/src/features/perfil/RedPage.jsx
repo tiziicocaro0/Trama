@@ -15,6 +15,7 @@ import useAuth from '../../hooks/useAuth.js'
 import CabeceraPerfil from './components/CabeceraPerfil.jsx'
 import ModalInvitarMiembro from './components/ModalInvitarMiembro.jsx'
 import InvitacionesPendientes from './components/InvitacionesPendientes.jsx'
+import PermisosFamiliares from './components/PermisosFamiliares.jsx'
 import usePerfil from './hooks/usePerfil.js'
 import NavegacionPerfil from './components/NavegacionPerfil.jsx'
 import EspecialidadModal from './components/EspecialidadModal.jsx'
@@ -332,6 +333,8 @@ export default function RedPage() {
                     version={versionInvitaciones}
                   />
                 )}
+
+                {esAdmin && <PermisosFamiliares proyecto={proyecto} />}
               </section>
 
               <ModalInvitarMiembro

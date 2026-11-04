@@ -173,12 +173,18 @@ public class AporteService {
         List<Visibilidad> visibilidadesPermitidas =
                 PermisoService.visibilidadesPermitidas(rol);
 
+        // 1.8: un familiar sin permiso no recibe las notas profesionales
+        TipoAporte tipoOculto = permisoService.ocultaNotasProfesionales(proyectoId)
+                ? TipoAporte.NOTA_PROFESIONAL
+                : null;
+
         // Filtrar directamente desde la base de datos
         List<Aporte> aportes = aporteRepository.buscarAportesVisibles(
                 proyectoId,
                 incluirArchivados,
                 tipo,
-                visibilidadesPermitidas
+                visibilidadesPermitidas,
+                tipoOculto
         );
 
         // Se calcula una sola vez: si el usuario puede cargar en este proyecto
@@ -335,7 +341,8 @@ public class AporteService {
         // Verificar que también tenga permiso para ver el aporte
         permisoService.verificarPuedeVerAporte(
                 proyectoId,
-                aporte.getVisibilidad()
+                aporte.getVisibilidad(),
+                aporte.getTipo()
         );
 
         return aporte;

@@ -13,6 +13,8 @@ import useAuth from '../../hooks/useAuth.js'
 import { formatearFechaCalendario } from '../../utils/fechas.js'
 import { actualizarProyecto } from '../../api/proyectos.js'
 import { calcularEdad } from './perfil.js'
+import ZonaEliminarPerfil from './eliminacion/ZonaEliminarPerfil.jsx'
+import useProyectoActual from '../../hooks/useProyectoActual.js'
 
 const definicionesCampos = [
   { nombre: 'nombre', etiqueta: 'Nombre', maxLength: 80 },
@@ -27,10 +29,12 @@ export default function DatosPersonalesPage() {
   const { id } = useParams()
   const auth = useAuth()
   const usuario = auth?.usuario ?? auth
-  const esAdmin =
-    Boolean(auth?.esAdmin ?? usuario?.esAdmin)
 
   const { proyecto, cargando, error, reintentar } = usePerfil(id)
+  // Editar los datos y eliminar el perfil (8.2) son solo para el tutor administrador de este niño.
+  // Antes se leía un esAdmin de la sesión que el back no manda, así que el botón Editar no aparecía nunca.
+  const { esAdmin: esAdminDelProyecto } = useProyectoActual()
+  const esAdmin = esAdminDelProyecto || Boolean(auth?.esAdmin ?? usuario?.esAdmin)
 
   const [editando, setEditando] = useState(false)
   const [valores, setValores] = useState({})
@@ -257,6 +261,10 @@ export default function DatosPersonalesPage() {
                   </dl>
                 )}
               </section>
+
+              {esAdmin && (
+                <ZonaEliminarPerfil key={proyecto.id} proyecto={proyecto} />
+              )}
             </>
           )
         )}

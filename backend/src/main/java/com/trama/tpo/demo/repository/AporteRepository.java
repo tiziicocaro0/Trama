@@ -26,12 +26,6 @@ public interface AporteRepository extends JpaRepository<Aporte, UUID> {
             Boolean archivado
     );
 
-    List<Aporte> findByProyectoIdAndTipoAndArchivadoOrderByCreadoEnDesc(
-            UUID proyectoId,
-            TipoAporte tipo,
-            Boolean archivado
-    );
-
     List<Aporte> findByProyectoIdAndArchivosId(
             UUID proyectoId,
             UUID archivoId
@@ -45,12 +39,15 @@ public interface AporteRepository extends JpaRepository<Aporte, UUID> {
               AND a.archivado = :archivado
               AND (:tipo IS NULL OR a.tipo = :tipo)
               AND a.visibilidad IN :visibilidades
+              AND (:tipoOculto IS NULL OR a.tipo <> :tipoOculto)
             ORDER BY a.creadoEn DESC
             """)
     List<Aporte> buscarAportesVisibles(
             @Param("proyectoId") UUID proyectoId,
             @Param("archivado") Boolean archivado,
             @Param("tipo") TipoAporte tipo,
-            @Param("visibilidades") List<Visibilidad> visibilidades
+            @Param("visibilidades") List<Visibilidad> visibilidades,
+            // 1.8: NOTA_PROFESIONAL para un familiar sin permiso de ver notas; si no, null
+            @Param("tipoOculto") TipoAporte tipoOculto
     );
 }

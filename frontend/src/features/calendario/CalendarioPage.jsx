@@ -334,6 +334,7 @@ export default function CalendarioPage() {
                 onDescargarImagen={manejarDescargaImagen}
                 puedeEditarActa={puedeEditarActa}
                 onGuardarActa={manejarGuardarActa}
+                puedeAgregarAcuerdos={proyecto?.puedeCargar !== false}
               />
 
               <ModalEvento

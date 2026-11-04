@@ -115,3 +115,36 @@ export async function actualizarProyecto(id, datos) {
   const { data } = await cliente.put(`/proyectos/${encodeURIComponent(id)}`, datos)
   return data
 }
+
+// 1.8: qué pueden hacer los familiares en este niño (solo el tutor administrador).
+// PUT /api/proyectos/{id}/configuracion → devuelve el proyecto actualizado
+export async function guardarPermisosFamiliar(id, { familiarPuedeCargar, familiarVeNotas }) {
+  if (!cliente.defaults.baseURL) {
+    throw new Error(
+      'Falta configurar la conexión con TRAMA. Revisá VITE_API_URL.',
+    )
+  }
+  const { data } = await cliente.put(
+    `/proyectos/${encodeURIComponent(id)}/configuracion`,
+    { familiarPuedeCargar, familiarVeNotas },
+  )
+  return data
+}
+
+// 8.2: programar la eliminación del perfil (7 días para arrepentirse) y cancelarla.
+// Solo el tutor administrador. Devuelven el proyecto con su eliminacionProgramada.
+export async function programarEliminacion(id) {
+  if (!cliente.defaults.baseURL) {
+    throw new Error('Falta configurar la conexión con TRAMA. Revisá VITE_API_URL.')
+  }
+  const { data } = await cliente.post(`/proyectos/${encodeURIComponent(id)}/eliminacion`)
+  return data
+}
+
+export async function cancelarEliminacion(id) {
+  if (!cliente.defaults.baseURL) {
+    throw new Error('Falta configurar la conexión con TRAMA. Revisá VITE_API_URL.')
+  }
+  const { data } = await cliente.delete(`/proyectos/${encodeURIComponent(id)}/eliminacion`)
+  return data
+}

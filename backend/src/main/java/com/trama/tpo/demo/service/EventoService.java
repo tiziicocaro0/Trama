@@ -34,6 +34,7 @@ public class EventoService {
     private final ArchivoRepository archivoRepository;
     private final PermisoService permisoService;
     private final UsuarioActual usuarioActual;
+    private final AcuerdoRepository acuerdoRepository;
 
     public EventoService(
             EventoRepository eventoRepository,
@@ -43,7 +44,8 @@ public class EventoService {
             MembresiaRepository membresiaRepository,
             ArchivoRepository archivoRepository,
             PermisoService permisoService,
-            UsuarioActual usuarioActual) {
+            UsuarioActual usuarioActual,
+            AcuerdoRepository acuerdoRepository) {
 
         this.eventoRepository = eventoRepository;
         this.excepcionRepository = excepcionRepository;
@@ -53,6 +55,7 @@ public class EventoService {
         this.archivoRepository = archivoRepository;
         this.permisoService = permisoService;
         this.usuarioActual = usuarioActual;
+        this.acuerdoRepository = acuerdoRepository;
     }
 
     // CREAR EVENTO UNICO O RECURRENTE (COMUN O REUNION)
@@ -190,6 +193,12 @@ public class EventoService {
         if (evento.getActa() != null && !"REUNION".equals(tipo)) {
             throw error("REUNION_CON_ACTA", HttpStatus.CONFLICT,
                     "Esta reunión ya tiene acta: no puede pasar a ser un evento común");
+        }
+        // 5.6: tampoco si ya tiene acuerdos
+        if ("REUNION".equals(evento.getTipo()) && !"REUNION".equals(tipo)
+                && acuerdoRepository.existsByReunionId(eventoId)) {
+            throw error("REUNION_CON_ACUERDOS", HttpStatus.CONFLICT,
+                    "La reunión tiene acuerdos: no puede pasar a ser un evento común");
         }
 
         List<Usuario> participantes = request.participanteIds() != null

@@ -15,6 +15,8 @@ import { CATEGORIAS_COMUNICACION, CATEGORIAS_RUTINA, CONTEXTOS_RUTINA, claveCate
 import { CATEGORIAS_SENSORIALES, ICONOS_SENSORIALES, CATEGORIAS_ESTRATEGIA, ICONOS_ESTRATEGIA, RESULTADOS_ESTRATEGIA, TONOS_ESTRATEGIA } from './camposAporte.js'
 import { ESPECIALIDADES_EDUCACION, ESPECIALIDADES_SALUD } from './especialidades.js'
 import FiltrosRutinas from './components/FiltrosRutinas.jsx'
+import AvisoEliminacion from './eliminacion/AvisoEliminacion.jsx'
+import useProyectoActual from '../../hooks/useProyectoActual.js'
 
 
 export default function PerfilPage() {
@@ -24,6 +26,9 @@ export default function PerfilPage() {
     listarAportes,
   )
   const [mensajeGuardado, setMensajeGuardado] = useState('')
+  // 8.2: aviso de eliminación programada en la portada (se oculta al cancelarla)
+  const { esAdmin } = useProyectoActual()
+  const [cancelacionEn, setCancelacionEn] = useState(null)
   const { usuario } = useAuth()
   const [busqueda, setBusqueda] = useState('')
   const [categoria, setCategoria] = useState('')
@@ -130,6 +135,9 @@ export default function PerfilPage() {
           <>
             <CabeceraPerfil proyecto={proyecto} seccion={seccion} />
             <NavegacionPerfil proyectoId={id} />
+            {!seccion && cancelacionEn !== id && (
+              <AvisoEliminacion proyecto={proyecto} esAdmin={esAdmin} onCancelada={() => setCancelacionEn(id)} />
+            )}
             {!seccion && (
               <>
                 <div className="mb-4 flex flex-wrap items-center justify-between gap-4 rounded-md border border-primario/30 bg-superficie p-4 shadow-sm sm:p-5">

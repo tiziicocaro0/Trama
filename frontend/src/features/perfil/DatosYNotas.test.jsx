@@ -125,10 +125,38 @@ describe('Datos personales y navegación compartida', () => {
     abrir('datos-personales')
     await screen.findByRole('heading', { name: 'Datos personales' })
     expect(screen.getByText('No informado')).toBeInTheDocument()
-    expect(cliente.get).toHaveBeenCalledTimes(1)
+    // Lee el proyecto (y la lista de proyectos para saber si es admin, 8.2), nunca los aportes
+    expect(cliente.get.mock.calls.some(([ruta]) => ruta.includes('/aportes'))).toBe(false)
     expect(cliente.get).toHaveBeenCalledWith(`/proyectos/${id}`, {
       signal: expect.any(AbortSignal),
     })
+  })
+  it('el tutor administrador del niño ve Editar y la zona para eliminar el perfil', async () => {
+    cliente.get.mockImplementation(async (ruta) => ({
+      data:
+        ruta === '/proyectos'
+          ? [{ id, nombre: proyecto.nombre, rol: 'TUTOR', esAdmin: true }]
+          : { ...proyecto, puedeCargar: true },
+    }))
+    abrir('datos-personales')
+    expect(
+      await screen.findByRole('button', { name: 'Editar datos personales' }),
+    ).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'Eliminar perfil' })).toBeInTheDocument()
+  })
+  it('un miembro que no es administrador no ve Editar ni la zona para eliminar', async () => {
+    cliente.get.mockImplementation(async (ruta) => ({
+      data:
+        ruta === '/proyectos'
+          ? [{ id, nombre: proyecto.nombre, rol: 'FAMILIAR', esAdmin: false }]
+          : { ...proyecto, puedeCargar: true },
+    }))
+    abrir('datos-personales')
+    await screen.findByRole('heading', { name: 'Datos personales' })
+    expect(
+      screen.queryByRole('button', { name: 'Editar datos personales' }),
+    ).not.toBeInTheDocument()
+    expect(screen.queryByRole('heading', { name: 'Eliminar perfil' })).not.toBeInTheDocument()
   })
   it('no expone datos personales cuando falta permiso', async () => {
     cliente.get.mockRejectedValue({ response: { status: 403 } })

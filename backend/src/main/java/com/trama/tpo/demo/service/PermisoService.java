@@ -9,6 +9,7 @@ import org.springframework.stereotype.Service;
 
 import com.trama.tpo.demo.entity.membresia.Membresia;
 import com.trama.tpo.demo.entity.membresia.Rol;
+import com.trama.tpo.demo.aporte.TipoAporte;
 import com.trama.tpo.demo.aporte.Visibilidad;
 import com.trama.tpo.demo.exceptions.ApiException;
 import com.trama.tpo.demo.exceptions.SoloLecturaException;
@@ -209,18 +210,31 @@ public class PermisoService {
         }
     }
 
-    // 5. VERIFICAR VISIBILIDAD DE UN APORTE
+    // 5. VERIFICAR SI PUEDE VER UN APORTE
+    // 1.8: además de la visibilidad, un familiar no ve notas profesionales si el tutor no lo habilitó
     public void verificarPuedeVerAporte(
             UUID proyectoId,
-            Visibilidad visibilidad) {
+            Visibilidad visibilidad,
+            TipoAporte tipo) {
 
         Membresia membresia = obtenerMembresia(proyectoId);
 
-        if (!visibilidadesPermitidas(membresia.getRol()).contains(visibilidad)) {
+        if (!visibilidadesPermitidas(membresia.getRol()).contains(visibilidad)
+                || (tipo == TipoAporte.NOTA_PROFESIONAL && ocultaNotasProfesionales(membresia))) {
             throw new AccessDeniedException(
                     "No tenés permiso para ver este aporte"
             );
         }
+    }
+
+    // 1.8: para filtrar el listado en la base
+    public boolean ocultaNotasProfesionales(UUID proyectoId) {
+        return ocultaNotasProfesionales(obtenerMembresia(proyectoId));
+    }
+
+    private static boolean ocultaNotasProfesionales(Membresia membresia) {
+        return membresia.getRol() == Rol.FAMILIAR
+                && !Boolean.TRUE.equals(membresia.getProyecto().getFamiliarVeNotas());
     }
 
     // 6. VISIBILIDADES QUE PUEDE VER CADA ROL
