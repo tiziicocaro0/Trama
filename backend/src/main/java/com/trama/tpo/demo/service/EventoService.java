@@ -194,6 +194,12 @@ public class EventoService {
             throw error("REUNION_CON_ACTA", HttpStatus.CONFLICT,
                     "Esta reunión ya tiene acta: no puede pasar a ser un evento común");
         }
+        // 5.6: tampoco si ya tiene acuerdos
+        if ("REUNION".equals(evento.getTipo()) && !"REUNION".equals(tipo)
+                && acuerdoRepository.existsByReunionId(eventoId)) {
+            throw error("REUNION_CON_ACUERDOS", HttpStatus.CONFLICT,
+                    "La reunión tiene acuerdos: no puede pasar a ser un evento común");
+        }
 
         List<Usuario> participantes = request.participanteIds() != null
                 ? resolverParticipantes(proyectoId, request.participanteIds(), tipo)
@@ -211,16 +217,6 @@ public class EventoService {
                 ? request.fechaFinRecurrencia() : null);
         evento.setTipo(tipo);
         evento.setParticipantes(participantes);
-
-        // 5.6: si no viene el tipo se mantiene el que tenía (así una reunión no pasa a común sin querer)
-        if (request.tipo() != null) {
-            if ("COMUN".equals(request.tipo()) && "REUNION".equals(evento.getTipo())
-                    && acuerdoRepository.existsByReunionId(eventoId)) {
-                throw error("REUNION_CON_ACUERDOS", HttpStatus.CONFLICT,
-                        "La reunión tiene acuerdos: no puede pasar a ser un evento común");
-            }
-            evento.setTipo(request.tipo());
-        }
 
         return convertir(eventoRepository.saveAndFlush(evento));
     }

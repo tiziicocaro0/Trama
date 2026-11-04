@@ -12,6 +12,7 @@ import Boton from '../../../components/ui/Boton.jsx'
 import { formatearFechaCalendario, hoyIso } from '../../../utils/fechas.js'
 import { nombreDiaSemana } from '../utils/recurrencia.js'
 import SeccionActa from './SeccionActa.jsx'
+import SeccionAcuerdos from './SeccionAcuerdos.jsx'
 
 function formatearHora(valor) {
   if (typeof valor !== 'string' || !valor.trim()) return ''
@@ -36,6 +37,7 @@ export default function TarjetaEvento({
   miembros = [],
   puedeModificar,
   puedeEditarActa,
+  puedeAgregarAcuerdos = false,
   eliminando,
   onEditar,
   onEliminar,
@@ -135,6 +137,16 @@ export default function TarjetaEvento({
               evento={evento}
               puedeEditarActa={puedeEditarActa}
               onGuardarActa={onGuardarActa}
+            />
+          )}
+
+          {/* 5.6: los acuerdos de la reunión, con responsable, fecha de revisión y Cumplido */}
+          {esReunion && proyectoId && (
+            <SeccionAcuerdos
+              proyectoId={proyectoId}
+              reunion={evento}
+              miembros={miembros}
+              puedeAgregar={puedeAgregarAcuerdos}
             />
           )}
         </div>

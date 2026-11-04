@@ -82,7 +82,12 @@ class AccesoEndpointsTest {
             EventoOcurrenciaRequest.class, """
                     {"titulo":"Prueba","horaInicio":"10:00","horaFin":"11:00"}""",
             ActaRequest.class, """
-                    {"acta":"Acuerdos de la reunión de prueba"}""");
+                    {"acta":"Acuerdos de la reunión de prueba"}""",
+            AcuerdoRequest.class, """
+                    {"reunionId":"00000000-0000-0000-0000-000000000001","descripcion":"Prueba",
+                     "responsableId":"00000000-0000-0000-0000-000000000002","fechaRevision":"2026-11-20"}""",
+            CumplidoRequest.class, """
+                    {"cumplido":true}""");
 
     @Autowired private MockMvc mockMvc;
     @Autowired private JwtService jwtService;
