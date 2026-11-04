@@ -7,6 +7,7 @@ import {
   editarEvento,
   editarOcurrenciaEvento,
   eliminarEvento,
+  guardarActaReunion,
   listarEventos,
 } from '../../api/eventos.js'
 import { listarMiembros } from '../../api/miembros.js'
@@ -212,6 +213,12 @@ export default function CalendarioPage() {
       return
     }
     ejecutarEliminacion(evento, alcance)
+  }
+
+  async function manejarGuardarActa(evento, textoActa) {
+    await guardarActaReunion(proyectoId, evento.id, textoActa)
+    setMensajeExito('Acta guardada correctamente.')
+    reintentar()
   }
 
   async function manejarDescargaImagen(e, evento) {
