@@ -125,6 +125,7 @@ class ArchivoControllerTest {
                   "tipo": "COMUNICACION",
                   "titulo": "Agenda visual",
                   "contenido": "Informe y pictograma adjunto",
+                  "datos": "{\\\"categoria\\\":\\\"APOYOS\\\",\\\"formasComunicacion\\\":[\\\"PICTOGRAMAS\\\"],\\\"comoHablarle\\\":\\\"Mostrar la imagen\\\",\\\"queEvitar\\\":\\\"Apurarlo\\\"}",
                   "visibilidad": "TODOS",
                   "archivoIds": ["%s"]
                 }
@@ -202,6 +203,7 @@ class ArchivoControllerTest {
                                 {
                                   "tipo": "COMUNICACION",
                                   "titulo": "Informe solo para tutores",
+                                  "datos": "{\\\"categoria\\\":\\\"APOYOS\\\",\\\"formasComunicacion\\\":[\\\"PICTOGRAMAS\\\"],\\\"comoHablarle\\\":\\\"Mostrar la imagen\\\",\\\"queEvitar\\\":\\\"Apurarlo\\\"}",
                                   "visibilidad": "SOLO_TUTORES",
                                   "archivoIds": ["%s"]
                                 }

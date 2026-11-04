@@ -20,13 +20,18 @@ function normalizarHora(valor) {
   return typeof valor === 'string' && valor.trim() ? valor.trim().slice(0, 5) : ''
 }
 
+function horaFinDesdeInicio(valor) {
+  const hora = Number(valor.slice(0, 2))
+  return hora >= 23 ? '23:59' : `${String(hora + 1).padStart(2, '0')}:00`
+}
+
 function archivosIniciales(evento) {
   return evento?.imagenId
     ? [{ id: evento.imagenId, nombreOriginal: evento.imagenNombre || 'Imagen del evento', tipoMime: 'image/png' }]
     : []
 }
 
-function FormularioEvento({ proyectoId, evento, alcance = 'serie', fechaPorDefecto, onCerrar, onGuardar }) {
+function FormularioEvento({ proyectoId, evento, alcance = 'serie', fechaPorDefecto, horaInicioPorDefecto, onCerrar, onGuardar }) {
   const esEdicion = Boolean(evento?.id)
   const esSoloOcurrencia = esEdicion && alcance === 'ocurrencia'
   const fechaInicial = esSoloOcurrencia
@@ -35,8 +40,8 @@ function FormularioEvento({ proyectoId, evento, alcance = 'serie', fechaPorDefec
 
   const [titulo, setTitulo] = useState(evento?.titulo ?? '')
   const [fecha, setFecha] = useState(fechaInicial)
-  const [horaInicio, setHoraInicio] = useState(normalizarHora(evento?.horaInicio) || '09:00')
-  const [horaFin, setHoraFin] = useState(normalizarHora(evento?.horaFin) || '10:00')
+  const [horaInicio, setHoraInicio] = useState(normalizarHora(evento?.horaInicio) || horaInicioPorDefecto || '09:00')
+  const [horaFin, setHoraFin] = useState(normalizarHora(evento?.horaFin) || (horaInicioPorDefecto ? horaFinDesdeInicio(horaInicioPorDefecto) : '10:00'))
   const [descripcion, setDescripcion] = useState(evento?.descripcion ?? '')
   const [archivos, setArchivos] = useState(() => archivosIniciales(evento))
   const [recurrente, setRecurrente] = useState(Boolean(evento?.recurrente))
@@ -309,11 +314,12 @@ export default function ModalEvento({
   evento = null,
   alcance = 'serie',
   fechaPorDefecto,
+  horaInicioPorDefecto,
   onCerrar,
   onGuardar,
 }) {
   const esEdicion = Boolean(evento?.id)
-  const claveFormulario = `${abierto ? 'abierto' : 'cerrado'}-${evento?.id ?? 'nuevo'}-${alcance}-${evento?.fechaOcurrencia ?? ''}`
+  const claveFormulario = `${abierto ? 'abierto' : 'cerrado'}-${evento?.id ?? 'nuevo'}-${alcance}-${evento?.fechaOcurrencia ?? fechaPorDefecto ?? ''}-${horaInicioPorDefecto ?? ''}`
 
   return (
     <Modal
@@ -327,6 +333,7 @@ export default function ModalEvento({
         evento={evento}
         alcance={alcance}
         fechaPorDefecto={fechaPorDefecto}
+        horaInicioPorDefecto={horaInicioPorDefecto}
         onCerrar={onCerrar}
         onGuardar={onGuardar}
       />

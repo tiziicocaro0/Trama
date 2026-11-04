@@ -34,7 +34,7 @@ function traducirErrorAporte(error, accion = 'guardar') {
       cause: error,
     })
   if (error.response?.status === 400)
-    return new Error('Revisá el título, la descripción y la visibilidad.', {
+    return new Error(error.response.data?.mensaje || 'Revisá los datos del aporte.', {
       cause: error,
     })
   return new Error(

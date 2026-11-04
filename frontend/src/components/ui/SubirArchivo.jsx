@@ -144,6 +144,8 @@ export default function SubirArchivo({
           {archivos.map((archivo) => {
             const Icono = esPdf(archivo) ? FilePdf : FileImage
             const nombre = archivo.nombreOriginal || archivo.name || 'Adjunto'
+            const tipo = archivo.tipoMime || archivo.type
+            const tamano = archivo.tamanoBytes ?? archivo.size
             return (
               <li
                 key={archivo.id}
@@ -155,7 +157,7 @@ export default function SubirArchivo({
                     aria-hidden="true"
                     className="shrink-0 text-primario"
                   />
-                  <span className="truncate font-medium">{nombre}</span>
+                  <span className="min-w-0"><span className="block truncate font-medium">{nombre}</span>{(tipo || Number.isFinite(tamano)) && <span className="block text-xs text-texto-suave">{tipo || 'Archivo'}{Number.isFinite(tamano) ? ` · ${(tamano / 1048576).toFixed(1)} MB` : ''}</span>}</span>
                 </span>
                 <button
                   type="button"

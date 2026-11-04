@@ -1,6 +1,5 @@
-import { Plus } from '@phosphor-icons/react'
 import { useCallback, useState } from 'react'
-import { useParams } from 'react-router-dom'
+import { useParams, useSearchParams } from 'react-router-dom'
 import { descargarArchivo } from '../../api/archivos.js'
 import {
   cancelarOcurrenciaEvento,
@@ -23,21 +22,17 @@ import NavegacionPerfil from '../perfil/components/NavegacionPerfil.jsx'
 import usePerfil from '../perfil/hooks/usePerfil.js'
 import ModalAlcanceRecurrente from './components/ModalAlcanceRecurrente.jsx'
 import ModalEvento from './components/ModalEvento.jsx'
-import TarjetaEvento from './components/TarjetaEvento.jsx'
-
-const RANGO_INICIAL = {
-  desde: '2026-01-01',
-  hasta: '2027-12-31',
-}
-
-function resolverAutorEvento(autorId, miembros) {
-  if (!autorId || !Array.isArray(miembros)) return null
-  const encontrado = miembros.find((m) => m.usuarioId === autorId || m.id === autorId)
-  return encontrado ? [encontrado.nombre, encontrado.apellido].filter(Boolean).join(' ').trim() : null
-}
+import CabeceraCalendario from './components/CabeceraCalendario.jsx'
+import PanelCalendario from './components/PanelCalendario.jsx'
+import VistaCalendario from './components/VistaCalendario.jsx'
+import { hoyIso } from '../../utils/fechas.js'
+import { esFechaIsoValida, eventosDelDia, moverPeriodo, obtenerPeriodo } from './utils/periodo.js'
 
 export default function CalendarioPage() {
   const { id: idRuta } = useParams()
+  const [searchParams] = useSearchParams()
+  const fechaConsulta = searchParams.get('fecha')
+  const fechaInicial = esFechaIsoValida(fechaConsulta) ? fechaConsulta : hoyIso()
   const { proyectoActual, rol: rolSelector } = useProyectoActual()
   const proyectoId = idRuta || proyectoActual?.id || ''
 
@@ -46,20 +41,27 @@ export default function CalendarioPage() {
   const rolUsuario = auth?.rol ?? usuario?.rol ?? rolSelector
 
   const [modalAbierto, setModalAbierto] = useState(false)
+  const [vista, setVista] = useState('semana')
+  const [referencia, setReferencia] = useState(fechaInicial)
+  const [diaSeleccionado, setDiaSeleccionado] = useState(fechaInicial)
+  const [panelDia, setPanelDia] = useState(null)
+  const [eventoSeleccionado, setEventoSeleccionado] = useState(null)
+  const [fechaNuevoEvento, setFechaNuevoEvento] = useState(null)
   const [eventoEnEdicion, setEventoEnEdicion] = useState(null)
   const [alcanceEdicion, setAlcanceEdicion] = useState('serie')
   const [dialogoAlcance, setDialogoAlcance] = useState(null)
   const [eliminandoId, setEliminandoId] = useState(null)
   const [mensajeExito, setMensajeExito] = useState('')
   const [errorAccion, setErrorAccion] = useState('')
+  const periodo = obtenerPeriodo(vista, referencia)
 
   const cargarCalendario = useCallback(async (idProyecto, signal) => {
     const [eventos, miembros] = await Promise.all([
-      listarEventos(idProyecto, { desde: RANGO_INICIAL.desde, hasta: RANGO_INICIAL.hasta, signal }),
+      listarEventos(idProyecto, { desde: periodo.desde, hasta: periodo.hasta, signal }),
       listarMiembros(idProyecto, signal).catch(() => []),
     ])
     return { eventos, miembros }
-  }, [])
+  }, [periodo.desde, periodo.hasta])
 
   const { proyecto, datos, cargando, error, reintentar } = usePerfil(proyectoId, cargarCalendario)
   const eventos = datos?.eventos ?? []
@@ -76,12 +78,44 @@ export default function CalendarioPage() {
     return Boolean(usuario?.id && evento?.autorId === usuario.id)
   }
 
-  function abrirNuevoEvento() {
+  function abrirNuevoEvento(fecha = null) {
     setErrorAccion('')
     setMensajeExito('')
     setEventoEnEdicion(null)
+    setFechaNuevoEvento(fecha)
+    setPanelDia(null)
+    setEventoSeleccionado(null)
     setAlcanceEdicion('serie')
     setModalAbierto(true)
+  }
+
+  function seleccionarDia(fecha) {
+    setDiaSeleccionado(fecha)
+    const delDia = eventosDelDia(eventos, fecha)
+    if (delDia.length === 0) abrirNuevoEvento(fecha)
+    else { setPanelDia(fecha); setEventoSeleccionado(null) }
+  }
+
+  function seleccionarEvento(evento) {
+    setDiaSeleccionado(evento.fechaOcurrencia || evento.fecha)
+    setPanelDia(evento.fechaOcurrencia || evento.fecha)
+    setEventoSeleccionado(evento)
+  }
+
+  function cambiarPeriodo(direccion) {
+    const siguiente = moverPeriodo(vista, referencia, direccion)
+    setReferencia(siguiente)
+    setDiaSeleccionado(siguiente)
+    setPanelDia(null)
+    setEventoSeleccionado(null)
+  }
+
+  function volverHoy() {
+    const fecha = hoyIso()
+    setReferencia(fecha)
+    setDiaSeleccionado(fecha)
+    setPanelDia(null)
+    setEventoSeleccionado(null)
   }
 
   function solicitarEditarEvento(evento) {
@@ -109,6 +143,7 @@ export default function CalendarioPage() {
   function cerrarModal() {
     setModalAbierto(false)
     setEventoEnEdicion(null)
+    setFechaNuevoEvento(null)
     setAlcanceEdicion('serie')
   }
 
@@ -134,6 +169,8 @@ export default function CalendarioPage() {
       await crearEvento(proyectoId, datosFormulario)
       setMensajeExito('Evento creado correctamente.')
     }
+    setPanelDia(null)
+    setEventoSeleccionado(null)
     reintentar()
   }
 
@@ -151,6 +188,8 @@ export default function CalendarioPage() {
       }
       setDialogoAlcance(null)
       setMensajeExito('Evento eliminado correctamente.')
+      setPanelDia(null)
+      setEventoSeleccionado(null)
       reintentar()
     } catch (err) {
       setDialogoAlcance(null)
@@ -229,25 +268,7 @@ export default function CalendarioPage() {
               <NavegacionPerfil proyectoId={proyectoId} />
 
               <section aria-labelledby="titulo-calendario">
-                <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
-                  <div>
-                    <h2
-                      id="titulo-calendario"
-                      className="font-display text-h1 text-secundario"
-                    >
-                      Calendario
-                    </h2>
-                    <p className="mt-1 text-texto-suave">
-                      Eventos y actividades para tener presentes en la red de{' '}
-                      {proyecto.nombre}.
-                    </p>
-                  </div>
-
-                  <Boton onClick={abrirNuevoEvento}>
-                    <Plus size={18} aria-hidden="true" />
-                    Nuevo evento
-                  </Boton>
-                </div>
+                <CabeceraCalendario nombreProyecto={proyecto.nombre} vista={vista} referencia={referencia} periodo={periodo} onAnterior={() => cambiarPeriodo(-1)} onSiguiente={() => cambiarPeriodo(1)} onHoy={volverHoy} onVista={(valor) => { setVista(valor); setPanelDia(null); setEventoSeleccionado(null) }} mostrarNuevo={false} proyectoId={proyectoId} fechaSeleccionada={diaSeleccionado} mostrarIrAlDia={!panelDia} />
 
                 {mensajeExito && (
                   <div className="mb-6">
@@ -261,40 +282,34 @@ export default function CalendarioPage() {
                   </div>
                 )}
 
-                {eventos.length > 0 ? (
-                  <div className="space-y-4">
-                    {eventos.map((evento) => {
-                      const fechaVisible =
-                        evento.fechaOcurrencia || evento.fecha
-                      return (
-                        <TarjetaEvento
-                          key={`${evento.id}-${fechaVisible}`}
-                          proyectoId={proyectoId}
-                          evento={evento}
-                          autorNombre={resolverAutorEvento(
-                            evento.autorId,
-                            miembros,
-                          )}
-                          puedeModificar={puedeModificarEvento(evento)}
-                          eliminando={eliminandoId === evento.id}
-                          onEditar={solicitarEditarEvento}
-                          onEliminar={solicitarEliminarEvento}
-                          onDescargarImagen={manejarDescargaImagen}
-                        />
-                      )
-                    })}
-                  </div>
-                ) : (
-                  <p className="rounded-lg bg-superficie p-6 text-texto-suave">
-                    Todavía no hay eventos cargados en el calendario.
-                  </p>
-                )}
+                {cargando && <p role="status" className="mb-3 text-sm text-texto-suave">Cargando eventos…</p>}
+                <VistaCalendario vista={vista} periodo={periodo} referencia={referencia} eventos={eventos} hoy={hoyIso()} diaSeleccionado={diaSeleccionado} onDia={seleccionarDia} onEvento={seleccionarEvento} />
+                {!eventos.length && <p className="mt-4 rounded-md bg-superficie p-4 text-sm text-texto-suave">Todavía no hay eventos en este período. Seleccioná un día para agregar uno.</p>}
+                <div className="mt-5 flex flex-wrap gap-4 text-xs text-texto-suave"><span className="flex items-center gap-2"><span className="size-4 rounded-sm border border-agua bg-agua/15" />Evento</span><span className="flex items-center gap-2"><span className="size-4 rounded-sm border border-primario bg-primario/10" />Cambio de rutina</span></div>
               </section>
+
+              <PanelCalendario
+                dia={panelDia}
+                evento={eventoSeleccionado}
+                eventos={panelDia ? eventosDelDia(eventos, panelDia) : []}
+                proyectoId={proyectoId}
+                miembros={miembros}
+                puedeModificar={puedeModificarEvento}
+                eliminandoId={eliminandoId}
+                onCerrar={() => { setPanelDia(null); setEventoSeleccionado(null) }}
+                onVolver={() => setEventoSeleccionado(null)}
+                onEvento={seleccionarEvento}
+                onNuevo={abrirNuevoEvento}
+                onEditar={solicitarEditarEvento}
+                onEliminar={solicitarEliminarEvento}
+                onDescargarImagen={manejarDescargaImagen}
+              />
 
               <ModalEvento
                 abierto={modalAbierto}
                 proyectoId={proyectoId}
                 evento={eventoEnEdicion}
+                fechaPorDefecto={fechaNuevoEvento}
                 alcance={alcanceEdicion}
                 onCerrar={cerrarModal}
                 onGuardar={manejarGuardarEvento}

@@ -262,7 +262,7 @@ class ArchivoServiceTest {
                 TipoAporte.COMUNICACION,
                 "Tablero de pictogramas",
                 "Tablero actualizado para el aula",
-                null,
+                "{\"categoria\":\"APOYOS\",\"formasComunicacion\":[\"PICTOGRAMAS\"],\"comoHablarle\":\"Mostrar la imagen\",\"queEvitar\":\"Apurarlo\"}",
                 Visibilidad.TODOS,
                 List.of(archivoId)
         );

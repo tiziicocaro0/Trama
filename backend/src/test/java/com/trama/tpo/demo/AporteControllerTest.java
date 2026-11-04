@@ -56,6 +56,150 @@ class AporteControllerTest {
             }
             """;
 
+    private static final String COMUNICACION_VALIDA = """
+            {"tipo":"COMUNICACION","titulo":"Usa imágenes","contenido":"Señala pictogramas",
+             "datos":"{\\\"categoria\\\":\\\"EXPRESION\\\",\\\"formasComunicacion\\\":[\\\"PICTOGRAMAS\\\",\\\"GESTOS\\\"],\\\"comoHablarle\\\":\\\"Frases cortas\\\",\\\"queEvitar\\\":\\\"Hablar rápido\\\"}","visibilidad":"TODOS"}
+            """;
+
+    private static final String SENSORIAL_VALIDO = """
+            {"tipo":"SENSORIAL","titulo":"Busca balancearse","contenido":"",
+             "datos":"{\\\"lista\\\":\\\"AYUDA\\\",\\\"categoria\\\":\\\"MOVIMIENTO_EQUILIBRIO\\\",\\\"contexto\\\":\\\"CASA\\\"}",
+             "visibilidad":"PROFESIONALES"}
+            """;
+
+    private static final String ESTRATEGIA_VALIDA = """
+            {"tipo":"ESTRATEGIA","titulo":"Anticipa los pasos","contenido":"Muestra una secuencia visual",
+             "datos":"{\\\"categoria\\\":\\\"ANTICIPACION_SECUENCIACION\\\",\\\"situacion\\\":\\\"Antes de salir de casa\\\",\\\"resultado\\\":\\\"FUNCIONO\\\",\\\"contextos\\\":[\\\"CASA\\\"]}",
+             "visibilidad":"TODOS"}
+            """;
+
+    @Test
+    void estrategiaPersisteLosTresResultadosYRechazaDatosIncompletos() throws Exception {
+        for (String resultado : List.of("FUNCIONO", "FUNCIONO_EN_PARTE", "NO_FUNCIONO")) {
+            mockMvc.perform(post(rutaAportes()).header("Authorization", token(tutorAutor))
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(ESTRATEGIA_VALIDA.replace("FUNCIONO", resultado)))
+                    .andExpect(status().isCreated())
+                    .andExpect(jsonPath("$.datos").value(org.hamcrest.Matchers.containsString(resultado)));
+        }
+        mockMvc.perform(get(rutaAportes()).header("Authorization", token(tutorAutor)).param("tipo", "ESTRATEGIA"))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.length()").value(3));
+        for (String invalido : List.of(
+                ESTRATEGIA_VALIDA.replace("Muestra una secuencia visual", " "),
+                ESTRATEGIA_VALIDA.replace("ANTICIPACION_SECUENCIACION", "OTRA"),
+                ESTRATEGIA_VALIDA.replace("Antes de salir de casa", " "),
+                ESTRATEGIA_VALIDA.replace("FUNCIONO", "OTRO"))) {
+            mockMvc.perform(post(rutaAportes()).header("Authorization", token(tutorAutor))
+                    .contentType(MediaType.APPLICATION_JSON).content(invalido)).andExpect(status().isBadRequest());
+        }
+    }
+
+    @Test
+    void estrategiaSoloAutorEditaArchivaYConservaHistorial() throws Exception {
+        String respuesta = mockMvc.perform(post(rutaAportes()).header("Authorization", token(tutorAutor))
+                .contentType(MediaType.APPLICATION_JSON).content(ESTRATEGIA_VALIDA))
+                .andExpect(status().isCreated()).andExpect(jsonPath("$.autorNombre").value("Autor Prueba"))
+                .andReturn().getResponse().getContentAsString();
+        String aporteId = new com.fasterxml.jackson.databind.ObjectMapper().readTree(respuesta).get("id").asText();
+        mockMvc.perform(put(rutaAportes() + "/" + aporteId).header("Authorization", token(otroTutor))
+                .contentType(MediaType.APPLICATION_JSON).content(ESTRATEGIA_VALIDA)).andExpect(status().isForbidden());
+        mockMvc.perform(post(rutaAportes() + "/" + aporteId + "/archivar")
+                .header("Authorization", token(otroTutor))).andExpect(status().isForbidden());
+        mockMvc.perform(put(rutaAportes() + "/" + aporteId).header("Authorization", token(tutorAutor))
+                .contentType(MediaType.APPLICATION_JSON).content(ESTRATEGIA_VALIDA.replace("FUNCIONO", "FUNCIONO_EN_PARTE")))
+                .andExpect(status().isOk());
+        mockMvc.perform(get(rutaAportes() + "/" + aporteId + "/versiones")
+                .header("Authorization", token(tutorAutor))).andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].datos").value(org.hamcrest.Matchers.containsString("FUNCIONO_EN_PARTE")));
+        mockMvc.perform(post(rutaAportes() + "/" + aporteId + "/archivar")
+                .header("Authorization", token(tutorAutor))).andExpect(status().isNoContent());
+    }
+
+    @Test
+    void estrategiaAnteriorSinDatosNuevosSigueVisible() throws Exception {
+        Aporte anterior = aporteRepository.saveAndFlush(Aporte.builder()
+                .proyecto(proyecto).autor(tutorAutor).tipo(TipoAporte.ESTRATEGIA)
+                .titulo("Apoyo anterior").contenido("Muestra pasos")
+                .visibilidad(Visibilidad.TODOS).archivado(false).build());
+        mockMvc.perform(get(rutaAportes()).header("Authorization", token(tutorAutor))
+                .param("tipo", "ESTRATEGIA"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].id").value(anterior.getId().toString()));
+    }
+
+    @Test
+    void sensorialPersisteVersionaYProtegeAlAutor() throws Exception {
+        String respuesta = mockMvc.perform(post(rutaAportes()).header("Authorization", token(tutorAutor))
+                .contentType(MediaType.APPLICATION_JSON).content(SENSORIAL_VALIDO))
+                .andExpect(status().isCreated()).andExpect(jsonPath("$.autorNombre").value("Autor Prueba"))
+                .andReturn().getResponse().getContentAsString();
+        String aporteId = new com.fasterxml.jackson.databind.ObjectMapper().readTree(respuesta).get("id").asText();
+        mockMvc.perform(get(rutaAportes()).header("Authorization", token(tutorAutor)).param("tipo", "SENSORIAL"))
+                .andExpect(status().isOk()).andExpect(jsonPath("$[0].id").value(aporteId));
+        mockMvc.perform(put(rutaAportes() + "/" + aporteId).header("Authorization", token(otroTutor))
+                .contentType(MediaType.APPLICATION_JSON).content(SENSORIAL_VALIDO)).andExpect(status().isForbidden());
+        mockMvc.perform(post(rutaAportes() + "/" + aporteId + "/archivar")
+                .header("Authorization", token(otroTutor))).andExpect(status().isForbidden());
+        mockMvc.perform(put(rutaAportes() + "/" + aporteId).header("Authorization", token(tutorAutor))
+                .contentType(MediaType.APPLICATION_JSON).content(SENSORIAL_VALIDO.replace("AYUDA", "CUESTA")))
+                .andExpect(status().isOk());
+        mockMvc.perform(get(rutaAportes() + "/" + aporteId + "/versiones")
+                .header("Authorization", token(tutorAutor))).andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].datos").value(org.hamcrest.Matchers.containsString("CUESTA")));
+        mockMvc.perform(post(rutaAportes() + "/" + aporteId + "/archivar")
+                .header("Authorization", token(tutorAutor))).andExpect(status().isNoContent());
+    }
+
+    @Test
+    void sensorialRechazaDatosIncompletos() throws Exception {
+        mockMvc.perform(post(rutaAportes()).header("Authorization", token(tutorAutor))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(SENSORIAL_VALIDO.replace("MOVIMIENTO_EQUILIBRIO", "OTRO")))
+                .andExpect(status().isBadRequest());
+        mockMvc.perform(post(rutaAportes()).header("Authorization", token(tutorAutor))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(SENSORIAL_VALIDO.replace("AYUDA", "OTRO")))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void comunicacionPersisteEditaYVersiona() throws Exception {
+        String respuesta = mockMvc.perform(post(rutaAportes())
+                .header("Authorization", token(tutorAutor))
+                .contentType(MediaType.APPLICATION_JSON).content(COMUNICACION_VALIDA))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.datos").value(org.hamcrest.Matchers.containsString("PICTOGRAMAS")))
+                .andReturn().getResponse().getContentAsString();
+        String aporteId = new com.fasterxml.jackson.databind.ObjectMapper().readTree(respuesta).get("id").asText();
+        mockMvc.perform(get(rutaAportes()).header("Authorization", token(tutorAutor)).param("tipo", "COMUNICACION"))
+                .andExpect(status().isOk()).andExpect(jsonPath("$[0].id").value(aporteId));
+        mockMvc.perform(put(rutaAportes() + "/" + aporteId)
+                .header("Authorization", token(tutorAutor)).contentType(MediaType.APPLICATION_JSON)
+                .content(COMUNICACION_VALIDA.replace("Frases cortas", "Hablar despacio")))
+                .andExpect(status().isOk());
+        mockMvc.perform(get(rutaAportes() + "/" + aporteId + "/versiones")
+                .header("Authorization", token(tutorAutor)))
+                .andExpect(status().isOk()).andExpect(jsonPath("$[0].datos").value(org.hamcrest.Matchers.containsString("Hablar despacio")));
+        mockMvc.perform(post(rutaAportes() + "/" + aporteId + "/archivar")
+                .header("Authorization", token(tutorAutor))).andExpect(status().isNoContent());
+    }
+
+    @Test
+    void comunicacionInvalidaYAutorAjeno() throws Exception {
+        mockMvc.perform(post(rutaAportes()).header("Authorization", token(tutorAutor))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(COMUNICACION_VALIDA.replace("PICTOGRAMAS\\\",\\\"GESTOS", "OTRA")))
+                .andExpect(status().isBadRequest());
+        String respuesta = mockMvc.perform(post(rutaAportes()).header("Authorization", token(tutorAutor))
+                .contentType(MediaType.APPLICATION_JSON).content(COMUNICACION_VALIDA))
+                .andExpect(status().isCreated()).andReturn().getResponse().getContentAsString();
+        String aporteId = new com.fasterxml.jackson.databind.ObjectMapper().readTree(respuesta).get("id").asText();
+        mockMvc.perform(put(rutaAportes() + "/" + aporteId).header("Authorization", token(otroTutor))
+                .contentType(MediaType.APPLICATION_JSON).content(COMUNICACION_VALIDA)).andExpect(status().isForbidden());
+        mockMvc.perform(post(rutaAportes() + "/" + aporteId + "/archivar")
+                .header("Authorization", token(otroTutor))).andExpect(status().isForbidden());
+    }
+
     @Autowired private MockMvc mockMvc;
     @Autowired private JwtService jwtService;
     @Autowired private UsuarioRepository usuarioRepository;

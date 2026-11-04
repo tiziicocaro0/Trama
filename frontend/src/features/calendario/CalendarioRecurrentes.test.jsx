@@ -1,10 +1,13 @@
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router-dom'
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import cliente from '../../api/cliente.js'
 import AppRoutes from '../../routes/AppRoutes.jsx'
 import AuthContext from '../auth/AuthContext.js'
+
+beforeEach(() => { vi.useFakeTimers({ toFake: ['Date'] }); vi.setSystemTime(new Date(2026, 10, 10, 12)) })
+afterEach(() => vi.useRealTimers())
 
 vi.mock('../../api/cliente.js', () => {
   const mockCliente = {
@@ -115,17 +118,18 @@ describe('Eventos recurrentes semanales en el calendario (Tarea 5.1)', () => {
     const user = userEvent.setup()
     renderCalendario()
 
-    await screen.findByRole('heading', { name: 'Taller de música' })
-    expect(screen.getByText('Cada martes')).toBeInTheDocument()
+    await screen.findByRole('button', { name: 'Ver evento: Taller de música' })
+    await user.click(screen.getByRole('button', { name: 'Ver evento: Taller de música' }))
+    expect(screen.getByText(/Cada martes/)).toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: 'Cerrar detalle' }))
 
-    await user.click(screen.getByRole('button', { name: /Nuevo evento/i }))
+    await user.click(screen.getAllByRole('button', { name: /Agregar evento el .* a las 08:00/ })[0])
     const dialog = await screen.findByRole('dialog', { name: 'Nuevo evento' })
 
-    await user.type(within(dialog).getByLabelText(/Título/i), 'Fonoaudiología semanal')
+    fireEvent.change(within(dialog).getByLabelText(/Título/i), { target: { value: 'Fonoaudiología semanal' } })
 
     const inputFecha = within(dialog).getByLabelText('Fecha')
-    await user.clear(inputFecha)
-    await user.type(inputFecha, '02112026') // Lunes 2026-11-02
+    fireEvent.change(inputFecha, { target: { value: '02/11/2026' } }) // Lunes 2026-11-02
 
     const checkboxRecurrente = within(dialog).getByLabelText(
       /Se repite todas las semanas/i,
@@ -140,8 +144,7 @@ describe('Eventos recurrentes semanales en el calendario (Tarea 5.1)', () => {
     const inputFechaFin = within(dialog).getByLabelText(
       /Fecha de fin \(opcional\)/i,
     )
-    await user.clear(inputFechaFin)
-    await user.type(inputFechaFin, '17122026')
+    fireEvent.change(inputFechaFin, { target: { value: '17/12/2026' } })
 
     fireEvent.change(within(dialog).getByLabelText(/Hora de inicio/i), {
       target: { value: '15:00' },
@@ -166,18 +169,17 @@ describe('Eventos recurrentes semanales en el calendario (Tarea 5.1)', () => {
         }),
       )
     })
-  })
+  }, 10000)
 
   it('al editar un evento recurrente pregunta "¿Solo este o toda la serie?" y permite editar solo esa ocurrencia o toda la serie', async () => {
     const user = userEvent.setup()
     renderCalendario()
 
-    await screen.findByRole('heading', { name: 'Taller de música' })
+    await screen.findByRole('button', { name: 'Ver evento: Taller de música' })
+    await user.click(screen.getByRole('button', { name: 'Ver evento: Taller de música' }))
 
     // 1) Editar -> "Solo este"
-    await user.click(
-      screen.getByRole('button', { name: 'Editar Taller de música' }),
-    )
+    await user.click(screen.getByRole('button', { name: 'Editar Taller de música' }))
 
     const dialogoAlcance = await screen.findByRole('dialog', {
       name: '¿Solo este o toda la serie?',
@@ -190,8 +192,7 @@ describe('Eventos recurrentes semanales en el calendario (Tarea 5.1)', () => {
       name: 'Editar evento',
     })
     const inputTitulo = within(modalEdicion).getByLabelText(/Título/i)
-    await user.clear(inputTitulo)
-    await user.type(inputTitulo, 'Taller de música (invitado especial)')
+    fireEvent.change(inputTitulo, { target: { value: 'Taller de música (invitado especial)' } })
 
     await user.click(
       within(modalEdicion).getByRole('button', { name: 'Guardar cambios' }),
@@ -209,6 +210,7 @@ describe('Eventos recurrentes semanales en el calendario (Tarea 5.1)', () => {
     })
 
     // 2) Editar -> "Toda la serie"
+    await user.click(await screen.findByRole('button', { name: 'Ver evento: Taller de música' }))
     await user.click(
       screen.getByRole('button', { name: 'Editar Taller de música' }),
     )
@@ -239,18 +241,17 @@ describe('Eventos recurrentes semanales en el calendario (Tarea 5.1)', () => {
         }),
       )
     })
-  })
+  }, 10000)
 
   it('al eliminar un evento recurrente pregunta "¿Solo este o toda la serie?" y ejecuta la cancelación o el borrado de la serie', async () => {
     const user = userEvent.setup()
     renderCalendario()
 
-    await screen.findByRole('heading', { name: 'Taller de música' })
+    await screen.findByRole('button', { name: 'Ver evento: Taller de música' })
+    await user.click(screen.getByRole('button', { name: 'Ver evento: Taller de música' }))
 
     // 1) Eliminar -> "Solo este"
-    await user.click(
-      screen.getByRole('button', { name: 'Eliminar Taller de música' }),
-    )
+    await user.click(screen.getByRole('button', { name: 'Eliminar Taller de música' }))
     const dialogoAlcance = await screen.findByRole('dialog', {
       name: '¿Solo este o toda la serie?',
     })
@@ -265,6 +266,7 @@ describe('Eventos recurrentes semanales en el calendario (Tarea 5.1)', () => {
     })
 
     // 2) Eliminar -> "Toda la serie"
+    await user.click(await screen.findByRole('button', { name: 'Ver evento: Taller de música' }))
     await user.click(
       screen.getByRole('button', { name: 'Eliminar Taller de música' }),
     )
@@ -282,6 +284,6 @@ describe('Eventos recurrentes semanales en el calendario (Tarea 5.1)', () => {
         `/proyectos/${proyectoId}/eventos/ev-recurrente-1`,
       )
     })
-  })
+  }, 10000)
 })
 

@@ -336,6 +336,7 @@ public class EventoService {
                         ? null : evento.getImagen().getId(),
                 evento.getCreadoEn(),
                 evento.getRecurrente(),
+                evento.getEsCambio(),
                 evento.getDiaSemana(),
                 evento.getFechaFinRecurrencia(),
                 fecha

@@ -23,6 +23,7 @@ function Etiqueta({ children }) {
 export default function BarraIconos() {
   const { cerrarSesion } = useAuth()
   const { pathname } = useLocation()
+  const idProyectoActual = pathname.match(/^\/proyectos\/([^/]+)/)?.[1]
   const items = [
     { titulo: 'Inicio', icon: House, to: '/inicio' },
     ...navegacion,
@@ -34,12 +35,16 @@ export default function BarraIconos() {
     >
       <ul className="flex items-center justify-around px-2 py-1 lg:h-svh lg:flex-col lg:justify-start lg:gap-2 lg:py-6">
         {items.map(({ titulo, icon: Icon, to }) => {
+          const destino = titulo === 'Calendario' && idProyectoActual
+            ? `/proyectos/${idProyectoActual}/calendario`
+            : to
           const actual =
-            to === '/acompanamientos' && pathname.startsWith('/proyectos/')
+            (to === '/acompanamientos' && Boolean(idProyectoActual)) ||
+            (titulo === 'Calendario' && pathname.endsWith('/calendario') && Boolean(idProyectoActual))
           return (
             <li key={titulo}>
               <Link
-                to={to}
+                to={destino}
                 aria-current={actual ? 'page' : undefined}
                 className={`${CLASE_ICONO} ${actual ? 'bg-decoracion text-primario' : ''}`}
               >

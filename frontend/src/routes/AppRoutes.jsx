@@ -16,6 +16,7 @@ import DatosPersonalesPage from '../features/perfil/DatosPersonalesPage.jsx'
 import ConoceloPage from '../features/perfil/ConoceloPage.jsx'
 import BitacoraPage from '../features/bitacora/BitacoraPage.jsx'
 import CalendarioPage from '../features/calendario/CalendarioPage.jsx'
+import VistaDiaPage from '../features/calendario/VistaDiaPage.jsx'
 import PlanPage from '../features/plan/PlanPage.jsx'
 import PreferenciasNotificacionesPage from '../features/notificaciones/PreferenciasNotificacionesPage.jsx'
 import InstitucionPage from '../features/institucion/InstitucionPage.jsx'
@@ -62,6 +63,7 @@ export default function AppRoutes() {
       notas: 'Notas',
       bitacora: 'Bitácora',
       calendario: 'Calendario',
+      hoy: 'Mostrarle el día',
     }
     const espacio = Object.hasOwn(espaciosPerfil, perfil?.[1])
       ? espaciosPerfil[perfil[1]]
@@ -230,6 +232,14 @@ export default function AppRoutes() {
             <ConBarraIconos>
               <CalendarioPage />
             </ConBarraIconos>
+          </Acceso>
+        }
+      />
+      <Route
+        path="/proyectos/:id/hoy"
+        element={
+          <Acceso privado>
+            <VistaDiaPage />
           </Acceso>
         }
       />

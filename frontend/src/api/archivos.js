@@ -147,3 +147,36 @@ export async function descargarArchivo(proyectoId, archivoId, nombreOriginal) {
   }
 }
 
+export async function obtenerVistaArchivo(proyectoId, archivoId) {
+  if (!cliente.defaults.baseURL) throw new Error('Falta configurar la conexión con TRAMA.')
+  try {
+    const { data } = await cliente.get(
+      `/proyectos/${encodeURIComponent(proyectoId)}/archivos/${encodeURIComponent(archivoId)}`,
+      { responseType: 'blob' },
+    )
+    return window.URL.createObjectURL(data instanceof Blob ? data : new Blob([data]))
+  } catch (error) {
+    throw new Error(error.response?.status === 403
+      ? 'No tenés permiso para ver este archivo.'
+      : 'No pudimos mostrar el archivo. Intentá nuevamente.', { cause: error })
+  }
+}
+
+export async function obtenerVistaImagen(proyectoId, archivoId) {
+  if (!cliente.defaults.baseURL) throw new Error('Falta configurar la conexión con TRAMA.')
+  try {
+    const respuesta = await cliente.get(
+      `/proyectos/${encodeURIComponent(proyectoId)}/archivos/${encodeURIComponent(archivoId)}`,
+      { responseType: 'blob' },
+    )
+    const blob = respuesta.data instanceof Blob ? respuesta.data : new Blob([respuesta.data])
+    const tipoMime = (respuesta.headers?.['content-type'] || blob.type || '').split(';')[0].trim().toLowerCase()
+    if (!['image/jpeg', 'image/png'].includes(tipoMime)) return null
+    return window.URL.createObjectURL(blob)
+  } catch (error) {
+    throw new Error(error.response?.status === 403
+      ? 'No tenés permiso para ver esta imagen.'
+      : 'No pudimos mostrar esta imagen.', { cause: error })
+  }
+}
+

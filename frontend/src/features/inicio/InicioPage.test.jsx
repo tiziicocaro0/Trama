@@ -5,6 +5,8 @@ import { describe, expect, it, vi } from 'vitest'
 import AuthContext from '../auth/AuthContext.js'
 import InicioPage from './InicioPage.jsx'
 
+vi.mock('../calendario/CalendarioUsuarioPage.jsx', () => ({ default: () => <section><h2>Calendario</h2><p>Agenda del usuario autenticado</p></section> }))
+
 const usuario = {
   nombre: 'Nora',
   apellido: 'Ejemplo',
@@ -51,7 +53,7 @@ describe('Inicio de TRAMA', () => {
     ).toBeVisible()
   })
 
-  it('permite navegar por teclado a un módulo pendiente y regresar', async () => {
+  it('abre la agenda del usuario desde el sidebar y permite volver', async () => {
     const user = userEvent.setup()
     abrir()
     const nav = screen.getByRole('navigation', { name: 'Navegación principal' })
@@ -60,16 +62,13 @@ describe('Inicio de TRAMA', () => {
     ).toHaveAttribute('aria-current', 'page')
     within(nav).getByRole('link', { name: 'Calendario' }).focus()
     await user.keyboard('{Enter}')
-    expect(
-      screen.getByRole('heading', { name: 'Calendario · Próximamente' }),
-    ).toHaveFocus()
+    expect(screen.getByRole('heading', { name: 'Calendario', level: 2 })).toBeInTheDocument()
+    expect(screen.getByText('Agenda del usuario autenticado')).toBeInTheDocument()
     expect(
       within(nav).getByRole('link', { name: 'Calendario' }),
     ).toHaveAttribute('aria-current', 'page')
-    await user.click(screen.getByRole('link', { name: 'Volver al inicio' }))
-    expect(
-      screen.queryByText('Este espacio todavía no está disponible.'),
-    ).not.toBeInTheDocument()
+    await user.click(screen.getByRole('link', { name: 'TRAMA · Inicio' }))
+    expect(screen.queryByText('Agenda del usuario autenticado')).not.toBeInTheDocument()
   })
 
   it.each([
@@ -103,9 +102,11 @@ describe('Inicio de TRAMA', () => {
       const user = userEvent.setup()
       abrir()
       await user.click(screen.getByRole('link', { name: enlace, exact: true }))
-      expect(
-        screen.getByRole('heading', { name: `${titulo} · Próximamente` }),
-      ).toHaveFocus()
+      if (titulo === 'Calendario') {
+        expect(screen.getByText('Agenda del usuario autenticado')).toBeInTheDocument()
+      } else {
+        expect(screen.getByRole('heading', { name: `${titulo} · Próximamente` })).toHaveFocus()
+      }
     },
   )
 

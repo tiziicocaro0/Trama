@@ -19,6 +19,7 @@ public record EventoResponse(
         Instant creadoEn,
 
         Boolean recurrente,
+        Boolean esCambio,
         Byte diaSemana,
         LocalDate fechaFinRecurrencia,
         LocalDate fechaOcurrencia

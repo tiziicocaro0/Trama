@@ -4,5 +4,6 @@ public enum Visibilidad {
     TODOS,
     SOLO_TUTORES,
     SOLO_SALUD,
-    SOLO_EDUCACION
+    SOLO_EDUCACION,
+    PROFESIONALES
 }

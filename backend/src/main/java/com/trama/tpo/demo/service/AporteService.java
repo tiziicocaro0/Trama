@@ -23,6 +23,7 @@ import com.trama.tpo.demo.repository.ProyectoRepository;
 import com.trama.tpo.demo.repository.UsuarioRepository;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.trama.tpo.demo.aporte.observacion.DatosObservacion;
 import java.util.ArrayList;
 import java.util.Objects;
@@ -97,6 +98,9 @@ public class AporteService {
         validarFortaleza(request);
         validarObservacion(request);
         validarNota(request);
+        validarComunicacion(request);
+        validarSensorial(request);
+        validarEstrategia(request);
 
         UUID usuarioId = usuarioActual.obtenerId();
 
@@ -243,6 +247,9 @@ public class AporteService {
         validarFortaleza(request);
         validarObservacion(request);
         validarNota(request);
+        validarComunicacion(request);
+        validarSensorial(request);
+        validarEstrategia(request);
 
         // Guardar la versión anterior antes de editar
         AporteVersion version = AporteVersion.builder()
@@ -425,6 +432,91 @@ public class AporteService {
 
     private static String nombreCompleto(Usuario usuario) {
         return (usuario.getNombre() + " " + usuario.getApellido()).trim();
+    }
+
+    private void validarComunicacion(AporteRequest request) {
+        if (request.tipo() != TipoAporte.COMUNICACION) return;
+        try {
+            JsonNode datos = mapper.readTree(request.datos());
+            if (datos == null || !datos.isObject()
+                    || !List.of("EXPRESION", "COMPRENSION", "NO_VERBAL", "INTERACCION_SOCIAL", "TIEMPO_ESPERA", "APOYOS")
+                            .contains(datos.path("categoria").asText())
+                    || !datos.path("formasComunicacion").isArray()
+                    || datos.path("formasComunicacion").isEmpty()
+                    || !datos.path("comoHablarle").isTextual()
+                    || datos.path("comoHablarle").asText().isBlank()
+                    || datos.path("comoHablarle").asText().length() > 2000
+                    || !datos.path("queEvitar").isTextual()
+                    || datos.path("queEvitar").asText().isBlank()
+                    || datos.path("queEvitar").asText().length() > 2000) {
+                throw new ApiException("DATOS_COMUNICACION_INVALIDOS", "Completá la categoría, las formas de comunicación, cómo hablarle y qué evitar", HttpStatus.BAD_REQUEST);
+            }
+            boolean otra = false;
+            for (JsonNode forma : datos.path("formasComunicacion")) {
+                if (!forma.isTextual() || !List.of("VERBAL", "PICTOGRAMAS", "GESTOS", "SENAS", "OTRA").contains(forma.asText())) {
+                    throw new ApiException("DATOS_COMUNICACION_INVALIDOS", "Elegí formas de comunicación válidas", HttpStatus.BAD_REQUEST);
+                }
+                otra |= forma.asText().equals("OTRA");
+            }
+            if (otra && (!datos.path("otraForma").isTextual() || datos.path("otraForma").asText().isBlank()
+                    || datos.path("otraForma").asText().length() > 150)) {
+                throw new ApiException("DATOS_COMUNICACION_INVALIDOS", "Indicá cuál es la otra forma de comunicación", HttpStatus.BAD_REQUEST);
+            }
+        } catch (JsonProcessingException | IllegalArgumentException e) {
+            throw new ApiException("DATOS_COMUNICACION_INVALIDOS", "Los datos de comunicación no son válidos", HttpStatus.BAD_REQUEST);
+        }
+    }
+
+    private void validarSensorial(AporteRequest request) {
+        if (request.tipo() != TipoAporte.SENSORIAL) return;
+        try {
+            JsonNode datos = mapper.readTree(request.datos());
+            if (datos == null || !datos.isObject()
+                    || !List.of("AYUDA", "CUESTA").contains(datos.path("lista").asText())
+                    || !List.of("VISION", "AUDICION", "TACTO", "GUSTO_OLFATO", "CONCIENCIA_CORPORAL", "MOVIMIENTO_EQUILIBRIO")
+                            .contains(datos.path("categoria").asText())
+                    || (datos.has("contexto") && !List.of("CASA", "ESCUELA", "CONSULTORIO", "OTRO")
+                            .contains(datos.path("contexto").asText()))) {
+                throw new ApiException("DATOS_SENSORIALES_INVALIDOS",
+                        "Elegí una lista y una categoría sensorial válidas", HttpStatus.BAD_REQUEST);
+            }
+        } catch (JsonProcessingException | IllegalArgumentException e) {
+            throw new ApiException("DATOS_SENSORIALES_INVALIDOS",
+                    "Los datos sensoriales no son válidos", HttpStatus.BAD_REQUEST);
+        }
+    }
+
+    private void validarEstrategia(AporteRequest request) {
+        if (request.tipo() != TipoAporte.ESTRATEGIA) return;
+        if (request.contenido() == null || request.contenido().isBlank()) {
+            throw new ApiException("ESTRATEGIA_INVALIDA", "Contá qué se hizo", HttpStatus.BAD_REQUEST);
+        }
+        try {
+            JsonNode datos = mapper.readTree(request.datos());
+            if (datos == null || !datos.isObject()
+                    || !List.of("ANTICIPACION_SECUENCIACION", "APOYOS_VISUALES_COMUNICATIVOS", "ORGANIZACION_ENTORNO",
+                            "ADAPTACION_ACTIVIDADES", "REGULACION_PAUSAS", "PARTICIPACION_AUTONOMIA", "MOTIVACION_INTERESES")
+                            .contains(datos.path("categoria").asText())
+                    || !datos.path("situacion").isTextual() || datos.path("situacion").asText().isBlank()
+                    || datos.path("situacion").asText().length() > 2000
+                    || !List.of("FUNCIONO", "FUNCIONO_EN_PARTE", "NO_FUNCIONO")
+                            .contains(datos.path("resultado").asText())) {
+                throw new ApiException("DATOS_ESTRATEGIA_INVALIDOS",
+                        "Completá la categoría, la situación y el resultado", HttpStatus.BAD_REQUEST);
+            }
+            JsonNode contextos = datos.path("contextos");
+            if (!contextos.isMissingNode() && (!contextos.isArray() || contextos.size() > 6)) {
+                throw new ApiException("DATOS_ESTRATEGIA_INVALIDOS", "Elegí contextos válidos", HttpStatus.BAD_REQUEST);
+            }
+            for (JsonNode contexto : contextos) {
+                if (!contexto.isTextual() || !List.of("CASA", "ESCUELA", "CONSULTORIO",
+                        "ACTIVIDAD_EXTRACURRICULAR", "DISTINTOS_CONTEXTOS", "OTRO").contains(contexto.asText())) {
+                    throw new ApiException("DATOS_ESTRATEGIA_INVALIDOS", "Elegí contextos válidos", HttpStatus.BAD_REQUEST);
+                }
+            }
+        } catch (JsonProcessingException | IllegalArgumentException e) {
+            throw new ApiException("DATOS_ESTRATEGIA_INVALIDOS", "Los datos de la estrategia no son válidos", HttpStatus.BAD_REQUEST);
+        }
     }
 
     // 4.2: una nota profesional necesita su tipo y su fecha dentro de "datos"

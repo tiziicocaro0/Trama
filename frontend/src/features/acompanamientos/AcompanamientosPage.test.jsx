@@ -42,6 +42,8 @@ beforeEach(() => {
     data:
       ruta === '/proyectos'
         ? proyectos
+        : ruta.endsWith('/eventos') || ruta.endsWith('/miembros')
+          ? []
         : ruta.endsWith('/aportes')
           ? []
           : detalles[ruta.split('/').at(-1)],
@@ -66,6 +68,8 @@ describe('Recorrido Dashboard → Acompañamientos → Perfil', () => {
         name: 'Ver perfil de Luz ficticia',
       })
       expect(tarjeta).toHaveAttribute('href', `/proyectos/${id}`)
+      const calendario = screen.getByRole('link', { name: 'Ver calendario de Luz ficticia' })
+      expect(calendario).toHaveAttribute('href', `/proyectos/${id}/calendario`)
       expect(within(tarjeta).getByRole('img')).toHaveAccessibleName(
         'Foto de Luz ficticia no disponible',
       )
@@ -102,6 +106,15 @@ describe('Recorrido Dashboard → Acompañamientos → Perfil', () => {
       ).toBeInTheDocument()
     },
   )
+
+  it('abre el calendario del acompañamiento elegido desde su tarjeta', async () => {
+    const user = userEvent.setup()
+    abrir()
+    await screen.findByRole('link', { name: 'Ver perfil de Luz ficticia' })
+    await user.click(screen.getByRole('link', { name: 'Ver calendario de Luz ficticia' }))
+    expect(await screen.findByRole('heading', { name: 'Calendario', level: 2 })).toBeInTheDocument()
+    expect(cliente.get).toHaveBeenCalledWith(`/proyectos/${id}/eventos`, expect.objectContaining({ params: expect.objectContaining({ desde: expect.any(String), hasta: expect.any(String) }) }))
+  })
 
   it('busca por nombre sin inventar proyectos y permite limpiar la búsqueda', async () => {
     const user = userEvent.setup()

@@ -177,6 +177,20 @@ describe('SubirArchivo y adjuntos en aportes (Tarea 4.3)', () => {
     ).toBeInTheDocument()
   })
 
+  it('abre un pictograma desde el endpoint protegido y permite cerrar la vista', async () => {
+    const crearUrl = vi.fn(() => 'blob:pictograma-ficticio')
+    const revocarUrl = vi.fn()
+    Object.defineProperty(window.URL, 'createObjectURL', { configurable: true, value: crearUrl })
+    Object.defineProperty(window.URL, 'revokeObjectURL', { configurable: true, value: revocarUrl })
+    cliente.get.mockResolvedValue({ data: new Blob(['imagen ficticia'], { type: 'image/png' }) })
+    render(<TarjetaAporte aporte={{ id: 'aporte-ficticio', proyectoId, tipo: 'COMUNICACION', titulo: 'Pictograma', archivos: [{ id: 'archivo-ficticio', nombreOriginal: 'pictograma.png', tipoMime: 'image/png' }] }} />)
+    await userEvent.click(screen.getByRole('link', { name: /pictograma\.png/ }))
+    expect(cliente.get).toHaveBeenCalledWith(`/proyectos/${proyectoId}/archivos/archivo-ficticio`, { responseType: 'blob' })
+    expect(await screen.findByRole('img', { name: 'pictograma.png' })).toHaveAttribute('src', 'blob:pictograma-ficticio')
+    await userEvent.click(screen.getByRole('button', { name: 'Cerrar modal' }))
+    expect(revocarUrl).toHaveBeenCalledWith('blob:pictograma-ficticio')
+  })
+
   it.each([
     ['comunicacion', 'COMUNICACION', 'Agregar aporte', 'Guardar aporte'],
     ['notas', 'NOTA_PROFESIONAL', 'Agregar nota', 'Guardar nota'],
@@ -249,6 +263,12 @@ describe('SubirArchivo y adjuntos en aportes (Tarea 4.3)', () => {
         screen.getByRole('textbox', { name: 'Título' }),
         'Título con adjunto',
       )
+      if (tipo === 'COMUNICACION') {
+        await userEvent.click(screen.getByRole('radio', { name: 'Expresión' }))
+        await userEvent.click(screen.getByRole('checkbox', { name: 'Pictogramas' }))
+        await userEvent.type(screen.getByRole('textbox', { name: '¿Cómo conviene hablarle?' }), 'Frases cortas')
+        await userEvent.type(screen.getByRole('textbox', { name: '¿Qué evitar?' }), 'Hablar rápido')
+      }
       await userEvent.click(
         screen.getByRole('button', { name: textoBotonGuardar }),
       )
