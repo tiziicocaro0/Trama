@@ -16,6 +16,7 @@ public enum TipoNotificacion {
     MENCION(true),             // 6.2
     REVISION(true),            // 3.4
     CAMBIO_PAQUETE(true),      // 9.3
+    ACUERDO_VENCIDO(false),    // 5.6: solo campana; para hacerlo configurable hay que sumarlo en tiposAviso.js del front
     INVITACION(false);         // 1.3
 
     private final boolean configurable;
