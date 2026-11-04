@@ -91,6 +91,39 @@ export function leerDatosObservacion(datosRaw) {
   }
 }
 
+// 4.4: el registro ABC comparte fecha y contexto con la observación,
+// y suma lo que pasó antes, la conducta y lo que pasó después.
+export function esRegistroAbc(aporte) {
+  return aporte?.tipo === 'ABC'
+}
+
+export function leerDatosAbc(datosRaw) {
+  const vacio = {
+    antecedente: '',
+    conducta: '',
+    consecuencia: '',
+    fecha: null,
+    contexto: null,
+  }
+  try {
+    const parsed =
+      typeof datosRaw === 'string' ? JSON.parse(datosRaw) : datosRaw
+    if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
+      return vacio
+    }
+    const texto = (valor) => (typeof valor === 'string' ? valor : '')
+    return {
+      antecedente: texto(parsed.antecedente),
+      conducta: texto(parsed.conducta),
+      consecuencia: texto(parsed.consecuencia),
+      fecha: typeof parsed.fecha === 'string' ? parsed.fecha : null,
+      contexto: typeof parsed.contexto === 'string' ? parsed.contexto : null,
+    }
+  } catch {
+    return vacio
+  }
+}
+
 export function filtrarObservaciones(observaciones, filtros) {
   if (!Array.isArray(observaciones)) return []
   if (!tieneFiltrosActivos(filtros)) return observaciones
