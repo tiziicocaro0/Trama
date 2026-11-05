@@ -1,6 +1,5 @@
 package com.trama.tpo.demo.service;
 
-import java.time.Clock;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
@@ -35,7 +34,6 @@ public class PanelService {
     private final PermisoService permisoService;
     private final UsuarioRepository usuarioRepository;
     private final UsuarioActual usuarioActual;
-    private final Clock clock;
 
     public PanelService(
             MembresiaRepository membresiaRepository,
@@ -44,32 +42,12 @@ public class PanelService {
             PermisoService permisoService,
             UsuarioRepository usuarioRepository,
             UsuarioActual usuarioActual) {
-        this(
-                membresiaRepository,
-                aporteRepository,
-                eventoRepository,
-                permisoService,
-                usuarioRepository,
-                usuarioActual,
-                Clock.systemUTC()
-        );
-    }
-
-    public PanelService(
-            MembresiaRepository membresiaRepository,
-            AporteRepository aporteRepository,
-            EventoRepository eventoRepository,
-            PermisoService permisoService,
-            UsuarioRepository usuarioRepository,
-            UsuarioActual usuarioActual,
-            Clock clock) {
         this.membresiaRepository = membresiaRepository;
         this.aporteRepository = aporteRepository;
         this.eventoRepository = eventoRepository;
         this.permisoService = permisoService;
         this.usuarioRepository = usuarioRepository;
         this.usuarioActual = usuarioActual;
-        this.clock = clock;
     }
 
     @Transactional(readOnly = true)
@@ -89,7 +67,7 @@ public class PanelService {
             throw new AccessDeniedException("El panel de novedades es exclusivo para profesionales");
         }
 
-        Instant hace7Dias = Instant.now(clock).minus(7, ChronoUnit.DAYS);
+        Instant hace7Dias = Instant.now().minus(7, ChronoUnit.DAYS);
 
         List<Membresia> membresias = membresiaRepository.findByUsuarioIdConProyecto(usuarioId);
 
@@ -135,4 +113,3 @@ public class PanelService {
         }).toList();
     }
 }
-
