@@ -426,11 +426,11 @@ docker compose --profile app up -d --force-recreate backend
 
 Para que otras personas prueben TRAMA desde su navegador, el perfil `demo` levanta todo con un solo comando: MySQL, el back, el front compilado y un túnel de ngrok con el dominio fijo de TRAMA.
 
-```bash
-docker compose --profile demo up -d --build
+```powershell
+.\demo.cmd
 ```
 
-La primera vez tarda unos minutos porque compila el back y el front. Después, TRAMA queda disponible en la dirección de `NGROK_URL`. Mientras la PC esté prendida, cualquiera puede entrar desde otra computadora o un celular. La primera vez, ngrok muestra una advertencia con el botón *Visit Site*.
+El script levanta los contenedores, espera a que el back responda y al final muestra el link de `NGROK_URL` y lo abre en el navegador (`-SinAbrir` para que no lo abra). La primera vez tarda unos minutos porque compila el back y el front. Sin el script, el equivalente es `docker compose --profile demo up -d --build`, pero no avisa cuándo está lista. Mientras la PC esté prendida, cualquiera puede entrar desde otra computadora o un celular. La primera vez, ngrok muestra una advertencia con el botón *Visit Site*.
 
 Antes de usarlo, el `.env` necesita:
 
@@ -450,14 +450,13 @@ Cómo funciona:
 
 Para probar en la misma PC sin pasar por el túnel: http://localhost:4173.
 
-**Si el mail no sale desde Docker** (el log de `backend-demo` muestra `MailSendException ... Read timed out`): en algunas PCs, Docker Desktop no deja pasar el SMTP hacia Gmail. En ese caso el back corre en Windows con `mvnw`, como siempre, y Docker levanta solo el front y ngrok, apuntando a ese back:
+**Si el mail no sale desde Docker** (el log de `backend-demo` muestra `MailSendException ... Read timed out`): algunas redes, como las de instituciones, bloquean el SMTP. Para probar si es eso, el back puede correr en Windows con `mvnw` y Docker levantar solo el front y ngrok, apuntando a ese back:
 
-1. En el `.env`: `DEMO_BACKEND_URL=http://host.docker.internal:4002`.
-2. Desde la raíz: `powershell -ExecutionPolicy Bypass -File scripts\demo.ps1`. El script levanta MySQL, abre el back en otra ventana, espera a que responda y después levanta el front y ngrok.
+```powershell
+.\demo.cmd -BackEnWindows
+```
 
-A mano son tres pasos: `docker compose up -d --wait mysql`, el back con `mvnw` y `docker compose --profile demo up -d --build frontend-demo ngrok`.
-
-Para volver a tener todo en Docker, se borra `DEMO_BACKEND_URL` del `.env`.
+El script levanta MySQL, abre el back en otra ventana, espera a que responda, levanta el front y ngrok y muestra el link. A mano son tres pasos: `docker compose up -d --wait mysql`, el back con `mvnw` y, con `DEMO_BACKEND_URL=http://host.docker.internal:4002`, `docker compose --profile demo up -d --build frontend-demo ngrok`.
 
 Para ver qué pasa en el back:
 
