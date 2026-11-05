@@ -7,13 +7,17 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.PastOrPresent;
 import jakarta.validation.constraints.Size;
 
+import com.trama.tpo.demo.entity.proyecto.TipoEscuela;
+
 public record ActualizarDatosProyectoRequest(
         @NotBlank @Size(max = 80) String nombre,
         @NotBlank @Size(max = 80) String apellido,
         @Size(max = 40) String apodo,
         @NotNull @PastOrPresent LocalDate fechaNacimiento,
         @NotBlank @Size(max = 120) String escuela,
-        @NotBlank @Size(max = 30) String grado) {
+        @NotBlank @Size(max = 30) String grado,
+        // Opcional en la API: los perfiles anteriores no lo tienen. El front lo pide.
+        TipoEscuela tipoEscuela) {
 
     public ActualizarDatosProyectoRequest {
         nombre = nombre == null ? null : nombre.strip();

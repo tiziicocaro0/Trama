@@ -38,6 +38,7 @@ import com.trama.tpo.demo.entity.dto.RegisterRequest;
 import com.trama.tpo.demo.entity.dto.RestablecerContrasenaRequest;
 import com.trama.tpo.demo.entity.membresia.Especialidad;
 import com.trama.tpo.demo.entity.notificacion.TipoNotificacion;
+import com.trama.tpo.demo.entity.proyecto.TipoEscuela;
 import com.trama.tpo.demo.entity.usuario.TipoCuenta;
 import com.trama.tpo.demo.entity.membresia.Rol;
 import com.trama.tpo.demo.entity.plan.PeriodoSuscripcion;
@@ -80,6 +81,14 @@ class ContratoFrontendTest {
                 Pattern.compile("valor: '([A-Z_]+)'"),
                 leer("features/perfil/especialidades.js"));
         assertEquals(nombres(Especialidad.class), front);
+    }
+
+    @Test
+    void tiposDeEscuela() {
+        Set<String> front = todasLasCoincidencias(
+                Pattern.compile("valor: '([A-Z_]+)'"),
+                leer("features/perfil/datosEscolares.js"));
+        assertEquals(nombres(TipoEscuela.class), front);
     }
 
     @Test

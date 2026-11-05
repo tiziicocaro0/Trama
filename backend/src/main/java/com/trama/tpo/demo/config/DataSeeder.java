@@ -16,6 +16,7 @@ import com.trama.tpo.demo.entity.membresia.Membresia;
 import com.trama.tpo.demo.entity.membresia.MembresiaEspecialidad;
 import com.trama.tpo.demo.entity.membresia.Rol;
 import com.trama.tpo.demo.entity.proyecto.Proyecto;
+import com.trama.tpo.demo.entity.proyecto.TipoEscuela;
 import com.trama.tpo.demo.entity.usuario.TipoCuenta;
 import com.trama.tpo.demo.entity.usuario.Usuario;
 import com.trama.tpo.demo.entity.usuario.UsuarioEspecialidad;
@@ -78,11 +79,11 @@ public class DataSeeder implements CommandLineRunner {
 
         // Niños ficticios
         Proyecto tomi = crearProyecto("Tomás", "Fernández", "Tomi",
-                LocalDate.of(2017, 5, 12), "Escuela N.º 12 D.E. 4", "3.º grado");
+                LocalDate.of(2017, 5, 12), "Escuela N.º 12 D.E. 4", "3.º grado", TipoEscuela.COMUN);
         Proyecto valen = crearProyecto("Valentina", "Ruiz", "Valen",
-                LocalDate.of(2018, 9, 3), "Instituto San Martín", "2.º grado");
+                LocalDate.of(2018, 9, 3), "Instituto San Martín", "2.º grado", TipoEscuela.HIBRIDA);
         Proyecto juli = crearProyecto("Julián", "Gómez", "Juli",
-                LocalDate.of(2016, 2, 20), "Escuela N.º 7 D.E. 9", "4.º grado");
+                LocalDate.of(2016, 2, 20), "Escuela N.º 7 D.E. 9", "4.º grado", TipoEscuela.ESPECIAL);
 
         // Cada proyecto con miembros de los 4 roles
         crearMembresia(tutor, tomi, Rol.TUTOR, true, null, null);
@@ -141,7 +142,8 @@ public class DataSeeder implements CommandLineRunner {
             String apodo,
             LocalDate fechaNacimiento,
             String escuela,
-            String grado) {
+            String grado,
+            TipoEscuela tipoEscuela) {
 
         Proyecto proyecto = Proyecto.builder()
                 .nombre(nombre)
@@ -150,6 +152,7 @@ public class DataSeeder implements CommandLineRunner {
                 .fechaNacimiento(fechaNacimiento)
                 .escuela(escuela)
                 .grado(grado)
+                .tipoEscuela(tipoEscuela)
                 .consentimientoFecha(Instant.now())
                 .build();
 

@@ -2,8 +2,6 @@ import { useState } from 'react'
 import { useParams } from 'react-router-dom'
 import { PencilSimple } from '@phosphor-icons/react'
 import Boton from '../../components/ui/Boton.jsx'
-import Campo from '../../components/ui/Campo.jsx'
-import CampoFecha from '../../components/ui/CampoFecha.jsx'
 import CampoFormulario from '../../components/ui/CampoFormulario.jsx'
 import { Aviso } from '../../components/ui/Aviso.jsx'
 import CabeceraPerfil from './components/CabeceraPerfil.jsx'
@@ -13,6 +11,12 @@ import useAuth from '../../hooks/useAuth.js'
 import { formatearFechaCalendario } from '../../utils/fechas.js'
 import { actualizarProyecto } from '../../api/proyectos.js'
 import { calcularEdad } from './perfil.js'
+import CampoDatoNino from './components/CampoDatoNino.jsx'
+import {
+  GRADOS,
+  TIPOS_ESCUELA,
+  nombreTipoEscuela,
+} from './datosEscolares.js'
 import ZonaEliminarPerfil from './eliminacion/ZonaEliminarPerfil.jsx'
 import useProyectoActual from '../../hooks/useProyectoActual.js'
 
@@ -22,7 +26,21 @@ const definicionesCampos = [
   { nombre: 'apodo', etiqueta: 'Apodo', maxLength: 40, opcional: true },
   { nombre: 'fechaNacimiento', etiqueta: 'Fecha de nacimiento', tipo: 'fecha' },
   { nombre: 'escuela', etiqueta: 'Colegio', maxLength: 120 },
-  { nombre: 'grado', etiqueta: 'Grado', maxLength: 30 },
+  {
+    nombre: 'tipoEscuela',
+    etiqueta: 'Tipo de escuela',
+    tipo: 'selector',
+    opciones: TIPOS_ESCUELA,
+    vacia: 'Elegí el tipo de escuela',
+  },
+  {
+    nombre: 'grado',
+    etiqueta: 'Grado',
+    maxLength: 30,
+    tipo: 'selector',
+    opciones: GRADOS,
+    vacia: 'Elegí el grado',
+  },
 ]
 
 export default function DatosPersonalesPage() {
@@ -52,6 +70,7 @@ export default function DatosPersonalesPage() {
       apodo: proyecto.apodo ?? '',
       fechaNacimiento: proyecto.fechaNacimiento ?? '',
       escuela: proyecto.escuela ?? '',
+      tipoEscuela: proyecto.tipoEscuela ?? '',
       grado: proyecto.grado ?? '',
     })
     setErrores({})
@@ -78,7 +97,8 @@ export default function DatosPersonalesPage() {
     for (const campo of definicionesCampos) {
       datos[campo.nombre] = (valores[campo.nombre] ?? '').trim()
       if (!campo.opcional && !datos[campo.nombre]) {
-        nuevosErrores[campo.nombre] = 'Completá este dato.'
+        nuevosErrores[campo.nombre] =
+          campo.tipo === 'selector' ? 'Elegí una opción.' : 'Completá este dato.'
       } else if (campo.maxLength && datos[campo.nombre].length > campo.maxLength) {
         nuevosErrores[campo.nombre] = `Usá hasta ${campo.maxLength} caracteres.`
       }
@@ -128,6 +148,7 @@ export default function DatosPersonalesPage() {
           formatearFechaCalendario(proyecto.fechaNacimiento),
         ],
         ['Colegio', proyecto.escuela],
+        ['Tipo de escuela', nombreTipoEscuela(proyecto.tipoEscuela)],
         ['Grado', proyecto.grado],
       ]
     : []
@@ -206,26 +227,13 @@ export default function DatosPersonalesPage() {
                             label={campo.etiqueta}
                             error={errores[campo.nombre]}
                           >
-                            {campo.tipo === 'fecha' ? (
-                              <CampoFecha
-                                name={campo.nombre}
-                                value={valores[campo.nombre]}
-                                onChange={cambiar}
-                                max={fechaMaxima}
-                                disabled={guardando}
-                                required
-                              />
-                            ) : (
-                              <Campo
-                                name={campo.nombre}
-                                type="text"
-                                maxLength={campo.maxLength}
-                                value={valores[campo.nombre]}
-                                onChange={cambiar}
-                                required={!campo.opcional}
-                                disabled={guardando}
-                              />
-                            )}
+                            <CampoDatoNino
+                              campo={campo}
+                              valor={valores[campo.nombre]}
+                              onChange={cambiar}
+                              fechaMaxima={fechaMaxima}
+                              disabled={guardando}
+                            />
                           </CampoFormulario>
                         </div>
                       ))}

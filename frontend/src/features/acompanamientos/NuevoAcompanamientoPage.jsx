@@ -1,14 +1,14 @@
 import { useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import Boton from '../../components/ui/Boton.jsx'
-import Campo from '../../components/ui/Campo.jsx'
-import CampoFecha from '../../components/ui/CampoFecha.jsx'
 import CampoFormulario from '../../components/ui/CampoFormulario.jsx'
 import CasillaOvillo from '../../components/ui/CasillaOvillo.jsx'
 import InicioSidebar from '../inicio/InicioSidebar.jsx'
 import useAuth from '../../hooks/useAuth.js'
 import { crearProyecto } from '../../api/proyectos.js'
 import { calcularEdad } from '../perfil/perfil.js'
+import CampoDatoNino from '../perfil/components/CampoDatoNino.jsx'
+import { GRADOS, TIPOS_ESCUELA } from '../perfil/datosEscolares.js'
 
 // Son los datos del niño, no de quien crea el acompañamiento.
 const campos = [
@@ -22,7 +22,21 @@ const campos = [
   },
   { nombre: 'fechaNacimiento', etiqueta: 'Fecha de nacimiento', tipo: 'fecha' },
   { nombre: 'escuela', etiqueta: 'Escuela a la que va', maxLength: 120 },
-  { nombre: 'grado', etiqueta: 'Grado', maxLength: 30 },
+  {
+    nombre: 'tipoEscuela',
+    etiqueta: 'Tipo de escuela',
+    tipo: 'selector',
+    opciones: TIPOS_ESCUELA,
+    vacia: 'Elegí el tipo de escuela',
+  },
+  {
+    nombre: 'grado',
+    etiqueta: 'Grado',
+    maxLength: 30,
+    tipo: 'selector',
+    opciones: GRADOS,
+    vacia: 'Elegí el grado',
+  },
 ]
 
 export default function NuevoAcompanamientoPage() {
@@ -34,6 +48,7 @@ export default function NuevoAcompanamientoPage() {
     apodo: '',
     fechaNacimiento: '',
     escuela: '',
+    tipoEscuela: '',
     grado: '',
     consentimiento: false,
   })
@@ -61,7 +76,8 @@ export default function NuevoAcompanamientoPage() {
     for (const campo of campos) {
       datos[campo.nombre] = valores[campo.nombre].trim()
       if (!campo.opcional && !datos[campo.nombre])
-        nuevosErrores[campo.nombre] = 'Completá este dato.'
+        nuevosErrores[campo.nombre] =
+          campo.tipo === 'selector' ? 'Elegí una opción.' : 'Completá este dato.'
       else if (campo.maxLength && datos[campo.nombre].length > campo.maxLength)
         nuevosErrores[campo.nombre] = `Usá hasta ${campo.maxLength} caracteres.`
     }
@@ -133,26 +149,13 @@ export default function NuevoAcompanamientoPage() {
                     label={campo.etiqueta}
                     error={errores[campo.nombre]}
                   >
-                    {campo.tipo === 'fecha' ? (
-                      <CampoFecha
-                        name={campo.nombre}
-                        value={valores[campo.nombre]}
-                        onChange={cambiar}
-                        max={fechaMaxima}
-                        disabled={enviando}
-                        required
-                      />
-                    ) : (
-                      <Campo
-                        name={campo.nombre}
-                        type="text"
-                        maxLength={campo.maxLength}
-                        value={valores[campo.nombre]}
-                        onChange={cambiar}
-                        required={!campo.opcional}
-                        disabled={enviando}
-                      />
-                    )}
+                    <CampoDatoNino
+                      campo={campo}
+                      valor={valores[campo.nombre]}
+                      onChange={cambiar}
+                      fechaMaxima={fechaMaxima}
+                      disabled={enviando}
+                    />
                   </CampoFormulario>
                 </div>
               ))}

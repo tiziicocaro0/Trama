@@ -19,6 +19,7 @@ import org.springframework.test.context.ActiveProfiles;
 import com.trama.tpo.demo.aporte.Visibilidad;
 import com.trama.tpo.demo.entity.dto.AporteRequest;
 import com.trama.tpo.demo.entity.dto.CrearProyectoRequest;
+import com.trama.tpo.demo.entity.proyecto.TipoEscuela;
 import com.trama.tpo.demo.entity.dto.EspecialidadItemRequest;
 import com.trama.tpo.demo.entity.dto.InvitacionRequest;
 import com.trama.tpo.demo.entity.dto.RegisterRequest;
@@ -90,6 +91,11 @@ class ContratoBaseDeDatosTest {
         // 9.4
         assertEquals(nombres(TipoCuenta.class), valoresDelCheck("ck_usuario_tipo_cuenta"));
         assertEquals(nombres(Especialidad.class), valoresDelCheck("ck_uesp_especialidad"));
+    }
+
+    @Test
+    void tiposDeEscuela() {
+        assertEquals(nombres(TipoEscuela.class), valoresDelCheck("ck_proyecto_tipo_escuela"));
     }
 
     @Test

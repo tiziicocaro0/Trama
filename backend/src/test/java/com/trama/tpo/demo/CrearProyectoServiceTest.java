@@ -41,7 +41,7 @@ class CrearProyectoServiceTest {
 
     private CrearProyectoRequest solicitud(Boolean consentimiento) {
         return new CrearProyectoRequest(" Luz ", " Ejemplo ", " ", LocalDate.of(2018, 5, 12),
-                " Escuela ficticia ", " 2.º ", consentimiento);
+                " Escuela ficticia ", " 2.º ", null, consentimiento);
     }
 
     @Test
