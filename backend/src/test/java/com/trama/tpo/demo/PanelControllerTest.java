@@ -227,6 +227,8 @@ class PanelControllerTest {
                 .nombre(nombre)
                 .apellido("Ficticio")
                 .fechaNacimiento(LocalDate.of(2018, 4, 15))
+                .escuela("Escuela N.º 12")
+                .grado("1.º grado")
                 .consentimientoFecha(Instant.now())
                 .build());
     }
