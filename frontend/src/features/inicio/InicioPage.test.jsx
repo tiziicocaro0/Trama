@@ -149,7 +149,8 @@ describe('Inicio de TRAMA', () => {
     expect(
       within(nav).getByRole('link', { name: 'Calendario' }),
     ).toHaveAttribute('aria-current', 'page')
-    await user.click(screen.getByRole('link', { name: 'TRAMA · Inicio' }))
+    // El logo está en la barra del celular y en el menú lateral: los dos van a Inicio
+    await user.click(screen.getAllByRole('link', { name: 'TRAMA · Inicio' })[0])
     expect(screen.queryByText('Agenda del usuario autenticado')).not.toBeInTheDocument()
   })
 
@@ -201,6 +202,34 @@ describe('Inicio de TRAMA', () => {
         name: 'Ver todos los acompañamientos',
       }),
     ).toHaveAttribute('href', '/acompanamientos')
+  })
+
+  it('en el celular el menú se abre con la hamburguesa y se cierra con la X, Escape o al elegir', async () => {
+    const user = userEvent.setup()
+    abrir()
+    const hamburguesa = screen.getByRole('button', { name: 'Abrir menú' })
+    const menu = document.getElementById('menu-principal')
+    expect(hamburguesa).toHaveAttribute('aria-controls', 'menu-principal')
+    expect(hamburguesa).toHaveAttribute('aria-expanded', 'false')
+    expect(menu).toHaveClass('hidden')
+
+    await user.click(hamburguesa)
+    expect(hamburguesa).toHaveAttribute('aria-expanded', 'true')
+    expect(menu).not.toHaveClass('hidden')
+    expect(screen.getByRole('button', { name: 'Cerrar menú' })).toHaveFocus()
+    await user.click(screen.getByRole('button', { name: 'Cerrar menú' }))
+    expect(menu).toHaveClass('hidden')
+    expect(hamburguesa).toHaveFocus()
+
+    await user.click(hamburguesa)
+    await user.keyboard('{Escape}')
+    expect(menu).toHaveClass('hidden')
+    expect(hamburguesa).toHaveFocus()
+
+    await user.click(hamburguesa)
+    await user.click(within(menu).getByRole('link', { name: 'Recursos' }))
+    expect(menu).toHaveClass('hidden')
+    expect(screen.getByRole('heading', { name: 'Recursos · Próximamente' })).toBeInTheDocument()
   })
 
   it('reutiliza el cierre de sesión desde el único botón del sidebar', async () => {
