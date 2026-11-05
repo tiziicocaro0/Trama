@@ -1,8 +1,9 @@
-import { ArrowLeft, User } from '@phosphor-icons/react'
+import { ArrowLeft } from '@phosphor-icons/react'
 import { Link } from 'react-router-dom'
 import Logo from '../../../components/ui/Logo.jsx'
 import { calcularEdad } from '../perfil.js'
 import AvisoPlanGratuito from '../../plan/AvisoPlanGratuito.jsx'
+import FotoNino from './FotoNino.jsx'
 
 export default function CabeceraPerfil({ proyecto, seccion }) {
   const edad = calcularEdad(proyecto.fechaNacimiento)
@@ -25,13 +26,12 @@ export default function CabeceraPerfil({ proyecto, seccion }) {
         {seccion ? 'Volver al perfil' : 'Volver a acompañamientos'}
       </Link>
       <div className="flex items-center gap-5 sm:gap-6">
-        <span
-          role="img"
-          aria-label={`Foto de ${proyecto.nombre} no disponible`}
-          className="flex size-20 shrink-0 items-center justify-center rounded-full bg-primario text-superficie sm:size-24"
-        >
-          <User size={40} weight="light" aria-hidden="true" />
-        </span>
+        <FotoNino
+          proyecto={proyecto}
+          className="size-20 sm:size-24"
+          claseIcono="bg-primario text-superficie"
+          tamanoIcono={40}
+        />
         <div className="min-w-0">
           <h1 className="break-words font-display text-h1 leading-tight text-secundario sm:text-display">
             {proyecto.nombre}

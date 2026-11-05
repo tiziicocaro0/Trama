@@ -100,6 +100,12 @@ class ContratoBaseDeDatosTest {
     }
 
     @Test
+    void tiposDeFotoDeLaCuenta() {
+        // La foto de la cuenta solo puede ser una imagen de las que acepta FotoService
+        assertEquals(Set.of("image/jpeg", "image/png"), valoresDelCheck("ck_usuario_foto_tipo"));
+    }
+
+    @Test
     void tiposDeArchivo() {
         assertEquals(ArchivoService.MIMES_PERMITIDOS, valoresDelCheck("ck_archivo_mime"));
     }

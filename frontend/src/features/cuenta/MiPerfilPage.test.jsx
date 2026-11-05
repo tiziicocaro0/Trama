@@ -11,7 +11,20 @@ vi.mock('../../api/cliente.js', () => ({
     defaults: { baseURL: '/api' },
     get: vi.fn(),
     put: vi.fn(),
+    post: vi.fn(),
+    delete: vi.fn(),
   },
+}))
+// El recortador real usa gestos y canvas: se simula la zona elegida.
+vi.mock('react-easy-crop', () => ({
+  default: ({ onCropComplete }) => (
+    <button type="button" onClick={() => onCropComplete({}, { x: 0, y: 0, width: 80, height: 80 })}>
+      Encuadrar
+    </button>
+  ),
+}))
+vi.mock('../../utils/recortarImagen.js', () => ({
+  recortarImagen: vi.fn(async () => new Blob(['jpg'], { type: 'image/jpeg' })),
 }))
 
 const profesional = {
@@ -36,8 +49,14 @@ function abrir(usuario, confirmarSesion = vi.fn().mockResolvedValue(usuario)) {
 }
 
 beforeEach(() => {
-  cliente.get.mockReset().mockResolvedValue({ data: [] })
+  window.URL.createObjectURL = vi.fn(() => 'blob:mi-foto')
+  window.URL.revokeObjectURL = vi.fn()
+  cliente.get.mockReset().mockImplementation(async (ruta) => ({
+    data: ruta.endsWith('/foto') ? new Blob(['foto'], { type: 'image/jpeg' }) : [],
+  }))
   cliente.put.mockReset()
+  cliente.post.mockReset().mockResolvedValue({ data: null })
+  cliente.delete.mockReset().mockResolvedValue({ data: null })
 })
 
 describe('Mi perfil', () => {
@@ -82,6 +101,34 @@ describe('Mi perfil', () => {
     expect(
       await screen.findByText('No pudimos guardar la matrícula. Intentá nuevamente.'),
     ).toBeInTheDocument()
+  })
+
+  it('sube su foto recortada y la muestra', async () => {
+    const user = userEvent.setup()
+    const confirmarSesion = abrir({ ...profesional, tieneFoto: false })
+    expect(screen.getByRole('img', { name: 'Foto de Pía no disponible' })).toBeInTheDocument()
+    await user.upload(
+      screen.getByLabelText('Elegir una foto'),
+      new File(['x'], 'yo.png', { type: 'image/png' }),
+    )
+    await user.click(screen.getByRole('button', { name: 'Encuadrar' }))
+    await user.click(screen.getByRole('button', { name: 'Usar esta foto' }))
+    expect(cliente.post).toHaveBeenCalledWith(
+      '/usuarios/yo/foto',
+      expect.any(FormData),
+      expect.objectContaining({ headers: { 'Content-Type': 'multipart/form-data' } }),
+    )
+    expect(cliente.post.mock.calls[0][1].get('archivo')).toBeInstanceOf(Blob)
+    expect(await screen.findByRole('img', { name: 'Foto de Pía' })).toHaveAttribute('src', 'blob:mi-foto')
+    expect(confirmarSesion).toHaveBeenCalled()
+  })
+
+  it('quita su foto', async () => {
+    const user = userEvent.setup()
+    abrir({ ...profesional, tieneFoto: true })
+    await user.click(await screen.findByRole('button', { name: 'Quitar foto' }))
+    expect(cliente.delete).toHaveBeenCalledWith('/usuarios/yo/foto')
+    expect(await screen.findByRole('img', { name: 'Foto de Pía no disponible' })).toBeInTheDocument()
   })
 
   it('una cuenta de familia no ve la sección de matrícula', () => {

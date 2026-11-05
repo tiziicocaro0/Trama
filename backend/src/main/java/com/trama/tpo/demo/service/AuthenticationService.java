@@ -154,6 +154,7 @@ public class AuthenticationService {
                                 e.getEspecialidad().name(), e.getAclaracion()))
                         .toList())
                 .matricula(usuario.getMatricula())
+                .tieneFoto(usuario.getFotoRuta() != null)
                 .build();
     }
 

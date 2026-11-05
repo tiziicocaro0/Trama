@@ -3,13 +3,13 @@ import {
   BookOpen,
   Lightbulb,
   Plus,
-  User,
   Users,
 } from '@phosphor-icons/react'
 import { Link } from 'react-router-dom'
 import Boton from '../../components/ui/Boton.jsx'
 import { fechaLocal } from '../calendario/utils/periodo.js'
 import { DIAS_DE_EVENTOS } from './useResumenInicio.js'
+import FotoNino from '../perfil/components/FotoNino.jsx'
 
 // Colores que se alternan entre las tarjetas para distinguirlas a simple vista.
 const tonos = [
@@ -108,11 +108,12 @@ export function Acompanamientos({ resumen }) {
                   to={`/proyectos/${proyecto.id}`}
                   className={`flex min-w-0 items-center gap-3 rounded-lg p-3 transition-shadow hover:shadow-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primario motion-reduce:transition-none sm:p-4 ${fondo}`}
                 >
-                  <span
-                    className={`flex size-11 shrink-0 items-center justify-center rounded-full sm:size-12 ${icono}`}
-                  >
-                    <User size={32} weight="light" aria-hidden="true" />
-                  </span>
+                  <FotoNino
+                    proyecto={proyecto}
+                    className="size-11 sm:size-12"
+                    claseIcono={icono}
+                    tamanoIcono={32}
+                  />
                   <span className="min-w-0 flex-1">
                     <span className="block truncate font-display text-subtitulo leading-tight text-primario">
                       {nombre}

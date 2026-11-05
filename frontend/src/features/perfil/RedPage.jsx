@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { User, PencilSimple } from '@phosphor-icons/react'
+import { PencilSimple } from '@phosphor-icons/react'
 import { useParams, useSearchParams } from 'react-router-dom'
 import {
   cambiarEspecialidades,
@@ -21,6 +21,7 @@ import NavegacionPerfil from './components/NavegacionPerfil.jsx'
 import EspecialidadModal from './components/EspecialidadModal.jsx'
 import { etiquetaEspecialidad } from './especialidades.js'
 import MatriculaMiembro from './components/MatriculaMiembro.jsx'
+import FotoUsuario from '../cuenta/FotoUsuario.jsx'
 
 const etiquetasRol = {
   TUTOR: 'Tutor/a',
@@ -257,9 +258,11 @@ export default function RedPage() {
                           className="flex flex-col justify-between gap-4 rounded-lg bg-superficie p-6 shadow-sm sm:flex-row sm:items-start"
                         >
                           <div className="flex items-start gap-4">
-                            <span className="flex size-12 shrink-0 items-center justify-center rounded-full bg-decoracion text-secundario">
-                              <User size={24} aria-hidden="true" />
-                            </span>
+                            <FotoUsuario
+                              usuarioId={persona.usuarioId}
+                              tieneFoto={persona.tieneFoto}
+                              nombre={nombre}
+                            />
                             <div className="min-w-0">
                               <h3 className="break-words font-display text-h2 text-secundario">
                                 {persona.nombre} {persona.apellido}

@@ -18,6 +18,7 @@ import {
   nombreTipoEscuela,
 } from './datosEscolares.js'
 import ZonaEliminarPerfil from './eliminacion/ZonaEliminarPerfil.jsx'
+import FotoNinoEditable from './components/FotoNinoEditable.jsx'
 import useProyectoActual from '../../hooks/useProyectoActual.js'
 
 const definicionesCampos = [
@@ -269,6 +270,8 @@ export default function DatosPersonalesPage() {
                   </dl>
                 )}
               </section>
+
+              {esAdmin && <FotoNinoEditable proyecto={proyecto} onCambio={reintentar} />}
 
               {esAdmin && (
                 <ZonaEliminarPerfil key={proyecto.id} proyecto={proyecto} />

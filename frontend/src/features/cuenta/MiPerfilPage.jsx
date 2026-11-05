@@ -1,12 +1,15 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
-import { IdentificationCard, UserCircle } from '@phosphor-icons/react'
+import { Camera, IdentificationCard, UserCircle } from '@phosphor-icons/react'
 import useAuth from '../../hooks/useAuth.js'
 import { Aviso } from '../../components/ui/Aviso.jsx'
 import Boton from '../../components/ui/Boton.jsx'
 import Campo from '../../components/ui/Campo.jsx'
 import CampoFormulario from '../../components/ui/CampoFormulario.jsx'
 import { actualizarMatricula } from '../../api/cuenta.js'
+import { quitarFotoUsuario, subirFotoUsuario } from '../../api/fotos.js'
+import EditorFoto from '../../components/ui/EditorFoto.jsx'
+import useFotoUsuario from './useFotoUsuario.js'
 import InicioSidebar from '../inicio/InicioSidebar.jsx'
 import { nombreTipoCuenta } from '../auth/registro/tipoCuenta.js'
 import { nombreEspecialidad } from '../perfil/especialidades.js'
@@ -19,6 +22,18 @@ export default function MiPerfilPage() {
   const [error, setError] = useState('')
   const [estado, setEstado] = useState({ tipo: null, texto: '' })
   const [guardando, setGuardando] = useState(false)
+  // Cambia cada vez que se sube otra foto, para volver a pedirla.
+  const [versionFoto, setVersionFoto] = useState(0)
+  const [tieneFoto, setTieneFoto] = useState(Boolean(usuario?.tieneFoto))
+  const foto = useFotoUsuario(usuario?.id, tieneFoto, versionFoto)
+
+  async function cambiarFoto(accion, quedaConFoto) {
+    await accion()
+    setTieneFoto(quedaConFoto)
+    setVersionFoto((actual) => actual + 1)
+    // Actualiza la sesión para que el resto de TRAMA vea el cambio.
+    confirmarSesion?.().catch(() => {})
+  }
 
   async function guardar(event) {
     event.preventDefault()
@@ -77,6 +92,29 @@ export default function MiPerfilPage() {
             <h1 className="font-display text-h1 text-secundario sm:text-display">Mi perfil</h1>
             <p className="mt-2 text-texto-suave">Tus datos en TRAMA.</p>
           </header>
+
+          <section
+            aria-labelledby="titulo-mi-foto"
+            className="rounded-lg bg-superficie p-6 shadow-sm"
+          >
+            <h2
+              id="titulo-mi-foto"
+              className="mb-4 flex items-center gap-2 font-display text-h2 text-secundario"
+            >
+              <Camera size={24} aria-hidden="true" />
+              Mi foto
+            </h2>
+            <EditorFoto
+              src={foto}
+              nombre={usuario?.nombre ?? ''}
+              tituloRecorte="Tu foto"
+              onGuardar={(imagen) => cambiarFoto(() => subirFotoUsuario(imagen), true)}
+              onQuitar={() => cambiarFoto(quitarFotoUsuario, false)}
+            />
+            <p className="mt-3 text-sm text-texto-suave">
+              La ven las redes de los niños en los que participás.
+            </p>
+          </section>
 
           <section
             aria-labelledby="titulo-mis-datos"

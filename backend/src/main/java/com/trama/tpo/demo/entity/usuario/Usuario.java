@@ -62,6 +62,13 @@ public class Usuario {
     @Column(name = "matricula", length = 40)
     private String matricula;
 
+    /** Foto de la cuenta: nombre del archivo cifrado en disco (null si no tiene). */
+    @Column(name = "foto_ruta", columnDefinition = "CHAR(36)")
+    private String fotoRuta;
+
+    @Column(name = "foto_tipo", length = 20)
+    private String fotoTipo;
+
     /** Registro: la cuenta entra recién después de confirmar el código que llega por mail. */
     @Builder.Default
     @Column(name = "email_verificado", nullable = false)

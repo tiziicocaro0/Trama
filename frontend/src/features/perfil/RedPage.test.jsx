@@ -49,6 +49,8 @@ const red = [
     rol: 'SALUD',
     especialidades: [{ especialidad: 'PSICOLOGIA', aclaracion: null }],
     matricula: 'MN 45.123',
+    usuarioId: 'usuario-psicologa',
+    tieneFoto: true,
   },
 ]
 function abrir(
@@ -70,8 +72,12 @@ function abrir(
   )
 }
 beforeEach(() => {
+  window.URL.createObjectURL = vi.fn(() => 'blob:foto-psicologa')
+  window.URL.revokeObjectURL = vi.fn()
   cliente.get.mockReset().mockImplementation(async (ruta) => ({
-    data: ruta.endsWith('/miembros')
+    data: ruta.endsWith('/foto')
+      ? new Blob(['foto'], { type: 'image/jpeg' })
+      : ruta.endsWith('/miembros')
       ? red
       : ruta.endsWith('/invitaciones')
         ? []
@@ -136,6 +142,17 @@ describe('Red de profesionales', () => {
       .getByRole('heading', { name: 'Docente ficticia Ejemplo' })
       .closest('li')
     expect(within(docente).queryByText(/Matrícula/)).not.toBeInTheDocument()
+  })
+  it('muestra la foto de quien tiene y el ícono de quien no', async () => {
+    abrir()
+    expect(await screen.findByRole('img', { name: 'Foto de Psicóloga ficticia Ejemplo' })).toHaveAttribute(
+      'src',
+      'blob:foto-psicologa',
+    )
+    expect(cliente.get).toHaveBeenCalledWith('/usuarios/usuario-psicologa/foto', expect.objectContaining({ responseType: 'blob' }))
+    expect(screen.getByRole('img', { name: 'Foto de Docente ficticia Ejemplo no disponible' })).toBeInTheDocument()
+    // Solo se pide la foto de quien tiene una
+    expect(cliente.get.mock.calls.filter(([ruta]) => ruta.endsWith('/foto'))).toHaveLength(1)
   })
   it('indica cuando la especialidad no está informada', async () => {
     cliente.get.mockImplementation(async (ruta) => ({
