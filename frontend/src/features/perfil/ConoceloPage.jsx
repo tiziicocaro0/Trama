@@ -9,8 +9,6 @@ import {
 import { Link, useParams } from 'react-router-dom'
 import { obtenerResumenProyecto } from '../../api/aportes.js'
 import Boton from '../../components/ui/Boton.jsx'
-import CabeceraPerfil from './components/CabeceraPerfil.jsx'
-import NavegacionPerfil from './components/NavegacionPerfil.jsx'
 import usePerfil from './hooks/usePerfil.js'
 import { leerDatosAporte } from './perfil.js'
 
@@ -125,7 +123,7 @@ export default function ConoceloPage() {
       <main
         id="contenido-conocelo"
         tabIndex={-1}
-        className="mx-auto max-w-6xl px-4 py-6 sm:px-8 sm:py-10"
+        className="mx-auto max-w-6xl px-4 pb-6 sm:px-8 sm:pb-10"
       >
         {cargando ? (
           <p role="status" className="py-12 text-center">
@@ -147,12 +145,7 @@ export default function ConoceloPage() {
         ) : (
           proyecto && (
             <>
-              <CabeceraPerfil
-                proyecto={proyecto}
-                seccion={{ titulo: 'Conocelo en 5 minutos' }}
-              />
               <div className="print:hidden">
-                <NavegacionPerfil proyectoId={id} />
               </div>
 
               <div className="mb-6 flex flex-wrap items-center justify-between gap-4 rounded-lg bg-superficie p-5 shadow-sm sm:p-6">

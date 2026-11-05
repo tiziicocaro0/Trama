@@ -12,12 +12,10 @@ import { Aviso } from '../../components/ui/Aviso.jsx'
 import Boton from '../../components/ui/Boton.jsx'
 import { Modal } from '../../components/ui/Modal.jsx'
 import useAuth from '../../hooks/useAuth.js'
-import CabeceraPerfil from './components/CabeceraPerfil.jsx'
 import ModalInvitarMiembro from './components/ModalInvitarMiembro.jsx'
 import InvitacionesPendientes from './components/InvitacionesPendientes.jsx'
 import PermisosFamiliares from './components/PermisosFamiliares.jsx'
 import usePerfil from './hooks/usePerfil.js'
-import NavegacionPerfil from './components/NavegacionPerfil.jsx'
 import EspecialidadModal from './components/EspecialidadModal.jsx'
 import { etiquetaEspecialidad } from './especialidades.js'
 import MatriculaMiembro from './components/MatriculaMiembro.jsx'
@@ -179,7 +177,7 @@ export default function RedPage() {
   return (
     <main
       tabIndex={-1}
-      className="min-h-svh bg-fondo px-4 py-6 text-texto sm:px-8 sm:py-10"
+      className="mx-auto max-w-6xl px-4 pb-6 text-texto sm:px-8 sm:pb-10"
     >
       <div className="mx-auto max-w-6xl">
         {cargando ? (
@@ -198,8 +196,6 @@ export default function RedPage() {
         ) : (
           proyecto && (
             <>
-              <CabeceraPerfil proyecto={proyecto} seccion={{ titulo: 'Red' }} />
-              <NavegacionPerfil proyectoId={id} />
               <section aria-labelledby="titulo-red">
                 <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
                   <div>

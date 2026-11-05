@@ -74,6 +74,8 @@ describe('Portada y navegación de lectura', () => {
     expect(cliente.get).toHaveBeenCalledWith(`/proyectos/${id}`, {
       signal: expect.any(AbortSignal),
     })
+    // La cabecera aparece apenas llega el proyecto; las secciones, con sus aportes
+    await screen.findByRole('heading', { name: 'Fortalezas', level: 2 })
     expect(
       screen
         .getAllByRole('heading', { level: 2 })
@@ -178,10 +180,10 @@ describe('Portada y navegación de lectura', () => {
     },
   )
 
-  it('rechaza una sección desconocida', () => {
+  it('rechaza una sección desconocida', async () => {
     abrir(`/proyectos/${id}/inventada`)
     expect(
-      screen.getByRole('heading', { name: 'Sección no encontrada' }),
+      await screen.findByRole('heading', { name: 'Sección no encontrada' }),
     ).toBeInTheDocument()
     expect(screen.queryByText(/Aportes de ejemplo/)).not.toBeInTheDocument()
   })

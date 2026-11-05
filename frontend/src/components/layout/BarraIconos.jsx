@@ -34,6 +34,16 @@ export default function BarraIconos() {
       className="fixed inset-x-0 bottom-0 z-40 border-t border-borde/60 bg-superficie print:hidden lg:inset-x-auto lg:top-0 lg:left-0 lg:w-20 lg:border-t-0 lg:border-r"
     >
       <ul className="flex items-center justify-around px-2 py-1 lg:h-svh lg:flex-col lg:justify-start lg:gap-2 lg:py-6">
+        {/* Isologo (la puerta del arco de TRAMA): solo en la barra lateral de pantallas grandes */}
+        <li className="mb-2 hidden lg:block">
+          <Link
+            to="/inicio"
+            aria-label="TRAMA · Inicio"
+            className="flex size-12 items-center justify-center rounded-md focus-visible:outline-2 focus-visible:outline-primario"
+          >
+            <img src="/favicon.svg" alt="" width="40" height="40" className="size-10" />
+          </Link>
+        </li>
         {items.map(({ titulo, icon: Icon, to }) => {
           const destino = titulo === 'Calendario' && idProyectoActual
             ? `/proyectos/${idProyectoActual}/calendario`

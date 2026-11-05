@@ -91,7 +91,7 @@ describe('Alta real de acompañamiento', () => {
       signal: expect.any(AbortSignal),
     })
     expect(
-      screen.getByRole('heading', { name: 'Fortalezas' }),
+      await screen.findByRole('heading', { name: 'Fortalezas' }),
     ).toBeInTheDocument()
   })
 

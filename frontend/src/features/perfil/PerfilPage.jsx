@@ -3,11 +3,9 @@ import { Link, useParams } from 'react-router-dom'
 import { useState } from 'react'
 import Boton from '../../components/ui/Boton.jsx'
 import { Aviso } from '../../components/ui/Aviso.jsx'
-import CabeceraPerfil from './components/CabeceraPerfil.jsx'
 import BloquePerfil from './components/BloquePerfil.jsx'
 import usePerfil from './hooks/usePerfil.js'
 import { LEYENDA_NOTAS, seccionesPerfil, seccionNotas } from './perfil.js'
-import NavegacionPerfil from './components/NavegacionPerfil.jsx'
 import { listarAportes } from '../../api/aportes.js'
 import useAuth from '../../hooks/useAuth.js'
 import { leerDatosAporte } from './perfil.js'
@@ -103,7 +101,7 @@ export default function PerfilPage() {
       <main
         id="contenido-perfil"
         tabIndex={-1}
-        className="mx-auto max-w-6xl px-4 py-6 sm:px-8 sm:py-10"
+        className="mx-auto max-w-6xl px-4 pb-6 sm:px-8 sm:pb-10"
       >
         {slug && !seccion ? (
           <div className="space-y-4">
@@ -133,8 +131,6 @@ export default function PerfilPage() {
           </div>
         ) : proyecto ? (
           <>
-            <CabeceraPerfil proyecto={proyecto} seccion={seccion} />
-            <NavegacionPerfil proyectoId={id} />
             {!seccion && cancelacionEn !== id && (
               <AvisoEliminacion proyecto={proyecto} esAdmin={esAdmin} onCancelada={() => setCancelacionEn(id)} />
             )}

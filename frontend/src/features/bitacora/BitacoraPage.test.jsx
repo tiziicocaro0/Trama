@@ -142,7 +142,8 @@ describe('Bitácora de observaciones (Tarea 4.0)', () => {
     ).toBeInTheDocument()
     expect(document.title).toBe('TRAMA · Bitácora')
 
-    const articulos = screen.getAllByRole('article')
+    // Las observaciones llegan después del título (la cabecera ya está cargada)
+    const articulos = await screen.findAllByRole('article')
     expect(articulos).toHaveLength(2)
 
     // Primera tarjeta: la más nueva (22/10/2026)

@@ -4,8 +4,6 @@ import { PencilSimple } from '@phosphor-icons/react'
 import Boton from '../../components/ui/Boton.jsx'
 import CampoFormulario from '../../components/ui/CampoFormulario.jsx'
 import { Aviso } from '../../components/ui/Aviso.jsx'
-import CabeceraPerfil from './components/CabeceraPerfil.jsx'
-import NavegacionPerfil from './components/NavegacionPerfil.jsx'
 import usePerfil from './hooks/usePerfil.js'
 import useAuth from '../../hooks/useAuth.js'
 import { formatearFechaCalendario } from '../../utils/fechas.js'
@@ -157,7 +155,7 @@ export default function DatosPersonalesPage() {
   return (
     <main
       tabIndex={-1}
-      className="min-h-svh bg-fondo px-4 py-6 text-texto sm:px-8 sm:py-10"
+      className="mx-auto max-w-6xl px-4 pb-6 text-texto sm:px-8 sm:pb-10"
     >
       <div className="mx-auto max-w-6xl">
         {cargando ? (
@@ -176,11 +174,6 @@ export default function DatosPersonalesPage() {
         ) : (
           proyecto && (
             <>
-              <CabeceraPerfil
-                proyecto={proyecto}
-                seccion={{ titulo: 'Datos personales' }}
-              />
-              <NavegacionPerfil proyectoId={id} />
 
               {mensaje.texto && (
                 <div className="mb-6">

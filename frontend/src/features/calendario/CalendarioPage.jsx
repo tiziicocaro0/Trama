@@ -18,8 +18,6 @@ import {
   normalizarRolProyecto,
   useProyectoActual,
 } from '../../hooks/useProyectoActual.js'
-import CabeceraPerfil from '../perfil/components/CabeceraPerfil.jsx'
-import NavegacionPerfil from '../perfil/components/NavegacionPerfil.jsx'
 import usePerfil from '../perfil/hooks/usePerfil.js'
 import ModalAlcanceRecurrente from './components/ModalAlcanceRecurrente.jsx'
 import ModalEvento from './components/ModalEvento.jsx'
@@ -260,7 +258,7 @@ export default function CalendarioPage() {
   return (
     <main
       tabIndex={-1}
-      className="min-h-svh bg-fondo px-4 py-6 text-texto sm:px-8 sm:py-10"
+      className="mx-auto max-w-6xl px-4 pb-6 text-texto sm:px-8 sm:pb-10"
     >
       <div className="mx-auto max-w-6xl">
         {!proyectoId ? (
@@ -290,11 +288,6 @@ export default function CalendarioPage() {
         ) : (
           proyecto && (
             <>
-              <CabeceraPerfil
-                proyecto={proyecto}
-                seccion={{ titulo: 'Calendario' }}
-              />
-              <NavegacionPerfil proyectoId={proyectoId} />
 
               <section aria-labelledby="titulo-calendario">
                 <CabeceraCalendario nombreProyecto={proyecto.nombre} vista={vista} referencia={referencia} periodo={periodo} onAnterior={() => cambiarPeriodo(-1)} onSiguiente={() => cambiarPeriodo(1)} onHoy={volverHoy} onVista={(valor) => { setVista(valor); setPanelDia(null); setEventoSeleccionado(null) }} mostrarNuevo={false} proyectoId={proyectoId} fechaSeleccionada={diaSeleccionado} mostrarIrAlDia={!panelDia} />
