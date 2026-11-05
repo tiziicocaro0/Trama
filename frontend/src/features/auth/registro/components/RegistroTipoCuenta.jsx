@@ -1,3 +1,6 @@
+import { IdentificationCard } from '@phosphor-icons/react'
+import Campo from '../../../../components/ui/Campo.jsx'
+import CampoFormulario from '../../../../components/ui/CampoFormulario.jsx'
 import SelectorEspecialidades from '../../../perfil/components/SelectorEspecialidades.jsx'
 import { AREAS_PROFESIONALES, TIPOS_CUENTA } from '../tipoCuenta.js'
 
@@ -39,7 +42,7 @@ function Opciones({ nombre, legend, opciones, valor, onElegir, error, enviando }
 // 9.4: segundo paso del registro. Familia o profesional; el profesional elige
 // primero su área (educación o salud) y después qué hace.
 export default function RegistroTipoCuenta({ registro }) {
-  const { valores, errores, enviando, elegir, cambiarEspecialidades } = registro
+  const { valores, errores, enviando, elegir, cambiar, cambiarEspecialidades } = registro
 
   return (
     <div className="space-y-6">
@@ -80,6 +83,24 @@ export default function RegistroTipoCuenta({ registro }) {
             error={errores.especialidades}
           />
         </section>
+      )}
+      {valores.tipoCuenta === 'PROFESIONAL' && valores.area && (
+        <CampoFormulario
+          id="registro-matricula"
+          label="Matrícula (opcional)"
+          error={errores.matricula}
+          hint="La ve la red de cada niño. TRAMA no verifica que sea válida."
+        >
+          <Campo
+            name="matricula"
+            placeholder="Matrícula (opcional)"
+            icon={IdentificationCard}
+            value={valores.matricula}
+            onChange={cambiar}
+            maxLength={40}
+            disabled={enviando}
+          />
+        </CampoFormulario>
       )}
     </div>
   )

@@ -115,6 +115,7 @@ describe('Contrato de login e identidad', () => {
       email: datos.email,
       tipoCuenta: 'PROFESIONAL',
       especialidades: [{ especialidad: 'OTRA_SALUD', aclaracion: 'Musicoterapeuta' }],
+      matricula: 'MN 45.123',
     }
     const get = vi.spyOn(cliente, 'get').mockResolvedValue({ data: identidad })
     expect(await obtenerIdentidad()).toEqual(identidad)
@@ -142,8 +143,33 @@ describe('API real de registro con transporte simulado', () => {
       data: { email: datos.email, verificacionPendiente: true },
     })
     await registrarUsuario({ ...datos, rol: 'TUTOR' })
-    expect(post).toHaveBeenCalledExactlyOnceWith('/auth/registro', datos)
+    expect(post).toHaveBeenCalledExactlyOnceWith('/auth/registro', {
+      ...datos,
+      matricula: null,
+    })
     expect(obtenerToken()).toBeNull()
+  })
+
+  it('manda la matrícula del profesional recortada, y nunca la de una familia', async () => {
+    const post = vi.spyOn(cliente, 'post').mockResolvedValue({
+      status: 201,
+      data: { email: datos.email, verificacionPendiente: true },
+    })
+    await registrarUsuario({ ...datos, matricula: '  MN 45.123 ' })
+    expect(post).toHaveBeenLastCalledWith(
+      '/auth/registro',
+      expect.objectContaining({ matricula: 'MN 45.123' }),
+    )
+    await registrarUsuario({
+      ...datos,
+      tipoCuenta: 'FAMILIA',
+      especialidades: [],
+      matricula: 'MN 45.123',
+    })
+    expect(post).toHaveBeenLastCalledWith(
+      '/auth/registro',
+      expect.objectContaining({ tipoCuenta: 'FAMILIA', matricula: null }),
+    )
   })
 
   it('con el código del mail guarda la sesión solo para esta pestaña', async () => {

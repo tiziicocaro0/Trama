@@ -26,6 +26,7 @@ export default function useRegistro() {
     tipoCuenta: '',
     area: '',
     especialidades: [],
+    matricula: '',
     codigo: '',
   })
   const [etapa, setEtapa] = useState(0)
@@ -61,7 +62,10 @@ export default function useRegistro() {
       ...actuales,
       [campo]: valor,
       ...(actuales[campo] !== valor
-        ? { especialidades: [], ...(campo === 'tipoCuenta' ? { area: '' } : {}) }
+        ? {
+            especialidades: [],
+            ...(campo === 'tipoCuenta' ? { area: '', matricula: '' } : {}),
+          }
         : {}),
     }))
     setErrores((actuales) => ({ ...actuales, [campo]: undefined, especialidades: undefined }))

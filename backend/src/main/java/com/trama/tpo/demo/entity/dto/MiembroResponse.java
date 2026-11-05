@@ -41,7 +41,10 @@ public class MiembroResponse {
                 .rol(membresia.getRol())
                 .esAdmin(membresia.getEsAdmin())
                 .especialidades(items)
-                .matricula(membresia.getMatricula())
+                // La de la cuenta del profesional; la de la membresía queda por compatibilidad.
+                .matricula(membresia.getMatricula() != null
+                        ? membresia.getMatricula()
+                        : membresia.getUsuario().getMatricula())
                 .fechaAlta(membresia.getFechaAlta())
                 .build();
     }

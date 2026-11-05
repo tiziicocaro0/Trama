@@ -58,6 +58,10 @@ public class Usuario {
     @Column(name = "tipo_cuenta", nullable = false, length = 12)
     private TipoCuenta tipoCuenta = TipoCuenta.FAMILIA;
 
+    /** Matrícula declarada por el profesional. TRAMA no la verifica. */
+    @Column(name = "matricula", length = 40)
+    private String matricula;
+
     /** Registro: la cuenta entra recién después de confirmar el código que llega por mail. */
     @Builder.Default
     @Column(name = "email_verificado", nullable = false)

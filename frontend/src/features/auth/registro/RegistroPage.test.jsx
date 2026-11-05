@@ -171,6 +171,7 @@ describe('Crear cuenta', () => {
       area: '',
       codigo: '',
       especialidades: [],
+      matricula: '',
     })
     // Último paso: el código que llega por mail
     expect(
@@ -285,6 +286,11 @@ describe('Crear cuenta', () => {
     await user.click(screen.getByRole('button', { name: 'Continuar' }))
     expect(screen.getByText('Contanos qué hacés en «Otra».')).toBeVisible()
     await user.type(screen.getByLabelText('Contanos qué hacés'), 'Musicoterapeuta')
+    // La matrícula es opcional y se aclara que TRAMA no la verifica.
+    expect(
+      screen.getByText('La ve la red de cada niño. TRAMA no verifica que sea válida.'),
+    ).toBeVisible()
+    await user.type(screen.getByLabelText('Matrícula (opcional)'), 'MN 45.123')
     await user.click(screen.getByRole('button', { name: 'Continuar' }))
 
     await user.type(screen.getByLabelText('Contraseña'), 'Prueba123!')
@@ -292,10 +298,12 @@ describe('Crear cuenta', () => {
     await user.click(screen.getByRole('button', { name: 'Continuar' }))
     expect(screen.getByText('Soy profesional')).toBeInTheDocument()
     expect(screen.getByText('Psicología, Musicoterapeuta')).toBeInTheDocument()
+    expect(screen.getByText('MN 45.123')).toBeInTheDocument()
     await user.click(screen.getByRole('button', { name: 'Crear cuenta' }))
     expect(registrarUsuario).toHaveBeenCalledWith(
       expect.objectContaining({
         tipoCuenta: 'PROFESIONAL',
+        matricula: 'MN 45.123',
         especialidades: [
           { especialidad: 'PSICOLOGIA', aclaracion: null },
           { especialidad: 'OTRA_SALUD', aclaracion: 'Musicoterapeuta' },

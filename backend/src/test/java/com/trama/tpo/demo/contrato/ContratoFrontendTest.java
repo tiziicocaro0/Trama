@@ -34,6 +34,7 @@ import com.trama.tpo.demo.aporte.observacion.EtiquetaObservacion;
 import com.trama.tpo.demo.entity.dto.AporteRequest;
 import com.trama.tpo.demo.entity.dto.CrearProyectoRequest;
 import com.trama.tpo.demo.entity.dto.EspecialidadItemRequest;
+import com.trama.tpo.demo.entity.dto.MatriculaRequest;
 import com.trama.tpo.demo.entity.dto.RegisterRequest;
 import com.trama.tpo.demo.entity.dto.RestablecerContrasenaRequest;
 import com.trama.tpo.demo.entity.membresia.Especialidad;
@@ -172,6 +173,13 @@ class ContratoFrontendTest {
                     numero(registro, "campo\\('" + campo + "'[\\s\\S]*?maxLength:\\s*(\\d+)"),
                     "Largo de '" + campo + "' en el registro");
         }
+        // Matrícula del profesional: en el registro y en Mi perfil
+        assertEquals(maximo(RegisterRequest.class, "matricula"), numero(
+                leer("features/auth/registro/components/RegistroTipoCuenta.jsx"),
+                "name=\"matricula\"[\\s\\S]*?maxLength=\\{(\\d+)\\}"), "Matrícula en el registro");
+        assertEquals(maximo(MatriculaRequest.class, "matricula"), numero(
+                leer("features/cuenta/MiPerfilPage.jsx"),
+                "name=\"matricula\"[\\s\\S]*?maxLength=\\{(\\d+)\\}"), "Matrícula en Mi perfil");
     }
 
     @Test

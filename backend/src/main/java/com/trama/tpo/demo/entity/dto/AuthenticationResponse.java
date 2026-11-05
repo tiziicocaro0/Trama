@@ -36,4 +36,7 @@ public class AuthenticationResponse {
 
     /** 9.4: especialidades de la cuenta, para precargar las de cada niño. */
     private List<MiembroResponse.EspecialidadItemResponse> especialidades;
-}
+
+    /** Matrícula declarada (solo profesionales). */
+    private String matricula;
+}

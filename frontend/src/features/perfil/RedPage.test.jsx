@@ -42,6 +42,14 @@ const red = [
     rol: 'EDUCACION',
     especialidades: [{ especialidad: 'DOCENTE_PRIMARIO', aclaracion: null }],
   },
+  {
+    id: 'membresia-psicologa',
+    nombre: 'Psicóloga ficticia',
+    apellido: 'Ejemplo',
+    rol: 'SALUD',
+    especialidades: [{ especialidad: 'PSICOLOGIA', aclaracion: null }],
+    matricula: 'MN 45.123',
+  },
 ]
 function abrir(
   ruta = `/proyectos/${id}/red`,
@@ -113,6 +121,21 @@ describe('Red de profesionales', () => {
       await screen.findByText('Todavía no hay miembros en esta red.'),
     ).toBeInTheDocument()
     expect(screen.queryByText('Docente ficticia')).not.toBeInTheDocument()
+  })
+  it('muestra la matrícula declarada y aclara que TRAMA no la verifica', async () => {
+    abrir()
+    const psicologa = (
+      await screen.findByRole('heading', { name: 'Psicóloga ficticia Ejemplo' })
+    ).closest('li')
+    expect(within(psicologa).getByText('MN 45.123')).toBeInTheDocument()
+    expect(
+      within(psicologa).getByText('Declarada por el profesional. TRAMA no la verifica.'),
+    ).toBeInTheDocument()
+    // Sin matrícula declarada no se muestra nada
+    const docente = screen
+      .getByRole('heading', { name: 'Docente ficticia Ejemplo' })
+      .closest('li')
+    expect(within(docente).queryByText(/Matrícula/)).not.toBeInTheDocument()
   })
   it('indica cuando la especialidad no está informada', async () => {
     cliente.get.mockImplementation(async (ruta) => ({

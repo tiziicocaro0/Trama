@@ -11,6 +11,7 @@ import PerfilPage from '../features/perfil/PerfilPage.jsx'
 import { seccionesPerfil } from '../features/perfil/perfil.js'
 import AcompanamientosPage from '../features/acompanamientos/AcompanamientosPage.jsx'
 import NuevoAcompanamientoPage from '../features/acompanamientos/NuevoAcompanamientoPage.jsx'
+import MiPerfilPage from '../features/cuenta/MiPerfilPage.jsx'
 import RedPage from '../features/perfil/RedPage.jsx'
 import DatosPersonalesPage from '../features/perfil/DatosPersonalesPage.jsx'
 import ConoceloPage from '../features/perfil/ConoceloPage.jsx'
@@ -160,6 +161,14 @@ export default function AppRoutes() {
         }
       />
       <Route
+        path="/perfil"
+        element={
+          <Acceso privado>
+            <MiPerfilPage />
+          </Acceso>
+        }
+      />
+      <Route
         path="/cuenta/notificaciones"
         element={
           <Acceso privado>
@@ -263,7 +272,6 @@ export default function AppRoutes() {
       <Route element={<Acceso privado><Layout /></Acceso>}>
         <Route path="/recursos" element={<Proximamente titulo="Recursos" />} />
         <Route path="/calendario" element={<CalendarioPage />} />
-        <Route path="/perfil" element={<Proximamente titulo="Mi perfil" />} />
       </Route>
       <Route
         path="*"

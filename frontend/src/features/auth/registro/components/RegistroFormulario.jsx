@@ -180,6 +180,9 @@ export default function RegistroFormulario({ registro, formRef, titleRef }) {
                       'Especialidades',
                       valores.especialidades.map(nombreEspecialidad).join(', '),
                     ],
+                    ...(valores.matricula.trim()
+                      ? [['Matrícula', valores.matricula.trim()]]
+                      : []),
                   ]
                 : []),
             ].map(([label, valor]) => (

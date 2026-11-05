@@ -74,6 +74,8 @@ public class DataSeeder implements CommandLineRunner {
         // terapeuta@ todavía no está en ningún niño: sirve para probar invitaciones.
         declararProfesional(docente, Especialidad.DOCENTE_PRIMARIO);
         declararProfesional(psico, Especialidad.PSICOLOGIA);
+        psico.setMatricula("MN 12345");
+        usuarioRepository.save(psico);
         declararProfesional(crearUsuario("Sofía", "Ramos", "terapeuta@trama.test"),
                 Especialidad.TERAPIA_OCUPACIONAL, Especialidad.ACOMPANANTE_TERAPEUTICO);
 

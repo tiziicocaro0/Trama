@@ -20,6 +20,7 @@ import usePerfil from './hooks/usePerfil.js'
 import NavegacionPerfil from './components/NavegacionPerfil.jsx'
 import EspecialidadModal from './components/EspecialidadModal.jsx'
 import { etiquetaEspecialidad } from './especialidades.js'
+import MatriculaMiembro from './components/MatriculaMiembro.jsx'
 
 const etiquetasRol = {
   TUTOR: 'Tutor/a',
@@ -275,6 +276,7 @@ export default function RedPage() {
                                   <p className="break-words text-texto-suave">
                                     {formatearEspecialidades(especialidades)}
                                   </p>
+                                  <MatriculaMiembro matricula={persona.matricula} />
                                   {esMiPerfil && (
                                     <button
                                       type="button"

@@ -22,6 +22,7 @@ import com.trama.tpo.demo.entity.dto.CrearProyectoRequest;
 import com.trama.tpo.demo.entity.proyecto.TipoEscuela;
 import com.trama.tpo.demo.entity.dto.EspecialidadItemRequest;
 import com.trama.tpo.demo.entity.dto.InvitacionRequest;
+import com.trama.tpo.demo.entity.dto.MatriculaRequest;
 import com.trama.tpo.demo.entity.dto.RegisterRequest;
 import com.trama.tpo.demo.entity.invitacion.EstadoInvitacion;
 import com.trama.tpo.demo.entity.membresia.Especialidad;
@@ -109,10 +110,12 @@ class ContratoBaseDeDatosTest {
 
     @Test
     void largosDeUsuario() throws Exception {
-        for (String campo : List.of("nombre", "apellido", "email")) {
+        for (String campo : List.of("nombre", "apellido", "email", "matricula")) {
             assertEquals(largoColumna("usuario", campo), maximo(RegisterRequest.class, campo),
                     "usuario." + campo);
         }
+        assertEquals(largoColumna("usuario", "matricula"), maximo(MatriculaRequest.class, "matricula"),
+                "Mi perfil: usuario.matricula");
     }
 
     @Test

@@ -15,6 +15,7 @@ export async function registrarUsuario({
   password,
   tipoCuenta,
   especialidades = [],
+  matricula = '',
 }) {
   if (!cliente.defaults.baseURL) {
     throw new ErrorRegistro(
@@ -31,6 +32,9 @@ export async function registrarUsuario({
       password,
       tipoCuenta,
       especialidades,
+      // Solo el profesional declara matrícula; vacía no se manda.
+      matricula:
+        tipoCuenta === 'PROFESIONAL' && matricula.trim() ? matricula.trim() : null,
     })
   } catch (error) {
     const codigo = error.response?.data?.codigo
@@ -169,6 +173,8 @@ export async function obtenerIdentidad() {
     especialidades: Array.isArray(data.especialidades)
       ? data.especialidades.filter((item) => typeof item?.especialidad === 'string')
       : [],
+    matricula:
+      typeof data.matricula === 'string' && data.matricula.trim() ? data.matricula : null,
   }
 }
 
