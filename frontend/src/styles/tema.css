@@ -1,5 +1,9 @@
 @import "tailwindcss";
 
+/* Pantallas bajas (laptops con la barra del navegador, celulares chicos):
+   las pantallas de acceso se compactan para entrar sin scroll. */
+@custom-variant bajo (@media (max-height: 720px));
+
 @theme {
   /* 01. Paleta y tokens de color — Colores principales */
   --color-crema: #F1E4CD;

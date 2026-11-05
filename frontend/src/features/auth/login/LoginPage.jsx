@@ -6,12 +6,17 @@ import Boton from '../../../components/ui/Boton.jsx'
 import Campo from '../../../components/ui/Campo.jsx'
 import CampoContrasena from '../../../components/ui/CampoContrasena.jsx'
 import CampoFormulario from '../../../components/ui/CampoFormulario.jsx'
+import CasillaOvillo from '../../../components/ui/CasillaOvillo.jsx'
 import useAuth from '../../../hooks/useAuth.js'
 import { validarEmail } from '../../../utils/validaciones.js'
 
 export default function LoginPage() {
   const { ingresar, mensajeSesion } = useAuth()
-  const [valores, setValores] = useState({ email: '', password: '' })
+  const [valores, setValores] = useState({
+    email: '',
+    password: '',
+    recordar: false,
+  })
   const [errores, setErrores] = useState({})
   const [mensaje, setMensaje] = useState('')
   const [sinVerificar, setSinVerificar] = useState(false)
@@ -31,6 +36,12 @@ export default function LoginPage() {
     }))
     setMensaje('')
     setSinVerificar(false)
+  }
+
+  // Sin marcar, la sesión dura hasta cerrar la pestaña; marcada, sobrevive al
+  // cierre del navegador hasta que vence el token. En una compu compartida no conviene.
+  function marcarRecordar(event) {
+    setValores((actual) => ({ ...actual, recordar: event.target.checked }))
   }
 
   async function enviar(event) {
@@ -62,7 +73,7 @@ export default function LoginPage() {
   return (
     <main
       tabIndex={-1}
-      className="min-h-svh bg-superficie px-3 py-8 text-texto sm:px-6 sm:py-12"
+      className="min-h-svh bg-superficie px-3 py-8 text-texto sm:px-6 sm:py-12 bajo:py-4 bajo:sm:py-6"
     >
       <div className="relative mx-auto max-w-md">
         <Link
@@ -79,19 +90,19 @@ export default function LoginPage() {
           viewBox="0 0 120 40"
           aria-hidden="true"
           focusable="false"
-          className="mx-auto mt-8 h-10 w-28 fill-none stroke-miel"
+          className="mx-auto mt-8 h-10 w-28 fill-none stroke-miel bajo:hidden"
           strokeWidth="2.5"
           strokeLinecap="round"
         >
           <path d="M3 8C17 37 48 33 47 13C46-5 20 7 45 23C68 38 90 7 70 5C52 4 60 32 117 32" />
         </svg>
-        <p className="mt-6 text-center text-sm font-bold tracking-widest text-secundario">
+        <p className="mt-6 text-center text-sm font-bold tracking-widest text-secundario bajo:mt-4">
           QUÉ BUENO VERTE
         </p>
         <h1 className="mt-2 text-center font-display text-h1 text-primario">
           Hola de nuevo
         </h1>
-        <p className="mt-3 text-center text-lg text-texto-suave">
+        <p className="mt-3 text-center text-lg text-texto-suave bajo:mt-1">
           Ingresá para volver a tu red.
         </p>
         <form
@@ -100,7 +111,7 @@ export default function LoginPage() {
           noValidate
           aria-label="Iniciar sesión"
           aria-busy={enviando}
-          className="mt-8 space-y-4"
+          className="mt-8 space-y-4 bajo:mt-5"
         >
           <CampoFormulario id="login-email" label="Email" error={errores.email}>
             <Campo
@@ -130,14 +141,23 @@ export default function LoginPage() {
               disabled={enviando}
             />
           </CampoFormulario>
-          <p className="-mt-1 text-right">
+          <div className="-mt-1 flex flex-wrap items-center justify-between gap-x-4">
+            <CasillaOvillo
+              name="recordar"
+              checked={valores.recordar}
+              onChange={marcarRecordar}
+              disabled={enviando}
+              className="-ml-2 text-sm"
+            >
+              Mantener sesión iniciada
+            </CasillaOvillo>
             <Link
               to="/recuperar"
-              className="rounded-sm text-sm font-bold text-primario hover:underline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-primario"
+              className="ml-auto rounded-sm text-sm font-bold text-primario hover:underline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-primario"
             >
               ¿Olvidaste tu contraseña?
             </Link>
-          </p>
+          </div>
           {(mensaje || mensajeSesion) && (
             <p
               role="alert"
@@ -177,7 +197,7 @@ export default function LoginPage() {
             )}
           </Boton>
         </form>
-        <p className="mt-6 text-center text-texto-suave">
+        <p className="mt-6 text-center text-texto-suave bajo:mt-4">
           ¿Todavía no tenés cuenta?{' '}
           <Link
             to="/registro"

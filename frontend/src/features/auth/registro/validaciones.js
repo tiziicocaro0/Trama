@@ -58,6 +58,10 @@ export function validarRegistro(valores, etapa = ETAPA_CONFIRMACION) {
     ) {
       errores.password =
         'La contraseña debe cumplir todos los requisitos de seguridad.'
+    } else if (!valores.confirmar) {
+      errores.confirmar = 'Repetí la contraseña.'
+    } else if (valores.confirmar !== valores.password) {
+      errores.confirmar = 'Las contraseñas no coinciden.'
     }
   }
   if (etapa === ETAPA_CODIGO && !/^\d{6}$/.test(valores.codigo ?? ''))

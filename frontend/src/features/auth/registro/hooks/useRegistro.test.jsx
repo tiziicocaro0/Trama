@@ -24,6 +24,7 @@ describe('Estado del registro', () => {
         apellido: 'Ejemplo',
         email: 'alma@trama.test',
         password: 'Prueba123!',
+        confirmar: 'Prueba123!',
         tipoCuenta: 'FAMILIA',
       })) {
         result.current.cambiar({ target: { name, value } })
@@ -36,6 +37,7 @@ describe('Estado del registro', () => {
     }
     // La cuenta se creó: la contraseña ya no queda en memoria y falta el código del mail
     expect(result.current.valores.password).toBe('')
+    expect(result.current.valores.confirmar).toBe('')
     expect(result.current.exito).toBe(false)
     act(() => {
       result.current.cambiar({ target: { name: 'codigo', value: '123456' } })

@@ -112,7 +112,7 @@ export async function reenviarVerificacion(email) {
   }
 }
 
-export async function iniciarSesion({ email, password }) {
+export async function iniciarSesion({ email, password, recordar = false }) {
   if (!cliente.defaults.baseURL)
     throw new Error('Falta configurar la conexión con TRAMA. Revisá VITE_API_URL.')
   let respuesta
@@ -147,7 +147,7 @@ export async function iniciarSesion({ email, password }) {
     throw new Error(
       'No recibimos una sesión válida. Intentá ingresar nuevamente.',
     )
-  guardarToken(token)
+  guardarToken(token, { recordar })
 }
 
 export async function obtenerIdentidad() {

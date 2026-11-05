@@ -22,6 +22,7 @@ export default function useRegistro() {
     apellido: '',
     email: '',
     password: '',
+    confirmar: '',
     tipoCuenta: '',
     area: '',
     especialidades: [],
@@ -128,7 +129,11 @@ export default function useRegistro() {
                 : [],
           })
           // Último paso: el código que llega por mail.
-          setValores((actuales) => ({ ...actuales, password: '' }))
+          setValores((actuales) => ({
+            ...actuales,
+            password: '',
+            confirmar: '',
+          }))
           setEtapa(ETAPA_CODIGO)
           setSegundosReenvio(SEGUNDOS_ENTRE_ENVIOS)
         },

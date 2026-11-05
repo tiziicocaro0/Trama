@@ -6,6 +6,7 @@ const datos = {
   apellido: 'Ejemplo',
   email: 'alma@trama.test',
   password: 'Prueba123!',
+  confirmar: 'Prueba123!',
   tipoCuenta: 'FAMILIA',
   especialidades: [],
 }
@@ -54,8 +55,25 @@ describe('Validaciones del contrato de registro', () => {
 
   it('no inventa un máximo de contraseña ni restringe los caracteres especiales a ASCII', () => {
     expect(
-      validarRegistro({ ...datos, password: `A1${'ñ'.repeat(80)}` }),
+      validarRegistro({
+        ...datos,
+        password: `A1${'ñ'.repeat(80)}`,
+        confirmar: `A1${'ñ'.repeat(80)}`,
+      }),
     ).toEqual({})
+  })
+
+  it('pide repetir la contraseña y que coincida', () => {
+    expect(validarRegistro({ ...datos, confirmar: '' }, 2).confirmar).toBe(
+      'Repetí la contraseña.',
+    )
+    expect(validarRegistro({ ...datos, confirmar: 'Prueba124!' }, 2).confirmar).toBe(
+      'Las contraseñas no coinciden.',
+    )
+    // Si la contraseña ya está mal, alcanza con ese error.
+    expect(
+      validarRegistro({ ...datos, password: 'corta', confirmar: 'otra' }, 2),
+    ).toEqual({ password: 'La contraseña debe cumplir todos los requisitos de seguridad.' })
   })
 
   it('valida solo los campos de la etapa visible antes de la confirmación', () => {

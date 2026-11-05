@@ -3,13 +3,13 @@ import {
   CaretRight,
   Check,
   Envelope,
-  Lock,
   SpinnerGap,
   User,
 } from '@phosphor-icons/react'
 import { Link } from 'react-router-dom'
 import Boton from '../../../../components/ui/Boton.jsx'
 import Campo from '../../../../components/ui/Campo.jsx'
+import CampoContrasena from '../../../../components/ui/CampoContrasena.jsx'
 import CampoFormulario from '../../../../components/ui/CampoFormulario.jsx'
 import {
   ETAPA_CODIGO,
@@ -115,11 +115,9 @@ export default function RegistroFormulario({ registro, formRef, titleRef }) {
               error={errores.password}
               hint="Usá al menos 8 caracteres, una mayúscula (A–Z), un número y un carácter especial."
             >
-              <Campo
+              <CampoContrasena
                 name="password"
-                type="password"
                 placeholder="Contraseña"
-                icon={Lock}
                 value={valores.password}
                 onChange={cambiar}
                 autoComplete="new-password"
@@ -152,6 +150,21 @@ export default function RegistroFormulario({ registro, formRef, titleRef }) {
                 )
               })}
             </ul>
+            <CampoFormulario
+              id="registro-confirmar"
+              label="Repetí la contraseña"
+              error={errores.confirmar}
+            >
+              <CampoContrasena
+                name="confirmar"
+                placeholder="Repetí la contraseña"
+                value={valores.confirmar}
+                onChange={cambiar}
+                autoComplete="new-password"
+                required
+                disabled={enviando}
+              />
+            </CampoFormulario>
           </>
         )}
         {etapa === ETAPA_CONFIRMACION && (

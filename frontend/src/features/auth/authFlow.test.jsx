@@ -92,6 +92,7 @@ describe('Flujo integrado de autenticación con transporte Axios simulado', () =
     await user.click(screen.getByRole('radio', { name: /Soy familia/ }))
     await user.click(screen.getByRole('button', { name: 'Continuar' }))
     await user.type(screen.getByLabelText('Contraseña'), 'Prueba123!')
+    await user.type(screen.getByLabelText('Repetí la contraseña'), 'Prueba123!')
     await user.click(screen.getByRole('button', { name: 'Continuar' }))
     await user.click(screen.getByRole('button', { name: 'Crear cuenta' }))
     // Último paso: el código que llega por mail

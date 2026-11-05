@@ -49,10 +49,32 @@ async function completarDatos(user, email = 'ALMA@trama.test') {
 async function llegarAConfirmacion(user) {
   await completarDatos(user)
   await user.type(screen.getByLabelText('Contraseña'), 'Prueba123!')
+  await user.type(screen.getByLabelText('Repetí la contraseña'), 'Prueba123!')
   await user.click(screen.getByRole('button', { name: 'Continuar' }))
 }
 
 describe('Crear cuenta', () => {
+
+  it('pide repetir la contraseña, avisa si no coincide y deja verla con el ojito', async () => {
+    const user = preparar()
+    await completarDatos(user)
+    await user.type(screen.getByLabelText('Contraseña'), 'Prueba123!')
+    await user.click(screen.getByRole('button', { name: 'Continuar' }))
+    expect(screen.getByText('Repetí la contraseña.')).toBeVisible()
+    await user.type(screen.getByLabelText('Repetí la contraseña'), 'Prueba124!')
+    await user.click(screen.getByRole('button', { name: 'Continuar' }))
+    expect(screen.getByLabelText('Repetí la contraseña')).toHaveAccessibleDescription(
+      'Las contraseñas no coinciden.',
+    )
+    const [ojito] = screen.getAllByRole('button', { name: 'Mostrar contraseña' })
+    await user.click(ojito)
+    expect(screen.getByLabelText('Contraseña')).toHaveAttribute('type', 'text')
+    await user.clear(screen.getByLabelText('Repetí la contraseña'))
+    await user.type(screen.getByLabelText('Repetí la contraseña'), 'Prueba123!')
+    await user.click(screen.getByRole('button', { name: 'Continuar' }))
+    expect(screen.getByRole('heading', { name: 'Confirmá tus datos' })).toBeVisible()
+    expect(registrarUsuario).not.toHaveBeenCalled()
+  })
   it('muestra el formulario y las cinco etapas acordadas', () => {
     preparar()
     expect(
@@ -113,6 +135,7 @@ describe('Crear cuenta', () => {
     ).toBeInTheDocument()
     await user.clear(screen.getByLabelText('Contraseña'))
     await user.type(screen.getByLabelText('Contraseña'), 'Prueba123!')
+    await user.type(screen.getByLabelText('Repetí la contraseña'), 'Prueba123!')
     await user.click(screen.getByRole('button', { name: 'Volver' }))
     expect(screen.getByRole('radio', { name: /Soy familia/ })).toBeChecked()
     await user.click(screen.getByRole('button', { name: 'Volver' }))
@@ -142,6 +165,8 @@ describe('Crear cuenta', () => {
       apellido: 'Ejemplo',
       email: 'alma@trama.test',
       password: 'Prueba123!',
+      // La repetición no viaja al back: registrarUsuario manda solo los campos del DTO.
+      confirmar: 'Prueba123!',
       tipoCuenta: 'FAMILIA',
       area: '',
       codigo: '',
@@ -263,6 +288,7 @@ describe('Crear cuenta', () => {
     await user.click(screen.getByRole('button', { name: 'Continuar' }))
 
     await user.type(screen.getByLabelText('Contraseña'), 'Prueba123!')
+    await user.type(screen.getByLabelText('Repetí la contraseña'), 'Prueba123!')
     await user.click(screen.getByRole('button', { name: 'Continuar' }))
     expect(screen.getByText('Soy profesional')).toBeInTheDocument()
     expect(screen.getByText('Psicología, Musicoterapeuta')).toBeInTheDocument()
@@ -292,6 +318,7 @@ describe('Crear cuenta', () => {
     expect(screen.queryByRole('checkbox', { name: 'Psicología' })).not.toBeInTheDocument()
     await user.click(screen.getByRole('button', { name: 'Continuar' }))
     await user.type(screen.getByLabelText('Contraseña'), 'Prueba123!')
+    await user.type(screen.getByLabelText('Repetí la contraseña'), 'Prueba123!')
     await user.click(screen.getByRole('button', { name: 'Continuar' }))
     await user.click(screen.getByRole('button', { name: 'Crear cuenta' }))
     expect(registrarUsuario).toHaveBeenCalledWith(
