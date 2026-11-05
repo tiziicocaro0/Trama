@@ -1,5 +1,5 @@
-import { Clock, Users } from '@phosphor-icons/react'
-import { useState } from 'react'
+import { ClockCounterClockwise, Clock, Trash, Users } from '@phosphor-icons/react'
+import { useEffect, useState } from 'react'
 import { Aviso } from '../../../components/ui/Aviso.jsx'
 import Boton from '../../../components/ui/Boton.jsx'
 import Campo from '../../../components/ui/Campo.jsx'
@@ -15,6 +15,13 @@ import {
   DIAS_SEMANA,
   obtenerDiaSemanaIso,
 } from '../utils/recurrencia.js'
+import {
+  borrarBorrador,
+  claveBorradorEdicion,
+  claveBorradorNuevo,
+  guardarBorrador,
+  leerBorrador,
+} from '../utils/borradores.js'
 
 function normalizarHora(valor) {
   return typeof valor === 'string' && valor.trim() ? valor.trim().slice(0, 5) : ''
@@ -31,30 +38,82 @@ function archivosIniciales(evento) {
     : []
 }
 
-function FormularioEvento({ proyectoId, evento, miembros = [], alcance = 'serie', fechaPorDefecto, horaInicioPorDefecto, onCerrar, onGuardar }) {
-  const esEdicion = Boolean(evento?.id)
-  const esSoloOcurrencia = esEdicion && alcance === 'ocurrencia'
-  const fechaInicial = esSoloOcurrencia
+// Valores con los que abre el formulario, sin contar un borrador guardado.
+function valoresBase(evento, esSoloOcurrencia, fechaPorDefecto, horaInicioPorDefecto) {
+  const fecha = esSoloOcurrencia
     ? (evento?.fechaOcurrencia ?? evento?.fecha ?? hoyIso())
     : (evento?.fecha ?? fechaPorDefecto ?? hoyIso())
+  return {
+    titulo: evento?.titulo ?? '',
+    fecha,
+    horaInicio: normalizarHora(evento?.horaInicio) || horaInicioPorDefecto || '09:00',
+    horaFin:
+      normalizarHora(evento?.horaFin) ||
+      (horaInicioPorDefecto ? horaFinDesdeInicio(horaInicioPorDefecto) : '10:00'),
+    descripcion: evento?.descripcion ?? '',
+    archivos: archivosIniciales(evento),
+    esReunion: evento?.tipo === 'REUNION',
+    participantes: Array.isArray(evento?.participanteIds) ? evento.participanteIds : [],
+    recurrente: Boolean(evento?.recurrente),
+    diaSemana: evento?.diaSemana ? String(evento.diaSemana) : obtenerDiaSemanaIso(fecha),
+    fechaFinRecurrencia: evento?.fechaFinRecurrencia ?? '',
+  }
+}
 
-  const [titulo, setTitulo] = useState(evento?.titulo ?? '')
-  const [fecha, setFecha] = useState(fechaInicial)
-  const [horaInicio, setHoraInicio] = useState(normalizarHora(evento?.horaInicio) || horaInicioPorDefecto || '09:00')
-  const [horaFin, setHoraFin] = useState(normalizarHora(evento?.horaFin) || (horaInicioPorDefecto ? horaFinDesdeInicio(horaInicioPorDefecto) : '10:00'))
-  const [descripcion, setDescripcion] = useState(evento?.descripcion ?? '')
-  const [archivos, setArchivos] = useState(() => archivosIniciales(evento))
-  const [esReunion, setEsReunion] = useState(evento?.tipo === 'REUNION')
-  const [participantesSeleccionados, setParticipantesSeleccionados] = useState(() =>
-    Array.isArray(evento?.participanteIds) ? evento.participanteIds : [],
+function FormularioEvento({ proyectoId, evento, miembros = [], alcance = 'serie', fechaPorDefecto, horaInicioPorDefecto, claveBorrador, onCerrar, onGuardar, onEliminar }) {
+  const esEdicion = Boolean(evento?.id)
+  const esSoloOcurrencia = esEdicion && alcance === 'ocurrencia'
+  const [base] = useState(() =>
+    valoresBase(evento, esSoloOcurrencia, fechaPorDefecto, horaInicioPorDefecto),
   )
-  const [recurrente, setRecurrente] = useState(Boolean(evento?.recurrente))
-  const [diaSemana, setDiaSemana] = useState(() =>
-    evento?.diaSemana ? String(evento.diaSemana) : obtenerDiaSemanaIso(fechaInicial),
-  )
-  const [fechaFinRecurrencia, setFechaFinRecurrencia] = useState(evento?.fechaFinRecurrencia ?? '')
+  // Si se cerró sin guardar, vuelve lo que se había escrito.
+  const [borradorRecuperado] = useState(() => leerBorrador(proyectoId, claveBorrador))
+  const [inicial] = useState(() => ({ ...base, ...borradorRecuperado }))
+
+  const [titulo, setTitulo] = useState(inicial.titulo)
+  const [fecha, setFecha] = useState(inicial.fecha)
+  const [horaInicio, setHoraInicio] = useState(inicial.horaInicio)
+  const [horaFin, setHoraFin] = useState(inicial.horaFin)
+  const [descripcion, setDescripcion] = useState(inicial.descripcion)
+  const [archivos, setArchivos] = useState(inicial.archivos)
+  const [esReunion, setEsReunion] = useState(inicial.esReunion)
+  const [participantesSeleccionados, setParticipantesSeleccionados] = useState(inicial.participantes)
+  const [recurrente, setRecurrente] = useState(inicial.recurrente)
+  const [diaSemana, setDiaSemana] = useState(inicial.diaSemana)
+  const [fechaFinRecurrencia, setFechaFinRecurrencia] = useState(inicial.fechaFinRecurrencia)
   const [enviando, setEnviando] = useState(false)
   const [error, setError] = useState('')
+
+  // Cada cambio actualiza el borrador; si todo vuelve a como estaba, se borra.
+  const actuales = {
+    titulo,
+    fecha,
+    horaInicio,
+    horaFin,
+    descripcion,
+    archivos,
+    esReunion,
+    participantes: participantesSeleccionados,
+    recurrente,
+    diaSemana,
+    fechaFinRecurrencia,
+  }
+  const textoActual = JSON.stringify(actuales)
+  const textoBase = JSON.stringify(base)
+  useEffect(() => {
+    if (textoActual === textoBase) borrarBorrador(proyectoId, claveBorrador)
+    else guardarBorrador(proyectoId, claveBorrador, JSON.parse(textoActual))
+  }, [textoActual, textoBase, proyectoId, claveBorrador])
+
+  function descartarBorrador() {
+    borrarBorrador(proyectoId, claveBorrador)
+    onCerrar()
+  }
+
+  function eliminarEvento() {
+    borrarBorrador(proyectoId, claveBorrador)
+    onEliminar(evento)
+  }
 
   function manejarCambioFecha(e) {
     const nuevaFecha = e.target.value
@@ -157,6 +216,7 @@ function FormularioEvento({ proyectoId, evento, miembros = [], alcance = 'serie'
         alcance,
         fechaOcurrencia: evento?.fechaOcurrencia ?? evento?.fecha ?? fecha,
       })
+      borrarBorrador(proyectoId, claveBorrador)
       onCerrar()
     } catch (err) {
       setError(
@@ -176,6 +236,18 @@ function FormularioEvento({ proyectoId, evento, miembros = [], alcance = 'serie'
       className="space-y-4"
     >
       {error && <Aviso tipo="error">{error}</Aviso>}
+
+      {borradorRecuperado && (
+        <p
+          role="status"
+          className="flex items-start gap-2 rounded-md border border-acento bg-acento/15 p-3 text-sm text-texto"
+        >
+          <ClockCounterClockwise size={18} aria-hidden="true" className="mt-0.5 shrink-0 text-primario" />
+          {esEdicion
+            ? 'Recuperamos los cambios que dejaste sin guardar.'
+            : 'Recuperamos el borrador que dejaste para este día.'}
+        </p>
+      )}
 
       <CampoFormulario
         id="evento-titulo"
@@ -359,22 +431,46 @@ function FormularioEvento({ proyectoId, evento, miembros = [], alcance = 'serie'
         </>
       )}
 
-      <div className="flex flex-wrap justify-end gap-3 pt-2">
-        <Boton
-          type="button"
-          variant="secondary"
-          onClick={onCerrar}
-          disabled={enviando}
-        >
-          Cancelar
-        </Boton>
-        <Boton type="submit" disabled={enviando}>
-          {enviando
-            ? 'Guardando…'
-            : esEdicion
-              ? 'Guardar cambios'
-              : 'Crear evento'}
-        </Boton>
+      <div className="space-y-3 pt-2">
+        {esEdicion && onEliminar && (
+          <button
+            type="button"
+            onClick={eliminarEvento}
+            disabled={enviando}
+            className="inline-flex min-h-11 items-center gap-2 rounded-sm px-2 font-semibold text-error hover:bg-error/10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primario"
+          >
+            <Trash size={18} aria-hidden="true" />
+            Eliminar evento
+          </button>
+        )}
+        {!esEdicion && borradorRecuperado && (
+          <button
+            type="button"
+            onClick={descartarBorrador}
+            disabled={enviando}
+            className="inline-flex min-h-11 items-center gap-2 rounded-sm px-2 font-semibold text-error hover:bg-error/10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primario"
+          >
+            <Trash size={18} aria-hidden="true" />
+            Descartar borrador
+          </button>
+        )}
+        <div className="flex flex-wrap justify-end gap-3">
+          <Boton
+            type="button"
+            variant="secondary"
+            onClick={() => onCerrar()}
+            disabled={enviando}
+          >
+            Cancelar
+          </Boton>
+          <Boton type="submit" disabled={enviando}>
+            {enviando
+              ? 'Guardando…'
+              : esEdicion
+                ? 'Guardar cambios'
+                : 'Crear evento'}
+          </Boton>
+        </div>
       </div>
     </form>
   )
@@ -390,15 +486,20 @@ export default function ModalEvento({
   horaInicioPorDefecto,
   onCerrar,
   onGuardar,
+  onEliminar,
 }) {
   const esEdicion = Boolean(evento?.id)
+  const claveBorrador = esEdicion
+    ? claveBorradorEdicion(evento, alcance)
+    : claveBorradorNuevo(fechaPorDefecto ?? hoyIso())
   const claveFormulario = `${abierto ? 'abierto' : 'cerrado'}-${evento?.id ?? 'nuevo'}-${alcance}-${evento?.fechaOcurrencia ?? fechaPorDefecto ?? ''}-${horaInicioPorDefecto ?? ''}`
 
   return (
     <Modal
       abierto={abierto}
       titulo={esEdicion ? 'Editar evento' : 'Nuevo evento'}
-      onCerrar={onCerrar}
+      onCerrar={() => onCerrar()}
+      cerrarAlTocarFuera
     >
       <FormularioEvento
         key={claveFormulario}
@@ -408,8 +509,10 @@ export default function ModalEvento({
         alcance={alcance}
         fechaPorDefecto={fechaPorDefecto}
         horaInicioPorDefecto={horaInicioPorDefecto}
+        claveBorrador={claveBorrador}
         onCerrar={onCerrar}
         onGuardar={onGuardar}
+        onEliminar={onEliminar}
       />
     </Modal>
   )
