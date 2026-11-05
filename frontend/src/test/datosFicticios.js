@@ -1,5 +1,11 @@
+// Datos ficticios para tests: nunca se usan en la app (los reales vienen de la API).
 
-// Fixtures de ejemplo para tests (los proyectos reales vienen de GET /api/proyectos).
+export const USUARIO_MOCK = {
+  id: '00000000-0000-0000-0000-000000000001',
+  nombre: 'Zoe',
+  email: 'zoe@ejemplo.com',
+}
+
 export const PROYECTOS_MOCK = [
   {
     id: '11111111-1111-1111-1111-111111111111',

@@ -3,8 +3,13 @@ import Logo from '../../components/ui/Logo.jsx'
 import HiloInicio from './HiloInicio.jsx'
 import { navegacion } from './navegacion.js'
 
-// 9.2: la página de la institución se abre desde Mi plan
-const RUTAS_PLAN = ['/cuenta/plan', '/institucion']
+// Secciones con página propia: se marcan por la ruta, no por ?seccion=.
+// 9.2: la institución se abre desde Mi plan; los avisos por mail, desde Mi perfil.
+const RUTAS_PROPIAS = {
+  plan: ['/cuenta/plan', '/institucion'],
+  perfil: ['/perfil', '/cuenta/notificaciones'],
+}
+const TODAS_LAS_RUTAS_PROPIAS = Object.values(RUTAS_PROPIAS).flat()
 
 export default function InicioSidebar({ cerrarSesion }) {
   const [params] = useSearchParams()
@@ -31,12 +36,12 @@ export default function InicioSidebar({ cerrarSesion }) {
         <ul className="grid grid-cols-2 gap-2 sm:grid-cols-5 lg:grid-cols-1 lg:gap-1 xl:gap-1.5">
           {navegacion.map((item) => {
             const { id, titulo, icon: Icon, to } = item
-            const enPlan = RUTAS_PLAN.includes(pathname)
-            const seleccionada = id === 'plan'
-              ? enPlan
+            const enRutaPropia = TODAS_LAS_RUTAS_PROPIAS.includes(pathname)
+            const seleccionada = RUTAS_PROPIAS[id]
+              ? RUTAS_PROPIAS[id].includes(pathname)
               : id
-                ? !enPlan && actual === id
-                : !enPlan &&
+                ? !enRutaPropia && actual === id
+                : !enRutaPropia &&
                   !navegacion.some((item) => item.id && item.id === actual)
             return (
               <li key={titulo}>

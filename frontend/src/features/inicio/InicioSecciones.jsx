@@ -1,117 +1,138 @@
 import {
   ArrowRight,
   BookOpen,
-  GraduationCap,
-  Heart,
-  House,
   Lightbulb,
+  Plus,
+  User,
   Users,
 } from '@phosphor-icons/react'
 import { Link } from 'react-router-dom'
-import {
-  acompanamientosEjemplo,
-  eventosEjemplo,
-  recursosFuturos,
-} from './inicio.mock.js'
+import Boton from '../../components/ui/Boton.jsx'
+import { fechaLocal } from '../calendario/utils/periodo.js'
+import { DIAS_DE_EVENTOS } from './useResumenInicio.js'
 
-const tonos = {
-  familia: {
+// Colores que se alternan entre las tarjetas para distinguirlas a simple vista.
+const tonos = [
+  {
     fondo: 'bg-primario/5',
     icono: 'bg-primario/15 text-primario',
     fecha: 'bg-primario/15 text-primario',
-    icon: House,
   },
-  escuela: {
+  {
     fondo: 'bg-agua/10',
     icono: 'bg-agua/20 text-exito',
     fecha: 'bg-agua/20 text-secundario',
-    icon: GraduationCap,
   },
-  profesionales: {
+  {
     fondo: 'bg-agua/5',
     icono: 'bg-agua/20 text-secundario',
     fecha: 'bg-agua/20 text-secundario',
-    icon: Heart,
   },
-}
-const iconosRecursos = {
-  guias: { icon: BookOpen, tono: 'bg-decoracion text-primario' },
-  estrategias: { icon: Lightbulb, tono: 'bg-agua/20 text-exito' },
-  comunidad: { icon: Users, tono: 'bg-agua/15 text-secundario' },
-}
+]
 
-function EnlaceInicio({ seccion, children, etiqueta, circular = false }) {
+// Módulos que todavía no existen: se muestran como "Próximamente", sin enlaces.
+const recursosFuturos = [
+  {
+    titulo: 'Guías y materiales',
+    descripcion: 'Recursos para el día a día',
+    icon: BookOpen,
+    tono: 'bg-decoracion text-primario',
+  },
+  {
+    titulo: 'Estrategias',
+    descripcion: 'Herramientas prácticas',
+    icon: Lightbulb,
+    tono: 'bg-agua/20 text-exito',
+  },
+  {
+    titulo: 'Comunidad',
+    descripcion: 'Experiencias y consejos',
+    icon: Users,
+    tono: 'bg-agua/15 text-secundario',
+  },
+]
+
+const CLASE_ENLACE =
+  'inline-flex min-h-11 shrink-0 items-center justify-center gap-2 rounded-full bg-decoracion/80 px-3 py-2 text-sm font-semibold text-primario transition-colors hover:bg-decoracion focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-primario motion-reduce:transition-none'
+
+function EstadoCarga({ resumen, cargandoTexto }) {
+  if (resumen.cargando) return <p role="status">{cargandoTexto}</p>
   return (
-    <Link
-      to={
-        seccion === 'acompanamientos'
-          ? '/acompanamientos'
-          : `/inicio?seccion=${seccion}`
-      }
-      aria-label={etiqueta}
-      className={`inline-flex min-h-11 shrink-0 items-center justify-center gap-2 rounded-full text-primario transition-colors hover:bg-decoracion focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-primario motion-reduce:transition-none ${circular ? 'size-11 bg-superficie/65' : 'bg-decoracion/80 px-3 py-2 text-sm font-semibold'}`}
-    >
-      {children}
-      <ArrowRight size={20} aria-hidden="true" />
-    </Link>
+    <div className="space-y-3 rounded-lg bg-superficie p-4">
+      <p role="alert">No pudimos cargar esta información.</p>
+      <Boton variant="secondary" onClick={resumen.reintentar}>
+        Reintentar
+      </Boton>
+    </div>
   )
 }
 
-export function Acompanamientos() {
+export function Acompanamientos({ resumen }) {
+  const { proyectos } = resumen
   return (
-    <section
-      aria-labelledby="acompanamientos-titulo"
-      aria-describedby="aviso-ejemplos"
-    >
+    <section aria-labelledby="acompanamientos-titulo">
       <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-        <h2
-          id="acompanamientos-titulo"
-          className="text-subtitulo font-semibold text-primario"
-        >
-          Acompañamientos activos
+        <h2 id="acompanamientos-titulo" className="text-subtitulo font-semibold text-primario">
+          Tus acompañamientos
         </h2>
-        <EnlaceInicio
-          seccion="acompanamientos"
-          etiqueta="Ver todos los acompañamientos"
+        <Link
+          to="/acompanamientos"
+          aria-label="Ver todos los acompañamientos"
+          className={CLASE_ENLACE}
         >
           Ver todos
-        </EnlaceInicio>
+          <ArrowRight size={20} aria-hidden="true" />
+        </Link>
       </div>
-      <ul className="grid gap-3 xl:grid-cols-3">
-        {acompanamientosEjemplo.map(({ id, titulo, tono }) => {
-          const { fondo, icono, icon: Icon } = tonos[tono]
-          return (
-            <li
-              key={id}
-              className={`flex min-w-0 items-center gap-2 rounded-lg p-3 sm:gap-3 sm:p-4 ${fondo}`}
-            >
-              <span
-                className={`flex size-11 shrink-0 items-center justify-center rounded-full sm:size-12 ${icono}`}
-              >
-                <Icon size={32} weight="light" aria-hidden="true" />
-              </span>
-              <div className="min-w-0 flex-1">
-                <h3 className="whitespace-nowrap font-display text-subtitulo leading-tight text-primario">
-                  {titulo}
-                </h3>
-                <p className="mt-1 text-xs leading-snug text-texto-suave">
-                  Acompañamiento activo
-                </p>
-              </div>
-              <EnlaceInicio
-                seccion={id}
-                etiqueta={`Ver ${titulo} · Próximamente`}
-                circular
-              />
-            </li>
-          )
-        })}
-      </ul>
+      {resumen.cargando || resumen.error ? (
+        <EstadoCarga resumen={resumen} cargandoTexto="Cargando tus acompañamientos…" />
+      ) : proyectos.length === 0 ? (
+        <div className="flex flex-col items-start gap-3 rounded-lg bg-primario/5 p-5">
+          <p className="font-semibold">Todavía no acompañás a ningún niño.</p>
+          <p className="text-texto-suave">
+            Creá su perfil para empezar, o pedile a su familia que te invite.
+          </p>
+          <Boton to="/acompanamientos/nuevo">
+            <Plus size={20} aria-hidden="true" />
+            Crear acompañamiento
+          </Boton>
+        </div>
+      ) : (
+        <ul className="grid gap-3 xl:grid-cols-3">
+          {proyectos.slice(0, 3).map((proyecto, indice) => {
+            const { fondo, icono } = tonos[indice % tonos.length]
+            const nombre = proyecto.apodo || proyecto.nombre
+            return (
+              <li key={proyecto.id}>
+                <Link
+                  to={`/proyectos/${proyecto.id}`}
+                  className={`flex min-w-0 items-center gap-3 rounded-lg p-3 transition-shadow hover:shadow-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primario motion-reduce:transition-none sm:p-4 ${fondo}`}
+                >
+                  <span
+                    className={`flex size-11 shrink-0 items-center justify-center rounded-full sm:size-12 ${icono}`}
+                  >
+                    <User size={32} weight="light" aria-hidden="true" />
+                  </span>
+                  <span className="min-w-0 flex-1">
+                    <span className="block truncate font-display text-subtitulo leading-tight text-primario">
+                      {nombre}
+                    </span>
+                    <span className="mt-1 block text-xs leading-snug text-texto-suave">
+                      {[proyecto.rol, proyecto.edad].filter(Boolean).join(' · ')}
+                    </span>
+                  </span>
+                  <ArrowRight size={20} aria-hidden="true" className="shrink-0 text-primario" />
+                </Link>
+              </li>
+            )
+          })}
+        </ul>
+      )}
     </section>
   )
 }
 
-function Panel({ id, titulo, seccion, accion, children }) {
+function Panel({ id, titulo, accion, children }) {
   return (
     <section
       aria-labelledby={id}
@@ -121,44 +142,71 @@ function Panel({ id, titulo, seccion, accion, children }) {
         <h2 id={id} className="font-display text-subtitulo text-primario">
           {titulo}
         </h2>
-        <EnlaceInicio seccion={seccion} etiqueta={`${accion} · Próximamente`}>
-          {accion}
-        </EnlaceInicio>
+        {accion}
       </div>
       {children}
     </section>
   )
 }
 
-export function Eventos() {
+function diaDeLaSemana(fecha) {
+  return new Intl.DateTimeFormat('es-AR', { weekday: 'short' })
+    .format(fechaLocal(fecha))
+    .replace('.', '')
+    .toLocaleUpperCase('es')
+}
+
+function horario({ horaInicio, horaFin }) {
+  const corta = (valor) => (typeof valor === 'string' ? valor.slice(0, 5) : '')
+  return [corta(horaInicio), corta(horaFin)].filter(Boolean).join(' – ')
+}
+
+export function Eventos({ resumen }) {
+  const { eventos } = resumen
   return (
     <Panel
       id="eventos-titulo"
       titulo="Próximos eventos"
-      seccion="calendario"
-      accion="Ver calendario"
+      accion={
+        <Link to="/inicio?seccion=calendario" className={CLASE_ENLACE}>
+          Ver calendario
+          <ArrowRight size={20} aria-hidden="true" />
+        </Link>
+      }
     >
-      <ul
-        aria-describedby="aviso-ejemplos"
-        className="divide-y divide-borde/40"
-      >
-        {eventosEjemplo.map(({ id, dia, fecha, titulo, horario, tono }) => (
-          <li key={id} className="flex items-center gap-3 py-3">
-            <div
-              className={`flex size-14 shrink-0 flex-col items-center justify-center rounded-sm ${tonos[tono].fecha}`}
-            >
-              <span className="text-xs font-bold">{dia}</span>
-              <span className="text-2xl font-semibold leading-none">
-                {fecha}
-              </span>
-            </div>
-            <div className="min-w-0">
-              <h3 className="font-bold">{titulo}</h3>
-              <p className="mt-1 text-sm text-texto-suave">{horario}</p>
-            </div>
-          </li>
-        ))}
-      </ul>
+      {resumen.cargando || resumen.error ? (
+        <EstadoCarga resumen={resumen} cargandoTexto="Cargando tus próximos eventos…" />
+      ) : eventos.length === 0 ? (
+        <p className="py-3 text-texto-suave">
+          No hay eventos en los próximos {DIAS_DE_EVENTOS} días.
+        </p>
+      ) : (
+        <ul className="divide-y divide-borde/40">
+          {eventos.map((evento, indice) => (
+            <li key={`${evento.proyectoId}-${evento.id}-${evento.fecha}`}>
+              <Link
+                to={`/proyectos/${evento.proyectoId}/calendario?fecha=${evento.fecha}`}
+                className="flex items-center gap-3 rounded-md py-3 hover:bg-decoracion/40 focus-visible:outline-2 focus-visible:outline-primario"
+              >
+                <span
+                  className={`flex size-14 shrink-0 flex-col items-center justify-center rounded-sm ${tonos[indice % tonos.length].fecha}`}
+                >
+                  <span className="text-xs font-bold">{diaDeLaSemana(evento.fecha)}</span>
+                  <span className="text-2xl font-semibold leading-none">
+                    {Number(evento.fecha.slice(8, 10))}
+                  </span>
+                </span>
+                <span className="min-w-0">
+                  <span className="block break-words font-bold">{evento.titulo}</span>
+                  <span className="mt-1 block text-sm text-texto-suave">
+                    {[horario(evento), evento.proyectoNombre].filter(Boolean).join(' · ')}
+                  </span>
+                </span>
+              </Link>
+            </li>
+          ))}
+        </ul>
+      )}
     </Panel>
   )
 }
@@ -167,35 +215,28 @@ export function Recursos() {
   return (
     <Panel
       id="recursos-titulo"
-      titulo="Recursos destacados"
-      seccion="recursos"
-      accion="Ver todos"
+      titulo="Recursos"
+      accion={
+        <span className="rounded-full bg-decoracion px-3 py-1 text-sm font-semibold text-primario">
+          Próximamente
+        </span>
+      }
     >
       <ul className="divide-y divide-borde/40">
-        {recursosFuturos.map(({ id, titulo, descripcion }) => {
-          const { icon: Icon, tono } = iconosRecursos[id]
-          return (
-            <li key={id} className="flex items-center gap-3 py-3">
-              <span
-                className={`flex size-12 shrink-0 items-center justify-center rounded-full ${tono}`}
-              >
-                <Icon size={32} weight="light" aria-hidden="true" />
-              </span>
-              <div className="min-w-0 flex-1">
-                <h3 className="font-bold">{titulo}</h3>
-                <p className="mt-1 text-sm text-texto-suave">{descripcion}</p>
-              </div>
-              <EnlaceInicio
-                seccion={id}
-                etiqueta={`${titulo} · Próximamente`}
-                circular
-              />
-            </li>
-          )
-        })}
+        {recursosFuturos.map(({ titulo, descripcion, icon: Icon, tono }) => (
+          <li key={titulo} className="flex items-center gap-3 py-3">
+            <span className={`flex size-12 shrink-0 items-center justify-center rounded-full ${tono}`}>
+              <Icon size={32} weight="light" aria-hidden="true" />
+            </span>
+            <span className="min-w-0">
+              <span className="block font-bold">{titulo}</span>
+              <span className="mt-1 block text-sm text-texto-suave">{descripcion}</span>
+            </span>
+          </li>
+        ))}
       </ul>
       <p className="mt-2 text-xs text-texto-suave">
-        Estos recursos estarán disponibles próximamente.
+        Estamos preparando guías, estrategias y un espacio para compartir experiencias.
       </p>
     </Panel>
   )

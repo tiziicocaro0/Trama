@@ -4,8 +4,11 @@ import useAuth from '../../hooks/useAuth.js'
 import InicioSidebar from './InicioSidebar.jsx'
 import { Acompanamientos, Eventos, Recursos } from './InicioSecciones.jsx'
 import HiloInicio from './HiloInicio.jsx'
-import { seccionesFuturas } from './inicio.mock.js'
+import useResumenInicio from './useResumenInicio.js'
 import CalendarioUsuarioPage from '../calendario/CalendarioUsuarioPage.jsx'
+
+// Secciones que todavía no existen: se abren desde el menú y avisan "Próximamente".
+const seccionesFuturas = { recursos: 'Recursos' }
 
 export default function InicioPage() {
   const { usuario, cerrarSesion } = useAuth()
@@ -15,6 +18,8 @@ export default function InicioPage() {
     ? seccionesFuturas[seleccion]
     : null
   const tituloPendiente = useRef(null)
+  // Con el calendario abierto, el resumen no hace falta.
+  const resumen = useResumenInicio(seleccion !== 'calendario')
 
   useEffect(() => {
     if (seccion) tituloPendiente.current?.focus()
@@ -60,18 +65,8 @@ export default function InicioPage() {
                 {seccion} · Próximamente
               </h2>
               <p className="mt-2 text-texto-suave">
-                {seleccion === 'calendario'
-                  ? 'El calendario se consulta dentro de cada acompañamiento.'
-                  : 'Este espacio todavía no está disponible.'}
+                Este espacio todavía no está disponible.
               </p>
-              {seleccion === 'calendario' && (
-                <Link
-                  to="/acompanamientos"
-                  className="mt-3 inline-flex min-h-11 items-center rounded-sm border border-contorno-accion px-4 font-bold text-primario hover:bg-decoracion focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-primario"
-                >
-                  Elegir un acompañamiento
-                </Link>
-              )}
               <Link
                 to="/inicio"
                 className="mt-3 inline-flex min-h-11 items-center font-bold text-primario underline underline-offset-4 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-primario"
@@ -81,13 +76,9 @@ export default function InicioPage() {
             </section>
           )}
           {seleccion !== 'calendario' && <>
-            <p id="aviso-ejemplos" className="mb-3 text-xs text-texto-suave">
-              Vista de ejemplo: los acompañamientos y eventos son ficticios y no
-              corresponden a tu cuenta.
-            </p>
-            <Acompanamientos />
+            <Acompanamientos resumen={resumen} />
             <div className="mt-4 grid min-w-0 gap-4 lg:grid-cols-2">
-              <Eventos />
+              <Eventos resumen={resumen} />
               <Recursos />
             </div>
           </>}

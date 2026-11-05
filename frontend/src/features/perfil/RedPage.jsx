@@ -49,7 +49,6 @@ export default function RedPage() {
   const { id } = useParams()
   const auth = useAuth()
   const usuario = auth?.usuario ?? auth
-  const rolUsuario = auth?.rol ?? usuario?.rol
 
   const {
     proyecto,
@@ -60,8 +59,6 @@ export default function RedPage() {
   } = usePerfil(id, listarMiembros)
 
   const esAdmin =
-    rolUsuario === 'Admin' ||
-    rolUsuario === 'ADMIN' ||
     Boolean(auth?.esAdmin ?? usuario?.esAdmin) ||
     Boolean(
       usuario?.id &&
