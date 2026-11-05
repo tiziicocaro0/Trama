@@ -20,6 +20,7 @@ import FormularioAbc from './components/FormularioAbc.jsx'
 import FormularioObservacion from './components/FormularioObservacion.jsx'
 import TarjetaAbc from './components/TarjetaAbc.jsx'
 import TarjetaObservacion from './components/TarjetaObservacion.jsx'
+import Cargando from '../../components/ui/Cargando.jsx'
 
 export default function BitacoraPage() {
   const { id } = useParams()
@@ -122,7 +123,7 @@ export default function BitacoraPage() {
     >
       <div className="mx-auto max-w-6xl">
         {cargando && !proyecto ? (
-          <p role="status">Cargando la bitácora…</p>
+          <Cargando mensaje="Cargando la bitácora…" />
         ) : error ? (
           <div className="space-y-4 rounded-lg bg-superficie p-6">
             <h1 className="font-display text-h1 text-secundario">

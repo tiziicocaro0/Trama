@@ -2,6 +2,7 @@ import { Heart, Sparkle } from '@phosphor-icons/react'
 import { Link, useParams } from 'react-router-dom'
 import { useState } from 'react'
 import Boton from '../../components/ui/Boton.jsx'
+import CasillaOvillo from '../../components/ui/CasillaOvillo.jsx'
 import { Aviso } from '../../components/ui/Aviso.jsx'
 import CabeceraPerfil from './components/CabeceraPerfil.jsx'
 import BloquePerfil from './components/BloquePerfil.jsx'
@@ -17,6 +18,7 @@ import { ESPECIALIDADES_EDUCACION, ESPECIALIDADES_SALUD } from './especialidades
 import FiltrosRutinas from './components/FiltrosRutinas.jsx'
 import AvisoEliminacion from './eliminacion/AvisoEliminacion.jsx'
 import useProyectoActual from '../../hooks/useProyectoActual.js'
+import Cargando from '../../components/ui/Cargando.jsx'
 
 
 export default function PerfilPage() {
@@ -115,9 +117,7 @@ export default function PerfilPage() {
             </Boton>
           </div>
         ) : cargando ? (
-          <p role="status" className="py-12 text-center">
-            Cargando el perfil…
-          </p>
+          <Cargando mensaje="Cargando el perfil…" />
         ) : error ? (
           <div className="space-y-5 rounded-lg bg-superficie p-6">
             <h1 className="font-display text-h1 text-secundario">
@@ -207,12 +207,12 @@ export default function PerfilPage() {
                   <label><span className="sr-only">Visibilidad</span><select aria-label="Visibilidad" value={visibilidad} onChange={(event) => setVisibilidad(event.target.value)} className="min-h-11 rounded-sm border border-borde bg-superficie px-3"><option value="">Toda visibilidad</option><option value="TODOS">Toda la red</option><option value="SOLO_SALUD">Solo salud</option><option value="SOLO_EDUCACION">Solo educación</option><option value="SOLO_TUTORES">Solo tutores</option></select></label>
                   <label><span className="sr-only">Ordenar por fecha</span><select aria-label="Ordenar por fecha" value={orden} onChange={(event) => setOrden(event.target.value)} className="min-h-11 rounded-sm border border-borde bg-superficie px-3"><option value="recientes">Más recientes</option><option value="antiguos">Más antiguos</option></select></label>
                   <button type="button" onClick={() => setFiltrosAbiertos(true)} className="min-h-11 rounded-sm border border-borde bg-superficie px-3">Más filtros</button>
-                  <label className="hidden items-center gap-2 md:flex"><input type="checkbox" checked={soloMios} onChange={(event) => setSoloMios(event.target.checked)} />Solo mis aportes</label>
+                  <div className="hidden md:flex"><CasillaOvillo checked={soloMios} onChange={(event) => setSoloMios(event.target.checked)}>Solo mis aportes</CasillaOvillo></div>
                 </div>
                 <div className="flex flex-wrap gap-2" aria-label="Categorías de comunicación">
                   {[["", "Todos"], ...CATEGORIAS_COMUNICACION].map(([valor, etiqueta]) => <button key={valor} type="button" onClick={() => setCategoria(valor)} aria-pressed={categoria === valor} className={`min-h-11 rounded-full border px-4 py-2 ${categoria === valor ? 'border-primario bg-primario text-superficie' : 'border-borde bg-superficie text-secundario'}`}>{etiqueta}</button>)}
                 </div>
-                {filtrosAbiertos && <div className="fixed inset-0 z-40 flex items-end bg-texto/40 md:items-center md:justify-center"><div role="dialog" aria-modal="true" aria-label="Filtros" className="w-full rounded-lg bg-superficie p-6 md:max-w-md"><div className="flex items-center justify-between"><h3 className="font-display text-h2">Filtros</h3><button type="button" onClick={() => setFiltrosAbiertos(false)} aria-label="Cerrar filtros" className="min-h-11 px-3">Cerrar</button></div><label className="mt-5 flex min-h-11 items-center gap-3"><input type="checkbox" checked={soloMios} onChange={(event) => setSoloMios(event.target.checked)} />Solo mis aportes</label></div></div>}
+                {filtrosAbiertos && <div className="fixed inset-0 z-40 flex items-end bg-texto/40 md:items-center md:justify-center"><div role="dialog" aria-modal="true" aria-label="Filtros" className="w-full rounded-lg bg-superficie p-6 md:max-w-md"><div className="flex items-center justify-between"><h3 className="font-display text-h2">Filtros</h3><button type="button" onClick={() => setFiltrosAbiertos(false)} aria-label="Cerrar filtros" className="min-h-11 px-3">Cerrar</button></div><CasillaOvillo className="mt-5" checked={soloMios} onChange={(event) => setSoloMios(event.target.checked)}>Solo mis aportes</CasillaOvillo></div></div>}
               </section>
             )}
             {esSensorial && (
@@ -228,12 +228,12 @@ export default function PerfilPage() {
                   <select aria-label="Ordenar por fecha" value={orden} onChange={(event) => setOrden(event.target.value)} className="min-h-11 rounded-sm border border-borde bg-superficie px-3"><option value="recientes">Más recientes</option><option value="antiguos">Más antiguos</option></select>
                   <select aria-label="Lista" value={listaSensorial} onChange={(event) => setListaSensorial(event.target.value)} className="min-h-11 rounded-sm border border-borde bg-superficie px-3"><option value="">Ambas listas</option><option value="AYUDA">Le ayuda</option><option value="CUESTA">Le cuesta</option></select>
                   <button type="button" onClick={() => setFiltrosAbiertos(true)} className="min-h-11 shrink-0 rounded-sm border border-borde bg-superficie px-3 md:hidden">Filtros{soloMios ? ' (1)' : ''}</button>
-                  <label className="hidden min-h-11 items-center gap-2 whitespace-nowrap md:flex"><input type="checkbox" checked={soloMios} onChange={(event) => setSoloMios(event.target.checked)} />Solo mis aportes</label>
+                  <div className="hidden md:flex"><CasillaOvillo className="whitespace-nowrap" checked={soloMios} onChange={(event) => setSoloMios(event.target.checked)}>Solo mis aportes</CasillaOvillo></div>
                 </div>
                 <div className="flex gap-2 overflow-x-auto pb-1 md:flex-wrap md:overflow-visible" aria-label="Categorías sensoriales">
                   {[['', 'Todos'], ...CATEGORIAS_SENSORIALES].map(([valor, etiqueta]) => { const Icono = ICONOS_SENSORIALES[valor]; return <button key={valor} type="button" onClick={() => setCategoria(valor)} aria-pressed={categoria === valor} className={`inline-flex min-h-11 shrink-0 items-center gap-2 rounded-full border px-4 py-2 ${categoria === valor ? 'border-primario bg-primario text-superficie' : 'border-borde bg-superficie text-secundario'}`}>{Icono && <Icono size={20} aria-hidden="true" />}{etiqueta}</button> })}
                 </div>
-                {filtrosAbiertos && <div className="fixed inset-0 z-40 flex items-end bg-texto/40 md:items-center md:justify-center"><div role="dialog" aria-modal="true" aria-label="Filtros sensoriales" className="w-full rounded-lg bg-superficie p-6 md:max-w-md"><div className="flex items-center justify-between"><h3 className="font-display text-h2">Filtros</h3><button type="button" onClick={() => setFiltrosAbiertos(false)} aria-label="Cerrar filtros" className="min-h-11 px-3">Cerrar</button></div><label className="mt-5 flex min-h-11 items-center gap-3"><input type="checkbox" checked={soloMios} onChange={(event) => setSoloMios(event.target.checked)} />Solo mis aportes</label></div></div>}
+                {filtrosAbiertos && <div className="fixed inset-0 z-40 flex items-end bg-texto/40 md:items-center md:justify-center"><div role="dialog" aria-modal="true" aria-label="Filtros sensoriales" className="w-full rounded-lg bg-superficie p-6 md:max-w-md"><div className="flex items-center justify-between"><h3 className="font-display text-h2">Filtros</h3><button type="button" onClick={() => setFiltrosAbiertos(false)} aria-label="Cerrar filtros" className="min-h-11 px-3">Cerrar</button></div><CasillaOvillo className="mt-5" checked={soloMios} onChange={(event) => setSoloMios(event.target.checked)}>Solo mis aportes</CasillaOvillo></div></div>}
               </section>
             )}
             {esEstrategia && (
@@ -246,12 +246,12 @@ export default function PerfilPage() {
                   <select aria-label="Ordenar por fecha" value={orden} onChange={(event) => setOrden(event.target.value)} className="min-h-11 shrink-0 rounded-sm border border-borde bg-superficie px-3"><option value="recientes">Más recientes</option><option value="antiguos">Más antiguos</option></select>
                   <select aria-label="Resultado" value={resultadoEstrategia} onChange={(event) => setResultadoEstrategia(event.target.value)} className="min-h-11 shrink-0 rounded-sm border border-borde bg-superficie px-3"><option value="">Todos los resultados</option>{RESULTADOS_ESTRATEGIA.map(([valor, etiqueta]) => <option key={valor} value={valor}>{etiqueta}</option>)}</select>
                   <button type="button" onClick={() => setFiltrosAbiertos(true)} className="min-h-11 shrink-0 rounded-sm border border-borde bg-superficie px-3 md:hidden">Filtros{soloMios ? ' (1)' : ''}</button>
-                  <label className="hidden min-h-11 items-center gap-2 whitespace-nowrap md:flex"><input type="checkbox" checked={soloMios} onChange={(event) => setSoloMios(event.target.checked)} />Solo mis aportes</label>
+                  <div className="hidden md:flex"><CasillaOvillo className="whitespace-nowrap" checked={soloMios} onChange={(event) => setSoloMios(event.target.checked)}>Solo mis aportes</CasillaOvillo></div>
                 </div>
                 <div className="flex gap-2 overflow-x-auto pb-1 md:flex-wrap md:overflow-visible" aria-label="Categorías de estrategias">
                   {[['', 'Todos'], ...CATEGORIAS_ESTRATEGIA].map(([valor, etiqueta]) => { const Icono = ICONOS_ESTRATEGIA[valor]; return <button key={valor} type="button" onClick={() => setCategoria(valor)} aria-pressed={categoria === valor} className={`inline-flex min-h-11 shrink-0 items-center gap-2 rounded-full border px-4 py-2 ${categoria === valor ? 'border-primario bg-primario text-superficie' : valor ? `border-borde ${TONOS_ESTRATEGIA[valor]}` : 'border-borde bg-superficie text-secundario'}`}>{Icono && <Icono size={20} aria-hidden="true" />}{etiqueta}</button> })}
                 </div>
-                {filtrosAbiertos && <div className="fixed inset-0 z-40 flex items-end bg-texto/40 md:items-center md:justify-center"><div role="dialog" aria-modal="true" aria-label="Filtros de estrategias" className="w-full rounded-lg bg-superficie p-6 md:max-w-md"><div className="flex items-center justify-between"><h3 className="font-display text-h2">Filtros</h3><button type="button" onClick={() => setFiltrosAbiertos(false)} aria-label="Cerrar filtros" className="min-h-11 px-3">Cerrar</button></div><label className="mt-5 flex min-h-11 items-center gap-3"><input type="checkbox" checked={soloMios} onChange={(event) => setSoloMios(event.target.checked)} />Solo mis aportes</label></div></div>}
+                {filtrosAbiertos && <div className="fixed inset-0 z-40 flex items-end bg-texto/40 md:items-center md:justify-center"><div role="dialog" aria-modal="true" aria-label="Filtros de estrategias" className="w-full rounded-lg bg-superficie p-6 md:max-w-md"><div className="flex items-center justify-between"><h3 className="font-display text-h2">Filtros</h3><button type="button" onClick={() => setFiltrosAbiertos(false)} aria-label="Cerrar filtros" className="min-h-11 px-3">Cerrar</button></div><CasillaOvillo className="mt-5" checked={soloMios} onChange={(event) => setSoloMios(event.target.checked)}>Solo mis aportes</CasillaOvillo></div></div>}
               </section>
             )}
             <div

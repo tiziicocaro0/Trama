@@ -28,6 +28,7 @@ import PanelCalendario from './components/PanelCalendario.jsx'
 import VistaCalendario from './components/VistaCalendario.jsx'
 import { hoyIso } from '../../utils/fechas.js'
 import { esFechaIsoValida, eventosDelDia, moverPeriodo, obtenerPeriodo } from './utils/periodo.js'
+import Cargando from '../../components/ui/Cargando.jsx'
 
 export default function CalendarioPage() {
   const { id: idRuta } = useParams()
@@ -273,7 +274,7 @@ export default function CalendarioPage() {
             <Boton to="/acompanamientos">Ir a acompañamientos</Boton>
           </div>
         ) : cargando && !proyecto ? (
-          <p role="status">Cargando el calendario…</p>
+          <Cargando mensaje="Cargando el calendario…" />
         ) : error ? (
           <div className="space-y-4 rounded-lg bg-superficie p-6">
             <h1 className="font-display text-h1 text-secundario">

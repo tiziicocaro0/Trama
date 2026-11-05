@@ -101,6 +101,16 @@
   --text-registro-portada: 5rem;
   --text-registro-etapa: 3.25rem;
   --container-registro-form: 36.5rem;
+
+  /* 05. Ovillo de carga (Cargando.jsx): rueda despacio y la hebra se enrolla y se suelta */
+  --animate-rodar: spin 4s linear infinite;
+  --animate-enrollar: enrollar 2.4s ease-in-out infinite;
+
+  @keyframes enrollar {
+    0% { stroke-dashoffset: 1; }
+    40%, 75% { stroke-dashoffset: 0; }
+    100% { stroke-dashoffset: -1; }
+  }
 }
 
 @layer base {

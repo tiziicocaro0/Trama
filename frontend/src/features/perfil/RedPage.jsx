@@ -20,6 +20,7 @@ import usePerfil from './hooks/usePerfil.js'
 import NavegacionPerfil from './components/NavegacionPerfil.jsx'
 import EspecialidadModal from './components/EspecialidadModal.jsx'
 import { etiquetaEspecialidad } from './especialidades.js'
+import Cargando from '../../components/ui/Cargando.jsx'
 
 const etiquetasRol = {
   TUTOR: 'Tutor/a',
@@ -184,7 +185,7 @@ export default function RedPage() {
     >
       <div className="mx-auto max-w-6xl">
         {cargando ? (
-          <p role="status">Cargando la red de apoyo…</p>
+          <Cargando mensaje="Cargando la red de apoyo…" />
         ) : error ? (
           <div className="space-y-4">
             <h1 className="font-display text-h1 text-secundario">

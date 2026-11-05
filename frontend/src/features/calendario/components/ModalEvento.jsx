@@ -256,24 +256,21 @@ function FormularioEvento({ proyectoId, evento, miembros = [], alcance = 'serie'
                     const nombreCompleto = [m.nombre, m.apellido].filter(Boolean).join(' ').trim() || 'Miembro'
                     const marcado = participantesSeleccionados.includes(idUsuario)
                     return (
-                      <label
+                      <CasillaOvillo
                         key={idUsuario}
-                        className={`flex cursor-pointer items-center gap-2 rounded-md border p-2.5 text-sm transition ${
+                        tamano="chico"
+                        value={idUsuario}
+                        checked={marcado}
+                        onChange={() => alternarParticipante(idUsuario)}
+                        disabled={enviando}
+                        className={`rounded-md border p-2.5 text-sm transition ${
                           marcado
-                            ? 'border-primario bg-superficie font-semibold text-primario'
-                            : 'border-borde bg-superficie text-texto hover:bg-decoracion'
+                            ? 'border-primario bg-superficie'
+                            : 'border-borde bg-superficie hover:bg-decoracion'
                         }`}
                       >
-                        <input
-                          type="checkbox"
-                          value={idUsuario}
-                          checked={marcado}
-                          onChange={() => alternarParticipante(idUsuario)}
-                          disabled={enviando}
-                          className="h-4 w-4 rounded border-borde text-primario focus:ring-primario"
-                        />
-                        <span>{nombreCompleto}</span>
-                      </label>
+                        <span className={marcado ? 'font-semibold text-primario' : ''}>{nombreCompleto}</span>
+                      </CasillaOvillo>
                     )
                   })}
                 </div>

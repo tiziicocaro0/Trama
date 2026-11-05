@@ -15,6 +15,7 @@ import { actualizarProyecto } from '../../api/proyectos.js'
 import { calcularEdad } from './perfil.js'
 import ZonaEliminarPerfil from './eliminacion/ZonaEliminarPerfil.jsx'
 import useProyectoActual from '../../hooks/useProyectoActual.js'
+import Cargando from '../../components/ui/Cargando.jsx'
 
 const definicionesCampos = [
   { nombre: 'nombre', etiqueta: 'Nombre', maxLength: 80 },
@@ -139,7 +140,7 @@ export default function DatosPersonalesPage() {
     >
       <div className="mx-auto max-w-6xl">
         {cargando ? (
-          <p role="status">Cargando los datos personales…</p>
+          <Cargando mensaje="Cargando los datos personales…" />
         ) : error ? (
           <div className="space-y-4">
             <h1 className="font-display text-h1 text-secundario">
