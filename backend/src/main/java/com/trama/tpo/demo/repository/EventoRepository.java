@@ -5,6 +5,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.time.Instant;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
@@ -53,5 +54,17 @@ public interface EventoRepository
             @Param("proyectoId") UUID proyectoId,
             @Param("desde") LocalDate desde,
             @Param("hasta") LocalDate hasta
+    );
+
+    // 7.1: Contar eventos creados en los ultimos 7 dias para el panel profesional
+    @Query("""
+            SELECT COUNT(e)
+            FROM Evento e
+            WHERE e.proyecto.id = :proyectoId
+              AND e.creadoEn >= :desde
+            """)
+    long contarEventosNuevos(
+            @Param("proyectoId") UUID proyectoId,
+            @Param("desde") Instant desde
     );
 }

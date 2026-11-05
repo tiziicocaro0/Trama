@@ -1,9 +1,10 @@
-import { BookOpen, CalendarBlank, CreditCard, User, Users } from '@phosphor-icons/react'
+import { BookOpen, CalendarBlank, CreditCard, SquaresFour, User, Users } from '@phosphor-icons/react'
 
 // Secciones de la navegación principal: las usan el menú lateral de Inicio
 // y la barra de íconos de las pantallas de cada niño.
 export const navegacion = [
   { id: '', titulo: 'Acompañamientos', icon: Users, to: '/acompanamientos' },
+  { id: 'panel', titulo: 'Mi panel', icon: SquaresFour, to: '/panel' },
   { id: 'recursos', titulo: 'Recursos', icon: BookOpen, to: '/inicio?seccion=recursos' },
   { id: 'calendario', titulo: 'Calendario', icon: CalendarBlank, to: '/inicio?seccion=calendario' },
   { id: 'perfil', titulo: 'Mi perfil', icon: User, to: '/perfil' },

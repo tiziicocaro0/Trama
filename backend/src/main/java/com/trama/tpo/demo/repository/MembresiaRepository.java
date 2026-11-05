@@ -49,4 +49,14 @@ public interface MembresiaRepository extends JpaRepository<Membresia, UUID> {
             UUID usuarioId,
             Collection<Rol> roles
     );
+
+    /** 7.1: Todos los proyectos donde participa el usuario con join fetch para el panel profesional. */
+    @Query("""
+            SELECT m
+            FROM Membresia m
+            JOIN FETCH m.proyecto p
+            WHERE m.usuario.id = :usuarioId
+            ORDER BY p.nombre ASC
+            """)
+    List<Membresia> findByUsuarioIdConProyecto(@Param("usuarioId") UUID usuarioId);
 }

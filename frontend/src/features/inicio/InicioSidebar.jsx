@@ -10,6 +10,7 @@ import { navegacion } from './navegacion.js'
 const RUTAS_PROPIAS = {
   plan: ['/cuenta/plan', '/institucion'],
   perfil: ['/perfil', '/cuenta/notificaciones'],
+  panel: ['/panel'],
 }
 const TODAS_LAS_RUTAS_PROPIAS = Object.values(RUTAS_PROPIAS).flat()
 
