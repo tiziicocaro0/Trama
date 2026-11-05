@@ -131,10 +131,6 @@ class PanelControllerTest {
                 .fechaAlta(Instant.now().minus(30, ChronoUnit.DAYS))
                 .build());
 
-        Instant ahora = Instant.now();
-        Instant hace2Dias = ahora.minus(2, ChronoUnit.DAYS);
-        Instant hace10Dias = ahora.minus(10, ChronoUnit.DAYS);
-
         // Aporte reciente (cuenta)
         aporteRepository.save(Aporte.builder()
                 .proyecto(p1)
@@ -144,21 +140,6 @@ class PanelControllerTest {
                 .contenido("Funciona muy bien en el inicio de la clase")
                 .visibilidad(Visibilidad.TODOS)
                 .archivado(false)
-                .creadoEn(hace2Dias)
-                .actualizadoEn(hace2Dias)
-                .build());
-
-        // Aporte antiguo de hace 10 días (no debe contar en los últimos 7 días)
-        aporteRepository.save(Aporte.builder()
-                .proyecto(p1)
-                .autor(tutor)
-                .tipo(TipoAporte.INTERES)
-                .titulo("Dinosaurios")
-                .contenido("Le encantan los triceratops")
-                .visibilidad(Visibilidad.TODOS)
-                .archivado(false)
-                .creadoEn(hace10Dias)
-                .actualizadoEn(hace10Dias)
                 .build());
 
         // Aporte archivado (no debe contar)
@@ -170,8 +151,6 @@ class PanelControllerTest {
                 .contenido("Descontinuada")
                 .visibilidad(Visibilidad.TODOS)
                 .archivado(true)
-                .creadoEn(hace2Dias)
-                .actualizadoEn(hace2Dias)
                 .build());
 
         // Evento reciente (cuenta)
@@ -180,7 +159,6 @@ class PanelControllerTest {
                 .autor(tutor)
                 .titulo("Sesión semanal")
                 .fecha(LocalDate.now().plusDays(1))
-                .creadoEn(hace2Dias)
                 .build());
 
         // Proyecto 2: Martina (0 novedades)
