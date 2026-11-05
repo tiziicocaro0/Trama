@@ -117,6 +117,7 @@ describe('Contrato de login e identidad', () => {
       especialidades: [{ especialidad: 'OTRA_SALUD', aclaracion: 'Musicoterapeuta' }],
       matricula: 'MN 45.123',
       tieneFoto: true,
+      tieneComprobanteMatricula: true,
     }
     const get = vi.spyOn(cliente, 'get').mockResolvedValue({ data: identidad })
     expect(await obtenerIdentidad()).toEqual(identidad)

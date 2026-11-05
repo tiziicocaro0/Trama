@@ -89,7 +89,7 @@ export default function RegistroTipoCuenta({ registro }) {
           id="registro-matricula"
           label="Matrícula (opcional)"
           error={errores.matricula}
-          hint="La ve la red de cada niño. TRAMA no verifica que sea válida."
+          hint="La ve la red de cada niño. TRAMA no verifica que sea válida. El comprobante lo podés sumar después, desde Mi perfil."
         >
           <Campo
             name="matricula"

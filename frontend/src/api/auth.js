@@ -176,6 +176,7 @@ export async function obtenerIdentidad() {
     matricula:
       typeof data.matricula === 'string' && data.matricula.trim() ? data.matricula : null,
     tieneFoto: data.tieneFoto === true,
+    tieneComprobanteMatricula: data.tieneComprobanteMatricula === true,
   }
 }
 

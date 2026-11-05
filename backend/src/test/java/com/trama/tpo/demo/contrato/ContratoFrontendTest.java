@@ -178,7 +178,7 @@ class ContratoFrontendTest {
                 leer("features/auth/registro/components/RegistroTipoCuenta.jsx"),
                 "name=\"matricula\"[\\s\\S]*?maxLength=\\{(\\d+)\\}"), "Matrícula en el registro");
         assertEquals(maximo(MatriculaRequest.class, "matricula"), numero(
-                leer("features/cuenta/MiPerfilPage.jsx"),
+                leer("features/cuenta/ModalMatricula.jsx"),
                 "name=\"matricula\"[\\s\\S]*?maxLength=\\{(\\d+)\\}"), "Matrícula en Mi perfil");
     }
 

@@ -17,7 +17,9 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
+import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -38,7 +40,11 @@ import com.trama.tpo.demo.service.EmailService;
 @AutoConfigureMockMvc
 @ActiveProfiles("test")
 @Transactional
+@TestPropertySource(properties = "trama.archivos.directorio=target/uploads-matricula-test")
 class MatriculaTest {
+    // Firmas reales: el back no confía en la extensión
+    private static final byte[] PDF = "%PDF-1.4 comprobante de prueba".getBytes();
+    private static final byte[] PNG = {(byte) 0x89, 'P', 'N', 'G', 0x0D, 0x0A, 0x1A, 0x0A, 5, 5};
     @Autowired MockMvc mvc;
     @Autowired ObjectMapper json;
     @Autowired JwtService jwt;
@@ -153,5 +159,81 @@ class MatriculaTest {
         mvc.perform(get("/api/proyectos/" + proyecto.getId() + "/miembros").header("Authorization", token(tutora)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[?(@.rol == 'SALUD')].matricula").value("MN 45.123"));
+    }
+
+    // ---- Comprobante opcional de la matrícula ----
+
+    private MockMultipartFile comprobante(byte[] contenido, String nombre) {
+        return new MockMultipartFile("archivo", nombre, "application/pdf", contenido);
+    }
+
+    private void subirComprobante(Usuario usuario, byte[] contenido, String nombre, int estado) throws Exception {
+        mvc.perform(multipart("/api/usuarios/yo/matricula/comprobante")
+                .file(comprobante(contenido, nombre)).header("Authorization", token(usuario)))
+                .andExpect(status().is(estado));
+    }
+
+    private Proyecto proyectoCon(Usuario tutora, Usuario profesional) {
+        Proyecto proyecto = proyectos.save(Proyecto.builder().nombre("Luz").apellido("Ejemplo")
+                .fechaNacimiento(LocalDate.of(2018, 5, 12)).escuela("Escuela ficticia").grado("2.º grado")
+                .consentimientoFecha(Instant.now()).build());
+        membresias.save(Membresia.builder().proyecto(proyecto).usuario(tutora).rol(Rol.TUTOR).esAdmin(true).build());
+        membresias.save(Membresia.builder().proyecto(proyecto).usuario(profesional).rol(Rol.SALUD).esAdmin(false).build());
+        return proyecto;
+    }
+
+    @Test
+    void elComprobanteLoVeLaRedYNoUnAjeno() throws Exception {
+        Usuario tutora = usuario(TipoCuenta.FAMILIA, null);
+        Usuario psicologa = usuario(TipoCuenta.PROFESIONAL, "MN 45.123");
+        Usuario ajeno = usuario(TipoCuenta.FAMILIA, null);
+        Proyecto proyecto = proyectoCon(tutora, psicologa);
+        subirComprobante(psicologa, PDF, "matricula.pdf", 200);
+
+        mvc.perform(get("/api/auth/yo").header("Authorization", token(psicologa)))
+                .andExpect(jsonPath("$.tieneComprobanteMatricula").value(true));
+        mvc.perform(get("/api/proyectos/" + proyecto.getId() + "/miembros").header("Authorization", token(tutora)))
+                .andExpect(jsonPath("$[?(@.rol == 'SALUD')].tieneComprobanteMatricula").value(true));
+        mvc.perform(get("/api/usuarios/" + psicologa.getId() + "/matricula/comprobante")
+                .header("Authorization", token(tutora)))
+                .andExpect(status().isOk())
+                .andExpect(header().string("Content-Type", "application/pdf"))
+                .andExpect(content().bytes(PDF));
+        mvc.perform(get("/api/usuarios/" + psicologa.getId() + "/matricula/comprobante")
+                .header("Authorization", token(ajeno)))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void sinNumeroNoSeSubeComprobanteYSoloAceptaPdfJpgOPng() throws Exception {
+        Usuario sinNumero = usuario(TipoCuenta.PROFESIONAL, null);
+        mvc.perform(multipart("/api/usuarios/yo/matricula/comprobante")
+                .file(comprobante(PDF, "matricula.pdf")).header("Authorization", token(sinNumero)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.codigo").value("MATRICULA_REQUERIDA"));
+
+        Usuario conNumero = usuario(TipoCuenta.PROFESIONAL, "MN 1");
+        mvc.perform(multipart("/api/usuarios/yo/matricula/comprobante")
+                .file(comprobante("MZ no es un pdf".getBytes(), "matricula.pdf")).header("Authorization", token(conNumero)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.codigo").value("FORMATO_NO_PERMITIDO"));
+        subirComprobante(conNumero, PNG, "credencial.png", 200);
+        assertThat(usuarios.findById(conNumero.getId()).orElseThrow().getMatriculaComprobanteTipo())
+                .isEqualTo("image/png");
+    }
+
+    @Test
+    void quitarElComprobanteOElNumeroLoBorra() throws Exception {
+        Usuario profesional = usuario(TipoCuenta.PROFESIONAL, "MN 1");
+        subirComprobante(profesional, PDF, "matricula.pdf", 200);
+        mvc.perform(delete("/api/usuarios/yo/matricula/comprobante").header("Authorization", token(profesional)))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.tieneComprobanteMatricula").value(false));
+
+        subirComprobante(profesional, PDF, "matricula.pdf", 200);
+        // Sin número no queda comprobante suelto
+        cambiarMatricula(profesional, "{\"matricula\":null}", 200);
+        Usuario guardado = usuarios.findById(profesional.getId()).orElseThrow();
+        assertThat(guardado.getMatricula()).isNull();
+        assertThat(guardado.getMatriculaComprobanteRuta()).isNull();
     }
 }

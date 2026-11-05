@@ -42,6 +42,34 @@ public class CuentaController {
         return cuentaService.actualizarMatricula(request);
     }
 
+    // POST: comprobante opcional de la matrícula (PDF, JPG o PNG). Requiere el número.
+    @PostMapping(value = "/yo/matricula/comprobante", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public AuthenticationResponse subirComprobante(@RequestParam("archivo") MultipartFile archivo) {
+        return cuentaService.subirComprobante(archivo);
+    }
+
+    @DeleteMapping("/yo/matricula/comprobante")
+    public AuthenticationResponse quitarComprobante() {
+        return cuentaService.quitarComprobante();
+    }
+
+    // GET: el comprobante de un profesional, para la persona y para su red.
+    @GetMapping("/{usuarioId}/matricula/comprobante")
+    public ResponseEntity<byte[]> comprobante(@PathVariable UUID usuarioId) {
+        var comprobante = cuentaService.descargarComprobante(usuarioId);
+        String extension = switch (comprobante.tipoMime()) {
+            case "application/pdf" -> "pdf";
+            case "image/png" -> "png";
+            default -> "jpg";
+        };
+        return ResponseEntity.ok()
+                .contentType(MediaType.parseMediaType(comprobante.tipoMime()))
+                .header("Content-Disposition", "inline; filename=\"comprobante-matricula." + extension + "\"")
+                .header("X-Content-Type-Options", "nosniff")
+                .cacheControl(CacheControl.noStore())
+                .body(comprobante.contenido());
+    }
+
     // POST: sube la foto de la cuenta, ya recortada, y reemplaza la anterior.
     @PostMapping(value = "/yo/foto", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<Void> subirFoto(@RequestParam("archivo") MultipartFile archivo) {

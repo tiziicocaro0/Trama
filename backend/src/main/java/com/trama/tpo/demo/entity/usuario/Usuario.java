@@ -62,6 +62,13 @@ public class Usuario {
     @Column(name = "matricula", length = 40)
     private String matricula;
 
+    /** Comprobante opcional de la matrícula, cifrado en disco (null si no subió). */
+    @Column(name = "matricula_comprobante_ruta", columnDefinition = "CHAR(36)")
+    private String matriculaComprobanteRuta;
+
+    @Column(name = "matricula_comprobante_tipo", length = 20)
+    private String matriculaComprobanteTipo;
+
     /** Foto de la cuenta: nombre del archivo cifrado en disco (null si no tiene). */
     @Column(name = "foto_ruta", columnDefinition = "CHAR(36)")
     private String fotoRuta;

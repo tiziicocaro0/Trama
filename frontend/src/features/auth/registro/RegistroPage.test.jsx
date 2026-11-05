@@ -288,7 +288,7 @@ describe('Crear cuenta', () => {
     await user.type(screen.getByLabelText('Contanos qué hacés'), 'Musicoterapeuta')
     // La matrícula es opcional y se aclara que TRAMA no la verifica.
     expect(
-      screen.getByText('La ve la red de cada niño. TRAMA no verifica que sea válida.'),
+      screen.getByText(/La ve la red de cada niño. TRAMA no verifica que sea válida/),
     ).toBeVisible()
     await user.type(screen.getByLabelText('Matrícula (opcional)'), 'MN 45.123')
     await user.click(screen.getByRole('button', { name: 'Continuar' }))

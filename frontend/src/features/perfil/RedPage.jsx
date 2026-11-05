@@ -276,7 +276,11 @@ export default function RedPage() {
                                   <p className="break-words text-texto-suave">
                                     {formatearEspecialidades(especialidades)}
                                   </p>
-                                  <MatriculaMiembro matricula={persona.matricula} />
+                                  <MatriculaMiembro
+                                    usuarioId={persona.usuarioId}
+                                    matricula={persona.matricula}
+                                    tieneComprobante={persona.tieneComprobanteMatricula}
+                                  />
                                   {esMiPerfil && (
                                     <button
                                       type="button"

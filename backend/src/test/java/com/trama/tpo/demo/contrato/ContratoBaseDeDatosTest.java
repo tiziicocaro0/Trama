@@ -100,6 +100,12 @@ class ContratoBaseDeDatosTest {
     }
 
     @Test
+    void tiposDeComprobanteDeMatricula() {
+        // El comprobante acepta lo mismo que los adjuntos: PDF, JPG o PNG
+        assertEquals(ArchivoService.MIMES_PERMITIDOS, valoresDelCheck("ck_usuario_comprobante_tipo"));
+    }
+
+    @Test
     void tiposDeFotoDeLaCuenta() {
         // La foto de la cuenta solo puede ser una imagen de las que acepta FotoService
         assertEquals(Set.of("image/jpeg", "image/png"), valoresDelCheck("ck_usuario_foto_tipo"));

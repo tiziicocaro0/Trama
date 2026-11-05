@@ -27,6 +27,8 @@ public class MiembroResponse {
     /** 1.9: lista de especialidades declaradas (solo EDUCACION / SALUD). */
     private List<EspecialidadItemResponse> especialidades;
     private String matricula;
+    /** Si el profesional subió un comprobante de su matrícula. */
+    private Boolean tieneComprobanteMatricula;
     /** Si la persona tiene foto en su cuenta: se pide en /api/usuarios/{usuarioId}/foto. */
     private Boolean tieneFoto;
     private Instant fechaAlta;
@@ -47,6 +49,7 @@ public class MiembroResponse {
                 .matricula(membresia.getMatricula() != null
                         ? membresia.getMatricula()
                         : membresia.getUsuario().getMatricula())
+                .tieneComprobanteMatricula(membresia.getUsuario().getMatriculaComprobanteRuta() != null)
                 .tieneFoto(membresia.getUsuario().getFotoRuta() != null)
                 .fechaAlta(membresia.getFechaAlta())
                 .build();

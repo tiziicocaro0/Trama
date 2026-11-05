@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react'
+import { render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router-dom'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
@@ -68,39 +68,110 @@ describe('Mi perfil', () => {
     expect(screen.getByText('Psicología')).toBeInTheDocument()
   })
 
-  it('el profesional cambia su matrícula y se aclara que TRAMA no la verifica', async () => {
+  it('sin matrícula ofrece Sumar matrícula, con número obligatorio y comprobante opcional', async () => {
+    const user = userEvent.setup()
     cliente.put.mockResolvedValue({ data: { ...profesional, matricula: 'MP 778' } })
-    const confirmarSesion = abrir(profesional)
-    expect(screen.getByText(/TRAMA no verifica que sea válida/)).toBeInTheDocument()
-    const campo = screen.getByRole('textbox', { name: 'Matrícula' })
-    expect(campo).toHaveValue('MN 45.123')
-    expect(campo).toHaveAttribute('maxLength', '40')
-    await userEvent.clear(campo)
-    await userEvent.type(campo, ' MP 778 ')
-    await userEvent.click(screen.getByRole('button', { name: 'Guardar' }))
-    expect(cliente.put).toHaveBeenCalledExactlyOnceWith('/usuarios/yo/matricula', {
-      matricula: 'MP 778',
+    cliente.post.mockResolvedValue({
+      data: { ...profesional, matricula: 'MP 778', tieneComprobanteMatricula: true },
     })
+    abrir({ ...profesional, matricula: null })
+    await user.click(screen.getByRole('button', { name: 'Sumar matrícula' }))
+    const ventana = screen.getByRole('dialog', { name: 'Sumar matrícula' })
+    expect(within(ventana).getByText(/tapalos antes de subirlo/)).toBeInTheDocument()
+
+    // El número es obligatorio
+    await user.click(within(ventana).getByRole('button', { name: 'Guardar matrícula' }))
+    expect(within(ventana).getByText('Ingresá el número de matrícula.')).toBeInTheDocument()
+    expect(cliente.put).not.toHaveBeenCalled()
+
+    const numero = within(ventana).getByRole('textbox', { name: 'Número de matrícula' })
+    expect(numero).toHaveAttribute('maxLength', '40')
+    await user.type(numero, ' MP 778 ')
+    const pdf = new File(['%PDF-1.4'], 'matricula.pdf', { type: 'application/pdf' })
+    await user.upload(within(ventana).getByLabelText(/Comprobante/), pdf)
+    await user.click(within(ventana).getByRole('button', { name: 'Guardar matrícula' }))
+
+    // Primero el número, después el comprobante
+    expect(cliente.put).toHaveBeenCalledExactlyOnceWith('/usuarios/yo/matricula', { matricula: 'MP 778' })
+    expect(cliente.post).toHaveBeenCalledWith(
+      '/usuarios/yo/matricula/comprobante',
+      expect.any(FormData),
+      expect.objectContaining({ headers: { 'Content-Type': 'multipart/form-data' } }),
+    )
+    expect(cliente.post.mock.calls[0][1].get('archivo')).toHaveProperty('name', 'matricula.pdf')
     expect(await screen.findByText('Guardamos tu matrícula.')).toBeInTheDocument()
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+    expect(screen.getByText('MP 778')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Ver comprobante' })).toBeInTheDocument()
+  })
+
+  it('se puede guardar solo el número, sin comprobante', async () => {
+    const user = userEvent.setup()
+    cliente.put.mockResolvedValue({ data: { ...profesional, matricula: 'MP 778' } })
+    abrir({ ...profesional, matricula: null })
+    await user.click(screen.getByRole('button', { name: 'Sumar matrícula' }))
+    await user.type(screen.getByRole('textbox', { name: 'Número de matrícula' }), 'MP 778')
+    await user.click(screen.getByRole('button', { name: 'Guardar matrícula' }))
+    expect(await screen.findByText('Guardamos tu matrícula.')).toBeInTheDocument()
+    expect(cliente.post).not.toHaveBeenCalled()
+    expect(screen.queryByRole('button', { name: 'Ver comprobante' })).not.toBeInTheDocument()
+  })
+
+  it('rechaza un comprobante que no es PDF, JPG ni PNG', async () => {
+    const user = userEvent.setup({ applyAccept: false })
+    abrir({ ...profesional, matricula: null })
+    await user.click(screen.getByRole('button', { name: 'Sumar matrícula' }))
+    await user.upload(
+      screen.getByLabelText(/Comprobante/),
+      new File(['x'], 'matricula.docx', { type: 'application/msword' }),
+    )
+    expect(screen.getByText('El comprobante tiene que ser PDF, JPG o PNG.')).toBeInTheDocument()
+  })
+
+  it('con matrícula la muestra con el (i) y permite cambiarla o quitarla', async () => {
+    const user = userEvent.setup()
+    cliente.put.mockResolvedValue({ data: { ...profesional, matricula: null } })
+    const confirmarSesion = abrir({ ...profesional, tieneComprobanteMatricula: true })
+    expect(screen.getByText('MN 45.123')).toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: 'Sobre la matrícula' }))
+    expect(screen.getByRole('tooltip')).toHaveTextContent('TRAMA no verifica')
+
+    await user.click(screen.getByRole('button', { name: 'Cambiar matrícula' }))
+    expect(screen.getByRole('textbox', { name: 'Número de matrícula' })).toHaveValue('MN 45.123')
+    expect(screen.getByText(/Si subís otro, reemplaza al anterior/)).toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: 'Cancelar' }))
+
+    await user.click(screen.getByRole('button', { name: 'Quitar matrícula' }))
+    expect(cliente.put).toHaveBeenCalledWith('/usuarios/yo/matricula', { matricula: null })
+    expect(await screen.findByText('Quitamos tu matrícula.')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Sumar matrícula' })).toBeInTheDocument()
     expect(confirmarSesion).toHaveBeenCalled()
   })
 
-  it('vaciar el campo quita la matrícula', async () => {
-    cliente.put.mockResolvedValue({ data: { ...profesional, matricula: null } })
-    abrir(profesional)
-    await userEvent.clear(screen.getByRole('textbox', { name: 'Matrícula' }))
-    await userEvent.click(screen.getByRole('button', { name: 'Guardar' }))
-    expect(cliente.put).toHaveBeenCalledWith('/usuarios/yo/matricula', { matricula: null })
-    expect(await screen.findByText('Quitamos tu matrícula.')).toBeInTheDocument()
+  it('quita solo el comprobante', async () => {
+    const user = userEvent.setup()
+    cliente.delete.mockResolvedValue({
+      data: { ...profesional, tieneComprobanteMatricula: false },
+    })
+    abrir({ ...profesional, tieneComprobanteMatricula: true })
+    await user.click(screen.getByRole('button', { name: 'Quitar comprobante' }))
+    expect(cliente.delete).toHaveBeenCalledWith('/usuarios/yo/matricula/comprobante')
+    expect(await screen.findByText('Quitamos el comprobante.')).toBeInTheDocument()
+    expect(screen.getByText('MN 45.123')).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Ver comprobante' })).not.toBeInTheDocument()
   })
 
-  it('si falla, lo avisa', async () => {
+  it('si falla al guardar, lo avisa sin cerrar la ventana', async () => {
+    const user = userEvent.setup()
     cliente.put.mockRejectedValue({ response: { status: 500 } })
-    abrir(profesional)
-    await userEvent.click(screen.getByRole('button', { name: 'Guardar' }))
+    abrir({ ...profesional, matricula: null })
+    await user.click(screen.getByRole('button', { name: 'Sumar matrícula' }))
+    await user.type(screen.getByRole('textbox', { name: 'Número de matrícula' }), 'MP 1')
+    await user.click(screen.getByRole('button', { name: 'Guardar matrícula' }))
     expect(
       await screen.findByText('No pudimos guardar la matrícula. Intentá nuevamente.'),
     ).toBeInTheDocument()
+    expect(screen.getByRole('dialog')).toBeInTheDocument()
   })
 
   it('sube su foto recortada y la muestra', async () => {

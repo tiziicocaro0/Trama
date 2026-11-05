@@ -40,6 +40,9 @@ public class AuthenticationResponse {
     /** Matrícula declarada (solo profesionales). */
     private String matricula;
 
+    /** Si subió un comprobante de la matrícula: se ve en /api/usuarios/{id}/matricula/comprobante. */
+    private Boolean tieneComprobanteMatricula;
+
     /** Si la cuenta tiene foto: se pide en /api/usuarios/{id}/foto. */
     private Boolean tieneFoto;
 }
