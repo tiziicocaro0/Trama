@@ -15,6 +15,7 @@ import {
   nombreTipoEscuela,
 } from './datosEscolares.js'
 import ZonaEliminarPerfil from './eliminacion/ZonaEliminarPerfil.jsx'
+import DescargarDatos from './exportacion/DescargarDatos.jsx'
 import useProyectoActual from '../../hooks/useProyectoActual.js'
 import { avisar, avisarError } from '../../components/avisos/avisosFlotantes.js'
 import Cargando from '../../components/ui/Cargando.jsx'
@@ -50,7 +51,7 @@ export default function DatosPersonalesPage() {
   const { proyecto, cargando, error, reintentar } = usePerfil(id)
   // Editar los datos y eliminar el perfil (8.2) son solo para el tutor administrador de este niño.
   // Antes se leía un esAdmin de la sesión que el back no manda, así que el botón Editar no aparecía nunca.
-  const { esAdmin: esAdminDelProyecto } = useProyectoActual()
+  const { esAdmin: esAdminDelProyecto, rolCodigo } = useProyectoActual()
   const esAdmin = esAdminDelProyecto || Boolean(auth?.esAdmin ?? usuario?.esAdmin)
 
   const [editando, setEditando] = useState(false)
@@ -251,6 +252,9 @@ export default function DatosPersonalesPage() {
                   </dl>
                 )}
               </section>
+
+              {/* 8.1: cualquier tutor (no solo el administrador) puede descargar todo */}
+              {(rolCodigo === 'TUTOR' || esAdmin) && <DescargarDatos proyecto={proyecto} />}
 
               {esAdmin && (
                 <ZonaEliminarPerfil key={proyecto.id} proyecto={proyecto} />
