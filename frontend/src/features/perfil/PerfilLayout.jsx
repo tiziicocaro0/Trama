@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { Outlet, useLocation, useParams } from 'react-router-dom'
 import Boton from '../../components/ui/Boton.jsx'
+import useProyectoActual from '../../hooks/useProyectoActual.js'
 import { obtenerProyecto } from '../../api/proyectos.js'
 import CabeceraPerfil from './components/CabeceraPerfil.jsx'
 import PerfilContext from './PerfilContext.js'
@@ -44,6 +45,10 @@ export default function PerfilLayout() {
     return () => controller.abort()
   }, [id, intento])
 
+  // La foto del niño la cambia solo el tutor administrador (el back también lo controla).
+  // Va después del pedido del perfil para que ese salga primero.
+  const { esAdmin } = useProyectoActual()
+
   const recargarProyecto = useCallback(() => setIntento((actual) => actual + 1), [])
   // Al recargar (por ejemplo, después de editar los datos) se sigue mostrando el anterior.
   const proyecto = resultado?.id === id ? resultado.proyecto : null
@@ -56,7 +61,7 @@ export default function PerfilLayout() {
   if (!proyecto) {
     return (
       <div className="min-h-svh bg-fondo text-texto">
-      <div className="mx-auto max-w-6xl px-4 py-6 sm:px-8 sm:py-10">
+        <div className="mx-auto max-w-6xl px-4 py-6 sm:px-8 sm:py-10">
         {error ? (
           <div className="space-y-5 rounded-lg bg-superficie p-6">
             <h1 className="font-display text-h1 text-secundario">No pudimos mostrar el perfil</h1>
@@ -82,7 +87,12 @@ export default function PerfilLayout() {
     <PerfilContext.Provider value={{ proyecto, recargarProyecto }}>
       <div className="min-h-svh bg-fondo text-texto">
         <div className="mx-auto max-w-6xl px-4 pt-6 sm:px-8 sm:pt-8">
-          <CabeceraPerfil proyecto={proyecto} seccion={seccion} />
+          <CabeceraPerfil
+            proyecto={proyecto}
+            seccion={seccion}
+            puedeEditarFoto={esAdmin}
+            onCambioFoto={recargarProyecto}
+          />
         </div>
         <Outlet />
       </div>

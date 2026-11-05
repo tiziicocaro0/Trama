@@ -10,6 +10,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.trama.tpo.demo.entity.dto.AuthenticationResponse;
+import com.trama.tpo.demo.entity.dto.DatosCuentaRequest;
 import com.trama.tpo.demo.entity.dto.MatriculaRequest;
 import com.trama.tpo.demo.entity.usuario.TipoCuenta;
 import com.trama.tpo.demo.entity.usuario.Usuario;
@@ -18,8 +19,8 @@ import com.trama.tpo.demo.repository.MembresiaRepository;
 import com.trama.tpo.demo.repository.UsuarioRepository;
 
 /**
- * Datos de la propia cuenta que se editan desde Mi perfil: la matrícula del profesional
- * y su comprobante opcional. Los dos son declarados: TRAMA no los verifica.
+ * Datos de la propia cuenta que se editan desde Mi perfil: nombre y apellido, la matrícula
+ * del profesional y su comprobante opcional. La matrícula es declarada: TRAMA no la verifica.
  */
 @Service
 public class CuentaService {
@@ -43,6 +44,16 @@ public class CuentaService {
         this.usuarioActual = usuarioActual;
         this.authenticationService = authenticationService;
         this.almacen = almacen;
+    }
+
+    // Nombre y apellido. El email no se cambia acá: es con lo que la persona ingresa.
+    @Transactional
+    public AuthenticationResponse actualizarDatos(DatosCuentaRequest request) {
+        Usuario usuario = usuarioLogueado();
+        usuario.setNombre(request.nombre());
+        usuario.setApellido(request.apellido());
+        usuarioRepository.save(usuario);
+        return authenticationService.perfil(usuario.getId());
     }
 
     // Guarda o borra el número. Sin número no hay comprobante: se borra con él.

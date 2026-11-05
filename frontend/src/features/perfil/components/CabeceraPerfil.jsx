@@ -2,12 +2,12 @@ import { ArrowLeft } from '@phosphor-icons/react'
 import { Link } from 'react-router-dom'
 import { calcularEdad } from '../perfil.js'
 import AvisoPlanGratuito from '../../plan/AvisoPlanGratuito.jsx'
-import FotoNino from './FotoNino.jsx'
+import FotoNinoCabecera from './FotoNinoCabecera.jsx'
 import NavegacionPerfil from './NavegacionPerfil.jsx'
 
 // Cabecera del perfil del niño: la dibuja PerfilLayout una sola vez para todas las
 // secciones. Foto y nombre a la izquierda, la botonera a la derecha.
-export default function CabeceraPerfil({ proyecto, seccion }) {
+export default function CabeceraPerfil({ proyecto, seccion, puedeEditarFoto = false, onCambioFoto }) {
   const edad = calcularEdad(proyecto.fechaNacimiento)
   return (
     <header className="mb-6">
@@ -20,12 +20,7 @@ export default function CabeceraPerfil({ proyecto, seccion }) {
       </Link>
       <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
         <div className="flex min-w-0 items-center gap-4">
-          <FotoNino
-            proyecto={proyecto}
-            className="size-16 sm:size-20"
-            claseIcono="bg-primario text-superficie"
-            tamanoIcono={36}
-          />
+          <FotoNinoCabecera proyecto={proyecto} editable={puedeEditarFoto} onCambio={onCambioFoto} />
           <div className="min-w-0">
             <h1 className="break-words font-display text-h1 leading-tight text-secundario">
               {proyecto.nombre}

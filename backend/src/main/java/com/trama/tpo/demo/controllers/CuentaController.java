@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.trama.tpo.demo.entity.dto.AuthenticationResponse;
+import com.trama.tpo.demo.entity.dto.DatosCuentaRequest;
 import com.trama.tpo.demo.entity.dto.MatriculaRequest;
 import com.trama.tpo.demo.service.CuentaService;
 import com.trama.tpo.demo.service.FotoService;
@@ -34,6 +35,12 @@ public class CuentaController {
     public CuentaController(CuentaService cuentaService, FotoService fotoService) {
         this.cuentaService = cuentaService;
         this.fotoService = fotoService;
+    }
+
+    // PUT: corrige el nombre y el apellido de la cuenta y devuelve los datos actualizados.
+    @PutMapping("/yo")
+    public AuthenticationResponse actualizarDatos(@Valid @RequestBody DatosCuentaRequest request) {
+        return cuentaService.actualizarDatos(request);
     }
 
     // PUT: guarda o borra la matrícula declarada y devuelve los datos de la cuenta.

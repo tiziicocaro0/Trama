@@ -63,7 +63,8 @@ describe('Mi perfil', () => {
   it('muestra los datos de la cuenta', () => {
     abrir(profesional)
     expect(screen.getByRole('heading', { name: 'Mi perfil', level: 1 })).toBeInTheDocument()
-    expect(screen.getByText('pia@trama.test')).toBeInTheDocument()
+    // El email sale junto a la foto y en la lista de datos
+    expect(screen.getAllByText('pia@trama.test')).toHaveLength(2)
     expect(screen.getByText('Soy profesional')).toBeInTheDocument()
     expect(screen.getByText('Psicología')).toBeInTheDocument()
   })
@@ -194,17 +195,44 @@ describe('Mi perfil', () => {
     expect(confirmarSesion).toHaveBeenCalled()
   })
 
-  it('quita su foto', async () => {
-    const user = userEvent.setup()
-    abrir({ ...profesional, tieneFoto: true })
-    await user.click(await screen.findByRole('button', { name: 'Quitar foto' }))
-    expect(cliente.delete).toHaveBeenCalledWith('/usuarios/yo/foto')
-    expect(await screen.findByRole('img', { name: 'Foto de Pía no disponible' })).toBeInTheDocument()
-  })
-
   it('una cuenta de familia no ve la sección de matrícula', () => {
     abrir({ ...profesional, tipoCuenta: 'FAMILIA', especialidades: [], matricula: null })
     expect(screen.queryByRole('heading', { name: 'Matrícula' })).not.toBeInTheDocument()
     expect(screen.getByText('Soy familia')).toBeInTheDocument()
+  })
+
+  it('edita su nombre y apellido, y valida que no queden vacíos', async () => {
+    const user = userEvent.setup()
+    cliente.put.mockResolvedValue({ data: { ...profesional, nombre: 'Pía Sol', apellido: 'Gómez' } })
+    const confirmarSesion = abrir(profesional)
+    await user.click(screen.getByRole('button', { name: 'Editar mis datos' }))
+    const nombre = screen.getByRole('textbox', { name: 'Nombre' })
+    await user.clear(nombre)
+    await user.click(screen.getByRole('button', { name: 'Guardar' }))
+    expect(screen.getByText('Completá tu nombre.')).toBeInTheDocument()
+    expect(cliente.put).not.toHaveBeenCalled()
+
+    await user.type(nombre, ' Pía Sol ')
+    const apellido = screen.getByRole('textbox', { name: 'Apellido' })
+    await user.clear(apellido)
+    await user.type(apellido, 'Gómez')
+    await user.click(screen.getByRole('button', { name: 'Guardar' }))
+    expect(cliente.put).toHaveBeenCalledWith('/usuarios/yo', { nombre: 'Pía Sol', apellido: 'Gómez' })
+    expect(await screen.findByText('Guardamos tus datos.')).toBeInTheDocument()
+    expect(screen.queryByRole('form', { name: 'Editar mis datos' })).not.toBeInTheDocument()
+    expect(screen.getByText('Pía Sol Gómez')).toBeInTheDocument()
+    expect(confirmarSesion).toHaveBeenCalled()
+  })
+
+  it('si no se pueden guardar sus datos, avisa y deja el formulario abierto', async () => {
+    const user = userEvent.setup()
+    cliente.put.mockRejectedValue({ response: { status: 500 } })
+    abrir(profesional)
+    await user.click(screen.getByRole('button', { name: 'Editar mis datos' }))
+    await user.click(screen.getByRole('button', { name: 'Guardar' }))
+    expect(await screen.findByRole('alert')).toHaveTextContent(
+      'No pudimos guardar tus datos. Intentá nuevamente.',
+    )
+    expect(screen.getByRole('form', { name: 'Editar mis datos' })).toBeInTheDocument()
   })
 })

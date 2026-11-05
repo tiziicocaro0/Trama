@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
-import { Camera, Trash } from '@phosphor-icons/react'
-import { Aviso } from './Aviso.jsx'
+import { PencilSimple } from '@phosphor-icons/react'
+import { avisar, avisarError } from '../avisos/avisosFlotantes.js'
 import FotoCircular from './FotoCircular.jsx'
 import RecortadorFoto from './RecortadorFoto.jsx'
 
@@ -8,12 +8,19 @@ import RecortadorFoto from './RecortadorFoto.jsx'
 const TAMANO_MAXIMO_ORIGINAL = 15 * 1024 * 1024
 const TIPOS = ['image/jpeg', 'image/png']
 
-// Elegir, recortar y guardar una foto de perfil (de la cuenta o del niño).
-export default function EditorFoto({ src, nombre, onGuardar, onQuitar, tituloRecorte }) {
+// Foto de perfil (de la cuenta o del niño) con un lápiz en la esquina para cambiarla:
+// se elige, se recorta y se guarda. Los resultados salen como avisos flotantes.
+export default function EditorFoto({
+  src,
+  nombre,
+  onGuardar,
+  tituloRecorte,
+  className = 'size-24',
+  claseIcono,
+  tamanoIcono = 40,
+}) {
   const entrada = useRef(null)
   const [original, setOriginal] = useState(null)
-  const [estado, setEstado] = useState({ tipo: null, texto: '' })
-  const [quitando, setQuitando] = useState(false)
 
   // Libera la imagen elegida cuando se cierra el recortador.
   useEffect(() => () => original && window.URL.revokeObjectURL(original), [original])
@@ -23,14 +30,13 @@ export default function EditorFoto({ src, nombre, onGuardar, onQuitar, tituloRec
     event.target.value = ''
     if (!archivo) return
     if (!TIPOS.includes(archivo.type)) {
-      setEstado({ tipo: 'error', texto: 'Elegí una foto en JPG o PNG.' })
+      avisarError('Elegí una foto en JPG o PNG.')
       return
     }
     if (archivo.size > TAMANO_MAXIMO_ORIGINAL) {
-      setEstado({ tipo: 'error', texto: 'La foto es muy pesada. Elegí una de menos de 15 MB.' })
+      avisarError('La foto es muy pesada. Elegí una de menos de 15 MB.')
       return
     }
-    setEstado({ tipo: null, texto: '' })
     setOriginal(window.URL.createObjectURL(archivo))
   }
 
@@ -38,7 +44,7 @@ export default function EditorFoto({ src, nombre, onGuardar, onQuitar, tituloRec
     try {
       await onGuardar(recorte)
       setOriginal(null)
-      setEstado({ tipo: 'exito', texto: 'Guardamos la foto.' })
+      avisar('Guardamos la foto.')
     } catch (falla) {
       throw new Error(
         falla?.response?.data?.mensaje || 'No pudimos guardar la foto. Intentá nuevamente.',
@@ -47,44 +53,25 @@ export default function EditorFoto({ src, nombre, onGuardar, onQuitar, tituloRec
     }
   }
 
-  async function quitar() {
-    setQuitando(true)
-    setEstado({ tipo: null, texto: '' })
-    try {
-      await onQuitar()
-      setEstado({ tipo: 'exito', texto: 'Quitamos la foto.' })
-    } catch {
-      setEstado({ tipo: 'error', texto: 'No pudimos quitar la foto. Intentá nuevamente.' })
-    } finally {
-      setQuitando(false)
-    }
-  }
-
   return (
-    <div className="space-y-4">
-      <div className="flex flex-wrap items-center gap-4">
-        <FotoCircular src={src} nombre={nombre} className="size-24" tamanoIcono={40} />
-        <div className="flex flex-wrap gap-2">
-          <button
-            type="button"
-            onClick={() => entrada.current?.click()}
-            className="inline-flex min-h-11 items-center gap-2 rounded-sm border border-contorno-accion px-4 font-semibold text-primario hover:bg-decoracion focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primario"
-          >
-            <Camera size={20} aria-hidden="true" />
-            {src ? 'Cambiar foto' : 'Subir foto'}
-          </button>
-          {src && (
-            <button
-              type="button"
-              onClick={quitar}
-              disabled={quitando}
-              className="inline-flex min-h-11 items-center gap-2 rounded-sm px-4 font-semibold text-error hover:bg-error/10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primario disabled:cursor-wait"
-            >
-              <Trash size={20} aria-hidden="true" />
-              {quitando ? 'Quitando…' : 'Quitar foto'}
-            </button>
-          )}
-        </div>
+    <>
+      <div className="relative inline-flex shrink-0">
+        <FotoCircular
+          src={src}
+          nombre={nombre}
+          className={className}
+          claseIcono={claseIcono}
+          tamanoIcono={tamanoIcono}
+        />
+        <button
+          type="button"
+          onClick={() => entrada.current?.click()}
+          aria-label={src ? 'Cambiar foto' : 'Subir foto'}
+          title={src ? 'Cambiar foto' : 'Subir foto'}
+          className="absolute -bottom-1 -right-1 inline-flex size-9 items-center justify-center rounded-full border-2 border-superficie bg-primario text-superficie shadow-md hover:bg-primario-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-acento"
+        >
+          <PencilSimple size={18} weight="bold" aria-hidden="true" />
+        </button>
         <input
           ref={entrada}
           type="file"
@@ -95,7 +82,6 @@ export default function EditorFoto({ src, nombre, onGuardar, onQuitar, tituloRec
           tabIndex={-1}
         />
       </div>
-      {estado.texto && <Aviso tipo={estado.tipo}>{estado.texto}</Aviso>}
       {original && (
         <RecortadorFoto
           src={original}
@@ -104,6 +90,6 @@ export default function EditorFoto({ src, nombre, onGuardar, onQuitar, tituloRec
           onConfirmar={guardar}
         />
       )}
-    </div>
+    </>
   )
 }

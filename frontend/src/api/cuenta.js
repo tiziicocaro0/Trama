@@ -35,3 +35,12 @@ export async function obtenerComprobanteMatricula(usuarioId) {
     respuesta.data instanceof Blob ? respuesta.data : new Blob([respuesta.data], { type: tipo })
   return window.URL.createObjectURL(blob)
 }
+
+// Nombre y apellido de la cuenta. El email no se cambia desde acá.
+export async function actualizarMisDatos({ nombre, apellido }) {
+  const { data } = await cliente.put('/usuarios/yo', {
+    nombre: nombre.trim(),
+    apellido: apellido.trim(),
+  })
+  return data
+}

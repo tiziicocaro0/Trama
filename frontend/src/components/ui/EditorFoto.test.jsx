@@ -27,9 +27,8 @@ beforeEach(() => {
 
 function abrir(props = {}) {
   const onGuardar = vi.fn().mockResolvedValue(undefined)
-  const onQuitar = vi.fn().mockResolvedValue(undefined)
-  render(<EditorFoto nombre="Luz" onGuardar={onGuardar} onQuitar={onQuitar} {...props} />)
-  return { onGuardar, onQuitar }
+  render(<EditorFoto nombre="Luz" onGuardar={onGuardar} {...props} />)
+  return { onGuardar }
 }
 
 function archivo(tipo = 'image/jpeg', tamano = 1000) {
@@ -43,7 +42,6 @@ describe('Editor de foto de perfil', () => {
     abrir()
     expect(screen.getByRole('img', { name: 'Foto de Luz no disponible' })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Subir foto' })).toBeInTheDocument()
-    expect(screen.queryByRole('button', { name: 'Quitar foto' })).not.toBeInTheDocument()
   })
 
   it('recorta la foto elegida y guarda solo el recorte', async () => {
@@ -81,12 +79,10 @@ describe('Editor de foto de perfil', () => {
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
   })
 
-  it('con foto la muestra y permite quitarla', async () => {
-    const user = userEvent.setup()
-    const { onQuitar } = abrir({ src: 'blob:actual' })
+  it('con foto muestra el lápiz para cambiarla, sin botón de quitar', () => {
+    abrir({ src: 'blob:actual' })
     expect(screen.getByRole('img', { name: 'Foto de Luz' })).toHaveAttribute('src', 'blob:actual')
-    await user.click(screen.getByRole('button', { name: 'Quitar foto' }))
-    expect(onQuitar).toHaveBeenCalledTimes(1)
-    expect(await screen.findByText('Quitamos la foto.')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Cambiar foto' })).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Quitar foto' })).not.toBeInTheDocument()
   })
 })

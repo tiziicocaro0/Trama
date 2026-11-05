@@ -3,7 +3,6 @@ import { useParams } from 'react-router-dom'
 import { PencilSimple } from '@phosphor-icons/react'
 import Boton from '../../components/ui/Boton.jsx'
 import CampoFormulario from '../../components/ui/CampoFormulario.jsx'
-import { Aviso } from '../../components/ui/Aviso.jsx'
 import usePerfil from './hooks/usePerfil.js'
 import useAuth from '../../hooks/useAuth.js'
 import { formatearFechaCalendario } from '../../utils/fechas.js'
@@ -16,8 +15,8 @@ import {
   nombreTipoEscuela,
 } from './datosEscolares.js'
 import ZonaEliminarPerfil from './eliminacion/ZonaEliminarPerfil.jsx'
-import FotoNinoEditable from './components/FotoNinoEditable.jsx'
 import useProyectoActual from '../../hooks/useProyectoActual.js'
+import { avisar, avisarError } from '../../components/avisos/avisosFlotantes.js'
 
 const definicionesCampos = [
   { nombre: 'nombre', etiqueta: 'Nombre', maxLength: 80 },
@@ -57,7 +56,6 @@ export default function DatosPersonalesPage() {
   const [valores, setValores] = useState({})
   const [errores, setErrores] = useState({})
   const [guardando, setGuardando] = useState(false)
-  const [mensaje, setMensaje] = useState({ tipo: '', texto: '' })
 
   const hoy = new Date()
   const fechaMaxima = `${hoy.getFullYear()}-${String(hoy.getMonth() + 1).padStart(2, '0')}-${String(hoy.getDate()).padStart(2, '0')}`
@@ -73,14 +71,12 @@ export default function DatosPersonalesPage() {
       grado: proyecto.grado ?? '',
     })
     setErrores({})
-    setMensaje({ tipo: '', texto: '' })
     setEditando(true)
   }
 
   function cancelarEdicion() {
     setEditando(false)
     setErrores({})
-    setMensaje({ tipo: '', texto: '' })
   }
 
   function cambiar(evento) {
@@ -117,21 +113,19 @@ export default function DatosPersonalesPage() {
     }
 
     setGuardando(true)
-    setMensaje({ tipo: '', texto: '' })
 
     try {
       await actualizarProyecto(id, datos)
       setEditando(false)
-      setMensaje({ tipo: 'exito', texto: 'Datos actualizados correctamente.' })
+      avisar('Datos actualizados correctamente.')
       reintentar()
-      setTimeout(() => setMensaje({ tipo: '', texto: '' }), 4000)
     } catch (err) {
       const texto =
         err?.response?.status === 403
           ? 'No tenés permiso para editar estos datos.'
           : err?.response?.data?.mensaje ||
             'No pudimos guardar los cambios. Intentá nuevamente.'
-      setMensaje({ tipo: 'error', texto })
+      avisarError(texto)
     } finally {
       setGuardando(false)
     }
@@ -174,13 +168,6 @@ export default function DatosPersonalesPage() {
         ) : (
           proyecto && (
             <>
-
-              {mensaje.texto && (
-                <div className="mb-6">
-                  <Aviso tipo={mensaje.tipo}>{mensaje.texto}</Aviso>
-                </div>
-              )}
-
               <section
                 aria-labelledby="titulo-datos-personales"
                 className="rounded-lg bg-superficie p-5 shadow-sm sm:p-8"
@@ -263,8 +250,6 @@ export default function DatosPersonalesPage() {
                   </dl>
                 )}
               </section>
-
-              {esAdmin && <FotoNinoEditable proyecto={proyecto} onCambio={reintentar} />}
 
               {esAdmin && (
                 <ZonaEliminarPerfil key={proyecto.id} proyecto={proyecto} />

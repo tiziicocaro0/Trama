@@ -146,9 +146,8 @@ describe('Datos personales y navegación compartida', () => {
       await screen.findByRole('button', { name: 'Editar datos personales' }),
     ).toBeInTheDocument()
     expect(screen.getByRole('heading', { name: 'Eliminar perfil' })).toBeInTheDocument()
-    // También cambia la foto del niño
-    expect(screen.getByRole('heading', { name: 'Foto' })).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: 'Subir foto' })).toBeInTheDocument()
+    // La foto del niño se cambia con el lápiz de la cabecera
+    expect(await screen.findByRole('button', { name: 'Subir foto' })).toBeInTheDocument()
   })
   it('el admin edita el tipo de escuela y conserva un grado escrito a mano', async () => {
     cliente.get.mockImplementation(async (ruta) => ({
