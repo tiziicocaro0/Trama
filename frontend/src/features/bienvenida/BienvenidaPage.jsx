@@ -4,6 +4,7 @@ import WelcomeBackdrop from './components/WelcomeBackdrop.jsx'
 
 export default function BienvenidaPage() {
   return (
+    <div className="welcome-page">
     <div className="welcome-shell">
       <WelcomeBackdrop />
       <a href="#contenido" className="skip-link">
@@ -35,6 +36,7 @@ export default function BienvenidaPage() {
           </nav>
         </div>
       </main>
+    </div>
     </div>
   )
 }
