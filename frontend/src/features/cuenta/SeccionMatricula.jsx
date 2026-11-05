@@ -1,12 +1,12 @@
 import { useState } from 'react'
 import { IdentificationCard, Plus } from '@phosphor-icons/react'
-import { Aviso } from '../../components/ui/Aviso.jsx'
 import Boton from '../../components/ui/Boton.jsx'
 import InfoAyuda from '../../components/ui/InfoAyuda.jsx'
 import { actualizarMatricula, quitarComprobanteMatricula } from '../../api/cuenta.js'
 import MatriculaMiembro from '../perfil/components/MatriculaMiembro.jsx'
 import { AVISO_MATRICULA } from '../perfil/matricula.js'
 import ModalMatricula from './ModalMatricula.jsx'
+import { avisar, avisarError } from '../../components/avisos/avisosFlotantes.js'
 
 // Mi perfil: el profesional suma, cambia o quita su matrícula y su comprobante.
 export default function SeccionMatricula({ usuario, onCambio }) {
@@ -15,7 +15,6 @@ export default function SeccionMatricula({ usuario, onCambio }) {
     tieneComprobanteMatricula: Boolean(usuario?.tieneComprobanteMatricula),
   })
   const [modalAbierto, setModalAbierto] = useState(false)
-  const [estado, setEstado] = useState({ tipo: null, texto: '' })
   const [quitando, setQuitando] = useState(false)
 
   function actualizar(nueva, texto) {
@@ -23,17 +22,16 @@ export default function SeccionMatricula({ usuario, onCambio }) {
       matricula: nueva?.matricula ?? null,
       tieneComprobanteMatricula: Boolean(nueva?.tieneComprobanteMatricula),
     })
-    setEstado({ tipo: 'exito', texto })
+    avisar(texto)
     onCambio?.()
   }
 
   async function quitar(accion, texto) {
     setQuitando(true)
-    setEstado({ tipo: null, texto: '' })
     try {
       actualizar(await accion(), texto)
     } catch {
-      setEstado({ tipo: 'error', texto: 'No pudimos guardar el cambio. Intentá nuevamente.' })
+      avisarError('No pudimos guardar el cambio. Intentá nuevamente.')
     } finally {
       setQuitando(false)
     }
@@ -46,11 +44,6 @@ export default function SeccionMatricula({ usuario, onCambio }) {
         Matrícula
         <InfoAyuda etiqueta="Sobre la matrícula">{AVISO_MATRICULA}</InfoAyuda>
       </h2>
-      {estado.texto && (
-        <div className="mb-4">
-          <Aviso tipo={estado.tipo}>{estado.texto}</Aviso>
-        </div>
-      )}
       {cuenta.matricula ? (
         <>
           <MatriculaMiembro

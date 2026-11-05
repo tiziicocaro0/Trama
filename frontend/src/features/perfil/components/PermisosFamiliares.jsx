@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { guardarPermisosFamiliar } from '../../../api/proyectos.js'
-import { Aviso } from '../../../components/ui/Aviso.jsx'
 import Interruptor from '../../../components/ui/Interruptor.jsx'
+import { avisar, avisarError } from '../../../components/avisos/avisosFlotantes.js'
 
 // 1.8: el tutor administrador decide qué pueden hacer los familiares (abuelos, tíos…) en este niño.
 // Cada cambio se guarda al instante; si falla, el interruptor vuelve a como estaba.
@@ -11,7 +11,6 @@ export default function PermisosFamiliares({ proyecto }) {
     familiarVeNotas: Boolean(proyecto.familiarVeNotas),
   })
   const [guardando, setGuardando] = useState(null)
-  const [estado, setEstado] = useState({ tipo: null, texto: '' })
 
   async function cambiar(campo, valor) {
     if (guardando) return
@@ -19,20 +18,16 @@ export default function PermisosFamiliares({ proyecto }) {
     const nuevos = { ...permisos, [campo]: valor }
     setPermisos(nuevos)
     setGuardando(campo)
-    setEstado({ tipo: null, texto: '' })
     try {
       const actualizado = await guardarPermisosFamiliar(proyecto.id, nuevos)
       setPermisos({
         familiarPuedeCargar: Boolean(actualizado?.familiarPuedeCargar ?? nuevos.familiarPuedeCargar),
         familiarVeNotas: Boolean(actualizado?.familiarVeNotas ?? nuevos.familiarVeNotas),
       })
-      setEstado({ tipo: 'exito', texto: 'Guardamos el cambio.' })
+      avisar('Guardamos el cambio.')
     } catch (error) {
       setPermisos(anteriores)
-      setEstado({
-        tipo: 'error',
-        texto: error?.response?.data?.mensaje || 'No pudimos guardar el cambio. Intentá nuevamente.',
-      })
+      avisarError(error?.response?.data?.mensaje || 'No pudimos guardar el cambio. Intentá nuevamente.')
     } finally {
       setGuardando(null)
     }
@@ -46,11 +41,6 @@ export default function PermisosFamiliares({ proyecto }) {
       <p className="mt-2 text-texto-suave">
         Aplica a quienes están en la red como familiar. Los tutores siempre pueden todo.
       </p>
-      {estado.texto && (
-        <div className="mt-4">
-          <Aviso tipo={estado.tipo}>{estado.texto}</Aviso>
-        </div>
-      )}
       <ul className="mt-4 divide-y divide-borde/60">
         <li className="py-3">
           <Interruptor
