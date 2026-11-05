@@ -5,6 +5,7 @@ import InicioSidebar from '../inicio/InicioSidebar.jsx'
 import ContratarPaquete from './components/ContratarPaquete.jsx'
 import PanelInstitucion from './components/PanelInstitucion.jsx'
 import useInstitucion from './hooks/useInstitucion.js'
+import Cargando from '../../components/ui/Cargando.jsx'
 
 // 9.2: /institucion. Cualquier usuario puede contratar un paquete y queda como responsable.
 export default function InstitucionPage() {
@@ -33,7 +34,7 @@ export default function InstitucionPage() {
             Institución
           </h1>
           {cargando ? (
-            <p role="status">Cargando la institución…</p>
+            <Cargando mensaje="Cargando la institución…" />
           ) : error ? (
             <div className="space-y-4 rounded-lg bg-superficie p-6">
               <p role="alert">{error}</p>

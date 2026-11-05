@@ -11,6 +11,7 @@ import PagoSimulado from './components/PagoSimulado.jsx'
 import useMiPlan from './hooks/useMiPlan.js'
 import { NOMBRES_PLAN, describirPeriodo, formatearPesos } from './planes.js'
 import { avisar } from '../../components/avisos/avisosFlotantes.js'
+import Cargando from '../../components/ui/Cargando.jsx'
 
 // 9.1: /cuenta/plan. Las familias solo ven que Trama es gratis: nunca precios ni pagos.
 export default function PlanPage() {
@@ -56,7 +57,7 @@ export default function PlanPage() {
             </h1>
           </header>
           {cargando ? (
-            <p role="status">Cargando tu plan…</p>
+            <Cargando mensaje="Cargando tu plan…" />
           ) : error ? (
             <div className="space-y-4 rounded-lg bg-superficie p-6">
               <p role="alert">{error}</p>

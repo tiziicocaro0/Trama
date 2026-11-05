@@ -20,6 +20,7 @@ import { etiquetaEspecialidad } from './especialidades.js'
 import MatriculaMiembro from './components/MatriculaMiembro.jsx'
 import FotoUsuario from '../cuenta/FotoUsuario.jsx'
 import { avisar, avisarError } from '../../components/avisos/avisosFlotantes.js'
+import Cargando from '../../components/ui/Cargando.jsx'
 
 const etiquetasRol = {
   TUTOR: 'Tutor/a',
@@ -171,7 +172,7 @@ export default function RedPage() {
     >
       <div className="mx-auto max-w-6xl">
         {cargando ? (
-          <p role="status">Cargando la red de apoyo…</p>
+          <Cargando mensaje="Cargando la red de apoyo…" />
         ) : error ? (
           <div className="space-y-4">
             <h1 className="font-display text-h1 text-secundario">
