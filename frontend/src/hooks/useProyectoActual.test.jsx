@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Route, Routes, useParams } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { clienteApi } from '../api/cliente.js';
-import { PROYECTOS_MOCK } from '../api/proyectos.mock.js';
+import { PROYECTOS_MOCK } from '../test/datosFicticios.js';
 import { Layout } from '../components/layout/Layout.jsx';
 import { useProyectoActual } from './useProyectoActual.js';
 
@@ -14,8 +14,9 @@ vi.mock('../api/cliente.js', () => {
 
 vi.mock('./useAuth', async (importOriginal) => {
   const original = await importOriginal();
+  const { USUARIO_MOCK } = await import('../test/datosFicticios.js');
   const sesion = () => ({
-    usuario: original.USUARIO_MOCK,
+    usuario: USUARIO_MOCK,
     estado: 'autenticado',
     cerrarSesion: vi.fn(),
   });

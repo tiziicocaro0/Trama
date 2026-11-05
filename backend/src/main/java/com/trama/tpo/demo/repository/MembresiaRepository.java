@@ -22,6 +22,14 @@ public interface MembresiaRepository extends JpaRepository<Membresia, UUID> {
 
     boolean existsByUsuarioIdAndProyectoId(UUID usuarioId, UUID proyectoId);
 
+    /** Si dos personas están en la red de al menos un mismo niño (para ver la foto de la otra). */
+    @Query("""
+            SELECT COUNT(m1) > 0 FROM Membresia m1, Membresia m2
+            WHERE m1.proyecto.id = m2.proyecto.id
+              AND m1.usuario.id = :usuarioA AND m2.usuario.id = :usuarioB
+            """)
+    boolean compartenProyecto(@Param("usuarioA") UUID usuarioA, @Param("usuarioB") UUID usuarioB);
+
     List<Membresia> findByProyectoId(UUID proyectoId);
 
     // Miembros del proyecto en orden alfabetico (pagina Red, card 1.3)

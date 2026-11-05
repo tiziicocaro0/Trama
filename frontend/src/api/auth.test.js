@@ -26,6 +26,34 @@ beforeEach(() => {
 })
 
 describe('Contrato de login e identidad', () => {
+
+  it('sin "mantener sesión" la guarda para la pestaña y con la casilla, en el navegador', async () => {
+    vi.spyOn(cliente, 'post').mockResolvedValue({ data: { access_token: 'jwt-pestana' } })
+    await iniciarSesion({ email: 'alma@trama.test', password: 'Prueba123!' })
+    expect(sessionStorage.getItem('trama.sesion')).toBe('jwt-pestana')
+    expect(localStorage.getItem('trama.sesion')).toBeNull()
+
+    vi.spyOn(cliente, 'post').mockResolvedValue({ data: { access_token: 'jwt-recordado' } })
+    await iniciarSesion({ email: 'alma@trama.test', password: 'Prueba123!', recordar: true })
+    expect(localStorage.getItem('trama.sesion')).toBe('jwt-recordado')
+    expect(sessionStorage.getItem('trama.sesion')).toBeNull()
+
+    // Cerrar sesión (o un 401) borra la sesión guardada en los dos lugares.
+    guardarToken(null)
+    expect(localStorage.getItem('trama.sesion')).toBeNull()
+    expect(sessionStorage.getItem('trama.sesion')).toBeNull()
+  })
+
+  it('no manda "recordar" al back: es solo del navegador', async () => {
+    const post = vi
+      .spyOn(cliente, 'post')
+      .mockResolvedValue({ data: { access_token: 'jwt-ficticio' } })
+    await iniciarSesion({ email: 'alma@trama.test', password: 'Prueba123!', recordar: true })
+    expect(post).toHaveBeenCalledExactlyOnceWith('/auth/login', {
+      email: 'alma@trama.test',
+      password: 'Prueba123!',
+    })
+  })
   it('envía email y password a login y conserva el token devuelto', async () => {
     const post = vi
       .spyOn(cliente, 'post')
@@ -87,6 +115,9 @@ describe('Contrato de login e identidad', () => {
       email: datos.email,
       tipoCuenta: 'PROFESIONAL',
       especialidades: [{ especialidad: 'OTRA_SALUD', aclaracion: 'Musicoterapeuta' }],
+      matricula: 'MN 45.123',
+      tieneFoto: true,
+      tieneComprobanteMatricula: true,
     }
     const get = vi.spyOn(cliente, 'get').mockResolvedValue({ data: identidad })
     expect(await obtenerIdentidad()).toEqual(identidad)
@@ -114,12 +145,36 @@ describe('API real de registro con transporte simulado', () => {
       data: { email: datos.email, verificacionPendiente: true },
     })
     await registrarUsuario({ ...datos, rol: 'TUTOR' })
-    expect(post).toHaveBeenCalledExactlyOnceWith('/auth/registro', datos)
+    expect(post).toHaveBeenCalledExactlyOnceWith('/auth/registro', {
+      ...datos,
+      matricula: null,
+    })
     expect(obtenerToken()).toBeNull()
   })
 
-  it('con el código del mail guarda el JWT solo en memoria', async () => {
-    const almacenar = vi.spyOn(Storage.prototype, 'setItem')
+  it('manda la matrícula del profesional recortada, y nunca la de una familia', async () => {
+    const post = vi.spyOn(cliente, 'post').mockResolvedValue({
+      status: 201,
+      data: { email: datos.email, verificacionPendiente: true },
+    })
+    await registrarUsuario({ ...datos, matricula: '  MN 45.123 ' })
+    expect(post).toHaveBeenLastCalledWith(
+      '/auth/registro',
+      expect.objectContaining({ matricula: 'MN 45.123' }),
+    )
+    await registrarUsuario({
+      ...datos,
+      tipoCuenta: 'FAMILIA',
+      especialidades: [],
+      matricula: 'MN 45.123',
+    })
+    expect(post).toHaveBeenLastCalledWith(
+      '/auth/registro',
+      expect.objectContaining({ tipoCuenta: 'FAMILIA', matricula: null }),
+    )
+  })
+
+  it('con el código del mail guarda la sesión solo para esta pestaña', async () => {
     const post = vi.spyOn(cliente, 'post').mockResolvedValue({
       data: { access_token: 'jwt-ficticio' },
     })
@@ -129,7 +184,8 @@ describe('API real de registro con transporte simulado', () => {
       codigo: '123456',
     })
     expect(obtenerToken()).toBe('jwt-ficticio')
-    expect(almacenar).not.toHaveBeenCalled()
+    expect(sessionStorage.getItem('trama.sesion')).toBe('jwt-ficticio')
+    expect(localStorage.getItem('trama.sesion')).toBeNull()
   })
 
   it('traduce un código equivocado o bloqueado', async () => {

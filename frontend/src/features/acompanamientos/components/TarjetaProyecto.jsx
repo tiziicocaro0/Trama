@@ -1,6 +1,7 @@
-import { CalendarBlank, CaretRight, User } from '@phosphor-icons/react'
+import { CalendarBlank, CaretRight } from '@phosphor-icons/react'
 import { Link } from 'react-router-dom'
 import { calcularEdad } from '../../perfil/perfil.js'
+import FotoNino from '../../perfil/components/FotoNino.jsx'
 
 export default function TarjetaProyecto({ proyecto }) {
   const edad = calcularEdad(proyecto.fechaNacimiento)
@@ -11,13 +12,12 @@ export default function TarjetaProyecto({ proyecto }) {
       aria-label={`Ver perfil de ${proyecto.nombre}`}
       className="flex min-w-0 flex-1 items-center gap-4 rounded-md p-1 transition-colors hover:bg-bienvenida-luz focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primario motion-reduce:transition-none sm:gap-6"
     >
-      <span
-        role="img"
-        aria-label={`Foto de ${proyecto.nombre} no disponible`}
-        className="flex size-16 shrink-0 items-center justify-center rounded-full bg-primario text-superficie sm:size-24"
-      >
-        <User size={40} weight="light" aria-hidden="true" />
-      </span>
+      <FotoNino
+        proyecto={proyecto}
+        className="size-16 sm:size-24"
+        claseIcono="bg-primario text-superficie"
+        tamanoIcono={40}
+      />
       <div className="min-w-0 flex-1">
         <h2 className="break-words font-display text-h2 text-secundario sm:text-h1">
           {proyecto.nombre}

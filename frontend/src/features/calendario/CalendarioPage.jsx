@@ -11,15 +11,12 @@ import {
   listarEventos,
 } from '../../api/eventos.js'
 import { listarMiembros } from '../../api/miembros.js'
-import { Aviso } from '../../components/ui/Aviso.jsx'
 import Boton from '../../components/ui/Boton.jsx'
 import { useAuth } from '../../hooks/useAuth.js'
 import {
   normalizarRolProyecto,
   useProyectoActual,
 } from '../../hooks/useProyectoActual.js'
-import CabeceraPerfil from '../perfil/components/CabeceraPerfil.jsx'
-import NavegacionPerfil from '../perfil/components/NavegacionPerfil.jsx'
 import usePerfil from '../perfil/hooks/usePerfil.js'
 import ModalAlcanceRecurrente from './components/ModalAlcanceRecurrente.jsx'
 import ModalEvento from './components/ModalEvento.jsx'
@@ -28,6 +25,8 @@ import PanelCalendario from './components/PanelCalendario.jsx'
 import VistaCalendario from './components/VistaCalendario.jsx'
 import { hoyIso } from '../../utils/fechas.js'
 import { esFechaIsoValida, eventosDelDia, moverPeriodo, obtenerPeriodo } from './utils/periodo.js'
+import { avisar, avisarError } from '../../components/avisos/avisosFlotantes.js'
+import { claveBorradorNuevo, leerBorrador } from './utils/borradores.js'
 
 export default function CalendarioPage() {
   const { id: idRuta } = useParams()
@@ -53,8 +52,6 @@ export default function CalendarioPage() {
   const [alcanceEdicion, setAlcanceEdicion] = useState('serie')
   const [dialogoAlcance, setDialogoAlcance] = useState(null)
   const [eliminandoId, setEliminandoId] = useState(null)
-  const [mensajeExito, setMensajeExito] = useState('')
-  const [errorAccion, setErrorAccion] = useState('')
   const periodo = obtenerPeriodo(vista, referencia)
 
   const cargarCalendario = useCallback(async (idProyecto, signal) => {
@@ -92,8 +89,6 @@ export default function CalendarioPage() {
   }
 
   function abrirNuevoEvento(fecha = null, hora = null) {
-    setErrorAccion('')
-    setMensajeExito('')
     setEventoEnEdicion(null)
     setFechaNuevoEvento(fecha)
     setHoraNuevoEvento(hora)
@@ -138,8 +133,6 @@ export default function CalendarioPage() {
   }
 
   function solicitarEditarEvento(evento) {
-    setErrorAccion('')
-    setMensajeExito('')
     if (evento?.recurrente) {
       setDialogoAlcance({ accion: 'editar', evento })
       return
@@ -150,8 +143,6 @@ export default function CalendarioPage() {
   }
 
   function solicitarEliminarEvento(evento) {
-    setErrorAccion('')
-    setMensajeExito('')
     if (evento?.recurrente) {
       setDialogoAlcance({ accion: 'eliminar', evento })
       return
@@ -167,7 +158,6 @@ export default function CalendarioPage() {
   }
 
   async function manejarGuardarEvento(datosFormulario) {
-    setErrorAccion('')
     if (eventoEnEdicion?.id) {
       if (datosFormulario.alcance === 'ocurrencia') {
         const fechaOcurrencia =
@@ -183,10 +173,10 @@ export default function CalendarioPage() {
       } else {
         await editarEvento(proyectoId, eventoEnEdicion.id, datosFormulario)
       }
-      setMensajeExito('Evento actualizado correctamente.')
+      avisar('Evento actualizado correctamente.')
     } else {
       await crearEvento(proyectoId, datosFormulario)
-      setMensajeExito('Evento creado correctamente.')
+      avisar('Evento creado correctamente.')
     }
     setPanelDia(null)
     setEventoSeleccionado(null)
@@ -196,8 +186,6 @@ export default function CalendarioPage() {
   async function ejecutarEliminacion(evento, alcance = 'serie') {
     if (eliminandoId) return
     setEliminandoId(evento.id)
-    setErrorAccion('')
-    setMensajeExito('')
     try {
       if (alcance === 'ocurrencia') {
         const fechaOcurrencia = evento.fechaOcurrencia || evento.fecha
@@ -206,13 +194,13 @@ export default function CalendarioPage() {
         await eliminarEvento(proyectoId, evento.id)
       }
       setDialogoAlcance(null)
-      setMensajeExito('Evento eliminado correctamente.')
+      avisar('Evento eliminado correctamente.')
       setPanelDia(null)
       setEventoSeleccionado(null)
       reintentar()
     } catch (err) {
       setDialogoAlcance(null)
-      setErrorAccion(
+      avisarError(
         err?.message || 'No pudimos eliminar el evento. Intentá nuevamente.',
       )
     } finally {
@@ -239,7 +227,7 @@ export default function CalendarioPage() {
     setEventoSeleccionado((actual) =>
       actual && actual.id === evento.id ? { ...actual, acta: textoActa } : actual,
     )
-    setMensajeExito('Acta guardada correctamente.')
+    avisar('Acta guardada correctamente.')
     reintentar()
   }
 
@@ -260,7 +248,7 @@ export default function CalendarioPage() {
   return (
     <main
       tabIndex={-1}
-      className="min-h-svh bg-fondo px-4 py-6 text-texto sm:px-8 sm:py-10"
+      className="mx-auto max-w-6xl px-4 pb-6 text-texto sm:px-8 sm:pb-10"
     >
       <div className="mx-auto max-w-6xl">
         {!proyectoId ? (
@@ -290,26 +278,8 @@ export default function CalendarioPage() {
         ) : (
           proyecto && (
             <>
-              <CabeceraPerfil
-                proyecto={proyecto}
-                seccion={{ titulo: 'Calendario' }}
-              />
-              <NavegacionPerfil proyectoId={proyectoId} />
-
               <section aria-labelledby="titulo-calendario">
                 <CabeceraCalendario nombreProyecto={proyecto.nombre} vista={vista} referencia={referencia} periodo={periodo} onAnterior={() => cambiarPeriodo(-1)} onSiguiente={() => cambiarPeriodo(1)} onHoy={volverHoy} onVista={(valor) => { setVista(valor); setPanelDia(null); setEventoSeleccionado(null) }} mostrarNuevo={false} proyectoId={proyectoId} fechaSeleccionada={diaSeleccionado} mostrarIrAlDia={!panelDia} />
-
-                {mensajeExito && (
-                  <div className="mb-6">
-                    <Aviso tipo="exito">{mensajeExito}</Aviso>
-                  </div>
-                )}
-
-                {errorAccion && (
-                  <div className="mb-6">
-                    <Aviso tipo="error">{errorAccion}</Aviso>
-                  </div>
-                )}
 
                 {cargando && <p role="status" className="mb-3 text-sm text-texto-suave">Cargando eventos…</p>}
                 <VistaCalendario vista={vista} periodo={periodo} referencia={referencia} eventos={eventos} hoy={hoyIso()} diaSeleccionado={diaSeleccionado} onDia={seleccionarDia} onEvento={seleccionarEvento} />
@@ -321,6 +291,7 @@ export default function CalendarioPage() {
                 dia={panelDia}
                 evento={eventoSeleccionado}
                 eventos={panelDia ? eventosDelDia(eventos, panelDia) : []}
+                borrador={panelDia ? leerBorrador(proyectoId, claveBorradorNuevo(panelDia)) : null}
                 proyectoId={proyectoId}
                 miembros={miembros}
                 puedeModificar={puedeModificarEvento}
@@ -347,6 +318,10 @@ export default function CalendarioPage() {
                 alcance={alcanceEdicion}
                 onCerrar={cerrarModal}
                 onGuardar={manejarGuardarEvento}
+                onEliminar={(evento) => {
+                  cerrarModal()
+                  solicitarEliminarEvento(evento)
+                }}
               />
 
               <ModalAlcanceRecurrente

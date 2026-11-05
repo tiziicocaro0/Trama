@@ -82,6 +82,15 @@ public class AuthenticationService {
                     HttpStatus.BAD_REQUEST
             );
         }
+        String matricula = request.getMatricula() == null || request.getMatricula().isBlank()
+                ? null : request.getMatricula().strip();
+        if (!esProfesional && matricula != null) {
+            throw new ApiException(
+                    "MATRICULA_SOLO_PROFESIONAL",
+                    "Solo las cuentas profesionales declaran una matrícula",
+                    HttpStatus.BAD_REQUEST
+            );
+        }
         if (!esProfesional && !especialidades.isEmpty()) {
             throw new ApiException(
                     "ESPECIALIDAD_SOLO_PROFESIONAL",
@@ -96,6 +105,7 @@ public class AuthenticationService {
         usuario.setApellido(request.getApellido());
         usuario.setEmail(email);
         usuario.setTipoCuenta(request.getTipoCuenta());
+        usuario.setMatricula(matricula);
         usuario.setEmailVerificado(false);
 
         usuario.setPasswordHash(
@@ -143,6 +153,9 @@ public class AuthenticationService {
                         .map(e -> new MiembroResponse.EspecialidadItemResponse(
                                 e.getEspecialidad().name(), e.getAclaracion()))
                         .toList())
+                .matricula(usuario.getMatricula())
+                .tieneComprobanteMatricula(usuario.getMatriculaComprobanteRuta() != null)
+                .tieneFoto(usuario.getFotoRuta() != null)
                 .build();
     }
 
@@ -237,4 +250,4 @@ public class AuthenticationService {
                 .email(usuario.getEmail())
                 .build();
     }
-}
+}

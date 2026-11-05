@@ -5,6 +5,7 @@ import Campo from '../../../components/ui/Campo.jsx'
 import { Tarjeta } from '../../../components/ui/Tarjeta.jsx'
 import { asociarProfesional, quitarProfesional } from '../../../api/instituciones.js'
 import { formatearPesos } from '../../plan/planes.js'
+import { avisar } from '../../../components/avisos/avisosFlotantes.js'
 
 function uso(usados, cupo) {
   return cupo === null || cupo === undefined ? `${usados} (sin límite)` : `${usados} de ${cupo}`
@@ -16,16 +17,14 @@ export default function PanelInstitucion({ institucion, onActualizar }) {
   const [email, setEmail] = useState('')
   const [enviando, setEnviando] = useState(false)
   const [error, setError] = useState('')
-  const [mensaje, setMensaje] = useState('')
   const { paquete } = institucion
 
   async function ejecutar(accion, exito) {
     setEnviando(true)
     setError('')
-    setMensaje('')
     try {
       onActualizar(await accion())
-      setMensaje(exito)
+      avisar(exito)
       return true
     } catch (problema) {
       setError(problema.message)
@@ -90,7 +89,6 @@ export default function PanelInstitucion({ institucion, onActualizar }) {
           </div>
         </form>
         {error && <p role="alert" className="text-error">{error}</p>}
-        {mensaje && <Aviso tipo="exito">{mensaje}</Aviso>}
         {institucion.profesionales.length === 0 ? (
           <p className="text-texto-suave">Todavía no asociaste profesionales.</p>
         ) : (

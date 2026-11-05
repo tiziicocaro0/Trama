@@ -23,6 +23,8 @@ const proyecto = {
   apodo: 'Luli',
   fechaNacimiento: '2018-05-12',
   escuela: 'Colegio ficticio',
+  tipoEscuela: 'HIBRIDA',
+  // Un grado escrito a mano antes de que fuera una lista.
   grado: '2.º',
 }
 const instante = '2026-10-17T15:04:05Z'
@@ -99,6 +101,7 @@ describe('Datos personales y navegación compartida', () => {
       'Luli',
       '12/05/2018',
       'Colegio ficticio',
+      'Híbrida (común y especial)',
       '2.º',
     ])
       expect(within(datos).getByText(valor)).toBeInTheDocument()
@@ -143,6 +146,36 @@ describe('Datos personales y navegación compartida', () => {
       await screen.findByRole('button', { name: 'Editar datos personales' }),
     ).toBeInTheDocument()
     expect(screen.getByRole('heading', { name: 'Eliminar perfil' })).toBeInTheDocument()
+    // La foto del niño se cambia con el lápiz de la cabecera
+    expect(await screen.findByRole('button', { name: 'Subir foto' })).toBeInTheDocument()
+  })
+  it('el admin edita el tipo de escuela y conserva un grado escrito a mano', async () => {
+    cliente.get.mockImplementation(async (ruta) => ({
+      data:
+        ruta === '/proyectos'
+          ? [{ id, nombre: proyecto.nombre, rol: 'TUTOR', esAdmin: true }]
+          : { ...proyecto, puedeCargar: true },
+    }))
+    cliente.put.mockResolvedValueOnce({ data: { ...proyecto, tipoEscuela: 'COMUN' } })
+    abrir('datos-personales')
+    await userEvent.click(
+      await screen.findByRole('button', { name: 'Editar datos personales' }),
+    )
+    const grado = screen.getByLabelText('Grado', { exact: true })
+    expect(grado).toHaveValue('2.º')
+    expect(within(grado).getByRole('option', { name: '7.º grado' })).toBeInTheDocument()
+    await userEvent.selectOptions(
+      screen.getByLabelText('Tipo de escuela', { exact: true }),
+      'COMUN',
+    )
+    await userEvent.click(screen.getByRole('button', { name: 'Guardar cambios' }))
+    expect(cliente.put).toHaveBeenCalledWith(
+      `/proyectos/${id}`,
+      expect.objectContaining({ tipoEscuela: 'COMUN', grado: '2.º' }),
+    )
+    expect(
+      await screen.findByText('Datos actualizados correctamente.'),
+    ).toBeInTheDocument()
   })
   it('un miembro que no es administrador no ve Editar ni la zona para eliminar', async () => {
     cliente.get.mockImplementation(async (ruta) => ({
@@ -157,6 +190,7 @@ describe('Datos personales y navegación compartida', () => {
       screen.queryByRole('button', { name: 'Editar datos personales' }),
     ).not.toBeInTheDocument()
     expect(screen.queryByRole('heading', { name: 'Eliminar perfil' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Subir foto' })).not.toBeInTheDocument()
   })
   it('no expone datos personales cuando falta permiso', async () => {
     cliente.get.mockRejectedValue({ response: { status: 403 } })

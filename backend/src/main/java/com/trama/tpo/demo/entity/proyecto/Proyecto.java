@@ -45,6 +45,10 @@ public class Proyecto {
     @Column(name = "grado", nullable = false, length = 30)
     private String grado;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "tipo_escuela", length = 10)
+    private TipoEscuela tipoEscuela;
+
     /**
      * Id del archivo de la foto. Queda como id suelto hasta que exista la entity Archivo (0.3, S2);
      * ahí se cambia por un @ManyToOne(fetch = LAZY) sin tocar la base.

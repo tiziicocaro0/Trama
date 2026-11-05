@@ -2,19 +2,21 @@ import { useState } from 'react'
 import { useParams } from 'react-router-dom'
 import { PencilSimple } from '@phosphor-icons/react'
 import Boton from '../../components/ui/Boton.jsx'
-import Campo from '../../components/ui/Campo.jsx'
-import CampoFecha from '../../components/ui/CampoFecha.jsx'
 import CampoFormulario from '../../components/ui/CampoFormulario.jsx'
-import { Aviso } from '../../components/ui/Aviso.jsx'
-import CabeceraPerfil from './components/CabeceraPerfil.jsx'
-import NavegacionPerfil from './components/NavegacionPerfil.jsx'
 import usePerfil from './hooks/usePerfil.js'
 import useAuth from '../../hooks/useAuth.js'
 import { formatearFechaCalendario } from '../../utils/fechas.js'
 import { actualizarProyecto } from '../../api/proyectos.js'
 import { calcularEdad } from './perfil.js'
+import CampoDatoNino from './components/CampoDatoNino.jsx'
+import {
+  GRADOS,
+  TIPOS_ESCUELA,
+  nombreTipoEscuela,
+} from './datosEscolares.js'
 import ZonaEliminarPerfil from './eliminacion/ZonaEliminarPerfil.jsx'
 import useProyectoActual from '../../hooks/useProyectoActual.js'
+import { avisar, avisarError } from '../../components/avisos/avisosFlotantes.js'
 
 const definicionesCampos = [
   { nombre: 'nombre', etiqueta: 'Nombre', maxLength: 80 },
@@ -22,7 +24,21 @@ const definicionesCampos = [
   { nombre: 'apodo', etiqueta: 'Apodo', maxLength: 40, opcional: true },
   { nombre: 'fechaNacimiento', etiqueta: 'Fecha de nacimiento', tipo: 'fecha' },
   { nombre: 'escuela', etiqueta: 'Colegio', maxLength: 120 },
-  { nombre: 'grado', etiqueta: 'Grado', maxLength: 30 },
+  {
+    nombre: 'tipoEscuela',
+    etiqueta: 'Tipo de escuela',
+    tipo: 'selector',
+    opciones: TIPOS_ESCUELA,
+    vacia: 'Elegí el tipo de escuela',
+  },
+  {
+    nombre: 'grado',
+    etiqueta: 'Grado',
+    maxLength: 30,
+    tipo: 'selector',
+    opciones: GRADOS,
+    vacia: 'Elegí el grado',
+  },
 ]
 
 export default function DatosPersonalesPage() {
@@ -40,7 +56,6 @@ export default function DatosPersonalesPage() {
   const [valores, setValores] = useState({})
   const [errores, setErrores] = useState({})
   const [guardando, setGuardando] = useState(false)
-  const [mensaje, setMensaje] = useState({ tipo: '', texto: '' })
 
   const hoy = new Date()
   const fechaMaxima = `${hoy.getFullYear()}-${String(hoy.getMonth() + 1).padStart(2, '0')}-${String(hoy.getDate()).padStart(2, '0')}`
@@ -52,17 +67,16 @@ export default function DatosPersonalesPage() {
       apodo: proyecto.apodo ?? '',
       fechaNacimiento: proyecto.fechaNacimiento ?? '',
       escuela: proyecto.escuela ?? '',
+      tipoEscuela: proyecto.tipoEscuela ?? '',
       grado: proyecto.grado ?? '',
     })
     setErrores({})
-    setMensaje({ tipo: '', texto: '' })
     setEditando(true)
   }
 
   function cancelarEdicion() {
     setEditando(false)
     setErrores({})
-    setMensaje({ tipo: '', texto: '' })
   }
 
   function cambiar(evento) {
@@ -78,7 +92,8 @@ export default function DatosPersonalesPage() {
     for (const campo of definicionesCampos) {
       datos[campo.nombre] = (valores[campo.nombre] ?? '').trim()
       if (!campo.opcional && !datos[campo.nombre]) {
-        nuevosErrores[campo.nombre] = 'Completá este dato.'
+        nuevosErrores[campo.nombre] =
+          campo.tipo === 'selector' ? 'Elegí una opción.' : 'Completá este dato.'
       } else if (campo.maxLength && datos[campo.nombre].length > campo.maxLength) {
         nuevosErrores[campo.nombre] = `Usá hasta ${campo.maxLength} caracteres.`
       }
@@ -98,21 +113,19 @@ export default function DatosPersonalesPage() {
     }
 
     setGuardando(true)
-    setMensaje({ tipo: '', texto: '' })
 
     try {
       await actualizarProyecto(id, datos)
       setEditando(false)
-      setMensaje({ tipo: 'exito', texto: 'Datos actualizados correctamente.' })
+      avisar('Datos actualizados correctamente.')
       reintentar()
-      setTimeout(() => setMensaje({ tipo: '', texto: '' }), 4000)
     } catch (err) {
       const texto =
         err?.response?.status === 403
           ? 'No tenés permiso para editar estos datos.'
           : err?.response?.data?.mensaje ||
             'No pudimos guardar los cambios. Intentá nuevamente.'
-      setMensaje({ tipo: 'error', texto })
+      avisarError(texto)
     } finally {
       setGuardando(false)
     }
@@ -128,6 +141,7 @@ export default function DatosPersonalesPage() {
           formatearFechaCalendario(proyecto.fechaNacimiento),
         ],
         ['Colegio', proyecto.escuela],
+        ['Tipo de escuela', nombreTipoEscuela(proyecto.tipoEscuela)],
         ['Grado', proyecto.grado],
       ]
     : []
@@ -135,7 +149,7 @@ export default function DatosPersonalesPage() {
   return (
     <main
       tabIndex={-1}
-      className="min-h-svh bg-fondo px-4 py-6 text-texto sm:px-8 sm:py-10"
+      className="mx-auto max-w-6xl px-4 pb-6 text-texto sm:px-8 sm:pb-10"
     >
       <div className="mx-auto max-w-6xl">
         {cargando ? (
@@ -154,18 +168,6 @@ export default function DatosPersonalesPage() {
         ) : (
           proyecto && (
             <>
-              <CabeceraPerfil
-                proyecto={proyecto}
-                seccion={{ titulo: 'Datos personales' }}
-              />
-              <NavegacionPerfil proyectoId={id} />
-
-              {mensaje.texto && (
-                <div className="mb-6">
-                  <Aviso tipo={mensaje.tipo}>{mensaje.texto}</Aviso>
-                </div>
-              )}
-
               <section
                 aria-labelledby="titulo-datos-personales"
                 className="rounded-lg bg-superficie p-5 shadow-sm sm:p-8"
@@ -206,26 +208,13 @@ export default function DatosPersonalesPage() {
                             label={campo.etiqueta}
                             error={errores[campo.nombre]}
                           >
-                            {campo.tipo === 'fecha' ? (
-                              <CampoFecha
-                                name={campo.nombre}
-                                value={valores[campo.nombre]}
-                                onChange={cambiar}
-                                max={fechaMaxima}
-                                disabled={guardando}
-                                required
-                              />
-                            ) : (
-                              <Campo
-                                name={campo.nombre}
-                                type="text"
-                                maxLength={campo.maxLength}
-                                value={valores[campo.nombre]}
-                                onChange={cambiar}
-                                required={!campo.opcional}
-                                disabled={guardando}
-                              />
-                            )}
+                            <CampoDatoNino
+                              campo={campo}
+                              valor={valores[campo.nombre]}
+                              onChange={cambiar}
+                              fechaMaxima={fechaMaxima}
+                              disabled={guardando}
+                            />
                           </CampoFormulario>
                         </div>
                       ))}

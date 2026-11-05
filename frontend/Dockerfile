@@ -17,7 +17,7 @@ RUN npm run build
 # Etapa 2: servir los archivos compilados con nginx
 FROM nginx:1.27-alpine
 
-COPY nginx.conf /etc/nginx/conf.d/default.conf
+COPY nginx.conf.template /etc/nginx/templates/default.conf.template
 COPY --from=build /build/dist /usr/share/nginx/html
 
 EXPOSE 80

@@ -4,8 +4,6 @@ import { listarBitacora } from '../../api/aportes.js'
 import { listarMiembros } from '../../api/miembros.js'
 import Boton from '../../components/ui/Boton.jsx'
 import { useAuth } from '../../hooks/useAuth.js'
-import CabeceraPerfil from '../perfil/components/CabeceraPerfil.jsx'
-import NavegacionPerfil from '../perfil/components/NavegacionPerfil.jsx'
 import usePerfil from '../perfil/hooks/usePerfil.js'
 import {
   esRegistroAbc,
@@ -118,7 +116,7 @@ export default function BitacoraPage() {
   return (
     <main
       tabIndex={-1}
-      className="min-h-svh bg-fondo px-4 py-6 text-texto sm:px-8 sm:py-10"
+      className="mx-auto max-w-6xl px-4 pb-6 text-texto sm:px-8 sm:pb-10"
     >
       <div className="mx-auto max-w-6xl">
         {cargando && !proyecto ? (
@@ -139,11 +137,6 @@ export default function BitacoraPage() {
         ) : (
           proyecto && (
             <>
-              <CabeceraPerfil
-                proyecto={proyecto}
-                seccion={{ titulo: 'Bitácora' }}
-              />
-              <NavegacionPerfil proyectoId={id} />
 
               <section aria-labelledby="titulo-bitacora">
                 <div className="mb-6 flex flex-wrap items-center justify-between gap-4">

@@ -102,7 +102,7 @@ describe('Recorrido Dashboard → Acompañamientos → Perfil', () => {
       ).toBeInTheDocument()
       await user.click(screen.getByRole('link', { name: 'Volver al inicio' }))
       expect(
-        screen.getByRole('heading', { name: 'Acompañamientos activos' }),
+        screen.getByRole('heading', { name: 'Tus acompañamientos' }),
       ).toBeInTheDocument()
     },
   )

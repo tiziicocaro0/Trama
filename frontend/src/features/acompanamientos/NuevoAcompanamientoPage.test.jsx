@@ -1,4 +1,4 @@
-import { act, fireEvent, render, screen } from '@testing-library/react'
+import { act, fireEvent, render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router-dom'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
@@ -38,7 +38,8 @@ function completar() {
     ['Nombre del niño', 'Luz ficticia'],
     ['Apellido del niño', 'Ejemplo'],
     ['Escuela a la que va', 'Escuela ficticia'],
-    ['Grado', '2.º'],
+    ['Tipo de escuela', 'ESPECIAL'],
+    ['Grado', '2.º grado'],
     ['Fecha de nacimiento', '2018-05-12'],
   ]) {
     fireEvent.change(screen.getByLabelText(nombre, { exact: true }), {
@@ -79,7 +80,8 @@ describe('Alta real de acompañamiento', () => {
       apodo: '',
       fechaNacimiento: '2018-05-12',
       escuela: 'Escuela ficticia',
-      grado: '2.º',
+      tipoEscuela: 'ESPECIAL',
+      grado: '2.º grado',
       consentimiento: true,
     })
     expect(
@@ -89,7 +91,7 @@ describe('Alta real de acompañamiento', () => {
       signal: expect.any(AbortSignal),
     })
     expect(
-      screen.getByRole('heading', { name: 'Fortalezas' }),
+      await screen.findByRole('heading', { name: 'Fortalezas' }),
     ).toBeInTheDocument()
   })
 
@@ -97,7 +99,9 @@ describe('Alta real de acompañamiento', () => {
     abrir()
     fireEvent.submit(screen.getByRole('form', { name: 'Crear acompañamiento' }))
     expect(screen.getByLabelText('Nombre del niño', { exact: true })).toHaveFocus()
-    expect(screen.getAllByText('Completá este dato.')).toHaveLength(5)
+    expect(screen.getAllByText('Completá este dato.')).toHaveLength(4)
+    // Grado y tipo de escuela son listas: piden elegir una opción.
+    expect(screen.getAllByText('Elegí una opción.')).toHaveLength(2)
     expect(
       screen.getByText('Necesitamos tu autorización para continuar.'),
     ).toBeInTheDocument()
@@ -118,6 +122,33 @@ describe('Alta real de acompañamiento', () => {
       'Luz ficticia',
     )
     expect(cliente.post).not.toHaveBeenCalled()
+  })
+
+  it('el grado y el tipo de escuela se eligen de una lista', () => {
+    abrir()
+    const grado = screen.getByLabelText('Grado', { exact: true })
+    expect(grado.tagName).toBe('SELECT')
+    expect(
+      within(grado).getAllByRole('option').map((opcion) => opcion.textContent),
+    ).toEqual([
+      'Elegí el grado',
+      '1.º grado',
+      '2.º grado',
+      '3.º grado',
+      '4.º grado',
+      '5.º grado',
+      '6.º grado',
+      '7.º grado',
+    ])
+    const tipo = screen.getByLabelText('Tipo de escuela', { exact: true })
+    expect(
+      within(tipo).getAllByRole('option').map((opcion) => opcion.textContent),
+    ).toEqual([
+      'Elegí el tipo de escuela',
+      'Común',
+      'Especial',
+      'Híbrida (común y especial)',
+    ])
   })
 
   it('rechaza campos que contienen solo espacios', () => {

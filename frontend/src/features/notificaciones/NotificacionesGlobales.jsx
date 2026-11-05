@@ -13,6 +13,7 @@ export default function NotificacionesGlobales() {
     pathname.startsWith('/proyectos/') ||
     // 9.x: Mi plan y la institución (el cambio de paquete llega como notificación)
     pathname.startsWith('/cuenta/') ||
+    pathname === '/perfil' ||
     pathname === '/institucion'
 
   // 5.3: "Mostrarle el día" es a pantalla completa, sin nada encima (la campana tapaba la X en el celular)
@@ -29,4 +30,4 @@ export default function NotificacionesGlobales() {
       <CampanaNotificaciones />
     </div>
   )
-}
+}

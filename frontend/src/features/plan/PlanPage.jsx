@@ -1,7 +1,6 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import useAuth from '../../hooks/useAuth.js'
-import { Aviso } from '../../components/ui/Aviso.jsx'
 import Boton from '../../components/ui/Boton.jsx'
 import { Modal } from '../../components/ui/Modal.jsx'
 import { Tarjeta } from '../../components/ui/Tarjeta.jsx'
@@ -11,6 +10,7 @@ import InicioSidebar from '../inicio/InicioSidebar.jsx'
 import PagoSimulado from './components/PagoSimulado.jsx'
 import useMiPlan from './hooks/useMiPlan.js'
 import { NOMBRES_PLAN, describirPeriodo, formatearPesos } from './planes.js'
+import { avisar } from '../../components/avisos/avisosFlotantes.js'
 
 // 9.1: /cuenta/plan. Las familias solo ven que Trama es gratis: nunca precios ni pagos.
 export default function PlanPage() {
@@ -18,14 +18,13 @@ export default function PlanPage() {
   const { plan, error, cargando, reintentar, actualizar } = useMiPlan()
   const [elegido, setElegido] = useState(null)
   const [confirmarBaja, setConfirmarBaja] = useState(false)
-  const [mensaje, setMensaje] = useState('')
   const [errorBaja, setErrorBaja] = useState('')
 
   async function pagar() {
     const nuevo = await suscribirse(elegido.periodo)
     actualizar(nuevo)
     setElegido(null)
-    setMensaje('¡Listo! Tu suscripción está activa: ya podés editar en todos tus niños.')
+    avisar('¡Listo! Tu suscripción está activa: ya podés editar en todos tus niños.')
   }
 
   async function darDeBaja() {
@@ -33,7 +32,7 @@ export default function PlanPage() {
     try {
       actualizar(await cancelarSuscripcion())
       setConfirmarBaja(false)
-      setMensaje('Cancelaste la suscripción. Volviste al plan gratuito.')
+      avisar('Cancelaste la suscripción. Volviste al plan gratuito.')
     } catch (problema) {
       setErrorBaja(problema.message)
     }
@@ -56,7 +55,6 @@ export default function PlanPage() {
               Mi plan
             </h1>
           </header>
-          {mensaje && <Aviso tipo="exito">{mensaje}</Aviso>}
           {cargando ? (
             <p role="status">Cargando tu plan…</p>
           ) : error ? (

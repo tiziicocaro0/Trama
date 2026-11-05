@@ -34,10 +34,12 @@ import com.trama.tpo.demo.aporte.observacion.EtiquetaObservacion;
 import com.trama.tpo.demo.entity.dto.AporteRequest;
 import com.trama.tpo.demo.entity.dto.CrearProyectoRequest;
 import com.trama.tpo.demo.entity.dto.EspecialidadItemRequest;
+import com.trama.tpo.demo.entity.dto.MatriculaRequest;
 import com.trama.tpo.demo.entity.dto.RegisterRequest;
 import com.trama.tpo.demo.entity.dto.RestablecerContrasenaRequest;
 import com.trama.tpo.demo.entity.membresia.Especialidad;
 import com.trama.tpo.demo.entity.notificacion.TipoNotificacion;
+import com.trama.tpo.demo.entity.proyecto.TipoEscuela;
 import com.trama.tpo.demo.entity.usuario.TipoCuenta;
 import com.trama.tpo.demo.entity.membresia.Rol;
 import com.trama.tpo.demo.entity.plan.PeriodoSuscripcion;
@@ -80,6 +82,14 @@ class ContratoFrontendTest {
                 Pattern.compile("valor: '([A-Z_]+)'"),
                 leer("features/perfil/especialidades.js"));
         assertEquals(nombres(Especialidad.class), front);
+    }
+
+    @Test
+    void tiposDeEscuela() {
+        Set<String> front = todasLasCoincidencias(
+                Pattern.compile("valor: '([A-Z_]+)'"),
+                leer("features/perfil/datosEscolares.js"));
+        assertEquals(nombres(TipoEscuela.class), front);
     }
 
     @Test
@@ -163,6 +173,13 @@ class ContratoFrontendTest {
                     numero(registro, "campo\\('" + campo + "'[\\s\\S]*?maxLength:\\s*(\\d+)"),
                     "Largo de '" + campo + "' en el registro");
         }
+        // Matrícula del profesional: en el registro y en Mi perfil
+        assertEquals(maximo(RegisterRequest.class, "matricula"), numero(
+                leer("features/auth/registro/components/RegistroTipoCuenta.jsx"),
+                "name=\"matricula\"[\\s\\S]*?maxLength=\\{(\\d+)\\}"), "Matrícula en el registro");
+        assertEquals(maximo(MatriculaRequest.class, "matricula"), numero(
+                leer("features/cuenta/ModalMatricula.jsx"),
+                "name=\"matricula\"[\\s\\S]*?maxLength=\\{(\\d+)\\}"), "Matrícula en Mi perfil");
     }
 
     @Test

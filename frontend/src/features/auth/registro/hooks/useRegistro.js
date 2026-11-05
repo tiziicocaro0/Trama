@@ -22,9 +22,11 @@ export default function useRegistro() {
     apellido: '',
     email: '',
     password: '',
+    confirmar: '',
     tipoCuenta: '',
     area: '',
     especialidades: [],
+    matricula: '',
     codigo: '',
   })
   const [etapa, setEtapa] = useState(0)
@@ -60,7 +62,10 @@ export default function useRegistro() {
       ...actuales,
       [campo]: valor,
       ...(actuales[campo] !== valor
-        ? { especialidades: [], ...(campo === 'tipoCuenta' ? { area: '' } : {}) }
+        ? {
+            especialidades: [],
+            ...(campo === 'tipoCuenta' ? { area: '', matricula: '' } : {}),
+          }
         : {}),
     }))
     setErrores((actuales) => ({ ...actuales, [campo]: undefined, especialidades: undefined }))
@@ -128,7 +133,11 @@ export default function useRegistro() {
                 : [],
           })
           // Último paso: el código que llega por mail.
-          setValores((actuales) => ({ ...actuales, password: '' }))
+          setValores((actuales) => ({
+            ...actuales,
+            password: '',
+            confirmar: '',
+          }))
           setEtapa(ETAPA_CODIGO)
           setSegundosReenvio(SEGUNDOS_ENTRE_ENVIOS)
         },

@@ -136,6 +136,8 @@ services:
     environment:
       SPRING_PROFILES_ACTIVE: dev
       SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/trama
+      # Sin devtools (no viaja en el jar), los errores devueltos no quedan en el log.
+      SPRING_MVC_LOG_RESOLVED_EXCEPTION: "true"
       MYSQL_PASSWORD: ${MYSQL_PASSWORD}
       JWT_SECRET: ${JWT_SECRET}
       TRAMA_CRYPTO_KEY: ${TRAMA_CRYPTO_KEY}
@@ -160,8 +162,10 @@ services:
     image: trama-frontend:local
     container_name: trama-frontend-demo
     restart: unless-stopped
-    depends_on:
-      - backend-demo
+    environment:
+      # Back en Docker (por defecto) o el de Windows con mvnw:
+      # DEMO_BACKEND_URL=http://host.docker.internal:4002 en el .env
+      DEMO_BACKEND_URL: ${DEMO_BACKEND_URL:-http://backend-demo:8080}
     ports:
       - "127.0.0.1:4173:80"
   ngrok:

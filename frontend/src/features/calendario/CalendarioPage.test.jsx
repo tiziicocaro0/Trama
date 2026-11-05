@@ -344,5 +344,64 @@ describe('Calendario y eventos del niño (Tarea 5.0)', () => {
       ).not.toBeInTheDocument()
     })
   })
-})
 
+  it('al tocar afuera se cierra el alta y guarda un borrador para ese día, que se puede descartar', async () => {
+    const user = userEvent.setup()
+    renderCalendario({ id: docenteId, nombre: 'Lucía' })
+    await screen.findByRole('button', { name: 'Ver evento: Acto del Día de la Tradición' })
+    const abrirAlta = () =>
+      user.click(screen.getAllByRole('button', { name: /Agregar evento el .* a las 08:00/ })[0])
+
+    await abrirAlta()
+    let dialog = await screen.findByRole('dialog', { name: 'Nuevo evento' })
+    fireEvent.change(within(dialog).getByLabelText(/Título/i), { target: { value: 'Turno con la fono' } })
+    fireEvent.mouseDown(dialog)
+    expect(screen.queryByRole('dialog', { name: 'Nuevo evento' })).not.toBeInTheDocument()
+    expect(cliente.post).not.toHaveBeenCalledWith(`/proyectos/${proyectoId}/eventos`, expect.anything())
+
+    await abrirAlta()
+    dialog = await screen.findByRole('dialog', { name: 'Nuevo evento' })
+    expect(within(dialog).getByLabelText(/Título/i)).toHaveValue('Turno con la fono')
+    expect(within(dialog).getByText('Recuperamos el borrador que dejaste para este día.')).toBeInTheDocument()
+    await user.click(within(dialog).getByRole('button', { name: 'Descartar borrador' }))
+    expect(screen.queryByRole('dialog', { name: 'Nuevo evento' })).not.toBeInTheDocument()
+
+    await abrirAlta()
+    dialog = await screen.findByRole('dialog', { name: 'Nuevo evento' })
+    expect(within(dialog).getByLabelText(/Título/i)).toHaveValue('')
+    expect(within(dialog).queryByRole('button', { name: 'Descartar borrador' })).not.toBeInTheDocument()
+  })
+
+  it('el borrador aparece en el panel del día y Escape también cierra guardándolo', async () => {
+    const user = userEvent.setup()
+    renderCalendario({ id: docenteId, nombre: 'Lucía' })
+    await user.click(await screen.findByRole('button', { name: 'Ver evento: Acto del Día de la Tradición' }))
+    await user.click(screen.getByRole('button', { name: '← Volver' }))
+    const panel = screen.getByRole('dialog', { name: /Eventos del/ })
+    await user.click(within(panel).getByRole('button', { name: 'Agregar evento' }))
+    const dialog = await screen.findByRole('dialog', { name: 'Nuevo evento' })
+    fireEvent.change(within(dialog).getByLabelText(/Título/i), { target: { value: 'Llevar la mochila azul' } })
+    await user.keyboard('{Escape}')
+    expect(screen.queryByRole('dialog', { name: 'Nuevo evento' })).not.toBeInTheDocument()
+
+    await user.click(screen.getByRole('button', { name: 'Ver evento: Acto del Día de la Tradición' }))
+    await user.click(screen.getByRole('button', { name: '← Volver' }))
+    expect(screen.getByText('Borrador sin guardar')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Seguir el borrador' })).toBeInTheDocument()
+    expect(screen.getByText('Llevar la mochila azul')).toBeInTheDocument()
+  })
+
+  it('desde el formulario de edición se puede eliminar el evento', async () => {
+    const user = userEvent.setup()
+    renderCalendario({ id: docenteId, nombre: 'Lucía' })
+    await user.click(await screen.findByRole('button', { name: 'Ver evento: Acto del Día de la Tradición' }))
+    await user.click(screen.getByRole('button', { name: 'Editar Acto del Día de la Tradición' }))
+    const dialog = await screen.findByRole('dialog', { name: 'Editar evento' })
+    await user.click(within(dialog).getByRole('button', { name: 'Eliminar evento' }))
+    await waitFor(() => {
+      expect(cliente.delete).toHaveBeenCalledWith(`/proyectos/${proyectoId}/eventos/ev-propio`)
+    })
+    expect(await screen.findByText('Evento eliminado correctamente.')).toBeInTheDocument()
+    expect(screen.queryByRole('dialog', { name: 'Editar evento' })).not.toBeInTheDocument()
+  })
+})

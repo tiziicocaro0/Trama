@@ -66,6 +66,7 @@ public class ProyectoService {
                                 .fechaNacimiento(request.fechaNacimiento())
                                 .escuela(request.escuela())
                                 .grado(request.grado())
+                                .tipoEscuela(request.tipoEscuela())
                                 .consentimientoFecha(Instant.now())
                                 .build());
 
@@ -137,6 +138,7 @@ public class ProyectoService {
                 proyecto.setFechaNacimiento(request.fechaNacimiento());
                 proyecto.setEscuela(request.escuela());
                 proyecto.setGrado(request.grado());
+                proyecto.setTipoEscuela(request.tipoEscuela());
 
                 return ProyectoResponse.from(proyectoRepository.save(proyecto), true, false);
         }
@@ -149,4 +151,4 @@ public class ProyectoService {
                                                 "No encontramos este proyecto",
                                                 HttpStatus.NOT_FOUND));
         }
-}
+}

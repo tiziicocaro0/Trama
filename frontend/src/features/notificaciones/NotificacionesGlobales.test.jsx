@@ -26,6 +26,11 @@ describe('Campana en las pantallas privadas', () => {
     expect(screen.getByRole('button', { name: 'Campana' })).toBeInTheDocument()
   })
 
+  it.each(['/inicio', '/perfil', '/cuenta/plan'])('aparece en %s', (ruta) => {
+    montar(ruta)
+    expect(screen.getByRole('button', { name: 'Campana' })).toBeInTheDocument()
+  })
+
   it('no aparece en "Mostrarle el día", que es a pantalla completa (5.3)', () => {
     montar('/proyectos/abc/hoy')
     expect(screen.queryByRole('button', { name: 'Campana' })).not.toBeInTheDocument()

@@ -2,7 +2,6 @@ import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { EnvelopeSimple } from '@phosphor-icons/react'
 import useAuth from '../../hooks/useAuth.js'
-import { Aviso } from '../../components/ui/Aviso.jsx'
 import Boton from '../../components/ui/Boton.jsx'
 import Interruptor from '../../components/ui/Interruptor.jsx'
 import {
@@ -11,6 +10,7 @@ import {
 } from '../../api/notificaciones.js'
 import InicioSidebar from '../inicio/InicioSidebar.jsx'
 import { TIPOS_AVISO } from './tiposAviso.js'
+import { avisar, avisarError } from '../../components/avisos/avisosFlotantes.js'
 
 // 6.1: /cuenta/notificaciones. Elegir qué avisos de la campana llegan también por mail.
 export default function PreferenciasNotificacionesPage() {
@@ -19,7 +19,6 @@ export default function PreferenciasNotificacionesPage() {
   const [resultado, setResultado] = useState(null)
   const [preferencias, setPreferencias] = useState(null)
   const [guardando, setGuardando] = useState(null)
-  const [estado, setEstado] = useState({ tipo: null, texto: '' })
 
   useEffect(() => {
     const controller = new AbortController()
@@ -45,17 +44,13 @@ export default function PreferenciasNotificacionesPage() {
     const anteriores = actuales
     setPreferencias({ ...actuales, [tipo]: porEmail })
     setGuardando(tipo)
-    setEstado({ tipo: null, texto: '' })
     try {
       const lista = await guardarPreferenciasNotificacion([{ tipo, porEmail }])
       setPreferencias(Object.fromEntries(lista.map((item) => [item.tipo, item.porEmail])))
-      setEstado({ tipo: 'exito', texto: 'Guardamos tu preferencia.' })
+      avisar('Guardamos tu preferencia.')
     } catch (error) {
       setPreferencias(anteriores)
-      setEstado({
-        tipo: 'error',
-        texto: error?.response?.data?.mensaje || 'No pudimos guardar el cambio. Intentá nuevamente.',
-      })
+      avisarError(error?.response?.data?.mensaje || 'No pudimos guardar el cambio. Intentá nuevamente.')
     } finally {
       setGuardando(null)
     }
@@ -81,8 +76,6 @@ export default function PreferenciasNotificacionesPage() {
               Todo te llega a la campana. Elegí qué avisos querés recibir también por mail.
             </p>
           </header>
-
-          {estado.texto && <Aviso tipo={estado.tipo}>{estado.texto}</Aviso>}
 
           {cargando ? (
             <p role="status">Cargando tus preferencias…</p>

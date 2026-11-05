@@ -6,7 +6,7 @@ import { App } from './App';
 import CampoContrasena from './components/ui/CampoContrasena.jsx';
 import CampoFormulario from './components/ui/CampoFormulario.jsx';
 import { clienteApi } from './api/cliente.js';
-import { PROYECTOS_MOCK } from './api/proyectos.mock.js';
+import { PROYECTOS_MOCK } from './test/datosFicticios.js';
 
 vi.mock('./api/cliente.js', () => {
   const cliente = { defaults: { baseURL: '/api' }, get: vi.fn() };
@@ -20,7 +20,8 @@ beforeEach(() => {
 // La sesión real la da AuthProvider (1.1); acá se simula un usuario logueado.
 vi.mock('./hooks/useAuth', async (importOriginal) => {
   const original = await importOriginal();
-  const sesion = () => ({ usuario: original.USUARIO_MOCK, estado: 'autenticado' });
+  const { USUARIO_MOCK } = await import('./test/datosFicticios.js');
+  const sesion = () => ({ usuario: USUARIO_MOCK, estado: 'autenticado' });
   return { ...original, useAuth: sesion, default: sesion };
 });
 

@@ -92,6 +92,7 @@ describe('Flujo integrado de autenticación con transporte Axios simulado', () =
     await user.click(screen.getByRole('radio', { name: /Soy familia/ }))
     await user.click(screen.getByRole('button', { name: 'Continuar' }))
     await user.type(screen.getByLabelText('Contraseña'), 'Prueba123!')
+    await user.type(screen.getByLabelText('Repetí la contraseña'), 'Prueba123!')
     await user.click(screen.getByRole('button', { name: 'Continuar' }))
     await user.click(screen.getByRole('button', { name: 'Crear cuenta' }))
     // Último paso: el código que llega por mail
@@ -100,11 +101,14 @@ describe('Flujo integrado de autenticación con transporte Axios simulado', () =
     expect(
       await screen.findByRole('heading', { name: 'Hola, Nora.' }),
     ).toBeInTheDocument()
-    expect(peticiones.map(({ url }) => url)).toEqual([
+    const urls = peticiones.map(({ url }) => url)
+    expect(urls.slice(0, 3)).toEqual([
       '/auth/registro',
       '/auth/verificar-email',
       '/auth/yo',
     ])
+    // Lo que sigue es lo que carga Inicio: nunca un POST de login
+    expect(urls).not.toContain('/auth/login')
     expect(peticiones[2].headers.get('Authorization')).toBe(
       `Bearer ${obtenerToken()}`,
     )
@@ -125,9 +129,9 @@ describe('Flujo integrado de autenticación con transporte Axios simulado', () =
     })
     expect(peticiones[0].headers.get('Authorization')).toBeUndefined()
     expect(screen.queryByText('No usar esta identidad')).not.toBeInTheDocument()
-    expect(
-      screen.getByText(/los acompañamientos y eventos son ficticios/),
-    ).toBeInTheDocument()
+    // Inicio muestra datos de la cuenta, no ejemplos
+    expect(screen.getByRole('region', { name: 'Tus acompañamientos' })).toBeInTheDocument()
+    expect(screen.queryByText(/ficticios/)).not.toBeInTheDocument()
   })
 
   it('rechaza credenciales incorrectas y no crea una sesión', async () => {
@@ -192,12 +196,15 @@ describe('Flujo integrado de autenticación con transporte Axios simulado', () =
       await screen.findByRole('heading', { name: 'Hola de nuevo' }),
     ).toBeInTheDocument()
     expect(obtenerToken()).toBeNull()
+    // Antes de cerrar sesión: la identidad y el resumen de Inicio
+    const pedidosConSesion = peticiones.length
     vista.unmount()
     abrir('/inicio')
     expect(
       await screen.findByRole('heading', { name: 'Hola de nuevo' }),
     ).toBeInTheDocument()
-    expect(peticiones).toHaveLength(1)
+    // Sin sesión, recargar /inicio no hace ningún pedido
+    expect(peticiones).toHaveLength(pedidosConSesion)
   })
 
   it('un 401 de una petición autenticada elimina la sesión', async () => {

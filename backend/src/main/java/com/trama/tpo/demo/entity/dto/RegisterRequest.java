@@ -62,4 +62,8 @@ public class RegisterRequest {
     @NotNull(message = "Las especialidades no pueden ser nulas")
     @Size(max = 10, message = "No se pueden declarar más de 10 especialidades")
     private List<@NotNull(message = "La especialidad es obligatoria") @Valid EspecialidadItemRequest> especialidades = new ArrayList<>();
+
+    /** Opcional y solo para profesionales. Es declarada: TRAMA no la verifica. */
+    @Size(max = 40, message = "La matrícula no puede superar los 40 caracteres")
+    private String matricula;
 }

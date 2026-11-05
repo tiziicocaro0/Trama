@@ -122,7 +122,7 @@ describe('Registro ABC en la bitácora (Tarea 4.4)', () => {
     abrirBitacora()
 
     await screen.findByRole('heading', { name: 'Bitácora', level: 2 })
-    const articulos = screen.getAllByRole('article')
+    const articulos = await screen.findAllByRole('article')
     expect(articulos).toHaveLength(2)
 
     // El ABC (20/10) va arriba de la observación (18/10)

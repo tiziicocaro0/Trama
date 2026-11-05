@@ -42,6 +42,17 @@ const red = [
     rol: 'EDUCACION',
     especialidades: [{ especialidad: 'DOCENTE_PRIMARIO', aclaracion: null }],
   },
+  {
+    id: 'membresia-psicologa',
+    nombre: 'Psicóloga ficticia',
+    apellido: 'Ejemplo',
+    rol: 'SALUD',
+    especialidades: [{ especialidad: 'PSICOLOGIA', aclaracion: null }],
+    matricula: 'MN 45.123',
+    usuarioId: 'usuario-psicologa',
+    tieneFoto: true,
+    tieneComprobanteMatricula: true,
+  },
 ]
 function abrir(
   ruta = `/proyectos/${id}/red`,
@@ -62,8 +73,12 @@ function abrir(
   )
 }
 beforeEach(() => {
+  window.URL.createObjectURL = vi.fn(() => 'blob:foto-psicologa')
+  window.URL.revokeObjectURL = vi.fn()
   cliente.get.mockReset().mockImplementation(async (ruta) => ({
-    data: ruta.endsWith('/miembros')
+    data: ruta.endsWith('/foto') || ruta.endsWith('/comprobante')
+      ? new Blob(['foto'], { type: 'image/jpeg' })
+      : ruta.endsWith('/miembros')
       ? red
       : ruta.endsWith('/invitaciones')
         ? []
@@ -113,6 +128,51 @@ describe('Red de profesionales', () => {
       await screen.findByText('Todavía no hay miembros en esta red.'),
     ).toBeInTheDocument()
     expect(screen.queryByText('Docente ficticia')).not.toBeInTheDocument()
+  })
+  it('muestra la matrícula declarada y aclara que TRAMA no la verifica', async () => {
+    abrir()
+    const psicologa = (
+      await screen.findByRole('heading', { name: 'Psicóloga ficticia Ejemplo' })
+    ).closest('li')
+    expect(within(psicologa).getByText('MN 45.123')).toBeInTheDocument()
+    // La aclaración está en el (i): aparece al tocarlo
+    expect(within(psicologa).queryByRole('tooltip')).not.toBeInTheDocument()
+    await userEvent.click(within(psicologa).getByRole('button', { name: 'Sobre la matrícula' }))
+    expect(within(psicologa).getByRole('tooltip')).toHaveTextContent(
+      'TRAMA no verifica que la matrícula ni el comprobante sean reales',
+    )
+    expect(within(psicologa).getByRole('button', { name: 'Ver comprobante' })).toBeInTheDocument()
+    // Sin matrícula declarada no se muestra nada
+    const docente = screen
+      .getByRole('heading', { name: 'Docente ficticia Ejemplo' })
+      .closest('li')
+    expect(within(docente).queryByText(/Matrícula/)).not.toBeInTheDocument()
+  })
+  it('abre el comprobante de la matrícula en otra pestaña', async () => {
+    const pestana = { location: { href: '' }, close: vi.fn() }
+    vi.spyOn(window, 'open').mockReturnValue(pestana)
+    abrir()
+    const psicologa = (
+      await screen.findByRole('heading', { name: 'Psicóloga ficticia Ejemplo' })
+    ).closest('li')
+    await userEvent.click(within(psicologa).getByRole('button', { name: 'Ver comprobante' }))
+    expect(cliente.get).toHaveBeenCalledWith(
+      '/usuarios/usuario-psicologa/matricula/comprobante',
+      { responseType: 'blob' },
+    )
+    expect(window.open).toHaveBeenCalledWith('', '_blank')
+    await vi.waitFor(() => expect(pestana.location.href).toBe('blob:foto-psicologa'))
+  })
+  it('muestra la foto de quien tiene y el ícono de quien no', async () => {
+    abrir()
+    expect(await screen.findByRole('img', { name: 'Foto de Psicóloga ficticia Ejemplo' })).toHaveAttribute(
+      'src',
+      'blob:foto-psicologa',
+    )
+    expect(cliente.get).toHaveBeenCalledWith('/usuarios/usuario-psicologa/foto', expect.objectContaining({ responseType: 'blob' }))
+    expect(screen.getByRole('img', { name: 'Foto de Docente ficticia Ejemplo no disponible' })).toBeInTheDocument()
+    // Solo se pide la foto de quien tiene una
+    expect(cliente.get.mock.calls.filter(([ruta]) => ruta.endsWith('/foto'))).toHaveLength(1)
   })
   it('indica cuando la especialidad no está informada', async () => {
     cliente.get.mockImplementation(async (ruta) => ({

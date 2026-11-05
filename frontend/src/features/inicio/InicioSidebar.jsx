@@ -1,10 +1,17 @@
+import { useEffect, useRef, useState } from 'react'
 import { Link, NavLink, useLocation, useSearchParams } from 'react-router-dom'
+import { List, X } from '@phosphor-icons/react'
 import Logo from '../../components/ui/Logo.jsx'
 import HiloInicio from './HiloInicio.jsx'
 import { navegacion } from './navegacion.js'
 
-// 9.2: la página de la institución se abre desde Mi plan
-const RUTAS_PLAN = ['/cuenta/plan', '/institucion']
+// Secciones con página propia: se marcan por la ruta, no por ?seccion=.
+// 9.2: la institución se abre desde Mi plan; los avisos por mail, desde Mi perfil.
+const RUTAS_PROPIAS = {
+  plan: ['/cuenta/plan', '/institucion'],
+  perfil: ['/perfil', '/cuenta/notificaciones'],
+}
+const TODAS_LAS_RUTAS_PROPIAS = Object.values(RUTAS_PROPIAS).flat()
 
 export default function InicioSidebar({ cerrarSesion }) {
   const [params] = useSearchParams()
@@ -13,37 +20,105 @@ export default function InicioSidebar({ cerrarSesion }) {
   const actual = ['guias', 'estrategias', 'comunidad'].includes(seleccion)
     ? 'recursos'
     : seleccion
+  // En el celular el menú se abre con la hamburguesa; en pantallas grandes está siempre.
+  const [abierto, setAbierto] = useState(false)
+  const botonMenu = useRef(null)
+  const botonCerrar = useRef(null)
+
+  function cerrar() {
+    setAbierto(false)
+    botonMenu.current?.focus()
+  }
+
+  useEffect(() => {
+    if (!abierto) return undefined
+    botonCerrar.current?.focus()
+    function alTeclear(event) {
+      if (event.key === 'Escape') {
+        setAbierto(false)
+        botonMenu.current?.focus()
+      }
+    }
+    document.addEventListener('keydown', alTeclear)
+    return () => document.removeEventListener('keydown', alTeclear)
+  }, [abierto])
+
   return (
-    <aside className="flex flex-col border-b border-borde/40 bg-superficie py-6 lg:sticky lg:top-0 lg:min-h-svh lg:w-64 lg:shrink-0 lg:self-start lg:border-0 lg:pt-10 lg:pb-5 xl:w-72 xl:pt-12">
-      <div className="flex justify-center px-6">
+    <>
+      {/* Celular: hamburguesa, logo al centro y la campana (fija, de NotificacionesGlobales) a la derecha */}
+      <header className="sticky top-0 z-20 flex h-20 items-center justify-center border-b border-borde/40 bg-superficie lg:hidden">
+        <button
+          ref={botonMenu}
+          type="button"
+          aria-label="Abrir menú"
+          aria-expanded={abierto}
+          aria-controls="menu-principal"
+          onClick={() => setAbierto(true)}
+          className="absolute left-4 flex size-11 items-center justify-center rounded-md text-primario hover:bg-decoracion focus-visible:outline-2 focus-visible:outline-primario"
+        >
+          <List size={28} aria-hidden="true" />
+        </button>
         <NavLink
           to="/inicio"
           aria-label="TRAMA · Inicio"
-          className="block w-32 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-primario lg:w-28 xl:w-32"
+          className="block w-28 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-primario"
+        >
+          <Logo />
+        </NavLink>
+      </header>
+      {abierto && (
+        <div
+          aria-hidden="true"
+          onClick={cerrar}
+          className="fixed inset-0 z-40 bg-texto/40 lg:hidden"
+        />
+      )}
+      <aside
+        id="menu-principal"
+        aria-label="Menú"
+        className={`${abierto ? 'fixed inset-y-0 left-0 z-50 flex w-72 max-w-full overflow-y-auto shadow-lg' : 'hidden'} flex-col bg-superficie py-6 lg:sticky lg:top-0 lg:z-auto lg:flex lg:min-h-svh lg:w-64 lg:max-w-none lg:shrink-0 lg:self-start lg:overflow-visible lg:pt-10 lg:pb-5 lg:shadow-none xl:w-72 xl:pt-12`}
+      >
+      <div className="flex justify-end px-4 lg:hidden">
+        <button
+          ref={botonCerrar}
+          type="button"
+          aria-label="Cerrar menú"
+          onClick={cerrar}
+          className="flex size-11 items-center justify-center rounded-md text-primario hover:bg-decoracion focus-visible:outline-2 focus-visible:outline-primario"
+        >
+          <X size={28} aria-hidden="true" />
+        </button>
+      </div>
+      <div className="hidden justify-center px-6 lg:flex">
+        <NavLink
+          to="/inicio"
+          aria-label="TRAMA · Inicio"
+          className="block w-28 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-primario xl:w-32"
         >
           <Logo />
         </NavLink>
       </div>
       <nav
         aria-label="Navegación principal"
-        className="mt-8 px-5 lg:mt-10 lg:px-6 xl:px-7"
+        className="mt-2 px-5 lg:mt-10 lg:px-6 xl:px-7"
       >
-        <ul className="grid grid-cols-2 gap-2 sm:grid-cols-5 lg:grid-cols-1 lg:gap-1 xl:gap-1.5">
+        <ul className="grid grid-cols-1 gap-1 xl:gap-1.5">
           {navegacion.map((item) => {
             const { id, titulo, icon: Icon, to } = item
-            const enPlan = RUTAS_PLAN.includes(pathname)
-            const seleccionada = id === 'plan'
-              ? enPlan
+            const enRutaPropia = TODAS_LAS_RUTAS_PROPIAS.includes(pathname)
+            const seleccionada = RUTAS_PROPIAS[id]
+              ? RUTAS_PROPIAS[id].includes(pathname)
               : id
-                ? !enPlan && actual === id
-                : !enPlan &&
+                ? !enRutaPropia && actual === id
+                : !enRutaPropia &&
                   !navegacion.some((item) => item.id && item.id === actual)
             return (
               <li key={titulo}>
                 <Link
                   to={to}
+                  onClick={() => setAbierto(false)}
                   aria-current={seleccionada ? 'page' : false}
-                  className={`flex min-h-12 flex-col items-center gap-1 rounded-md px-2 py-3 text-xs focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primario sm:justify-center sm:text-sm lg:flex-row lg:justify-start lg:gap-3 lg:px-3 xl:min-h-13 xl:px-4 xl:text-base ${seleccionada ? 'bg-decoracion font-semibold text-primario' : 'text-texto-suave hover:bg-decoracion/60'}`}
+                  className={`flex min-h-12 items-center gap-3 rounded-md px-3 py-3 text-base focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primario lg:text-sm xl:min-h-13 xl:px-4 xl:text-base ${seleccionada ? 'bg-decoracion font-semibold text-primario' : 'text-texto-suave hover:bg-decoracion/60'}`}
                 >
                   <Icon
                     size={24}
@@ -54,7 +129,7 @@ export default function InicioSidebar({ cerrarSesion }) {
                   {seleccionada && (
                     <span
                       aria-hidden="true"
-                      className="ml-auto hidden size-2 shrink-0 rounded-full bg-miel lg:block"
+                      className="ml-auto size-2 shrink-0 rounded-full bg-miel"
                     />
                   )}
                 </Link>
@@ -88,5 +163,6 @@ export default function InicioSidebar({ cerrarSesion }) {
         </div>
       </div>
     </aside>
+    </>
   )
 }

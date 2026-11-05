@@ -15,6 +15,7 @@ export async function registrarUsuario({
   password,
   tipoCuenta,
   especialidades = [],
+  matricula = '',
 }) {
   if (!cliente.defaults.baseURL) {
     throw new ErrorRegistro(
@@ -31,6 +32,9 @@ export async function registrarUsuario({
       password,
       tipoCuenta,
       especialidades,
+      // Solo el profesional declara matrícula; vacía no se manda.
+      matricula:
+        tipoCuenta === 'PROFESIONAL' && matricula.trim() ? matricula.trim() : null,
     })
   } catch (error) {
     const codigo = error.response?.data?.codigo
@@ -112,7 +116,7 @@ export async function reenviarVerificacion(email) {
   }
 }
 
-export async function iniciarSesion({ email, password }) {
+export async function iniciarSesion({ email, password, recordar = false }) {
   if (!cliente.defaults.baseURL)
     throw new Error('Falta configurar la conexión con TRAMA. Revisá VITE_API_URL.')
   let respuesta
@@ -147,7 +151,7 @@ export async function iniciarSesion({ email, password }) {
     throw new Error(
       'No recibimos una sesión válida. Intentá ingresar nuevamente.',
     )
-  guardarToken(token)
+  guardarToken(token, { recordar })
 }
 
 export async function obtenerIdentidad() {
@@ -169,6 +173,10 @@ export async function obtenerIdentidad() {
     especialidades: Array.isArray(data.especialidades)
       ? data.especialidades.filter((item) => typeof item?.especialidad === 'string')
       : [],
+    matricula:
+      typeof data.matricula === 'string' && data.matricula.trim() ? data.matricula : null,
+    tieneFoto: data.tieneFoto === true,
+    tieneComprobanteMatricula: data.tieneComprobanteMatricula === true,
   }
 }
 

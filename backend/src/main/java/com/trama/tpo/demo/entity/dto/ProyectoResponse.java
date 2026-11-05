@@ -5,6 +5,7 @@ import java.time.LocalDate;
 import java.util.UUID;
 
 import com.trama.tpo.demo.entity.proyecto.Proyecto;
+import com.trama.tpo.demo.entity.proyecto.TipoEscuela;
 
 public record ProyectoResponse(
         UUID id,
@@ -14,6 +15,9 @@ public record ProyectoResponse(
         LocalDate fechaNacimiento,
         String escuela,
         String grado,
+        TipoEscuela tipoEscuela,
+        // Foto del niño: se descarga por /archivos/{fotoArchivoId} (null si no tiene)
+        UUID fotoArchivoId,
         Boolean familiarPuedeCargar,
         Boolean familiarVeNotas,
         // true si el usuario actual puede cargar aportes en este proyecto
@@ -45,6 +49,8 @@ public record ProyectoResponse(
                 proyecto.getFechaNacimiento(),
                 proyecto.getEscuela(),
                 proyecto.getGrado(),
+                proyecto.getTipoEscuela(),
+                proyecto.getFotoArchivoId(),
                 proyecto.getFamiliarPuedeCargar(),
                 proyecto.getFamiliarVeNotas(),
                 puedeCargar,

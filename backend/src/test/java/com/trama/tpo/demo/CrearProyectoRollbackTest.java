@@ -43,7 +43,7 @@ class CrearProyectoRollbackTest {
                     .when(membresias).save(any());
             long cantidad = proyectos.count();
             var solicitud = new CrearProyectoRequest("Niño ficticio", "Ejemplo", null,
-                    LocalDate.of(2018, 5, 12), "Escuela ficticia", "2.º", true);
+                    LocalDate.of(2018, 5, 12), "Escuela ficticia", "2.º", null, true);
 
             assertThatThrownBy(() -> service.crear(solicitud)).isInstanceOf(IllegalStateException.class);
             assertThat(proyectos.count()).isEqualTo(cantidad);

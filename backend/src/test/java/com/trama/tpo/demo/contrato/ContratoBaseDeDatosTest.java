@@ -19,8 +19,10 @@ import org.springframework.test.context.ActiveProfiles;
 import com.trama.tpo.demo.aporte.Visibilidad;
 import com.trama.tpo.demo.entity.dto.AporteRequest;
 import com.trama.tpo.demo.entity.dto.CrearProyectoRequest;
+import com.trama.tpo.demo.entity.proyecto.TipoEscuela;
 import com.trama.tpo.demo.entity.dto.EspecialidadItemRequest;
 import com.trama.tpo.demo.entity.dto.InvitacionRequest;
+import com.trama.tpo.demo.entity.dto.MatriculaRequest;
 import com.trama.tpo.demo.entity.dto.RegisterRequest;
 import com.trama.tpo.demo.entity.invitacion.EstadoInvitacion;
 import com.trama.tpo.demo.entity.membresia.Especialidad;
@@ -93,6 +95,23 @@ class ContratoBaseDeDatosTest {
     }
 
     @Test
+    void tiposDeEscuela() {
+        assertEquals(nombres(TipoEscuela.class), valoresDelCheck("ck_proyecto_tipo_escuela"));
+    }
+
+    @Test
+    void tiposDeComprobanteDeMatricula() {
+        // El comprobante acepta lo mismo que los adjuntos: PDF, JPG o PNG
+        assertEquals(ArchivoService.MIMES_PERMITIDOS, valoresDelCheck("ck_usuario_comprobante_tipo"));
+    }
+
+    @Test
+    void tiposDeFotoDeLaCuenta() {
+        // La foto de la cuenta solo puede ser una imagen de las que acepta FotoService
+        assertEquals(Set.of("image/jpeg", "image/png"), valoresDelCheck("ck_usuario_foto_tipo"));
+    }
+
+    @Test
     void tiposDeArchivo() {
         assertEquals(ArchivoService.MIMES_PERMITIDOS, valoresDelCheck("ck_archivo_mime"));
     }
@@ -103,10 +122,12 @@ class ContratoBaseDeDatosTest {
 
     @Test
     void largosDeUsuario() throws Exception {
-        for (String campo : List.of("nombre", "apellido", "email")) {
+        for (String campo : List.of("nombre", "apellido", "email", "matricula")) {
             assertEquals(largoColumna("usuario", campo), maximo(RegisterRequest.class, campo),
                     "usuario." + campo);
         }
+        assertEquals(largoColumna("usuario", "matricula"), maximo(MatriculaRequest.class, "matricula"),
+                "Mi perfil: usuario.matricula");
     }
 
     @Test

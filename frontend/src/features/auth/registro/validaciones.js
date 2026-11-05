@@ -1,7 +1,7 @@
 import { validarEmail } from '../../../utils/validaciones.js'
 
 export const camposDatos = ['nombre', 'apellido', 'email']
-export const camposTipoCuenta = ['tipoCuenta', 'area', 'especialidades']
+export const camposTipoCuenta = ['tipoCuenta', 'area', 'especialidades', 'matricula']
 
 // Etapas: 0 datos, 1 tipo de cuenta (9.4), 2 contraseña, 3 revisión, 4 código del mail.
 export const ETAPA_CONFIRMACION = 3
@@ -48,6 +48,8 @@ export function validarRegistro(valores, etapa = ETAPA_CONFIRMACION) {
         )
       )
         errores.especialidades = 'Contanos qué hacés en «Otra».'
+      else if ((valores.matricula ?? '').trim().length > 40)
+        errores.matricula = 'La matrícula no puede superar los 40 caracteres.'
     }
   }
   if (etapa === 2 || todas) {
@@ -58,6 +60,10 @@ export function validarRegistro(valores, etapa = ETAPA_CONFIRMACION) {
     ) {
       errores.password =
         'La contraseña debe cumplir todos los requisitos de seguridad.'
+    } else if (!valores.confirmar) {
+      errores.confirmar = 'Repetí la contraseña.'
+    } else if (valores.confirmar !== valores.password) {
+      errores.confirmar = 'Las contraseñas no coinciden.'
     }
   }
   if (etapa === ETAPA_CODIGO && !/^\d{6}$/.test(valores.codigo ?? ''))

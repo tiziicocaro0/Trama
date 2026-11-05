@@ -9,8 +9,10 @@ import InicioPage from '../features/inicio/InicioPage.jsx'
 import Acceso from './Acceso.jsx'
 import PerfilPage from '../features/perfil/PerfilPage.jsx'
 import { seccionesPerfil } from '../features/perfil/perfil.js'
+import PerfilLayout from '../features/perfil/PerfilLayout.jsx'
 import AcompanamientosPage from '../features/acompanamientos/AcompanamientosPage.jsx'
 import NuevoAcompanamientoPage from '../features/acompanamientos/NuevoAcompanamientoPage.jsx'
+import MiPerfilPage from '../features/cuenta/MiPerfilPage.jsx'
 import RedPage from '../features/perfil/RedPage.jsx'
 import DatosPersonalesPage from '../features/perfil/DatosPersonalesPage.jsx'
 import ConoceloPage from '../features/perfil/ConoceloPage.jsx'
@@ -160,6 +162,14 @@ export default function AppRoutes() {
         }
       />
       <Route
+        path="/perfil"
+        element={
+          <Acceso privado>
+            <MiPerfilPage />
+          </Acceso>
+        }
+      />
+      <Route
         path="/cuenta/notificaciones"
         element={
           <Acceso privado>
@@ -175,81 +185,32 @@ export default function AppRoutes() {
           </Acceso>
         }
       />
+      {/* Perfil del niño: PerfilLayout carga el proyecto una vez y deja fija la cabecera;
+          al cambiar de sección solo se cambia el contenido de abajo. */}
       <Route
         path="/proyectos/:id"
         element={
           <Acceso privado>
             <ConBarraIconos>
-              <PerfilPage />
+              <PerfilLayout />
             </ConBarraIconos>
           </Acceso>
         }
-      />
-      <Route
-        path="/proyectos/:id/conocelo"
-        element={
-          <Acceso privado>
-            <ConBarraIconos>
-              <ConoceloPage />
-            </ConBarraIconos>
-          </Acceso>
-        }
-      />
-      <Route
-        path="/proyectos/:id/red"
-        element={
-          <Acceso privado>
-            <ConBarraIconos>
-              <RedPage />
-            </ConBarraIconos>
-          </Acceso>
-        }
-      />
-      <Route
-        path="/proyectos/:id/datos-personales"
-        element={
-          <Acceso privado>
-            <ConBarraIconos>
-              <DatosPersonalesPage />
-            </ConBarraIconos>
-          </Acceso>
-        }
-      />
-      <Route
-        path="/proyectos/:id/bitacora"
-        element={
-          <Acceso privado>
-            <ConBarraIconos>
-              <BitacoraPage />
-            </ConBarraIconos>
-          </Acceso>
-        }
-      />
-      <Route
-        path="/proyectos/:id/calendario"
-        element={
-          <Acceso privado>
-            <ConBarraIconos>
-              <CalendarioPage />
-            </ConBarraIconos>
-          </Acceso>
-        }
-      />
+      >
+        <Route index element={<PerfilPage />} />
+        <Route path="conocelo" element={<ConoceloPage />} />
+        <Route path="red" element={<RedPage />} />
+        <Route path="datos-personales" element={<DatosPersonalesPage />} />
+        <Route path="bitacora" element={<BitacoraPage />} />
+        <Route path="calendario" element={<CalendarioPage />} />
+        <Route path=":seccion" element={<PerfilPage />} />
+      </Route>
+      {/* "Mostrarle el día" es a pantalla completa: sin cabecera ni barra */}
       <Route
         path="/proyectos/:id/hoy"
         element={
           <Acceso privado>
             <VistaDiaPage />
-          </Acceso>
-        }
-      />
-      <Route
-        path="/proyectos/:id/:seccion"
-        element={
-          <Acceso privado>
-            <ConBarraIconos>
-              <PerfilPage />
-            </ConBarraIconos>
           </Acceso>
         }
       />
@@ -263,7 +224,6 @@ export default function AppRoutes() {
       <Route element={<Acceso privado><Layout /></Acceso>}>
         <Route path="/recursos" element={<Proximamente titulo="Recursos" />} />
         <Route path="/calendario" element={<CalendarioPage />} />
-        <Route path="/perfil" element={<Proximamente titulo="Mi perfil" />} />
       </Route>
       <Route
         path="*"

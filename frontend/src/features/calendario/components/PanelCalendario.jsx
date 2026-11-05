@@ -1,10 +1,10 @@
 import { useEffect, useRef } from 'react'
-import { Plus, Sparkle, X } from '@phosphor-icons/react'
+import { NotePencil, Plus, Sparkle, X } from '@phosphor-icons/react'
 import Boton from '../../../components/ui/Boton.jsx'
 import { tituloDia } from '../utils/periodo.js'
 import TarjetaEvento from './TarjetaEvento.jsx'
 
-export default function PanelCalendario({ dia, evento, eventos, proyectoId, miembros, puedeModificar, eliminandoId, onCerrar, onEvento, onVolver, onNuevo, onEditar, onEliminar, onDescargarImagen, puedeEditarActa, onGuardarActa, puedeAgregarAcuerdos = false, soloLectura = false }) {
+export default function PanelCalendario({ dia, evento, eventos, borrador = null, proyectoId, miembros, puedeModificar, eliminandoId, onCerrar, onEvento, onVolver, onNuevo, onEditar, onEliminar, onDescargarImagen, puedeEditarActa, onGuardarActa, puedeAgregarAcuerdos = false, soloLectura = false }) {
   const abierto = Boolean(dia || evento)
   const botonCerrar = useRef(null)
   const cerrarActual = useRef(onCerrar)
@@ -31,7 +31,8 @@ export default function PanelCalendario({ dia, evento, eventos, proyectoId, miem
         <h3 className="font-display text-h2 capitalize text-secundario">{tituloDia(dia)}</h3>
         <p className="mb-5 text-sm text-texto-suave">{eventos.length} {eventos.length === 1 ? 'actividad' : 'actividades'}</p>
         {eventos.length ? <div className="space-y-2">{eventos.map((item) => <button key={`${item.id}-${item.fechaOcurrencia || item.fecha}`} type="button" onClick={() => onEvento(item)} className={`w-full rounded-md border p-3 text-left ${item.esCambio ? 'border-primario bg-primario/10' : 'border-borde bg-fondo/40'}`}><span className="block text-xs text-texto-suave">{item.horaInicio?.slice(0, 5) || 'Sin horario'}</span><span className="font-semibold">{item.titulo}</span>{item.proyectoNombre && <span className="block text-xs text-texto-suave">{item.proyectoNombre}</span>}{item.esCambio && <span className="block text-xs text-primario">Cambio de rutina</span>}</button>)}</div> : <p className="text-texto-suave">No hay eventos este día.</p>}
-        {!soloLectura && <Boton onClick={() => onNuevo(dia)} className="mt-5 w-full"><Plus size={18} aria-hidden="true" /> Agregar evento</Boton>}
+        {!soloLectura && borrador && <button type="button" onClick={() => onNuevo(dia)} className="mt-2 flex w-full items-center gap-3 rounded-md border border-dashed border-acento bg-acento/10 p-3 text-left"><NotePencil size={20} aria-hidden="true" className="shrink-0 text-primario" /><span><span className="block text-xs text-texto-suave">Borrador sin guardar</span><span className="font-semibold">{borrador.titulo?.trim() || 'Evento sin título'}</span></span></button>}
+        {!soloLectura && <Boton onClick={() => onNuevo(dia)} className="mt-5 w-full"><Plus size={18} aria-hidden="true" /> {borrador ? 'Seguir el borrador' : 'Agregar evento'}</Boton>}
       </>}
       {dia && <Boton to={`/proyectos/${proyectoId}/hoy?fecha=${dia}`} variant="secondary" className="mt-4 w-full"><Sparkle size={18} aria-hidden="true" />Mostrarle el día</Boton>}
     </aside>
