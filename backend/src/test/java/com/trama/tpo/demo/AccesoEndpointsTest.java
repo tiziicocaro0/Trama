@@ -64,30 +64,34 @@ class AccesoEndpointsTest {
      * control de permisos y el test no probaría nada. Si se crea un endpoint con un DTO nuevo,
      * hay que agregar su ejemplo acá (el test falla y lo avisa).
      */
-    private static final Map<Class<?>, String> CUERPOS = Map.of(
-            AporteRequest.class, """
+
+    private static final Map<Class<?>, String> CUERPOS = Map.ofEntries(
+            Map.entry(AporteRequest.class, """
                     {"tipo":"FORTALEZA","titulo":"Prueba","contenido":"Texto de prueba",
-                     "datos":"{\\"contexto\\":\\"ESCUELA\\"}","visibilidad":"TODOS"}""",
-            InvitacionRequest.class, """
-                    {"email":"alguien@example.com","rol":"FAMILIAR"}""",
-            ConfiguracionProyectoRequest.class, """
-                    {"familiarPuedeCargar":true,"familiarVeNotas":false}""",
-            ActualizarDatosProyectoRequest.class, """
+                    "datos":"{\\"contexto\\":\\"ESCUELA\\"}","visibilidad":"TODOS"}"""),
+            Map.entry(InvitacionRequest.class, """
+                    {"email":"alguien@example.com","rol":"FAMILIAR"}"""),
+            Map.entry(ConfiguracionProyectoRequest.class, """
+                    {"familiarPuedeCargar":true,"familiarVeNotas":false}"""),
+            Map.entry(ActualizarDatosProyectoRequest.class, """
                     {"nombre":"Otro","apellido":"Nombre","fechaNacimiento":"2017-01-01",
-                     "escuela":"Escuela de prueba","grado":"3.º grado"}""",
-            EspecialidadRequest.class, """
-                    {"especialidades":[{"especialidad":"DOCENTE_PRIMARIO"}]}""",
-            EventoRequest.class, """
-                    {"titulo":"Prueba","fecha":"2026-11-05","horaInicio":"10:00","horaFin":"11:00"}""",
-            EventoOcurrenciaRequest.class, """
-                    {"titulo":"Prueba","horaInicio":"10:00","horaFin":"11:00"}""",
-            ActaRequest.class, """
-                    {"acta":"Acuerdos de la reunión de prueba"}""",
-            AcuerdoRequest.class, """
+                    "escuela":"Escuela de prueba","grado":"3.º grado"}"""),
+            Map.entry(EspecialidadRequest.class, """
+                    {"especialidades":[{"especialidad":"DOCENTE_PRIMARIO"}]}"""),
+            Map.entry(EventoRequest.class, """
+                    {"titulo":"Prueba","fecha":"2026-11-05","horaInicio":"10:00","horaFin":"11:00"}"""),
+            Map.entry(EventoOcurrenciaRequest.class, """
+                    {"titulo":"Prueba","horaInicio":"10:00","horaFin":"11:00"}"""),
+            Map.entry(ActaRequest.class, """
+                    {"acta":"Acuerdos de la reunión de prueba"}"""),
+            Map.entry(AcuerdoRequest.class, """
                     {"reunionId":"00000000-0000-0000-0000-000000000001","descripcion":"Prueba",
-                     "responsableId":"00000000-0000-0000-0000-000000000002","fechaRevision":"2026-11-20"}""",
-            CumplidoRequest.class, """
-                    {"cumplido":true}""");
+                    "responsableId":"00000000-0000-0000-0000-000000000002","fechaRevision":"2026-11-20"}"""),
+            Map.entry(CumplidoRequest.class, """
+                    {"cumplido":true}"""),
+            Map.entry(SolicitarEliminacionRequest.class, """
+                    {"nombreConfirmacion":"NinoAcceso021"}""")
+    );
 
     @Autowired private MockMvc mockMvc;
     @Autowired private JwtService jwtService;

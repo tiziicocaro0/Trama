@@ -30,6 +30,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.http.MediaType;
 
 import com.trama.tpo.demo.aporte.Aporte;
 import com.trama.tpo.demo.aporte.TipoAporte;
@@ -96,15 +97,14 @@ class EliminacionPerfilTest {
 
     @Test
     void elTutorProgramaLaEliminacionASieteDiasYLaRedSeEntera() throws Exception {
-        mockMvc.perform(post(ruta()).header("Authorization", token(tutor)))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.eliminacionProgramada").exists());
+        mockMvc.perform(solicitudEliminacion(tutor))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.eliminacionProgramada").exists());
 
         Instant cuando = proyectoRepository.findById(proyecto.getId()).orElseThrow().getEliminacionProgramada();
         assertNotNull(cuando);
         long dias = Duration.between(Instant.now(), cuando).toHours();
         assertTrue(dias > 7 * 24 - 2 && dias <= 7 * 24, "vence a los 7 días");
-
         // La portada sabe que está programada
         mockMvc.perform(get("/api/proyectos/" + proyecto.getId()).header("Authorization", token(docente)))
                 .andExpect(jsonPath("$.eliminacionProgramada").exists());
@@ -117,14 +117,14 @@ class EliminacionPerfilTest {
         assertTrue(notificacionRepository.findByUsuarioIdOrderByFechaDesc(tutor.getId(), PageRequest.of(0, 10)).isEmpty());
 
         // Programarla dos veces no corre la fecha
-        mockMvc.perform(post(ruta()).header("Authorization", token(tutor)))
+        mockMvc.perform(solicitudEliminacion(tutor))
                 .andExpect(status().isConflict())
                 .andExpect(jsonPath("$.codigo").value("ELIMINACION_YA_PROGRAMADA"));
     }
 
     @Test
     void elTutorCancelaLaEliminacion() throws Exception {
-        mockMvc.perform(post(ruta()).header("Authorization", token(tutor))).andExpect(status().isOk());
+        mockMvc.perform(solicitudEliminacion(tutor)).andExpect(status().isOk());
 
         mockMvc.perform(delete(ruta()).header("Authorization", token(tutor)))
                 .andExpect(status().isOk())
@@ -138,7 +138,7 @@ class EliminacionPerfilTest {
 
     @Test
     void unMiembroQueNoEsAdminNoPuedeProgramarNiCancelar() throws Exception {
-        mockMvc.perform(post(ruta()).header("Authorization", token(docente))).andExpect(status().isForbidden());
+        mockMvc.perform(solicitudEliminacion(docente)).andExpect(status().isForbidden());
         mockMvc.perform(delete(ruta()).header("Authorization", token(docente))).andExpect(status().isForbidden());
         assertNull(proyectoRepository.findById(proyecto.getId()).orElseThrow().getEliminacionProgramada());
     }
@@ -174,6 +174,13 @@ class EliminacionPerfilTest {
         assertFalse(archivoRepository.existsById(archivo.getId()));
         assertTrue(membresiaRepository.findByProyectoId(proyecto.getId()).isEmpty());
         assertFalse(Files.exists(carpeta.resolve(ruta)), "el archivo cifrado se borra del disco");
+    }
+    private org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder
+            solicitudEliminacion(Usuario usuario) {
+        return post(ruta())
+                .header("Authorization", token(usuario))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"nombreConfirmacion\":\"Niño\"}");
     }
 
     private String ruta() {

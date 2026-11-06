@@ -109,10 +109,19 @@ public class EliminacionProyectoService {
         Instant cuando = Instant.now()
                 .plus(DIAS_DE_GRACIA, ChronoUnit.DAYS);
 
-        proyecto.setEliminacionProgramada(cuando);
-        proyectoRepository.save(proyecto);
-
         UUID usuarioId = usuarioActual.obtenerId();
+
+        Usuario solicitante = usuarioRepository.findById(usuarioId)
+                .orElseThrow(() -> new ApiException(
+                        "USUARIO_NO_ENCONTRADO",
+                        "No encontramos al usuario",
+                        HttpStatus.NOT_FOUND
+                ));
+
+        proyecto.setEliminacionProgramada(cuando);
+        proyecto.setEliminacionPedidaPor(solicitante);
+
+        proyectoRepository.save(proyecto);
 
         registroAccionService.registrar(
                 usuarioId,
@@ -142,6 +151,8 @@ public class EliminacionProyectoService {
         }
 
         proyecto.setEliminacionProgramada(null);
+        proyecto.setEliminacionPedidaPor(null);
+
         proyectoRepository.save(proyecto);
 
         avisarALaRed(proyectoId, usuarioActual.obtenerId(),

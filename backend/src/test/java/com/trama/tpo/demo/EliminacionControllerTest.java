@@ -196,7 +196,7 @@ class EliminacionControllerTest {
 
         mockMvc.perform(delete(endpoint)
                 .header("Authorization", token(tutorAdmin)))
-                .andExpect(status().isNoContent());
+                .andExpect(status().isOk());
 
         Proyecto actualizado = proyectoRepository
                 .findById(proyecto.getId()).orElseThrow();
@@ -225,28 +225,31 @@ class EliminacionControllerTest {
                 .andExpect(status().isConflict());
     }
 
-    @Test
-    void todaLaRedRecibeNotificacion() throws Exception {
+        @Test
+        void todaLaRedRecibeNotificacion() throws Exception {
         mockMvc.perform(post(endpoint)
                 .header("Authorization", token(tutorAdmin))
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(nombre("Tomas")))
                 .andExpect(status().isOk());
 
-        for (Usuario usuario : List.of(
-                tutorAdmin, cotutor, familiar)) {
-
-            assertEquals(1,
-                    notificacionRepository
-                            .countByUsuarioIdAndLeidaFalse(
-                                    usuario.getId()));
+        // El cotutor y el familiar reciben una notificación
+        for (Usuario usuario : List.of(cotutor, familiar)) {
+                assertEquals(1,
+                        notificacionRepository.countByUsuarioIdAndLeidaFalse(
+                                usuario.getId()));
         }
 
+        // El tutor administrador no recibe su propia notificación
         assertEquals(0,
-                notificacionRepository
-                        .countByUsuarioIdAndLeidaFalse(
-                                ajeno.getId()));
-    }
+                notificacionRepository.countByUsuarioIdAndLeidaFalse(
+                        tutorAdmin.getId()));
+
+        // Un usuario ajeno tampoco recibe notificaciones
+        assertEquals(0,
+                notificacionRepository.countByUsuarioIdAndLeidaFalse(
+                        ajeno.getId()));
+        }
 
     @Test
     void sinTokenDevuelve401() throws Exception {
