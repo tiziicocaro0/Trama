@@ -15,6 +15,7 @@ import com.trama.tpo.demo.entity.proyecto.Proyecto;
 import com.trama.tpo.demo.entity.usuario.Usuario;
 import com.trama.tpo.demo.exceptions.ApiException;
 import com.trama.tpo.demo.repository.AporteRepository;
+import com.trama.tpo.demo.repository.SolicitudRevisionRepository;
 import com.trama.tpo.demo.repository.AporteVersionRepository;
 import com.trama.tpo.demo.repository.ArchivoRepository;
 import com.trama.tpo.demo.repository.MembresiaRepository;
@@ -244,7 +245,9 @@ class ArchivoServiceTest {
                 archivoRepository,
                 mock(RegistroAccionService.class),
                 mock(ConfirmacionAporteService.class),
-                mock(AvisoNotaService.class)
+                mock(AvisoNotaService.class),
+                // 3.4: repositorio agregado para gestionar solicitudes de revisión.
+                mock(SolicitudRevisionRepository.class)
         );
 
         when(usuarioActual.obtenerId()).thenReturn(usuarioId);
