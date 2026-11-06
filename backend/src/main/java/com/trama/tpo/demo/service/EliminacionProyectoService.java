@@ -79,23 +79,54 @@ public class EliminacionProyectoService {
     }
 
     @Transactional
-    public ProyectoResponse programar(UUID proyectoId) {
+    public ProyectoResponse programar(
+            UUID proyectoId,
+            String nombreConfirmacion) {
+
         permisoService.verificarAdmin(proyectoId);
+
         Proyecto proyecto = buscar(proyectoId);
 
-        if (proyecto.getEliminacionProgramada() != null) {
-            throw new ApiException("ELIMINACION_YA_PROGRAMADA",
-                    "La eliminación de este perfil ya está programada", HttpStatus.CONFLICT);
+        // Confirmación obligatoria por nombre
+        if (nombreConfirmacion == null
+                || !proyecto.getNombre().equals(nombreConfirmacion.trim())) {
+
+            throw new ApiException(
+                    "NOMBRE_INCORRECTO",
+                    "El nombre ingresado no coincide con el del niño",
+                    HttpStatus.BAD_REQUEST
+            );
         }
 
-        Instant cuando = Instant.now().plus(DIAS_DE_GRACIA, ChronoUnit.DAYS);
+        if (proyecto.getEliminacionProgramada() != null) {
+            throw new ApiException(
+                    "ELIMINACION_YA_PROGRAMADA",
+                    "La eliminación de este perfil ya está programada",
+                    HttpStatus.CONFLICT
+            );
+        }
+
+        Instant cuando = Instant.now()
+                .plus(DIAS_DE_GRACIA, ChronoUnit.DAYS);
+
         proyecto.setEliminacionProgramada(cuando);
         proyectoRepository.save(proyecto);
 
         UUID usuarioId = usuarioActual.obtenerId();
-        registroAccionService.registrar(usuarioId, proyectoId, AccionRegistro.ELIMINAR, "PROYECTO");
-        avisarALaRed(proyectoId, usuarioId,
-                " programó la eliminación de un acompañamiento: se borra el " + FECHA.format(cuando) + ".");
+
+        registroAccionService.registrar(
+                usuarioId,
+                proyectoId,
+                AccionRegistro.ELIMINAR,
+                "PROYECTO"
+        );
+
+        avisarALaRed(
+                proyectoId,
+                usuarioId,
+                " programó la eliminación de un acompañamiento: se borra el "
+                        + FECHA.format(cuando) + "."
+        );
 
         return respuesta(proyecto);
     }

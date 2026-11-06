@@ -20,6 +20,7 @@ import com.trama.tpo.demo.entity.dto.CrearProyectoRequest;
 import com.trama.tpo.demo.entity.dto.MiProyectoDTO;
 import com.trama.tpo.demo.entity.dto.ProyectoResponse;
 import com.trama.tpo.demo.entity.dto.ResumenProyectoResponse;
+import com.trama.tpo.demo.entity.dto.SolicitarEliminacionRequest;
 import com.trama.tpo.demo.service.EliminacionProyectoService;
 import com.trama.tpo.demo.service.ProyectoService;
 import com.trama.tpo.demo.service.ResumenService;
@@ -93,10 +94,18 @@ public class ProyectoController {
                 proyectoService.actualizarConfiguracion(proyectoId, request));
     }
 
-    // 8.2: PROGRAMAR LA ELIMINACIÓN DEL PERFIL (7 días de gracia, solo tutor administrador)
+    // 8.2: PROGRAMAR LA ELIMINACIÓN DEL PERFIL
     @PostMapping("/{proyectoId}/eliminacion")
-    public ResponseEntity<ProyectoResponse> programarEliminacion(@PathVariable UUID proyectoId) {
-        return ResponseEntity.ok(eliminacionService.programar(proyectoId));
+    public ResponseEntity<ProyectoResponse> programarEliminacion(
+            @PathVariable UUID proyectoId,
+            @Valid @RequestBody SolicitarEliminacionRequest request) {
+
+        return ResponseEntity.ok(
+                eliminacionService.programar(
+                        proyectoId,
+                        request.nombreConfirmacion()
+                )
+        );
     }
 
     // 8.2: CANCELAR LA ELIMINACIÓN PROGRAMADA
