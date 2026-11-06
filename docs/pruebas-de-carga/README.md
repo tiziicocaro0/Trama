@@ -15,6 +15,8 @@ Para decidir **qué servidor pagar**, saber **cuánto aguanta TRAMA hoy**, **qu�
 | [casos-limite.md](casos-limite.md) | Niños con miles de aportes, ediciones simultáneas, archivos, tormenta de logins, disco lleno |
 | [capacidad-50gb.md](capacidad-50gb.md) | Cuánto ocupa cada cosa y cuánto entra en un disco de 50 GB |
 | [seguridad.md](seguridad.md) | Vulnerabilidades del código, la configuración y las dependencias |
+| [escalabilidad.md](escalabilidad.md) | Qué tan escalable es TRAMA, por qué no lo es en lo que no lo es y cómo podría serlo |
+| [remediacion.md](remediacion.md) | Cómo arreglar cada vulnerabilidad, en tres etapas, y cómo verificar que quedó arreglada |
 
 ## Respuestas cortas
 
@@ -58,6 +60,8 @@ Ordenados por impacto. Cada uno tiene la evidencia en el documento que se indica
 | 11 | Sin límite de pedidos por IP en login, registro y recuperación | Bloqueo de cuentas ajenas, abuso de mails, saturación por BCrypt | [seguridad.md](seguridad.md#código) |
 | 12 | El **título** de los aportes se guarda sin cifrar (`aporte.titulo`, `aporte_version.titulo`) | Contradice la regla de cifrar todo texto libre sobre el niño | [seguridad.md](seguridad.md#código) |
 
+**¿Es escalable?** En cantidad de familias y de datos, sí. Agrandando el servidor, a medias (+66 % a +74 % con el doble de CPU). En **aportes por niño**, no, y hoy **no admite más de una copia del backend** (archivos en el disco local y tareas programadas que se repetirían). Ver [escalabilidad.md](escalabilidad.md).
+
 ### Qué haría primero (sin tocar reglas de negocio)
 
 | Prioridad | Cambio | Resuelve |
@@ -71,6 +75,8 @@ Ordenados por impacto. Cada uno tiene la evidencia en el documento que se indica
 | Pronto | Límite de pedidos por IP en `/api/auth/*` | 11 |
 | Pronto | Registrar en el log los errores inesperados; `409` con mensaje claro en vez de `500` ante un *deadlock* | 9, 10 |
 | Para decidir con el equipo | Cifrar el título del aporte (cambio de esquema: requiere migración y migrar los datos existentes) | 12 |
+
+El detalle de cada arreglo, con código y cómo verificarlo, está en [remediacion.md](remediacion.md).
 
 ## Gráficos
 

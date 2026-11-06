@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 400" width="720" height="400" role="img" aria-labelledby="t d">
+<title id="t">Cuánto empeora cada pedido al crecer cada dimensión</title><desc id="d">p95 de abrir un perfil en 1 CPU · 2 GB, medido. Crecer en total de datos casi no afecta; crecer en aportes por niño sí.</desc><style>
+  text { font-family: 'Nunito Sans', 'Segoe UI', system-ui, sans-serif; }
+  .fondo { fill: #FFFDF8; } .texto { fill: #2E2E2E; } .suave { fill: #6B6B6B; }
+  .grilla { stroke: #D9D4C8; stroke-width: 1; } .eje { stroke: #6B6B6B; stroke-width: 1; }
+  .s0 { fill: #963417; stroke: #963417; } .s1 { fill: #008C7E; stroke: #008C7E; } .s2 { fill: #B8792E; stroke: #B8792E; }
+  .s3 { fill: #B9B2A4; stroke: #B9B2A4; }
+  .caja { fill: #FFFDF8; stroke: #D9D4C8; stroke-width: 1.5; } .caja-crema { fill: #F1E4CD; stroke: #D9D4C8; stroke-width: 1.5; }
+  .caja-fuerte { fill: #963417; } .t-claro { fill: #FFFDF8; } .t-oliva { fill: #4B4F21; } .t-terra { fill: #963417; }
+  .flecha { stroke: #6B6B6B; stroke-width: 1.6; fill: none; marker-end: url(#punta); }
+  .banda { fill: #B0413E; opacity: 0.12; }
+  polyline.linea { fill: none !important; stroke-width: 2; stroke-linejoin: round; stroke-linecap: round; }
+  @media (prefers-color-scheme: dark) {
+    .fondo { fill: #2A2622; } .texto { fill: #F1E4CD; } .suave { fill: #BFB6A8; }
+    .grilla { stroke: #4A443D; } .eje { stroke: #BFB6A8; }
+    .s0 { fill: #D06A45; stroke: #D06A45; } .s1 { fill: #1FA593; stroke: #1FA593; } .s2 { fill: #B07F35; stroke: #B07F35; }
+    .caja { fill: #2A2622; stroke: #4A443D; } .caja-crema { fill: #3A342D; stroke: #4A443D; } .t-oliva { fill: #C9CC9A; } .t-terra { fill: #D06A45; }
+  }
+</style>
+<defs><marker id="punta" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#6B6B6B"/></marker></defs>
+<rect class="fondo" width="720" height="400" rx="16"/><rect class="s0" x="70" y="23" width="12" height="12" rx="3"/><text class="texto" x="88" y="33" font-size="13">p95 de ver el perfil (segundos)</text><line class="grilla" x1="78" x2="690" y1="334" y2="334"/><text class="suave" x="70" y="338" font-size="12" text-anchor="end">0 ms</text><line class="grilla" x1="78" x2="690" y1="266.5" y2="266.5"/><text class="suave" x="70" y="270.5" font-size="12" text-anchor="end">5,0 s</text><line class="grilla" x1="78" x2="690" y1="199" y2="199"/><text class="suave" x="70" y="203" font-size="12" text-anchor="end">10,0 s</text><line class="grilla" x1="78" x2="690" y1="131.5" y2="131.5"/><text class="suave" x="70" y="135.5" font-size="12" text-anchor="end">15,0 s</text><line class="grilla" x1="78" x2="690" y1="64" y2="64"/><text class="suave" x="70" y="68" font-size="12" text-anchor="end">20,0 s</text><rect class="s0" x="158" y="333.595" width="44" height="1" rx="4"/><text class="texto" x="180" y="328.595" font-size="11" text-anchor="middle">30 ms</text><text class="suave" x="180" y="352" font-size="12" text-anchor="middle">20 aportes por niño</text><rect class="s0" x="362" y="284.05" width="44" height="49.95" rx="4"/><text class="texto" x="384" y="279.05" font-size="11" text-anchor="middle">3,7 s</text><text class="suave" x="384" y="352" font-size="12" text-anchor="middle">1.000 por niño</text><rect class="s0" x="566" y="115.30000000000001" width="44" height="218.7" rx="4"/><text class="texto" x="588" y="110.30000000000001" font-size="11" text-anchor="middle">16,2 s</text><text class="suave" x="588" y="352" font-size="12" text-anchor="middle">5.000 por niño</text><line class="eje" x1="78" x2="690" y1="334" y2="334"/></svg>

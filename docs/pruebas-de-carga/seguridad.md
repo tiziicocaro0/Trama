@@ -1,6 +1,6 @@
 # Seguridad
 
-[← Volver al resumen](README.md)
+[← Volver al resumen](README.md) · Cómo arreglarlas: [remediacion.md](remediacion.md)
 
 Revisión del código, la configuración y las dependencias de `develop`. Lo marcado como **verificado** se comprobó con pedidos reales contra el entorno de pruebas; el resto sale de leer el código.
 

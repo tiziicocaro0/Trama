@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 330" width="720" height="330" role="img" aria-labelledby="t d">
+<title id="t">Arquitectura de hoy: todo en un servidor</title><desc id="d">Un solo backend, con los archivos en su disco y las tareas programadas adentro. Escala solo agrandando el servidor.</desc><style>
+  text { font-family: 'Nunito Sans', 'Segoe UI', system-ui, sans-serif; }
+  .fondo { fill: #FFFDF8; } .texto { fill: #2E2E2E; } .suave { fill: #6B6B6B; }
+  .grilla { stroke: #D9D4C8; stroke-width: 1; } .eje { stroke: #6B6B6B; stroke-width: 1; }
+  .s0 { fill: #963417; stroke: #963417; } .s1 { fill: #008C7E; stroke: #008C7E; } .s2 { fill: #B8792E; stroke: #B8792E; }
+  .s3 { fill: #B9B2A4; stroke: #B9B2A4; }
+  .caja { fill: #FFFDF8; stroke: #D9D4C8; stroke-width: 1.5; } .caja-crema { fill: #F1E4CD; stroke: #D9D4C8; stroke-width: 1.5; }
+  .caja-fuerte { fill: #963417; } .t-claro { fill: #FFFDF8; } .t-oliva { fill: #4B4F21; } .t-terra { fill: #963417; }
+  .flecha { stroke: #6B6B6B; stroke-width: 1.6; fill: none; marker-end: url(#punta); }
+  .banda { fill: #B0413E; opacity: 0.12; }
+  polyline.linea { fill: none !important; stroke-width: 2; stroke-linejoin: round; stroke-linecap: round; }
+  @media (prefers-color-scheme: dark) {
+    .fondo { fill: #2A2622; } .texto { fill: #F1E4CD; } .suave { fill: #BFB6A8; }
+    .grilla { stroke: #4A443D; } .eje { stroke: #BFB6A8; }
+    .s0 { fill: #D06A45; stroke: #D06A45; } .s1 { fill: #1FA593; stroke: #1FA593; } .s2 { fill: #B07F35; stroke: #B07F35; }
+    .caja { fill: #2A2622; stroke: #4A443D; } .caja-crema { fill: #3A342D; stroke: #4A443D; } .t-oliva { fill: #C9CC9A; } .t-terra { fill: #D06A45; }
+  }
+</style>
+<defs><marker id="punta" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#6B6B6B"/></marker></defs>
+<rect class="fondo" width="720" height="330" rx="16"/><rect class="caja-crema" x="20" y="20" width="680" height="290" rx="14"/><text class="t-terra" x="32" y="42" font-size="13.5" font-weight="800">Un VPS</text><rect class="caja" x="44" y="120" width="120" height="80" rx="14"/><text class="t-terra" x="56" y="142" font-size="13.5" font-weight="800">Navegador</text><text class="texto" x="56" y="162" font-size="11.5">Frontend</text><text class="texto" x="56" y="178" font-size="11.5">React</text><rect class="caja-fuerte" x="210" y="70" width="210" height="190" rx="14"/><text class="t-claro" x="222" y="92" font-size="13.5" font-weight="800">Backend (1 sola copia)</text><text class="t-claro" x="222" y="112" font-size="11.5">API + JWT</text><text class="t-claro" x="222" y="128" font-size="11.5">Tareas programadas</text><text class="t-claro" x="222" y="144" font-size="11.5">(8:00 y 3:00)</text><text class="t-claro" x="222" y="160" font-size="11.5">Archivos en ./uploads</text><text class="t-claro" x="222" y="176" font-size="11.5">Mails dentro del pedido</text><text class="t-claro" x="222" y="192" font-size="11.5">10 conexiones a la base</text><rect class="caja" x="470" y="70" width="200" height="90" rx="14"/><text class="t-terra" x="482" y="92" font-size="13.5" font-weight="800">MySQL</text><text class="texto" x="482" y="112" font-size="11.5">Una base</text><text class="texto" x="482" y="128" font-size="11.5">Binlogs 30 días</text><rect class="caja" x="470" y="180" width="200" height="80" rx="14"/><text class="t-terra" x="482" y="202" font-size="13.5" font-weight="800">OpenBao</text><text class="texto" x="482" y="222" font-size="11.5">Claves de cifrado</text><path class="flecha" d="M164,160 L208,165"/><text class="suave" x="186" y="156.5" font-size="11" text-anchor="middle">HTTP</text><path class="flecha" d="M420,165 L468,115"/><path class="flecha" d="M420,165 L468,220"/></svg>
