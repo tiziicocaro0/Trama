@@ -14,6 +14,20 @@ const TIPOS = [
   { tipo: 'PROFESIONAL', etiqueta: 'Profesionales', roles: ['SALUD'] },
 ]
 
+// Fechas en formato AAAA-MM-DD, con el día de la compu (no en UTC)
+function iso(fecha) {
+  return `${fecha.getFullYear()}-${String(fecha.getMonth() + 1).padStart(2, '0')}-${String(fecha.getDate()).padStart(2, '0')}`
+}
+
+// Atajos de fechas: desde el inicio del período hasta hoy
+function atajos() {
+  const hoy = new Date()
+  return [
+    { etiqueta: 'Este mes', desde: iso(new Date(hoy.getFullYear(), hoy.getMonth(), 1)), hasta: iso(hoy) },
+    { etiqueta: 'Este año', desde: iso(new Date(hoy.getFullYear(), 0, 1)), hasta: iso(hoy) },
+  ]
+}
+
 const PASTILLA =
   'rounded-full border border-borde bg-superficie px-3 py-2 has-checked:border-primario has-checked:bg-fondo'
 
@@ -86,6 +100,25 @@ export default function FiltrosExportacion({ abierto, proyectoId, descargando, o
 
         {elegir && (
           <div className="space-y-4">
+            <div className="flex flex-wrap gap-2" aria-label="Atajos de fechas">
+              {atajos().map((atajo) => {
+                const activo = desde === atajo.desde && hasta === atajo.hasta
+                return (
+                  <button
+                    key={atajo.etiqueta}
+                    type="button"
+                    aria-pressed={activo}
+                    onClick={() => {
+                      setDesde(atajo.desde)
+                      setHasta(atajo.hasta)
+                    }}
+                    className={`min-h-11 rounded-full border px-4 ${activo ? 'border-primario bg-primario text-superficie' : 'border-borde bg-superficie text-texto hover:border-primario'}`}
+                  >
+                    {atajo.etiqueta}
+                  </button>
+                )
+              })}
+            </div>
             <div className="grid gap-3 sm:grid-cols-2">
               {/* CampoFormulario deja la etiqueta solo para lectores de pantalla: acá hace falta verla */}
               <div>

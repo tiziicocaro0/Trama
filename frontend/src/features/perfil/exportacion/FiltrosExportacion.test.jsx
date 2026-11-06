@@ -94,4 +94,29 @@ describe('8.1: filtros del PDF', () => {
     expect(screen.getByRole('alert')).toHaveTextContent('Elegí al menos una persona.')
     expect(screen.getByRole('button', { name: 'Descargar PDF' })).toBeDisabled()
   })
+
+  it('"Este mes" y "Este año" completan desde el inicio del período hasta hoy', async () => {
+    const user = userEvent.setup()
+    const onDescargar = abrir()
+    const hoy = new Date()
+    const iso = (f) => `${f.getFullYear()}-${String(f.getMonth() + 1).padStart(2, '0')}-${String(f.getDate()).padStart(2, '0')}`
+    await user.click(screen.getByLabelText('Elegir qué aportes incluir'))
+    await screen.findByLabelText('Familia')
+
+    await user.click(screen.getByRole('button', { name: 'Este mes' }))
+    expect(screen.getByRole('button', { name: 'Este mes' })).toHaveAttribute('aria-pressed', 'true')
+    await user.click(screen.getByRole('button', { name: 'Descargar PDF' }))
+    expect(onDescargar).toHaveBeenLastCalledWith({
+      desde: iso(new Date(hoy.getFullYear(), hoy.getMonth(), 1)),
+      hasta: iso(hoy),
+    })
+
+    await user.click(screen.getByRole('button', { name: 'Este año' }))
+    expect(screen.getByRole('button', { name: 'Este mes' })).toHaveAttribute('aria-pressed', hoy.getMonth() === 0 ? 'true' : 'false')
+    await user.click(screen.getByRole('button', { name: 'Descargar PDF' }))
+    expect(onDescargar).toHaveBeenLastCalledWith({
+      desde: iso(new Date(hoy.getFullYear(), 0, 1)),
+      hasta: iso(hoy),
+    })
+  })
 })
