@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 306" width="720" height="306" role="img" aria-labelledby="t d">
+<title id="t">En qué se va la CPU con el servidor saturado (1 CPU · 2 GB con 400 personas)</title><desc id="d">Porcentaje de las muestras de CPU de Java Flight Recorder, agrupadas por la capa que estaba trabajando.</desc>
+<style>
+  text { font-family: 'Nunito Sans', 'Segoe UI', system-ui, sans-serif; }
+  .fondo { fill: #FFFDF8; } .texto { fill: #2E2E2E; } .suave { fill: #6B6B6B; }
+  .grilla { stroke: #D9D4C8; stroke-width: 1; } .eje { stroke: #6B6B6B; stroke-width: 1; }
+  .anillo { stroke: #FFFDF8; }
+  .s0 { stroke: #963417; fill: #963417; } .s1 { stroke: #008C7E; fill: #008C7E; } .s2 { stroke: #B8792E; fill: #B8792E; }
+  .limite { stroke-dasharray: 5 4; stroke-width: 1.5; fill: none; }
+  polyline.linea { fill: none !important; stroke-width: 2; stroke-linejoin: round; stroke-linecap: round; }
+  @media (prefers-color-scheme: dark) {
+    .fondo { fill: #2A2622; } .texto { fill: #F1E4CD; } .suave { fill: #BFB6A8; }
+    .grilla { stroke: #4A443D; } .eje { stroke: #BFB6A8; } .anillo { stroke: #2A2622; }
+    .s0 { stroke: #D06A45; fill: #D06A45; } .s1 { stroke: #1FA593; fill: #1FA593; } .s2 { stroke: #B07F35; fill: #B07F35; }
+  }
+</style>
+<rect class="fondo" width="720" height="306" rx="16"/>
+<text class="texto" x="200" y="45" font-size="13" text-anchor="end">BCrypt</text><rect class="s0" x="210" y="32" width="420" height="20" rx="4"/><text class="suave" x="638" y="46" font-size="12">75 %</text><text class="texto" x="200" y="77" font-size="13" text-anchor="end">Hibernate (JPA)</text><rect class="s0" x="210" y="64" width="51.787330316742086" height="20" rx="4"/><text class="suave" x="269.7873303167421" y="78" font-size="12">9 %</text><text class="texto" x="200" y="109" font-size="13" text-anchor="end">Driver de MySQL</text><rect class="s0" x="210" y="96" width="22.092760180995477" height="20" rx="4"/><text class="suave" x="240.09276018099547" y="110" font-size="12">4 %</text><text class="texto" x="200" y="141" font-size="13" text-anchor="end">Spring</text><rect class="s0" x="210" y="128" width="22.092760180995477" height="20" rx="4"/><text class="suave" x="240.09276018099547" y="142" font-size="12">4 %</text><text class="texto" x="200" y="173" font-size="13" text-anchor="end">Otras librerías</text><rect class="s0" x="210" y="160" width="11.165158371040723" height="20" rx="4"/><text class="suave" x="229.16515837104072" y="174" font-size="12">2 %</text><text class="texto" x="200" y="205" font-size="13" text-anchor="end">Jackson (JSON)</text><rect class="s0" x="210" y="192" width="9.502262443438914" height="20" rx="4"/><text class="suave" x="227.50226244343892" y="206" font-size="12">2 %</text><text class="texto" x="200" y="237" font-size="13" text-anchor="end">Tomcat (HTTP)</text><rect class="s0" x="210" y="224" width="6.651583710407241" height="20" rx="4"/><text class="suave" x="224.65158371040724" y="238" font-size="12">1 %</text><text class="texto" x="200" y="269" font-size="13" text-anchor="end">JWT (jjwt)</text><rect class="s0" x="210" y="256" width="4.988687782805431" height="20" rx="4"/><text class="suave" x="222.98868778280544" y="270" font-size="12">1 %</text>
+</svg>

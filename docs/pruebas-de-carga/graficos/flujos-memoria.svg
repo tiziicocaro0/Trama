@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 274" width="720" height="274" role="img" aria-labelledby="t d">
+<title id="t">Memoria que pide Java en cada pedido, por flujo</title><desc id="d">Promedio medido con Java Flight Recorder en 1 CPU · 2 GB. Es memoria temporal: la libera el recolector de basura.</desc>
+<style>
+  text { font-family: 'Nunito Sans', 'Segoe UI', system-ui, sans-serif; }
+  .fondo { fill: #FFFDF8; } .texto { fill: #2E2E2E; } .suave { fill: #6B6B6B; }
+  .grilla { stroke: #D9D4C8; stroke-width: 1; } .eje { stroke: #6B6B6B; stroke-width: 1; }
+  .anillo { stroke: #FFFDF8; }
+  .s0 { stroke: #963417; fill: #963417; } .s1 { stroke: #008C7E; fill: #008C7E; } .s2 { stroke: #B8792E; fill: #B8792E; }
+  .limite { stroke-dasharray: 5 4; stroke-width: 1.5; fill: none; }
+  polyline.linea { fill: none !important; stroke-width: 2; stroke-linejoin: round; stroke-linecap: round; }
+  @media (prefers-color-scheme: dark) {
+    .fondo { fill: #2A2622; } .texto { fill: #F1E4CD; } .suave { fill: #BFB6A8; }
+    .grilla { stroke: #4A443D; } .eje { stroke: #BFB6A8; } .anillo { stroke: #2A2622; }
+    .s0 { stroke: #D06A45; fill: #D06A45; } .s1 { stroke: #1FA593; fill: #1FA593; } .s2 { stroke: #B07F35; fill: #B07F35; }
+  }
+</style>
+<rect class="fondo" width="720" height="274" rx="16"/>
+<text class="texto" x="200" y="45" font-size="13" text-anchor="end">Iniciar sesión</text><rect class="s0" x="210" y="32" width="42.17371044456222" height="20" rx="4"/><text class="suave" x="260.17371044456223" y="46" font-size="12">606 KB</text><text class="texto" x="200" y="77" font-size="13" text-anchor="end">Inicio (mis niños)</text><rect class="s0" x="210" y="64" width="50.757063422316506" height="20" rx="4"/><text class="suave" x="268.7570634223165" y="78" font-size="12">730 KB</text><text class="texto" x="200" y="109" font-size="13" text-anchor="end">Ver aportes</text><rect class="s0" x="210" y="96" width="148.41934521077718" height="20" rx="4"/><text class="suave" x="366.4193452107772" y="110" font-size="12">2,1 MB</text><text class="texto" x="200" y="141" font-size="13" text-anchor="end">Bitácora</text><rect class="s0" x="210" y="128" width="197.3371942472288" height="20" rx="4"/><text class="suave" x="415.3371942472288" y="142" font-size="12">2,8 MB</text><text class="texto" x="200" y="173" font-size="13" text-anchor="end">Cargar aporte</text><rect class="s0" x="210" y="160" width="65.79957645387458" height="20" rx="4"/><text class="suave" x="283.7995764538746" y="174" font-size="12">946 KB</text><text class="texto" x="200" y="205" font-size="13" text-anchor="end">Editar aporte</text><rect class="s0" x="210" y="192" width="81.3031568855746" height="20" rx="4"/><text class="suave" x="299.3031568855746" y="206" font-size="12">1,1 MB</text><text class="texto" x="200" y="237" font-size="13" text-anchor="end">Subir archivo de 1 MB</text><rect class="s0" x="210" y="224" width="420" height="20" rx="4"/><text class="suave" x="638" y="238" font-size="12">5,9 MB</text>
+</svg>

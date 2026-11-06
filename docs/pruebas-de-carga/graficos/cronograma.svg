@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 370" width="720" height="370" role="img" aria-labelledby="t d">
+<title id="t">Tiempo dedicado a cada tipo de prueba</title><desc id="d">Duración aproximada de cada tanda, en minutos (sin contar la preparación de cada servidor).</desc>
+<style>
+  text { font-family: 'Nunito Sans', 'Segoe UI', system-ui, sans-serif; }
+  .fondo { fill: #FFFDF8; } .texto { fill: #2E2E2E; } .suave { fill: #6B6B6B; }
+  .grilla { stroke: #D9D4C8; stroke-width: 1; } .eje { stroke: #6B6B6B; stroke-width: 1; }
+  .anillo { stroke: #FFFDF8; }
+  .s0 { stroke: #963417; fill: #963417; } .s1 { stroke: #008C7E; fill: #008C7E; } .s2 { stroke: #B8792E; fill: #B8792E; }
+  .limite { stroke-dasharray: 5 4; stroke-width: 1.5; fill: none; }
+  polyline.linea { fill: none !important; stroke-width: 2; stroke-linejoin: round; stroke-linecap: round; }
+  @media (prefers-color-scheme: dark) {
+    .fondo { fill: #2A2622; } .texto { fill: #F1E4CD; } .suave { fill: #BFB6A8; }
+    .grilla { stroke: #4A443D; } .eje { stroke: #BFB6A8; } .anillo { stroke: #2A2622; }
+    .s0 { stroke: #D06A45; fill: #D06A45; } .s1 { stroke: #1FA593; fill: #1FA593; } .s2 { stroke: #B07F35; fill: #B07F35; }
+  }
+</style>
+<rect class="fondo" width="720" height="370" rx="16"/>
+<text class="texto" x="200" y="45" font-size="13" text-anchor="end">Escaleras (4 servidores)</text><rect class="s2" x="210" y="32" width="324.54545454545456" height="20" rx="4"/><text class="suave" x="542.5454545454545" y="46" font-size="12">85 min</text><text class="texto" x="200" y="77" font-size="13" text-anchor="end">Variante "login una vez"</text><rect class="s2" x="210" y="64" width="133.63636363636363" height="20" rx="4"/><text class="suave" x="351.6363636363636" y="78" font-size="12">35 min</text><text class="texto" x="200" y="109" font-size="13" text-anchor="end">Casos límite (2 pasadas)</text><rect class="s2" x="210" y="96" width="420" height="20" rx="4"/><text class="suave" x="638" y="110" font-size="12">110 min</text><text class="texto" x="200" y="141" font-size="13" text-anchor="end">Prueba larga</text><rect class="s2" x="210" y="128" width="152.72727272727272" height="20" rx="4"/><text class="suave" x="370.72727272727275" y="142" font-size="12">40 min</text><text class="texto" x="200" y="173" font-size="13" text-anchor="end">Capacidad (200.000 aportes)</text><rect class="s2" x="210" y="160" width="171.81818181818184" height="20" rx="4"/><text class="suave" x="389.81818181818187" y="174" font-size="12">45 min</text><text class="texto" x="200" y="205" font-size="13" text-anchor="end">Costo por flujo (JFR)</text><rect class="s2" x="210" y="192" width="68.72727272727273" height="20" rx="4"/><text class="suave" x="286.72727272727275" y="206" font-size="12">18 min</text><text class="texto" x="200" y="237" font-size="13" text-anchor="end">Saturación con diagnóstico</text><rect class="s2" x="210" y="224" width="76.36363636363636" height="20" rx="4"/><text class="suave" x="294.3636363636364" y="238" font-size="12">20 min</text><text class="texto" x="200" y="269" font-size="13" text-anchor="end">Disco lleno</text><rect class="s2" x="210" y="256" width="114.54545454545453" height="20" rx="4"/><text class="suave" x="332.5454545454545" y="270" font-size="12">30 min</text><text class="texto" x="200" y="301" font-size="13" text-anchor="end">Resiliencia</text><rect class="s2" x="210" y="288" width="38.18181818181818" height="20" rx="4"/><text class="suave" x="256.1818181818182" y="302" font-size="12">10 min</text><text class="texto" x="200" y="333" font-size="13" text-anchor="end">Trivy</text><rect class="s2" x="210" y="320" width="19.09090909090909" height="20" rx="4"/><text class="suave" x="237.0909090909091" y="334" font-size="12">5 min</text>
+</svg>

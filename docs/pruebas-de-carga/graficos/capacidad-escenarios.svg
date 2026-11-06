@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 114" width="720" height="114" role="img" aria-labelledby="t d">
+<title id="t">Cuántos niño-años entran en 50 GB según dónde van los backups</title><desc id="d">Un niño-año es un niño con un año de datos. Supuestos de uso en el capítulo de capacidad.</desc>
+<style>
+  text { font-family: 'Nunito Sans', 'Segoe UI', system-ui, sans-serif; }
+  .fondo { fill: #FFFDF8; } .texto { fill: #2E2E2E; } .suave { fill: #6B6B6B; }
+  .grilla { stroke: #D9D4C8; stroke-width: 1; } .eje { stroke: #6B6B6B; stroke-width: 1; }
+  .anillo { stroke: #FFFDF8; }
+  .s0 { stroke: #963417; fill: #963417; } .s1 { stroke: #008C7E; fill: #008C7E; } .s2 { stroke: #B8792E; fill: #B8792E; }
+  .limite { stroke-dasharray: 5 4; stroke-width: 1.5; fill: none; }
+  polyline.linea { fill: none !important; stroke-width: 2; stroke-linejoin: round; stroke-linecap: round; }
+  @media (prefers-color-scheme: dark) {
+    .fondo { fill: #2A2622; } .texto { fill: #F1E4CD; } .suave { fill: #BFB6A8; }
+    .grilla { stroke: #4A443D; } .eje { stroke: #BFB6A8; } .anillo { stroke: #2A2622; }
+    .s0 { stroke: #D06A45; fill: #D06A45; } .s1 { stroke: #1FA593; fill: #1FA593; } .s2 { stroke: #B07F35; fill: #B07F35; }
+  }
+</style>
+<rect class="fondo" width="720" height="114" rx="16"/>
+<text class="texto" x="200" y="45" font-size="13" text-anchor="end">Backups en otro lado</text><rect class="s0" x="210" y="32" width="420" height="20" rx="4"/><text class="suave" x="638" y="46" font-size="12">~1.150</text><text class="texto" x="200" y="77" font-size="13" text-anchor="end">7 backups en el mismo disco</text><rect class="s0" x="210" y="64" width="54.78260869565217" height="20" rx="4"/><text class="suave" x="272.7826086956522" y="78" font-size="12">~150</text>
+</svg>

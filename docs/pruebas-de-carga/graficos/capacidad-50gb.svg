@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 242" width="720" height="242" role="img" aria-labelledby="t d">
+<title id="t">Cómo se reparte un disco de 50 GB</title><desc id="d">Reservas recomendadas y lo que queda para los datos de TRAMA.</desc>
+<style>
+  text { font-family: 'Nunito Sans', 'Segoe UI', system-ui, sans-serif; }
+  .fondo { fill: #FFFDF8; } .texto { fill: #2E2E2E; } .suave { fill: #6B6B6B; }
+  .grilla { stroke: #D9D4C8; stroke-width: 1; } .eje { stroke: #6B6B6B; stroke-width: 1; }
+  .anillo { stroke: #FFFDF8; }
+  .s0 { stroke: #963417; fill: #963417; } .s1 { stroke: #008C7E; fill: #008C7E; } .s2 { stroke: #B8792E; fill: #B8792E; }
+  .limite { stroke-dasharray: 5 4; stroke-width: 1.5; fill: none; }
+  polyline.linea { fill: none !important; stroke-width: 2; stroke-linejoin: round; stroke-linecap: round; }
+  @media (prefers-color-scheme: dark) {
+    .fondo { fill: #2A2622; } .texto { fill: #F1E4CD; } .suave { fill: #BFB6A8; }
+    .grilla { stroke: #4A443D; } .eje { stroke: #BFB6A8; } .anillo { stroke: #2A2622; }
+    .s0 { stroke: #D06A45; fill: #D06A45; } .s1 { stroke: #1FA593; fill: #1FA593; } .s2 { stroke: #B07F35; fill: #B07F35; }
+  }
+</style>
+<rect class="fondo" width="720" height="242" rx="16"/>
+<text class="texto" x="200" y="45" font-size="13" text-anchor="end">Datos de TRAMA</text><rect class="s1" x="210" y="32" width="420" height="20" rx="4"/><text class="suave" x="638" y="46" font-size="12">29,8 GB</text><text class="texto" x="200" y="77" font-size="13" text-anchor="end">Margen libre (20 %)</text><rect class="s1" x="210" y="64" width="140.93959731543626" height="20" rx="4"/><text class="suave" x="358.93959731543623" y="78" font-size="12">10,0 GB</text><text class="texto" x="200" y="109" font-size="13" text-anchor="end">Sistema operativo</text><rect class="s1" x="210" y="96" width="70.46979865771813" height="20" rx="4"/><text class="suave" x="288.4697986577181" y="110" font-size="12">5,0 GB</text><text class="texto" x="200" y="141" font-size="13" text-anchor="end">Imágenes de Docker</text><rect class="s1" x="210" y="128" width="42.28187919463087" height="20" rx="4"/><text class="suave" x="260.28187919463085" y="142" font-size="12">3,0 GB</text><text class="texto" x="200" y="173" font-size="13" text-anchor="end">Logs de Docker</text><rect class="s1" x="210" y="160" width="28.187919463087248" height="20" rx="4"/><text class="suave" x="246.18791946308724" y="174" font-size="12">2,0 GB</text><text class="texto" x="200" y="205" font-size="13" text-anchor="end">Parte fija de MySQL</text><rect class="s1" x="210" y="192" width="4" height="20" rx="4"/><text class="suave" x="222" y="206" font-size="12">0,2 GB</text>
+</svg>

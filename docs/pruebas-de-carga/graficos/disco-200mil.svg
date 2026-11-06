@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 178" width="720" height="178" role="img" aria-labelledby="t d">
+<title id="t">Dónde ocupa espacio MySQL con 200.000 aportes</title><desc id="d">Tamaño en disco de cada parte de MySQL al final de la prueba de capacidad.</desc>
+<style>
+  text { font-family: 'Nunito Sans', 'Segoe UI', system-ui, sans-serif; }
+  .fondo { fill: #FFFDF8; } .texto { fill: #2E2E2E; } .suave { fill: #6B6B6B; }
+  .grilla { stroke: #D9D4C8; stroke-width: 1; } .eje { stroke: #6B6B6B; stroke-width: 1; }
+  .anillo { stroke: #FFFDF8; }
+  .s0 { stroke: #963417; fill: #963417; } .s1 { stroke: #008C7E; fill: #008C7E; } .s2 { stroke: #B8792E; fill: #B8792E; }
+  .limite { stroke-dasharray: 5 4; stroke-width: 1.5; fill: none; }
+  polyline.linea { fill: none !important; stroke-width: 2; stroke-linejoin: round; stroke-linecap: round; }
+  @media (prefers-color-scheme: dark) {
+    .fondo { fill: #2A2622; } .texto { fill: #F1E4CD; } .suave { fill: #BFB6A8; }
+    .grilla { stroke: #4A443D; } .eje { stroke: #BFB6A8; } .anillo { stroke: #2A2622; }
+    .s0 { stroke: #D06A45; fill: #D06A45; } .s1 { stroke: #1FA593; fill: #1FA593; } .s2 { stroke: #B07F35; fill: #B07F35; }
+  }
+</style>
+<rect class="fondo" width="720" height="178" rx="16"/>
+<text class="texto" x="200" y="45" font-size="13" text-anchor="end">Tablas de TRAMA</text><rect class="s1" x="210" y="32" width="420" height="20" rx="4"/><text class="suave" x="638" y="46" font-size="12">260 MB</text><text class="texto" x="200" y="77" font-size="13" text-anchor="end">Binlogs (30 días)</text><rect class="s1" x="210" y="64" width="279.8890048892639" height="20" rx="4"/><text class="suave" x="497.8890048892639" y="78" font-size="12">173 MB</text><text class="texto" x="200" y="109" font-size="13" text-anchor="end">Redo log (fijo)</text><rect class="s1" x="210" y="96" width="161.85083834852838" height="20" rx="4"/><text class="suave" x="379.8508383485284" y="110" font-size="12">100 MB</text><text class="texto" x="200" y="141" font-size="13" text-anchor="end">Sistema y otros</text><rect class="s1" x="210" y="128" width="158.14793316143977" height="20" rx="4"/><text class="suave" x="376.14793316143977" y="142" font-size="12">98 MB</text>
+</svg>
