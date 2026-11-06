@@ -20,6 +20,16 @@ public final class EstiloPdf {
     public static final Color TEXTO = new Color(0x2E, 0x2E, 0x2E);
     public static final Color TEXTO_SUAVE = new Color(0x6B, 0x6B, 0x6B);
     public static final Color BORDE = new Color(0xD9, 0xD4, 0xC8);
+    public static final Color MIEL = new Color(0xCF, 0x89, 0x3A);
+    public static final Color AGUA = new Color(0x62, 0x89, 0x81);
+
+    // Fondo muy suave de un color: se mezcla con blanco (proporcion = cuánto del color queda)
+    public static Color suave(Color color, float proporcion) {
+        return new Color(
+                Math.round(color.getRed() * proporcion + 255 * (1 - proporcion)),
+                Math.round(color.getGreen() * proporcion + 255 * (1 - proporcion)),
+                Math.round(color.getBlue() * proporcion + 255 * (1 - proporcion)));
+    }
 
     public final Font titulo;
     public final Font subtitulo;

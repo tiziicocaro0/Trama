@@ -3,14 +3,18 @@ package com.trama.tpo.demo;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.nio.charset.StandardCharsets;
+import java.time.LocalDate;
 import java.util.List;
 
 import org.junit.jupiter.api.Test;
 
 import com.trama.tpo.demo.service.PdfService;
+import com.trama.tpo.demo.service.PdfService.Hito;
+import com.trama.tpo.demo.service.PdfService.LineaDeTiempo;
 import com.trama.tpo.demo.service.PdfService.Seccion;
 import com.trama.tpo.demo.service.PdfService.Tabla;
 import com.trama.tpo.demo.service.PdfService.Tarjeta;
+import com.trama.tpo.demo.service.PdfService.Tono;
 
 // 8.1: PdfService es genérico; lo reutilizan la 8.3 y la 8.4
 class PdfServiceTest {
@@ -61,5 +65,16 @@ class PdfServiceTest {
 
         String contenido = new String(pdf, StandardCharsets.ISO_8859_1);
         assertThat(contenido).contains("Handlee").contains("NunitoSans");
+    }
+
+    @Test
+    void unaLineaDeTiempoConLosTresTonosNoFalla() {
+        byte[] pdf = pdfService.generar("Datos de prueba", List.of(new Seccion("Aportes", List.of(new LineaDeTiempo(List.of(
+                new Hito(LocalDate.of(2026, 11, 2), Tono.FAMILIA, "FORTALEZA · Tutora Prueba · Familia", "Le gusta dibujar", "Texto de prueba"),
+                new Hito(LocalDate.of(2026, 10, 15), Tono.DOCENTE, "INTERES · Docente Prueba · Docente", "Dinosaurios", null),
+                new Hito(LocalDate.of(2026, 9, 3), Tono.PROFESIONAL, "NOTA · Psicologa Prueba · Profesional", "Sesión", "Texto de prueba"),
+                new Hito(LocalDate.of(2026, 9, 1), Tono.NEUTRO, "INTERES · Ex miembro", "Música", "Texto de prueba")))))));
+
+        assertThat(new String(pdf, 0, 5, StandardCharsets.US_ASCII)).isEqualTo("%PDF-");
     }
 }

@@ -3,6 +3,7 @@ package com.trama.tpo.demo.service;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.time.LocalDate;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
@@ -20,6 +21,7 @@ import com.lowagie.text.pdf.PdfPTable;
 import com.lowagie.text.pdf.PdfWriter;
 import com.trama.tpo.demo.exceptions.ApiException;
 import com.trama.tpo.demo.service.pdf.EstiloPdf;
+import com.trama.tpo.demo.service.pdf.LineaDeTiempoPdf;
 import com.trama.tpo.demo.service.pdf.MarcoPaginaPdf;
 
 /**
@@ -30,7 +32,7 @@ import com.trama.tpo.demo.service.pdf.MarcoPaginaPdf;
 public class PdfService {
 
     private static final ZoneId ZONA = ZoneId.of("America/Argentina/Buenos_Aires");
-    private static final DateTimeFormatter FECHA = DateTimeFormatter.ofPattern("dd/MM/yyyy");
+    private static final DateTimeFormatter FECHA = DateTimeFormatter.ofPattern("dd/MM/yyyy · HH:mm");
     private static final float MARGEN = 56.7f;        // 2 cm
     private static final float MARGEN_SUPERIOR = 90;  // deja lugar al encabezado con el logo
 
@@ -45,7 +47,7 @@ public class PdfService {
         }
     }
 
-    public sealed interface Bloque permits Texto, Tabla, Tarjeta {}
+    public sealed interface Bloque permits Texto, Tabla, Tarjeta, LineaDeTiempo {}
 
     public record Texto(String contenido) implements Bloque {}
 
@@ -54,7 +56,17 @@ public class PdfService {
     /** Por ejemplo: etiqueta "FORTALEZA · 02/11/2026 · María P.", título y texto. */
     public record Tarjeta(String etiqueta, String titulo, String cuerpo) implements Bloque {}
 
+    /** Quién aportó: define el color de la caja en la línea de tiempo. */
+    public enum Tono { FAMILIA, DOCENTE, PROFESIONAL, NEUTRO }
+
+    /** Un punto de la línea de tiempo: fecha, color, etiqueta, título y texto. */
+    public record Hito(LocalDate fecha, Tono tono, String etiqueta, String titulo, String cuerpo) {}
+
+    /** Aportes en orden, agrupados por mes, como la historia laboral de un CV. */
+    public record LineaDeTiempo(List<Hito> hitos) implements Bloque {}
+
     private final EstiloPdf estilo = new EstiloPdf();
+    private final LineaDeTiempoPdf lineaDeTiempo = new LineaDeTiempoPdf(estilo);
     private final byte[] logo = leerLogo();
 
     public byte[] generar(String titulo, List<Seccion> secciones) {
@@ -81,10 +93,17 @@ public class PdfService {
                     continue;
                 }
                 for (Bloque bloque : seccion.bloques()) {
+                    if (bloque instanceof LineaDeTiempo linea) {
+                        for (com.lowagie.text.Element elemento : lineaDeTiempo.armar(linea)) {
+                            documento.add(elemento);
+                        }
+                        continue;
+                    }
                     documento.add(switch (bloque) {
                         case Texto t -> parrafo(t.contenido());
                         case Tabla t -> tabla(t);
                         case Tarjeta t -> tarjeta(t);
+                        case LineaDeTiempo l -> throw new IllegalStateException("Se arma arriba");
                     });
                 }
             }
