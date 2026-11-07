@@ -11,6 +11,7 @@ import {
 import InicioSidebar from '../inicio/InicioSidebar.jsx'
 import { TIPOS_AVISO } from './tiposAviso.js'
 import { avisar, avisarError } from '../../components/avisos/avisosFlotantes.js'
+import Cargando from '../../components/ui/Cargando.jsx'
 
 // 6.1: /cuenta/notificaciones. Elegir qué avisos de la campana llegan también por mail.
 export default function PreferenciasNotificacionesPage() {
@@ -78,7 +79,7 @@ export default function PreferenciasNotificacionesPage() {
           </header>
 
           {cargando ? (
-            <p role="status">Cargando tus preferencias…</p>
+            <Cargando mensaje="Cargando tus preferencias…" />
           ) : resultado.error ? (
             <div className="space-y-4 rounded-lg bg-superficie p-6">
               <p role="alert">{resultado.error}</p>

@@ -385,6 +385,18 @@ public class EventoService {
         return new ApiException(codigo, mensaje, estado);
     }
 
+    // 8.1: todos los eventos del proyecto, cada serie una sola vez (sin expandir las ocurrencias)
+    @Transactional(readOnly = true)
+    public List<EventoResponse> listarParaExportar(UUID proyectoId) {
+        permisoService.verificarMiembro(proyectoId);
+
+        return eventoRepository.findByProyectoIdAndFechaBetweenOrderByFechaAscHoraInicioAsc(
+                        proyectoId, LocalDate.of(1900, 1, 1), LocalDate.of(9999, 12, 31))
+                .stream()
+                .map(this::convertir)
+                .toList();
+    }
+
     private EventoResponse convertir(Evento evento) {
         return convertir(evento, evento.getFecha(), null);
     }
