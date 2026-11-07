@@ -58,36 +58,54 @@ class AccesoEndpointsTest {
 
     private static final String PREFIJO = "/api/proyectos/{proyectoId}";
     private static final String NOMBRE_DEL_NINO = "NinoAcceso021";
+    
 
     /**
      * Un cuerpo válido por cada DTO: si no, la validación responde 400 antes de llegar al
      * control de permisos y el test no probaría nada. Si se crea un endpoint con un DTO nuevo,
      * hay que agregar su ejemplo acá (el test falla y lo avisa).
      */
-    private static final Map<Class<?>, String> CUERPOS = Map.of(
-            AporteRequest.class, """
-                    {"tipo":"FORTALEZA","titulo":"Prueba","contenido":"Texto de prueba",
-                     "datos":"{\\"contexto\\":\\"ESCUELA\\"}","visibilidad":"TODOS"}""",
-            InvitacionRequest.class, """
-                    {"email":"alguien@example.com","rol":"FAMILIAR"}""",
-            ConfiguracionProyectoRequest.class, """
-                    {"familiarPuedeCargar":true,"familiarVeNotas":false}""",
-            ActualizarDatosProyectoRequest.class, """
-                    {"nombre":"Otro","apellido":"Nombre","fechaNacimiento":"2017-01-01",
-                     "escuela":"Escuela de prueba","grado":"3.º grado"}""",
-            EspecialidadRequest.class, """
-                    {"especialidades":[{"especialidad":"DOCENTE_PRIMARIO"}]}""",
-            EventoRequest.class, """
-                    {"titulo":"Prueba","fecha":"2026-11-05","horaInicio":"10:00","horaFin":"11:00"}""",
-            EventoOcurrenciaRequest.class, """
-                    {"titulo":"Prueba","horaInicio":"10:00","horaFin":"11:00"}""",
-            ActaRequest.class, """
-                    {"acta":"Acuerdos de la reunión de prueba"}""",
-            AcuerdoRequest.class, """
-                    {"reunionId":"00000000-0000-0000-0000-000000000001","descripcion":"Prueba",
-                     "responsableId":"00000000-0000-0000-0000-000000000002","fechaRevision":"2026-11-20"}""",
-            CumplidoRequest.class, """
-                    {"cumplido":true}""");
+    private static final Map<Class<?>, String> CUERPOS = Map.ofEntries(
+        Map.entry(AporteRequest.class, """
+                {"tipo":"FORTALEZA","titulo":"Prueba","contenido":"Texto de prueba",
+                 "datos":"{\\"contexto\\":\\"ESCUELA\\"}","visibilidad":"TODOS"}"""),
+
+        Map.entry(InvitacionRequest.class, """
+                {"email":"alguien@example.com","rol":"FAMILIAR"}"""),
+
+        Map.entry(ConfiguracionProyectoRequest.class, """
+                {"familiarPuedeCargar":true,"familiarVeNotas":false}"""),
+
+        Map.entry(ActualizarDatosProyectoRequest.class, """
+                {"nombre":"Otro","apellido":"Nombre","fechaNacimiento":"2017-01-01",
+                 "escuela":"Escuela de prueba","grado":"3.º grado"}"""),
+
+        Map.entry(EspecialidadRequest.class, """
+                {"especialidades":[{"especialidad":"DOCENTE_PRIMARIO"}]}"""),
+
+        Map.entry(EventoRequest.class, """
+                {"titulo":"Prueba","fecha":"2026-11-05",
+                 "horaInicio":"10:00","horaFin":"11:00"}"""),
+
+        Map.entry(EventoOcurrenciaRequest.class, """
+                {"titulo":"Prueba","horaInicio":"10:00","horaFin":"11:00"}"""),
+
+        Map.entry(ActaRequest.class, """
+                {"acta":"Acuerdos de la reunión de prueba"}"""),
+
+        Map.entry(AcuerdoRequest.class, """
+                {"reunionId":"00000000-0000-0000-0000-000000000001",
+                 "descripcion":"Prueba",
+                 "responsableId":"00000000-0000-0000-0000-000000000002",
+                 "fechaRevision":"2026-11-20"}"""),
+
+        Map.entry(CumplidoRequest.class, """
+                {"cumplido":true}"""),
+
+        // Historia 6.2: comentarios y menciones
+        Map.entry(ComentarioRequest.class, """
+                {"texto":"Comentario de prueba"}""")
+);
 
     @Autowired private MockMvc mockMvc;
     @Autowired private JwtService jwtService;
