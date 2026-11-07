@@ -10,6 +10,7 @@ import com.trama.tpo.demo.repository.EventoRepository;
 import com.trama.tpo.demo.repository.MembresiaRepository;
 import com.trama.tpo.demo.repository.ProyectoRepository;
 import com.trama.tpo.demo.repository.UsuarioRepository;
+import com.trama.tpo.demo.repository.NotificacionRepository;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -20,6 +21,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.data.domain.PageRequest;
 
 import java.time.Instant;
 import java.time.LocalDate;
@@ -29,6 +31,7 @@ import java.util.UUID;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -41,6 +44,7 @@ class EventoControllerTest {
     @Autowired private ProyectoRepository proyectoRepository;
     @Autowired private MembresiaRepository membresiaRepository;
     @Autowired private EventoRepository eventoRepository;
+    @Autowired private NotificacionRepository notificacionRepository;
 
     private final ObjectMapper mapper = new ObjectMapper();
 
@@ -76,6 +80,14 @@ class EventoControllerTest {
     void limpiarDatos() {
 
         if (proyecto != null) {
+                for (Usuario usuario : List.of(tutor, docente, familiar, usuarioAjeno)) {
+                        notificacionRepository.deleteAll(
+                                notificacionRepository.findByUsuarioIdOrderByFechaDesc(
+                                        usuario.getId(),
+                                        PageRequest.of(0, 100)
+                                )
+                        );
+                }
             eventoRepository.deleteAll(
                     eventoRepository.findByProyectoIdAndFechaBetweenOrderByFechaAscHoraInicioAsc(
                             proyecto.getId(),
@@ -274,6 +286,48 @@ class EventoControllerTest {
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.codigo").value("EVENTO_NO_ENCONTRADO"));
     }
+    @Test
+    void cambioDeRutinaNotificaATodosExceptoAlAutor() throws Exception {
+
+        String requestCambio = """
+                {
+                "titulo": "Cambio de horario escolar",
+                "descripcion": "Se modificó el horario de una actividad",
+                "fecha": "2026-11-05",
+                "horaInicio": "10:00",
+                "horaFin": "12:00",
+                "imagenId": null,
+                "esCambio": true
+                }
+                """;
+
+        // La docente registra el cambio de rutina.
+        mockMvc.perform(post(rutaEventos())
+                .header("Authorization", token(docente))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(requestCambio))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.esCambio").value(true));
+
+        // Los otros dos miembros reciben una notificación.
+        assertEquals(1,
+                notificacionRepository.countByUsuarioIdAndLeidaFalse(
+                        tutor.getId()));
+
+        assertEquals(1,
+                notificacionRepository.countByUsuarioIdAndLeidaFalse(
+                        familiar.getId()));
+
+        // La autora no recibe su propio aviso.
+        assertEquals(0,
+                notificacionRepository.countByUsuarioIdAndLeidaFalse(
+                        docente.getId()));
+
+        // Un usuario ajeno tampoco recibe notificaciones.
+        assertEquals(0,
+                notificacionRepository.countByUsuarioIdAndLeidaFalse(
+                        usuarioAjeno.getId()));
+                }
 
     // MÉTODOS AUXILIARES
 

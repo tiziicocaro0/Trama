@@ -1,7 +1,7 @@
 import { House, SignOut } from '@phosphor-icons/react'
 import { Link, useLocation } from 'react-router-dom'
 import useAuth from '../../hooks/useAuth.js'
-import { navegacion } from '../../features/inicio/navegacion.js'
+import { navegacionPara } from '../../features/inicio/navegacion.js'
 
 const CLASE_ICONO =
   'group relative flex size-12 items-center justify-center rounded-md text-texto-suave hover:bg-decoracion hover:text-primario focus-visible:outline-2 focus-visible:outline-primario'
@@ -21,12 +21,12 @@ function Etiqueta({ children }) {
 // Navegación a un clic en las pantallas de cada niño: íconos a la izquierda en
 // pantallas grandes y abajo en el celular.
 export default function BarraIconos() {
-  const { cerrarSesion } = useAuth()
+  const { usuario, cerrarSesion } = useAuth()
   const { pathname } = useLocation()
   const idProyectoActual = pathname.match(/^\/proyectos\/([^/]+)/)?.[1]
   const items = [
     { titulo: 'Inicio', icon: House, to: '/inicio' },
-    ...navegacion,
+    ...navegacionPara(usuario),
   ]
   return (
     <nav

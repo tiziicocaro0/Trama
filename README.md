@@ -52,6 +52,8 @@ Trama/
 
 **Nota:** el proyecto base del frontend todavía está en preparación.
 
+**Para levantar TODO:** docker compose --profile demo up -d --build 
+
 ## Clonar el repositorio
 
 Para descargar el proyecto por primera vez:

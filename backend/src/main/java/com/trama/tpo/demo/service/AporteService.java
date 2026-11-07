@@ -22,6 +22,9 @@ import com.trama.tpo.demo.repository.ArchivoRepository;
 import com.trama.tpo.demo.repository.MembresiaRepository;
 import com.trama.tpo.demo.repository.ProyectoRepository;
 import com.trama.tpo.demo.repository.UsuarioRepository;
+import com.trama.tpo.demo.aporte.EstadoRevision;
+import com.trama.tpo.demo.aporte.SolicitudRevision;
+import com.trama.tpo.demo.repository.SolicitudRevisionRepository;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -56,6 +59,7 @@ public class AporteService {
     private final RegistroAccionService registroAccionService;
     private final ConfirmacionAporteService confirmacionAporteService;
     private final AvisoNotaService avisoNotaService;
+    private final SolicitudRevisionRepository solicitudRevisionRepository;
     // Lee el JSON "datos" de cada tipo de aporte (fechas incluidas).
     private final ObjectMapper mapper = new ObjectMapper().findAndRegisterModules();
 
@@ -70,7 +74,8 @@ public class AporteService {
             ArchivoRepository archivoRepository,
             RegistroAccionService registroAccionService,
             ConfirmacionAporteService confirmacionAporteService,
-            AvisoNotaService avisoNotaService) {
+            AvisoNotaService avisoNotaService,
+            SolicitudRevisionRepository solicitudRevisionRepository) {
 
         this.aporteRepository = aporteRepository;
         this.aporteVersionRepository = aporteVersionRepository;
@@ -83,6 +88,7 @@ public class AporteService {
         this.registroAccionService = registroAccionService;
         this.confirmacionAporteService = confirmacionAporteService;
         this.avisoNotaService = avisoNotaService;
+        this.solicitudRevisionRepository = solicitudRevisionRepository;
     }
 
     // CREAR APORTE
@@ -146,8 +152,14 @@ public class AporteService {
         // 6.1: una nota nueva se avisa a quienes pueden leerla
         avisoNotaService.notaNueva(guardado);
 
-        // Un aporte recién creado todavía no tiene confirmaciones (3.3)
-        return convertirRespuesta(guardado, true, especialidadesPorAutor(proyectoId), List.of());
+        // Un aporte recién creado no tiene revisiones pendientes.
+        return convertirRespuesta(
+                guardado,
+                true,
+                especialidadesPorAutor(proyectoId),
+                List.of(),
+                Map.of()
+        );
     }
 
     // LISTAR APORTES
@@ -241,10 +253,23 @@ public class AporteService {
         // 3.3: las confirmaciones de todos los aportes del listado, en una sola búsqueda
         Map<UUID, List<ConfirmacionAporteService.Confirmante>> confirmantes =
                 confirmacionAporteService.confirmantesPorAporte(aportes.stream().map(Aporte::getId).toList());
+        // 3.4: obtiene las revisiones pendientes de todos los aportes
+        // en una sola consulta a la base de datos.
+        Map<UUID, UUID> revisionesPendientes =
+                obtenerRevisionesPendientes(
+                        aportes.stream()
+                                .map(Aporte::getId)
+                                .toList()
+                );
 
         return aportes.stream()
-                .map(aporte -> convertirRespuesta(aporte, puedeCargar, especialidades,
-                        confirmantes.getOrDefault(aporte.getId(), List.of())))
+                .map(aporte -> convertirRespuesta(
+                        aporte,
+                        puedeCargar,
+                        especialidades,
+                        confirmantes.getOrDefault(aporte.getId(), List.of()),
+                        revisionesPendientes
+                ))
                 .toList();
     }
 
@@ -314,10 +339,16 @@ public class AporteService {
         registroAccionService.registrar(
                 usuarioActual.obtenerId(), proyectoId, AccionRegistro.EDITAR, guardado.getTipo().name());
 
-        // Editar no borra las confirmaciones: se devuelven las que ya tenía (3.3)
-        return convertirRespuesta(guardado, true, especialidadesPorAutor(proyectoId),
+        // Conserva las confirmaciones y consulta si el aporte editado
+        // todavía tiene una solicitud de revisión pendiente.
+        return convertirRespuesta(
+                guardado,
+                true,
+                especialidadesPorAutor(proyectoId),
                 confirmacionAporteService.confirmantesPorAporte(List.of(guardado.getId()))
-                        .getOrDefault(guardado.getId(), List.of()));
+                        .getOrDefault(guardado.getId(), List.of()),
+                obtenerRevisionesPendientes(List.of(guardado.getId()))
+        );
     }
 
     // OBTENER APORTE PARA EDITAR
@@ -417,16 +448,38 @@ public class AporteService {
                         (primera, segunda) -> primera));
     }
 
+    // 3.4: obtiene las revisiones pendientes de varios aportes
+    // en una sola consulta a la base de datos.
+    private Map<UUID, UUID> obtenerRevisionesPendientes(List<UUID> aporteIds) {
+        if (aporteIds.isEmpty()) {
+            return Map.of();
+        }
 
+        return solicitudRevisionRepository
+                .findByAporteIdInAndEstado(aporteIds, EstadoRevision.PENDIENTE)
+                .stream()
+                .collect(Collectors.toMap(
+                        revision -> revision.getAporte().getId(),
+                        SolicitudRevision::getId,
+                        (primera, segunda) -> primera
+                ));
+    }
     // CONVERTIR ENTIDAD A DTO
     private AporteResponse convertirRespuesta(
-            Aporte aporte,
-            boolean puedeCargar,
-            Map<UUID, List<EspecialidadItemResponse>> especialidades,
-            List<ConfirmacionAporteService.Confirmante> confirmantes) {
+        Aporte aporte,
+        boolean puedeCargar,
+        Map<UUID, List<EspecialidadItemResponse>> especialidades,
+        List<ConfirmacionAporteService.Confirmante> confirmantes,
+        Map<UUID, UUID> revisionesPendientes) {
 
         boolean esAutor = aporte.getAutor().getId()
                 .equals(usuarioActual.obtenerId());
+        // 3.4: obtiene el ID de la revisión pendiente desde el mapa
+        // previamente consultado, sin realizar otra consulta a la base de datos.
+        UUID revisionPendienteId = revisionesPendientes.get(aporte.getId());
+
+        // Indica si el aporte tiene una revisión pendiente.
+        boolean revisionPendiente = revisionPendienteId != null;
 
         List<Archivo> listaArchivos = aporte.getArchivos() != null
                 ? aporte.getArchivos()
@@ -459,7 +512,9 @@ public class AporteService {
                 especialidades.getOrDefault(aporte.getAutor().getId(), List.of()),
                 confirmantes.size(),
                 confirmantes.stream().anyMatch(c -> c.usuarioId().equals(usuarioActual.obtenerId())),
-                confirmantes.stream().map(ConfirmacionAporteService.Confirmante::nombre).toList()
+                confirmantes.stream().map(ConfirmacionAporteService.Confirmante::nombre).toList(),
+                revisionPendiente,
+                revisionPendienteId
         );
     }
 

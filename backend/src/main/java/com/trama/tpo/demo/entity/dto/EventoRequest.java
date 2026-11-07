@@ -37,6 +37,8 @@ public record EventoRequest(
 
         String tipo,
 
-        List<UUID> participanteIds
+        List<UUID> participanteIds,
+
+        Boolean esCambio
 
 ) {}
