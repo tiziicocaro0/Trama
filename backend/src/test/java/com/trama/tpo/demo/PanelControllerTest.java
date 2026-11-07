@@ -17,6 +17,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 
@@ -48,6 +49,7 @@ class PanelControllerTest {
     @Autowired private MembresiaRepository membresiaRepository;
     @Autowired private AporteRepository aporteRepository;
     @Autowired private EventoRepository eventoRepository;
+    @Autowired private JdbcTemplate jdbc;
 
     @AfterEach
     void limpiar() {
@@ -123,13 +125,7 @@ class PanelControllerTest {
 
         // Proyecto 1: Tomás (2 novedades recientes: 1 aporte y 1 evento)
         Proyecto p1 = crearProyecto("Tomás");
-        membresiaRepository.save(Membresia.builder()
-                .usuario(profesional)
-                .proyecto(p1)
-                .rol(Rol.SALUD)
-                .esAdmin(false)
-                .fechaAlta(Instant.now().minus(30, ChronoUnit.DAYS))
-                .build());
+        unirComoSalud(profesional, p1, 30);
 
         // Aporte reciente (cuenta)
         aporteRepository.save(Aporte.builder()
@@ -163,23 +159,11 @@ class PanelControllerTest {
 
         // Proyecto 2: Martina (0 novedades)
         Proyecto p2 = crearProyecto("Martina");
-        membresiaRepository.save(Membresia.builder()
-                .usuario(profesional)
-                .proyecto(p2)
-                .rol(Rol.SALUD)
-                .esAdmin(false)
-                .fechaAlta(Instant.now().minus(20, ChronoUnit.DAYS))
-                .build());
+        unirComoSalud(profesional, p2, 20);
 
         // Proyecto 3: Lucas (3er proyecto profesional gratuito -> debe estar en soloLectura = true)
         Proyecto p3 = crearProyecto("Lucas");
-        membresiaRepository.save(Membresia.builder()
-                .usuario(profesional)
-                .proyecto(p3)
-                .rol(Rol.SALUD)
-                .esAdmin(false)
-                .fechaAlta(Instant.now().minus(10, ChronoUnit.DAYS))
-                .build());
+        unirComoSalud(profesional, p3, 10);
 
         mockMvc.perform(get("/api/panel")
                 .header("Authorization", token(profesional)))
@@ -198,6 +182,20 @@ class PanelControllerTest {
                 // Proyecto 3: Lucas (3er niño -> excede el plan gratuito de 2 niños)
                 .andExpect(jsonPath("$[0].nombre").value("Lucas"))
                 .andExpect(jsonPath("$[0].soloLectura").value(true));
+    }
+
+    // fecha_alta tiene @CreationTimestamp: Hibernate pisa la del builder, así que se fija por SQL.
+    // El orden de alta decide qué niños quedan en solo lectura con el plan gratuito.
+    private void unirComoSalud(Usuario profesional, Proyecto proyecto, int diasAtras) {
+        Membresia membresia = membresiaRepository.save(Membresia.builder()
+                .usuario(profesional)
+                .proyecto(proyecto)
+                .rol(Rol.SALUD)
+                .esAdmin(false)
+                .build());
+        jdbc.update("UPDATE membresia SET fecha_alta = ? WHERE id = UUID_TO_BIN(?)",
+                java.sql.Timestamp.from(Instant.now().minus(diasAtras, ChronoUnit.DAYS)),
+                membresia.getId().toString());
     }
 
     private Proyecto crearProyecto(String nombre) {
