@@ -17,12 +17,11 @@ const ETIQUETAS_ROL = {
 export default function TarjetaPanelNino({ nino }) {
   const edad = calcularEdad(nino.fechaNacimiento)
   const etiquetaRol = ETIQUETAS_ROL[nino.rol] || nino.rol
-  const idProyecto = nino.proyectoId || nino.id
 
   return (
     <article className="flex min-w-0 flex-col gap-3 rounded-lg bg-superficie p-4 shadow-sm transition-colors hover:bg-bienvenida-luz motion-reduce:transition-none sm:p-5">
       <Link
-        to={`/proyectos/${idProyecto}`}
+        to={`/proyectos/${nino.id}`}
         aria-label={`Ver perfil de ${nino.nombre}`}
         className="flex min-w-0 flex-1 items-center gap-4 rounded-md p-1 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primario sm:gap-6"
       >

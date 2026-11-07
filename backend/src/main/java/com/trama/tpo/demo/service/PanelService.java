@@ -98,7 +98,6 @@ public class PanelService {
 
             return new PanelItemResponse(
                     proyecto.getId(),
-                    proyecto.getId(),
                     proyecto.getNombre(),
                     proyecto.getApellido(),
                     proyecto.getApodo(),

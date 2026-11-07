@@ -100,7 +100,6 @@ describe('PanelPage (7.1)', () => {
     const mockNinos = [
       {
         id: 'p-1',
-        proyectoId: 'p-1',
         nombre: 'Tomás',
         apellido: 'Pérez',
         fechaNacimiento: '2018-05-12',
@@ -112,7 +111,6 @@ describe('PanelPage (7.1)', () => {
       },
       {
         id: 'p-2',
-        proyectoId: 'p-2',
         nombre: 'Martina',
         apellido: 'Gómez',
         fechaNacimiento: '2019-08-20',
@@ -164,7 +162,6 @@ describe('PanelPage (7.1)', () => {
     const mockNinos = [
       {
         id: 'p-1',
-        proyectoId: 'p-1',
         nombre: 'Tomás',
         fechaNacimiento: '2018-05-12',
         rol: 'EDUCACION',
@@ -175,7 +172,6 @@ describe('PanelPage (7.1)', () => {
       },
       {
         id: 'p-2',
-        proyectoId: 'p-2',
         nombre: 'Martina',
         fechaNacimiento: '2019-08-20',
         rol: 'SALUD',

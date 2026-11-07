@@ -108,7 +108,7 @@ export default function PanelPage() {
               {visibles.length ? (
                 <ul aria-label="Tus niños asignados" className="space-y-4">
                   {visibles.map((nino) => (
-                    <li key={nino.proyectoId || nino.id}>
+                    <li key={nino.id}>
                       <TarjetaPanelNino nino={nino} />
                     </li>
                   ))}
