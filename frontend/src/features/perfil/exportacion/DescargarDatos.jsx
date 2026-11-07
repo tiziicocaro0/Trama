@@ -3,6 +3,7 @@ import { DownloadSimple } from '@phosphor-icons/react'
 import Boton from '../../../components/ui/Boton.jsx'
 import { descargarTodosLosDatos } from '../../../api/exportacion.js'
 import { avisar, avisarError } from '../../../components/avisos/avisosFlotantes.js'
+import FiltrosExportacion from './FiltrosExportacion.jsx'
 
 const FORMATOS = [
   { formato: 'pdf', etiqueta: 'Descargar PDF', variante: 'primary' },
@@ -12,12 +13,14 @@ const FORMATOS = [
 // 8.1: los tutores descargan toda la información del niño (derecho de acceso).
 export default function DescargarDatos({ proyecto }) {
   const [descargando, setDescargando] = useState(null)
+  const [filtrosAbiertos, setFiltrosAbiertos] = useState(false)
 
-  async function descargar(formato) {
+  async function descargar(formato, filtros = {}) {
     if (descargando) return
     setDescargando(formato)
     try {
-      await descargarTodosLosDatos(proyecto.id, formato)
+      await descargarTodosLosDatos(proyecto.id, formato, filtros)
+      setFiltrosAbiertos(false)
       avisar('Descargamos los datos.')
     } catch (problema) {
       avisarError(
@@ -48,14 +51,22 @@ export default function DescargarDatos({ proyecto }) {
           <Boton
             key={formato}
             variant={variante}
-            onClick={() => descargar(formato)}
+            // El PDF abre antes los filtros; el JSON siempre trae todo
+            onClick={() => (formato === 'pdf' ? setFiltrosAbiertos(true) : descargar(formato))}
             disabled={Boolean(descargando)}
           >
             <DownloadSimple size={18} aria-hidden="true" />
-            {descargando === formato ? 'Preparando…' : etiqueta}
+            {descargando === formato && formato === 'json' ? 'Preparando…' : etiqueta}
           </Boton>
         ))}
       </div>
+      <FiltrosExportacion
+        abierto={filtrosAbiertos}
+        proyectoId={proyecto.id}
+        descargando={descargando === 'pdf'}
+        onCerrar={() => setFiltrosAbiertos(false)}
+        onDescargar={(filtros) => descargar('pdf', filtros)}
+      />
     </section>
   )
 }

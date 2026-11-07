@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react'
+import { render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router-dom'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
@@ -30,6 +30,13 @@ function abrir(rol, esAdmin) {
   )
 }
 
+// El botón "Descargar PDF" abre la ventana de filtros; sin elegir nada, se exporta todo
+async function descargarPdfDesdeLaVentana(user) {
+  await user.click(await screen.findByRole('button', { name: 'Descargar PDF' }))
+  const ventana = await screen.findByRole('dialog')
+  await user.click(within(ventana).getByRole('button', { name: 'Descargar PDF' }))
+}
+
 beforeEach(() => {
   cliente.get.mockReset()
   window.URL.createObjectURL = vi.fn(() => 'blob:datos')
@@ -41,7 +48,7 @@ describe('8.1: descargar todos los datos', () => {
     const user = userEvent.setup()
     const clics = vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(() => {})
     abrir('TUTOR', false)
-    await user.click(await screen.findByRole('button', { name: 'Descargar PDF' }))
+    await descargarPdfDesdeLaVentana(user)
     expect(cliente.get).toHaveBeenCalledWith(`/proyectos/${id}/exportar`, {
       params: { formato: 'pdf' },
       responseType: 'blob',
@@ -66,7 +73,7 @@ describe('8.1: descargar todos los datos', () => {
       if (ruta.endsWith('/exportar')) throw { response: { status: 500 } }
       return anterior(ruta, opciones)
     })
-    await user.click(await screen.findByRole('button', { name: 'Descargar PDF' }))
+    await descargarPdfDesdeLaVentana(user)
     expect(await screen.findByRole('alert')).toHaveTextContent(
       'No pudimos preparar la descarga. Intentá nuevamente.',
     )

@@ -1,6 +1,10 @@
 package com.trama.tpo.demo.controllers;
 
+import com.trama.tpo.demo.service.ExportacionPdfService;
 import com.trama.tpo.demo.service.ExportacionService;
+import com.trama.tpo.demo.service.FiltroAportes;
+
+import org.springframework.format.annotation.DateTimeFormat;
 
 import org.springframework.http.ContentDisposition;
 import org.springframework.http.HttpHeaders;
@@ -10,6 +14,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
 import java.time.ZoneId;
+import java.util.List;
 import java.util.UUID;
 
 // 8.1: descargar toda la información del niño (solo tutores)
@@ -20,16 +25,25 @@ public class ExportacionController {
     private static final ZoneId ZONA = ZoneId.of("America/Argentina/Buenos_Aires");
 
     private final ExportacionService exportacionService;
+    private final ExportacionPdfService exportacionPdfService;
 
-    public ExportacionController(ExportacionService exportacionService) {
+    public ExportacionController(
+            ExportacionService exportacionService,
+            ExportacionPdfService exportacionPdfService) {
         this.exportacionService = exportacionService;
+        this.exportacionPdfService = exportacionPdfService;
     }
 
     @GetMapping
     public ResponseEntity<?> exportar(
             @PathVariable UUID proyectoId,
             // Opcional acá para que el permiso se verifique antes (un no tutor recibe 403, no 400)
-            @RequestParam(required = false) String formato) {
+            @RequestParam(required = false) String formato,
+            // Filtros de los aportes, solo para el PDF; sin ninguno se exporta todo
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate desde,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate hasta,
+            @RequestParam(required = false) List<String> tipos,
+            @RequestParam(required = false) List<UUID> usuarios) {
 
         String elegido = exportacionService.verificarPedido(proyectoId, formato);
 
@@ -42,7 +56,8 @@ public class ExportacionController {
             return ResponseEntity.ok()
                     .headers(encabezados)
                     .contentType(MediaType.APPLICATION_PDF)
-                    .body(exportacionService.exportarPdf(proyectoId));
+                    .body(exportacionPdfService.exportar(
+                            proyectoId, FiltroAportes.crear(desde, hasta, tipos, usuarios)));
         }
 
         return ResponseEntity.ok()
