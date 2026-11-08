@@ -4,7 +4,7 @@ import { MemoryRouter } from 'react-router-dom'
 import { beforeEach, expect, it, vi } from 'vitest'
 import cliente from '../../api/cliente.js'
 import { hoyIso } from '../../utils/fechas.js'
-import { obtenerPeriodo, sumarDias, tituloDia } from './utils/periodo.js'
+import { obtenerPeriodo, tituloDia } from './utils/periodo.js'
 import CalendarioUsuarioPage from './CalendarioUsuarioPage.jsx'
 
 vi.mock('../../api/cliente.js', () => ({ default: { defaults: { baseURL: '/api' }, get: vi.fn(), post: vi.fn() } }))
