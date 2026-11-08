@@ -26,7 +26,7 @@ beforeEach(() => {
 it('abre el formulario con día y horario y crea el evento en el acompañamiento elegido', async () => {
   abrir()
   await screen.findByRole('button', { name: 'Ver evento: Actividad Uno' })
-  const fecha = sumarDias(hoy, 1)
+  const fecha = obtenerPeriodo('semana', hoy).desde
   const botonAgregar = screen.getAllByRole('button', { name: `Agregar evento el ${tituloDia(fecha)} a las 10:00` })[0]
   await userEvent.click(botonAgregar)
   const selector = await screen.findByRole('dialog', { name: '¿En qué acompañamiento va el evento?' })
