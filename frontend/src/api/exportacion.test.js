@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import cliente from './cliente.js'
-import { descargarTodosLosDatos } from './exportacion.js'
+import { descargarMisAportes, descargarTodosLosDatos } from './exportacion.js'
 
 vi.mock('./cliente.js', () => ({
   default: { defaults: { baseURL: '/api' }, get: vi.fn() },
@@ -33,6 +33,16 @@ describe('8.1: descargar todos los datos', () => {
 
     expect(cliente.get).toHaveBeenCalledWith('/proyectos/p1/exportar', {
       params: { formato: 'pdf', desde: '2026-09-01', hasta: '2026-11-06', tipos: 'FAMILIA,DOCENTE', usuarios: 'u1,u2' },
+      responseType: 'blob',
+    })
+  })
+
+  // 8.4
+  it('descarga mis aportes con su propia ruta', async () => {
+    await descargarMisAportes('p1', 'json')
+
+    expect(cliente.get).toHaveBeenCalledWith('/proyectos/p1/mis-aportes/exportar', {
+      params: { formato: 'json' },
       responseType: 'blob',
     })
   })

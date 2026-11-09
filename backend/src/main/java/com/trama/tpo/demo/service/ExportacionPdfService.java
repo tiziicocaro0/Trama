@@ -186,7 +186,7 @@ public class ExportacionPdfService {
             Map.entry("REUNION", "Reunión"),
             Map.entry("COMUN", "Evento"));
 
-    private static String legible(String constante) {
+    static String legible(String constante) {
         if (constante == null) {
             return "";
         }
