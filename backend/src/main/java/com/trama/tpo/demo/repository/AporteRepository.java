@@ -27,6 +27,12 @@ public interface AporteRepository extends JpaRepository<Aporte, UUID> {
             Boolean archivado
     );
 
+    // 8.4: lo que una persona cargó en el proyecto, activo y archivado, del más nuevo al más viejo
+    List<Aporte> findByProyectoIdAndAutorIdOrderByCreadoEnDesc(
+            UUID proyectoId,
+            UUID autorId
+    );
+
     List<Aporte> findByProyectoIdAndArchivosId(
             UUID proyectoId,
             UUID archivoId

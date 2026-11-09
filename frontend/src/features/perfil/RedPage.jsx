@@ -18,6 +18,7 @@ import usePerfil from './hooks/usePerfil.js'
 import EspecialidadModal from './components/EspecialidadModal.jsx'
 import { etiquetaEspecialidad } from './especialidades.js'
 import MatriculaMiembro from './components/MatriculaMiembro.jsx'
+import DescargarMisAportes from './components/DescargarMisAportes.jsx'
 import FotoUsuario from '../cuenta/FotoUsuario.jsx'
 import { avisar, avisarError } from '../../components/avisos/avisosFlotantes.js'
 import Cargando from '../../components/ui/Cargando.jsx'
@@ -236,6 +237,8 @@ export default function RedPage() {
                                 {etiquetasRol[persona.rol]}
                                 {persona.esAdmin && ' · Administrador'}
                               </p>
+                              {/* 8.4: lo que yo cargué, para conservarlo */}
+                              {esMiPerfil && <DescargarMisAportes proyecto={proyecto} />}
                               {esProfesional(persona.rol) && (
                                 <div className="mt-1">
                                   <p className="break-words text-texto-suave">

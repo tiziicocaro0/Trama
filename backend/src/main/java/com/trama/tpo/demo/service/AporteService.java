@@ -273,6 +273,34 @@ public class AporteService {
                 .toList();
     }
 
+    // 8.4: todo lo que cargó el usuario actual en el proyecto, también lo archivado.
+    // Son sus propios aportes, así que no se filtran por visibilidad. El autor sale de
+    // la sesión (no se recibe por parámetro) para que nunca sirva para leer aportes ajenos.
+    @Transactional(readOnly = true)
+    public List<AporteResponse> listarMios(UUID proyectoId) {
+
+        permisoService.verificarMiembro(proyectoId);
+
+        List<Aporte> aportes = aporteRepository.findByProyectoIdAndAutorIdOrderByCreadoEnDesc(
+                proyectoId, usuarioActual.obtenerId());
+        List<UUID> ids = aportes.stream().map(Aporte::getId).toList();
+
+        boolean puedeCargar = permisoService.puedeEditar(proyectoId);
+        Map<UUID, List<EspecialidadItemResponse>> especialidades = especialidadesPorAutor(proyectoId);
+        Map<UUID, List<ConfirmacionAporteService.Confirmante>> confirmantes =
+                confirmacionAporteService.confirmantesPorAporte(ids);
+        Map<UUID, UUID> revisionesPendientes = obtenerRevisionesPendientes(ids);
+
+        return aportes.stream()
+                .map(aporte -> convertirRespuesta(
+                        aporte,
+                        puedeCargar,
+                        especialidades,
+                        confirmantes.getOrDefault(aporte.getId(), List.of()),
+                        revisionesPendientes))
+                .toList();
+    }
+
     // EDITAR APORTE
     @Transactional
     public AporteResponse editar(
