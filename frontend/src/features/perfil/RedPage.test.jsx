@@ -91,6 +91,14 @@ beforeEach(() => {
   cliente.delete.mockReset()
 })
 describe('Red de profesionales', () => {
+  // 8.4: "Descargar mis aportes" aparece solo en la propia tarjeta
+  it('muestra "Descargar mis aportes" solo junto al propio nombre', async () => {
+    abrir(`/proyectos/${id}/red`, true, { id: 'usuario-tutora' })
+    await screen.findByRole('heading', { name: 'Tutora ficticia Ejemplo' })
+
+    expect(screen.getAllByRole('button', { name: 'Descargar mis aportes' })).toHaveLength(1)
+  })
+
   it('abre Red desde el perfil y muestra las membresías reales', async () => {
     abrir(`/proyectos/${id}`)
     await userEvent.click(
