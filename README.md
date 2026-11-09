@@ -570,7 +570,17 @@ sh scripts/datos-prueba.sh          # macOS / Linux
 
 Con `-Reiniciar` (Windows) o `--reiniciar` (macOS / Linux) se borra `trama_prueba` y se vuelve a cargar desde cero. El front se levanta como siempre (`npm run dev`).
 
-Carga 3 niños con su red, y en Tomi aportes de las seis secciones del perfil y notas profesionales, con autores, lugares, visibilidades y fechas variados. Mientras corre con datos de prueba, los mails van a Mailpit (`http://localhost:8025`) y nunca a Gmail.
+Carga 3 niños con su red, y en Tomi aportes de las seis secciones del perfil y notas profesionales, con autores, lugares, visibilidades y fechas variados. Con las cuentas `@trama.test`, los mails van a Mailpit (`http://localhost:8025`) y nunca a Gmail.
+
+**Con cuentas reales (por ejemplo, para grabar un video):** en el `.env` de tu PC (nunca en el repo) agregá los mails que quieras usar y reiniciá los datos con `-Reiniciar`:
+
+```
+DATOS_PRUEBA_EMAIL_TUTOR=...      # reemplaza a Marta, tutora de Tomi
+DATOS_PRUEBA_EMAIL_DOCENTE=...    # reemplaza a María, docente
+DATOS_PRUEBA_EMAIL_TERAPEUTA=...  # reemplaza a Diego, equipo de salud
+```
+
+Entran con la contraseña `Trama1234!` y, como los mails son de verdad, funcionan recuperar contraseña e invitaciones (los mails salen por Gmail). Al cargar, esas cuentas reciben algunos avisos de "nota nueva"; las `@trama.test` nunca reciben mails.
 
 Usuarios de prueba, todos con la contraseña `Trama1234!`:
 
@@ -655,4 +665,4 @@ Actualmente se trabaja en:
 
 ## Equipo
 
-Proyecto académico desarrollado por el equipo de Trama.
+Proyecto académico desarrollado por el equipo de Trama.

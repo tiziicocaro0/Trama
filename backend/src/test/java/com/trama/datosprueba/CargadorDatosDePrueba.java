@@ -9,6 +9,7 @@ import java.util.UUID;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Profile;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -27,12 +28,15 @@ import com.trama.tpo.demo.entity.membresia.Especialidad;
 import com.trama.tpo.demo.entity.membresia.Membresia;
 import com.trama.tpo.demo.entity.membresia.MembresiaEspecialidad;
 import com.trama.tpo.demo.entity.membresia.Rol;
+import com.trama.tpo.demo.entity.notificacion.PreferenciaNotificacion;
+import com.trama.tpo.demo.entity.notificacion.TipoNotificacion;
 import com.trama.tpo.demo.entity.proyecto.Proyecto;
 import com.trama.tpo.demo.entity.proyecto.TipoEscuela;
 import com.trama.tpo.demo.entity.usuario.TipoCuenta;
 import com.trama.tpo.demo.entity.usuario.Usuario;
 import com.trama.tpo.demo.entity.usuario.UsuarioEspecialidad;
 import com.trama.tpo.demo.repository.MembresiaRepository;
+import com.trama.tpo.demo.repository.PreferenciaNotificacionRepository;
 import com.trama.tpo.demo.repository.ProyectoRepository;
 import com.trama.tpo.demo.repository.UsuarioEspecialidadRepository;
 import com.trama.tpo.demo.repository.UsuarioRepository;
@@ -57,6 +61,14 @@ public class CargadorDatosDePrueba implements CommandLineRunner {
     private final PasswordEncoder passwordEncoder;
     private final AporteService aporteService;
     private final JdbcTemplate jdbcTemplate;
+    private final PreferenciaNotificacionRepository preferenciaRepository;
+
+    // Para grabar un video con cuentas reales: en el .env (nunca en el repo) se pueden poner
+    // DATOS_PRUEBA_EMAIL_TUTOR, DATOS_PRUEBA_EMAIL_DOCENTE y DATOS_PRUEBA_EMAIL_TERAPEUTA.
+    // Reemplazan a Marta (tutora de Tomi), María (docente) y Diego (salud). Si faltan, quedan los @trama.test.
+    private final String emailTutor;
+    private final String emailDocente;
+    private final String emailTerapeuta;
 
     public CargadorDatosDePrueba(
             UsuarioRepository usuarioRepository,
@@ -65,7 +77,11 @@ public class CargadorDatosDePrueba implements CommandLineRunner {
             UsuarioEspecialidadRepository usuarioEspecialidadRepository,
             PasswordEncoder passwordEncoder,
             AporteService aporteService,
-            JdbcTemplate jdbcTemplate) {
+            JdbcTemplate jdbcTemplate,
+            PreferenciaNotificacionRepository preferenciaRepository,
+            @Value("${DATOS_PRUEBA_EMAIL_TUTOR:}") String emailTutor,
+            @Value("${DATOS_PRUEBA_EMAIL_DOCENTE:}") String emailDocente,
+            @Value("${DATOS_PRUEBA_EMAIL_TERAPEUTA:}") String emailTerapeuta) {
 
         this.usuarioRepository = usuarioRepository;
         this.proyectoRepository = proyectoRepository;
@@ -74,23 +90,31 @@ public class CargadorDatosDePrueba implements CommandLineRunner {
         this.passwordEncoder = passwordEncoder;
         this.aporteService = aporteService;
         this.jdbcTemplate = jdbcTemplate;
+        this.preferenciaRepository = preferenciaRepository;
+        this.emailTutor = elegirEmail(emailTutor, "tutor@trama.test");
+        this.emailDocente = elegirEmail(emailDocente, "docente@trama.test");
+        this.emailTerapeuta = elegirEmail(emailTerapeuta, "psico@trama.test");
+    }
+
+    private static String elegirEmail(String configurado, String porDefecto) {
+        return configurado == null || configurado.isBlank() ? porDefecto : configurado.trim().toLowerCase();
     }
 
     @Override
     public void run(String... args) {
 
         // Si ya se cargaron los datos, no se vuelven a cargar
-        if (usuarioRepository.existsByEmail("tutor@trama.test")) {
+        if (usuarioRepository.existsByEmail("cotutor@trama.test")) {
             log.info("Datos de prueba: ya estaban cargados");
             return;
         }
 
         // Usuarios basados en nuestras user personas
-        Usuario tutor = crearUsuario("Marta", "Fernández", "tutor@trama.test");
+        Usuario tutor = crearUsuario("Marta", "Fernández", emailTutor);
         Usuario cotutor = crearUsuario("Jorge", "Fernández", "cotutor@trama.test");
         Usuario familiar = crearUsuario("Elena", "Sosa", "familiar@trama.test");
-        Usuario docente = crearUsuario("María", "Díaz", "docente@trama.test");
-        Usuario psico = crearUsuario("Diego", "Torres", "psico@trama.test");
+        Usuario docente = crearUsuario("María", "Díaz", emailDocente);
+        Usuario psico = crearUsuario("Diego", "Torres", emailTerapeuta);
         Usuario tutoraValen = crearUsuario("Laura", "Ruiz", "tutora.valen@trama.test");
         Usuario tutorJuli = crearUsuario("Pablo", "Gómez", "tutor.juli@trama.test");
 
@@ -102,6 +126,9 @@ public class CargadorDatosDePrueba implements CommandLineRunner {
         usuarioRepository.save(psico);
         declararProfesional(crearUsuario("Sofía", "Ramos", "terapeuta@trama.test"),
                 Especialidad.TERAPIA_OCUPACIONAL, Especialidad.ACOMPANANTE_TERAPEUTICO);
+
+        // Las cuentas @trama.test no existen: no se les mandan mails (si no, Gmail devuelve rebotes)
+        sinMailsParaCuentasFicticias();
 
         // Niños ficticios
         Proyecto tomi = crearProyecto("Tomás", "Fernández", "Tomi",
@@ -248,6 +275,23 @@ public class CargadorDatosDePrueba implements CommandLineRunner {
         Instant fecha = Instant.now().minus(Duration.ofDays(haceDias)).minus(Duration.ofMinutes(haceDias * 37L));
         jdbcTemplate.update("UPDATE aporte SET creado_en = ?, actualizado_en = ? WHERE id = ?",
                 java.sql.Timestamp.from(fecha), java.sql.Timestamp.from(fecha), bytes(creado.id()));
+    }
+
+    private void sinMailsParaCuentasFicticias() {
+        for (Usuario usuario : usuarioRepository.findAll()) {
+            if (!usuario.getEmail().endsWith("@trama.test")) {
+                continue;
+            }
+            for (TipoNotificacion tipo : TipoNotificacion.values()) {
+                if (tipo.isConfigurable()) {
+                    preferenciaRepository.save(PreferenciaNotificacion.builder()
+                            .usuarioId(usuario.getId())
+                            .tipo(tipo)
+                            .porEmail(false)
+                            .build());
+                }
+            }
+        }
     }
 
     private void fecharAltas(Proyecto proyecto, int haceDias) {

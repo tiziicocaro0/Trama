@@ -1,0 +1,16 @@
+# Datos de prueba con las cuentas @trama.test (las de siempre): los mails nunca salen a Gmail.
+# Van a Mailpit (http://localhost:8025) si está levantado, y si no, se descartan sin cortar el arranque.
+# Si en el .env hay cuentas reales (DATOS_PRUEBA_EMAIL_*), este perfil no se activa y los mails
+# salen por Gmail como siempre, así funcionan recuperar contraseña e invitaciones.
+spring:
+  mail:
+    host: localhost
+    port: 1025
+    username: ""
+    password: ""
+    properties:
+      mail:
+        smtp:
+          auth: false
+          starttls:
+            enable: false
