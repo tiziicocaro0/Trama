@@ -1,6 +1,6 @@
 import { TIPOS_NOTA } from './perfil.js'
 import { hoyIso } from '../../utils/fechas.js'
-import { Chalkboard, Ear, FirstAidKit, House, MapPin, MapTrifold, SoccerBall, Eye, Footprints, ForkKnife, Hand, HandHeart, HandPalm, Image, ListNumbers, MoonStars, PauseCircle, PersonSimple, PersonSimpleRun, PersonSimpleWalk, Shower, SlidersHorizontal, Sparkle, SquaresFour, TShirt, Toilet, ChatCircle, HandPointing, Hourglass, UsersThree, WaveSine } from '@phosphor-icons/react'
+import { Ear, FirstAidKit, GraduationCap, House, MapPin, MapTrifold, SoccerBall, Eye, Footprints, ForkKnife, Hand, HandHeart, HandPalm, Image, ListNumbers, MoonStars, PauseCircle, PersonSimple, PersonSimpleRun, PersonSimpleWalk, Shower, SlidersHorizontal, Sparkle, SquaresFour, TShirt, Toilet, ChatCircle, HandPointing, Hourglass, UsersThree, WaveSine } from '@phosphor-icons/react'
 
 export const textosPorTipo = {
   COMUNICACION: {
@@ -53,7 +53,7 @@ export const textosPorTipo = {
     introduccion:
       'Compartí una observación concreta, con palabras cotidianas y sin diagnósticos.',
     aclaracion:
-      'La descripción y el archivo son opcionales.',
+      'El archivo es opcional.',
   },
 }
 
@@ -343,7 +343,7 @@ export function etiquetaOpcion(opciones, valor, detalle) {
 // Ícono de dónde pasa algo (casa, escuela, consultorio…): va chico en la tarjeta, junto a los tres puntitos
 export const ICONOS_LUGAR = {
   CASA: House,
-  ESCUELA: Chalkboard,
+  ESCUELA: GraduationCap,
   CONSULTORIO: FirstAidKit,
   ACTIVIDAD_EXTRACURRICULAR: SoccerBall,
   DISTINTOS_CONTEXTOS: MapTrifold,

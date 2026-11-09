@@ -65,7 +65,7 @@ export default function MenuOpcionesAporte({ titulo, sustantivo, alEditar, alArc
                   // El foco vuelve a los tres puntitos al cerrar el panel o el historial
                   accion({ currentTarget: boton.current })
                 }}
-                className={`flex min-h-11 w-full items-center gap-3 rounded-md px-3 text-left text-sm font-semibold transition-colors hover:bg-superficie focus-visible:outline-2 focus-visible:outline-primario disabled:cursor-not-allowed disabled:opacity-60 motion-reduce:transition-none ${clave === 'archivar' ? 'text-miel' : 'text-texto'}`}
+                className={`flex min-h-11 w-full items-center gap-3 rounded-md px-3 text-left text-sm font-semibold transition-colors hover:bg-superficie focus-visible:outline-2 focus-visible:outline-primario disabled:cursor-not-allowed disabled:opacity-60 motion-reduce:transition-none ${clave === 'archivar' ? 'text-primario' : 'text-texto'}`}
               >
                 <Icono size={18} aria-hidden="true" />
                 {texto}
