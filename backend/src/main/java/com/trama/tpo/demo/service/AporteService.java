@@ -104,6 +104,7 @@ public class AporteService {
         }
         validarInteres(request);
         validarFortaleza(request);
+        validarDetallesOtro(request);
         validarObservacion(request);
         validarNota(request);
         validarComunicacion(request);
@@ -301,6 +302,7 @@ public class AporteService {
         // Validar los datos específicos del aporte
         validarInteres(request);
         validarFortaleza(request);
+        validarDetallesOtro(request);
         validarObservacion(request);
         validarNota(request);
         validarComunicacion(request);
@@ -514,7 +516,8 @@ public class AporteService {
                 confirmantes.stream().anyMatch(c -> c.usuarioId().equals(usuarioActual.obtenerId())),
                 confirmantes.stream().map(ConfirmacionAporteService.Confirmante::nombre).toList(),
                 revisionPendiente,
-                revisionPendienteId
+                revisionPendienteId,
+                aporte.getAutor().getFotoRuta() != null
         );
     }
 
@@ -676,6 +679,38 @@ public class AporteService {
         }
     }
 
+    // Al elegir «Otro» se aclara cuál (contextoOtro, categoriaOtra…): texto corto, como una etiqueta
+    static final int LARGO_DETALLE_OTRO = 60;
+
+    private void validarDetallesOtro(AporteRequest request) {
+        if (request.datos() == null || request.datos().isBlank()) {
+            return;
+        }
+        JsonNode datos;
+        try {
+            datos = mapper.readTree(request.datos());
+        } catch (JsonProcessingException e) {
+            return; // el validador de cada tipo ya avisa que los datos no son válidos
+        }
+        if (datos == null || !datos.isObject()) {
+            return;
+        }
+        datos.fields().forEachRemaining(campo -> {
+            String nombre = campo.getKey();
+            if (!nombre.endsWith("Otro") && !nombre.endsWith("Otra")) {
+                return;
+            }
+            JsonNode valor = campo.getValue();
+            if (!valor.isTextual() || valor.asText().length() > LARGO_DETALLE_OTRO) {
+                throw new ApiException(
+                        "DETALLE_OTRO_INVALIDO",
+                        "Lo que escribas en «Otro» puede tener hasta " + LARGO_DETALLE_OTRO + " caracteres",
+                        HttpStatus.BAD_REQUEST
+                );
+            }
+        });
+    }
+
     private void validarFortaleza(AporteRequest request) {
 
         if (request.tipo() != TipoAporte.FORTALEZA) {
@@ -827,4 +862,4 @@ public class AporteService {
             );
         }
     }
-}
+}

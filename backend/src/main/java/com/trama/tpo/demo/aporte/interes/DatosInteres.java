@@ -8,7 +8,10 @@ public record DatosInteres(
         CategoriaInteres categoria,
 
         @NotNull(message = "La intensidad es obligatoria")
-        IntensidadInteres intensidad
+        IntensidadInteres intensidad,
+
+        // Si la categoría es OTRO: cuál, con las palabras de quien lo carga
+        String categoriaOtra
 
 ) {
-}
+}

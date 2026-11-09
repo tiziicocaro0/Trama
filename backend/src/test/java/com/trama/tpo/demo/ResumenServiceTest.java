@@ -105,7 +105,10 @@ class ResumenServiceTest {
                 false,
 
                 // 3.4: al no existir una revisión, tampoco tiene un ID asociado.
-                null
+                null,
+
+                // La autora ficticia no tiene foto de cuenta.
+                false
         );
 }
-}
+}
