@@ -13,6 +13,7 @@ import AdjuntosAporte from './AdjuntosAporte.jsx'
 import PieEditorAporte from './PieEditorAporte.jsx'
 import { hoyIso } from '../../../utils/fechas.js'
 import CasillaOvillo from '../../../components/ui/CasillaOvillo.jsx'
+import PreguntaGuia from '../../../components/ui/PreguntaGuia.jsx'
 
 const SECCIONES_CON_ADJUNTOS = ['NOTA_PROFESIONAL', 'COMUNICACION', 'SENSORIAL', 'ESTRATEGIA', 'RUTINA']
 
@@ -161,15 +162,14 @@ export default function EditorAporte({
       aria-busy={enviando}
       className="mt-4 space-y-4 rounded-md border border-borde bg-bienvenida-luz p-4"
     >
-      {!textos.introduccion && (
-        <p className="font-semibold text-secundario">
-          {aporte
-            ? `Editar ${sustantivo}`
-            : esNota
-              ? 'Nueva nota'
-              : 'Nuevo aporte'}
-        </p>
-      )}
+      
+      <p className="font-semibold text-secundario">
+        {aporte
+          ? `Editar ${sustantivo}`
+          : esNota
+            ? 'Nueva nota'
+            : 'Nuevo aporte'}
+      </p>
 
       {(textos.introduccion || textos.aclaracion) && (
         <div className="space-y-2">
@@ -186,6 +186,7 @@ export default function EditorAporte({
           )}
         </div>
       )}
+      <PreguntaGuia tipo={seccion.tipo} />
       {esSensorial && <CamposSensoriales extra={extra} setExtra={setExtra} errores={erroresCampos} disabled={enviando} />}
       {esEstrategia && <CamposEstrategia parte="categoria" extra={extra} setExtra={setExtra} errores={erroresCampos} disabled={enviando} />}
       {esRutina && <>

@@ -1,4 +1,4 @@
-import { Heart, Plus, Sparkle, X, } from '@phosphor-icons/react'
+import { FilePdf, Heart, Plus, Sparkle, X } from '@phosphor-icons/react'
 import { Link, useLocation, useParams } from 'react-router-dom'
 import { useEffect, useState } from 'react'
 import Boton from '../../components/ui/Boton.jsx'
@@ -18,6 +18,7 @@ import FiltrosRutinas from './components/FiltrosRutinas.jsx'
 import AvisoEliminacion from './eliminacion/AvisoEliminacion.jsx'
 import useProyectoActual from '../../hooks/useProyectoActual.js'
 import Cargando from '../../components/ui/Cargando.jsx'
+import DescargarPdfPerfil from './components/DescargarPdfPerfil.jsx'
 
 
 export default function PerfilPage() {
@@ -313,7 +314,25 @@ function encabezadoCompleto({
                 </section>
               </div>
             )}
-            {!seccion && <ProximosCambios proyectoId={id} />}
+{/* 8.3: llevar el perfil a una reunión, solo con lo que la persona puede ver */}
+{!seccion && (
+  <div className="mb-6 flex flex-wrap items-center justify-between gap-4 rounded-lg border border-borde bg-superficie p-4 shadow-sm sm:px-6">
+    <div className="flex items-center gap-3">
+      <FilePdf size={28} aria-hidden="true" className="shrink-0 text-primario" />
+      <div>
+        <p className="font-semibold text-secundario">
+          ¿Vas a una reunión? Llevá el perfil en PDF
+        </p>
+        <p className="text-sm text-texto-suave">
+          Con fecha y solo con lo que podés ver.
+        </p>
+      </div>
+      </div>
+    <DescargarPdfPerfil proyectoId={id} seccion="perfil" />
+  </div>
+)}
+
+{!seccion && <ProximosCambios proyectoId={id} />}
             {mensajeGuardado && (
               <p role="status" className="mb-4 text-secundario">
                 {mensajeGuardado}

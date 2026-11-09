@@ -11,6 +11,7 @@ import { obtenerResumenProyecto } from '../../api/aportes.js'
 import Boton from '../../components/ui/Boton.jsx'
 import usePerfil from './hooks/usePerfil.js'
 import { leerDatosAporte } from './perfil.js'
+import DescargarPdfPerfil from './components/DescargarPdfPerfil.jsx'
 
 const ETIQUETAS_INTENSIDAD = {
   ALTA: 'Intensidad alta',
@@ -158,11 +159,13 @@ export default function ConoceloPage() {
                     en el perfil y tenés permiso para ver.
                   </p>
                 </div>
-                <div className="print:hidden">
+                <div className="flex flex-wrap gap-3 print:hidden">
                   <Boton variant="secondary" onClick={imprimirResumen}>
                     <Printer size={20} aria-hidden="true" />
                     Imprimir
                   </Boton>
+                  {/* 8.3: el PDF de TRAMA, con fecha y solo lo que la persona puede ver */}
+                  <DescargarPdfPerfil proyectoId={id} seccion="conocelo" />
                 </div>
               </div>
 
