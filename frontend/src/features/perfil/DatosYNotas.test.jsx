@@ -275,7 +275,8 @@ describe('Notas con fecha y hora', () => {
     aportes = [nota]
     abrir()
     await screen.findByRole('heading', { name: 'Fortalezas' })
-    expect(screen.getAllByRole('heading', { level: 2 })).toHaveLength(6)
+    expect(screen.getAllByRole('heading', { level: 2 })).toHaveLength(7)
+    expect(screen.getByRole('heading', { name: 'Próximos cambios', level: 2 })).toBeInTheDocument()
     expect(
       screen.queryByRole('heading', { name: nota.titulo }),
     ).not.toBeInTheDocument()

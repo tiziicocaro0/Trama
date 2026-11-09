@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, within } from '@testing-library/react'
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router-dom'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
@@ -132,6 +132,18 @@ describe('Bitácora de observaciones (Tarea 4.0)', () => {
       bitacoraActual = [creada, ...bitacoraActual]
       return { data: creada }
     })
+  })
+
+  it('encuentra una entrada fuera de la primera página al abrir un resultado', async () => {
+    cliente.get.mockImplementation(async (ruta) => {
+      if (ruta.endsWith('/bitacora')) return { data: [observacionReciente] }
+      if (ruta.endsWith('/aportes')) return { data: [observacionAntigua, observacionReciente] }
+      if (ruta.endsWith('/miembros')) return { data: miembrosMock }
+      return { data: proyectoMock }
+    })
+    render(<MemoryRouter initialEntries={[`/proyectos/${proyectoId}/bitacora?aporte=obs-1`]}><AuthContext.Provider value={{ usuario: { id: autorUnoId, nombre: 'Marta' }, estado: 'autenticado' }}><AppRoutes /></AuthContext.Provider></MemoryRouter>)
+    const texto = await screen.findByText(observacionAntigua.contenido)
+    await waitFor(() => expect(texto.closest('#aporte-obs-1')).toHaveFocus())
   })
 
   it('muestra las observaciones ordenadas por fecha (la más nueva arriba) con autor, fecha, contexto y etiquetas', async () => {

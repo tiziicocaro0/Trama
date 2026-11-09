@@ -13,6 +13,8 @@ import {
   leerFortaleza,
   TIPOS_NOTA,
 } from '../../features/perfil/perfil.js'
+import RevisionAporte from '../../features/perfil/components/RevisionAporte.jsx'
+import ComentariosAporte from '../../features/perfil/components/ComentariosAporte.jsx'
 import ConfirmacionAporte from '../../features/perfil/components/ConfirmacionAporte.jsx'
 import DatosEstrategia from '../../features/perfil/components/DatosEstrategia.jsx'
 import { CATEGORIAS_COMUNICACION, CATEGORIAS_SENSORIALES, CONTEXTOS_SENSORIALES, FORMAS_COMUNICACION, ICONOS_SENSORIALES, TONOS_SENSORIALES, ICONOS_LISTA_SENSORIAL, TONOS_LISTA_SENSORIAL, CONTEXTOS_RUTINA, ICONOS_RUTINA, TONOS_RUTINA, etiquetaCategoriaRutina, ICONOS_DESREGULACION, TONOS_DESREGULACION, } from '../../features/perfil/camposAporte.js'
@@ -53,6 +55,9 @@ export default function TarjetaAporte({
   alVerHistorial,
   archivando = false,
   resumen = false,
+  esTutor = false,
+  usuarioId,
+  alActualizarRevision,
 }) {
   const [errorAdjunto, setErrorAdjunto] = useState('')
   const [vistaAdjunto, setVistaAdjunto] = useState(null)
@@ -343,6 +348,8 @@ export default function TarjetaAporte({
         {!resumen && (
           <ConfirmacionAporte aporte={aporte} />
         )}
+        <RevisionAporte aporte={aporte} esTutor={esTutor} usuarioId={usuarioId} alActualizar={alActualizarRevision} />
+        <ComentariosAporte aporte={aporte} usuarioId={usuarioId} />
 
         {esNota && (
           <div className="mt-3 space-y-1 text-sm text-texto-suave">

@@ -61,6 +61,7 @@ function armarCuerpoEvento({
   fechaFinRecurrencia,
   tipo,
   participanteIds,
+  esCambio,
 }) {
   const textoDescripcion =
     typeof descripcion === 'string' && descripcion.trim()
@@ -95,6 +96,7 @@ function armarCuerpoEvento({
     fechaFinRecurrencia: fechaFinLimpia,
     tipo: tipoEvento,
     participanteIds: listaParticipantes,
+    ...(typeof esCambio === 'boolean' ? { esCambio } : {}),
   }
 }
 

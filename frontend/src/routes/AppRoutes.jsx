@@ -8,6 +8,8 @@ import RecuperarPage from '../features/auth/recuperar/RecuperarPage.jsx'
 import InicioPage from '../features/inicio/InicioPage.jsx'
 import Acceso from './Acceso.jsx'
 import PerfilPage from '../features/perfil/PerfilPage.jsx'
+import BusquedaPage from '../features/perfil/BusquedaPage.jsx'
+import DetalleAporteBusquedaPage from '../features/perfil/DetalleAporteBusquedaPage.jsx'
 import { seccionesPerfil } from '../features/perfil/perfil.js'
 import PerfilLayout from '../features/perfil/PerfilLayout.jsx'
 import AcompanamientosPage from '../features/acompanamientos/AcompanamientosPage.jsx'
@@ -208,6 +210,8 @@ export default function AppRoutes() {
         }
       >
         <Route index element={<PerfilPage />} />
+        <Route path="buscar" element={<BusquedaPage />} />
+        <Route path="aportes/:aporteId" element={<DetalleAporteBusquedaPage />} />
         <Route path="conocelo" element={<ConoceloPage />} />
         <Route path="red" element={<RedPage />} />
         <Route path="datos-personales" element={<DatosPersonalesPage />} />

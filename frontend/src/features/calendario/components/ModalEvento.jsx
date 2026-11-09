@@ -53,6 +53,7 @@ function valoresBase(evento, esSoloOcurrencia, fechaPorDefecto, horaInicioPorDef
     descripcion: evento?.descripcion ?? '',
     archivos: archivosIniciales(evento),
     esReunion: evento?.tipo === 'REUNION',
+    esCambio: evento?.esCambio === true,
     participantes: Array.isArray(evento?.participanteIds) ? evento.participanteIds : [],
     recurrente: Boolean(evento?.recurrente),
     diaSemana: evento?.diaSemana ? String(evento.diaSemana) : obtenerDiaSemanaIso(fecha),
@@ -77,6 +78,7 @@ function FormularioEvento({ proyectoId, evento, miembros = [], alcance = 'serie'
   const [descripcion, setDescripcion] = useState(inicial.descripcion)
   const [archivos, setArchivos] = useState(inicial.archivos)
   const [esReunion, setEsReunion] = useState(inicial.esReunion)
+  const [esCambio, setEsCambio] = useState(inicial.esCambio)
   const [participantesSeleccionados, setParticipantesSeleccionados] = useState(inicial.participantes)
   const [recurrente, setRecurrente] = useState(inicial.recurrente)
   const [diaSemana, setDiaSemana] = useState(inicial.diaSemana)
@@ -93,6 +95,7 @@ function FormularioEvento({ proyectoId, evento, miembros = [], alcance = 'serie'
     descripcion,
     archivos,
     esReunion,
+    esCambio,
     participantes: participantesSeleccionados,
     recurrente,
     diaSemana,
@@ -208,6 +211,7 @@ function FormularioEvento({ proyectoId, evento, miembros = [], alcance = 'serie'
             ? fechaFinRecurrencia
             : null,
         tipo: esSoloOcurrencia ? evento?.tipo : esReunion ? 'REUNION' : 'COMUN',
+        esCambio,
         participanteIds: esSoloOcurrencia
           ? evento?.participanteIds
           : esReunion
@@ -353,6 +357,23 @@ function FormularioEvento({ proyectoId, evento, miembros = [], alcance = 'serie'
           )}
         </div>
       )}
+
+      <div className="rounded-md border border-borde bg-fondo p-4">
+        <CasillaOvillo
+          name="esCambio"
+          checked={esCambio}
+          onChange={(e) => setEsCambio(e.target.checked)}
+          disabled={enviando || esSoloOcurrencia}
+          describedBy={esSoloOcurrencia ? 'evento-cambio-ayuda' : undefined}
+        >
+          Es un cambio en su rutina (avisar a la red)
+        </CasillaOvillo>
+        {esSoloOcurrencia && (
+          <p id="evento-cambio-ayuda" className="mt-2 text-sm text-texto-suave">
+            Para cambiar esta opción, editá toda la serie.
+          </p>
+        )}
+      </div>
 
       {!esSoloOcurrencia && (
         <div className="space-y-4 rounded-md border border-borde bg-fondo p-4">

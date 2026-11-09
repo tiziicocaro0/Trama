@@ -1,5 +1,16 @@
 import cliente from './cliente.js'
 
+export async function buscarAportes(proyectoId, consulta, signal) {
+  if (!cliente.defaults.baseURL) throw new Error('Falta configurar la conexión con TRAMA.')
+  const { data } = await cliente.get(`/proyectos/${encodeURIComponent(proyectoId)}/buscar`, {
+    params: { q: consulta }, signal,
+  })
+  if (!Array.isArray(data) || data.some((item) => typeof item?.id !== 'string' || item.proyectoId !== proyectoId || typeof item.tipo !== 'string' || typeof item.titulo !== 'string')) {
+    throw new Error('No pudimos verificar los resultados de la búsqueda.')
+  }
+  return data
+}
+
 function ruta(proyectoId) {
   if (!cliente.defaults.baseURL)
     throw new Error('Falta configurar la conexión con TRAMA.')

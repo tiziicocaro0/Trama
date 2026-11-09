@@ -37,6 +37,9 @@ export default function BloquePerfil({
   puedeCrear = false,
   alGuardar,
   encabezado,
+  esTutor,
+  usuarioId,
+  alActualizarRevision,
 }) {
   const [editor, setEditor] = useState(null)
   const [archivandoId, setArchivandoId] = useState(null)
@@ -117,9 +120,12 @@ export default function BloquePerfil({
           {agrupados.map((aporte, indice) => (
             <Fragment key={aporte.id}>
             {esSensorial && (indice === 0 || leerDatosAporte(agrupados[indice - 1].datos).lista !== leerDatosAporte(aporte.datos).lista) && <li className="col-span-full"><h3 className="font-display text-h2 text-secundario">{leerDatosAporte(aporte.datos).lista === 'AYUDA' ? 'Le ayuda' : leerDatosAporte(aporte.datos).lista === 'CUESTA' ? 'Le cuesta' : 'Sin clasificar'}</h3></li>}
-            <li className={esPanel ? 'rounded-lg bg-superficie p-5 shadow-sm' : ''}>
+            <li id={`aporte-${aporte.id}`} tabIndex={-1} className={esPanel ? 'rounded-lg bg-superficie p-5 shadow-sm' : ''}>
               <TarjetaAporte
                 aporte={aporte}
+                esTutor={esTutor}
+                usuarioId={usuarioId}
+                alActualizarRevision={alActualizarRevision}
                 resumen={!completo}
                 archivando={archivandoId === aporte.id}
                 alEditar={(event) => abrirEditor(event, aporte)}

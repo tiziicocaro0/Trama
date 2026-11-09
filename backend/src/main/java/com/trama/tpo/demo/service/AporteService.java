@@ -162,47 +162,25 @@ public class AporteService {
         );
     }
 
+    // Los mismos permisos y filtros se usan para listar y buscar aportes.
+    @Transactional(readOnly = true)
+    public List<Aporte> obtenerVisibles(UUID proyectoId, TipoAporte tipo, Boolean archivados) {
+        permisoService.verificarMiembro(proyectoId);
+        UUID usuarioId = usuarioActual.obtenerId();
+        Rol rol = membresiaRepository.findRol(usuarioId, proyectoId)
+                .orElseThrow(() -> new AccessDeniedException("No tenés acceso a este proyecto"));
+        TipoAporte tipoOculto = permisoService.ocultaNotasProfesionales(proyectoId)
+                ? TipoAporte.NOTA_PROFESIONAL : null;
+        return aporteRepository.buscarAportesVisibles(proyectoId, Boolean.TRUE.equals(archivados),
+                tipo, PermisoService.visibilidadesPermitidas(rol), tipoOculto);
+    }
+
     // LISTAR APORTES
     @Transactional(readOnly = true)
-    public List<AporteResponse> listar(
-            UUID proyectoId,
-            TipoAporte tipo,
-            Boolean archivados) {
-
-        permisoService.verificarMiembro(proyectoId);
-
-        UUID usuarioId = usuarioActual.obtenerId();
-
-        Rol rol = membresiaRepository
-                .findRol(usuarioId, proyectoId)
-                .orElseThrow(() -> new AccessDeniedException(
-                        "No tenés acceso a este proyecto"
-                ));
-
-        boolean incluirArchivados = Boolean.TRUE.equals(archivados);
-
-        // Determinar qué aportes puede ver el usuario según su rol
-        List<Visibilidad> visibilidadesPermitidas =
-                PermisoService.visibilidadesPermitidas(rol);
-
-        // 1.8: un familiar sin permiso no recibe las notas profesionales
-        TipoAporte tipoOculto = permisoService.ocultaNotasProfesionales(proyectoId)
-                ? TipoAporte.NOTA_PROFESIONAL
-                : null;
-
-        // Filtrar directamente desde la base de datos
-        List<Aporte> aportes = aporteRepository.buscarAportesVisibles(
-                proyectoId,
-                incluirArchivados,
-                tipo,
-                visibilidadesPermitidas,
-                tipoOculto
-        );
-
-        // Se calcula una sola vez: si el usuario puede cargar en este proyecto
+    public List<AporteResponse> listar(UUID proyectoId, TipoAporte tipo, Boolean archivados) {
+        List<Aporte> aportes = obtenerVisibles(proyectoId, tipo, archivados);
         boolean puedeCargar = permisoService.puedeEditar(proyectoId);
-        Map<UUID, List<EspecialidadItemResponse>> especialidades =
-                especialidadesPorAutor(proyectoId);
+        Map<UUID, List<EspecialidadItemResponse>> especialidades = especialidadesPorAutor(proyectoId);
 
         if (tipo == TipoAporte.OBSERVACION) {
                 aportes.sort(

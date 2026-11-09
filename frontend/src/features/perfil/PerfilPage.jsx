@@ -1,9 +1,10 @@
 import { Heart, Plus, Sparkle, X, } from '@phosphor-icons/react'
-import { Link, useParams } from 'react-router-dom'
-import { useState } from 'react'
+import { Link, useLocation, useParams } from 'react-router-dom'
+import { useEffect, useState } from 'react'
 import Boton from '../../components/ui/Boton.jsx'
 import { Aviso } from '../../components/ui/Aviso.jsx'
 import BloquePerfil from './components/BloquePerfil.jsx'
+import ProximosCambios from './components/ProximosCambios.jsx'
 import BarraFiltrosAportes from '../../components/ui/BarraFiltrosAportes.jsx'
 import ChipFiltro from '../../components/ui/ChipFiltro.jsx'
 import usePerfil from './hooks/usePerfil.js'
@@ -21,15 +22,22 @@ import Cargando from '../../components/ui/Cargando.jsx'
 
 export default function PerfilPage() {
   const { id, seccion: slug } = useParams()
+  const { hash } = useLocation()
   const { proyecto, datos, error, cargando, reintentar } = usePerfil(
     id,
     listarAportes,
   )
   const [mensajeGuardado, setMensajeGuardado] = useState('')
   // 8.2: aviso de eliminación programada en la portada (se oculta al cancelarla)
-  const { esAdmin } = useProyectoActual()
+  const { esAdmin, rolCodigo, proyectoActual } = useProyectoActual()
   const [cancelacionEn, setCancelacionEn] = useState(null)
   const { usuario } = useAuth()
+  useEffect(() => {
+    if (!datos?.aportes || !hash.startsWith('#aporte-')) return
+    const elemento = document.getElementById(hash.slice(1))
+    elemento?.scrollIntoView?.({ block: 'center' })
+    elemento?.focus({ preventScroll: true })
+  }, [datos, hash, slug])
   const [busqueda, setBusqueda] = useState('')
   const [categoria, setCategoria] = useState('')
   const [visibilidad, setVisibilidad] = useState('')
@@ -305,6 +313,7 @@ function encabezadoCompleto({
                 </section>
               </div>
             )}
+            {!seccion && <ProximosCambios proyectoId={id} />}
             {mensajeGuardado && (
               <p role="status" className="mb-4 text-secundario">
                 {mensajeGuardado}
@@ -333,6 +342,9 @@ function encabezadoCompleto({
             >
               {(seccion ? [seccion] : seccionesPerfil).map((item) => (
                 <BloquePerfil
+                  esTutor={proyectoActual?.id === id && rolCodigo === 'TUTOR'}
+                  usuarioId={usuario?.id}
+                  alActualizarRevision={reintentar}
                   key={item.slug}
                   seccion={item}
                   aportes={esComunicacion ? aportesComunicacion : esSensorial ? aportesSensoriales : esEstrategia ? aportesEstrategia : esRutina ? aportesRutina : esDesregulacion ? aportesDesregulacion : datos.aportes.filter(

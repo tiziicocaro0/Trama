@@ -60,13 +60,21 @@ function abrir(ruta = `/proyectos/${id}`, auth = sesion) {
 beforeEach(() => {
   cliente.defaults.baseURL = '/api'
   cliente.get.mockReset().mockImplementation(async (ruta) => ({
-    data: ruta.endsWith('/aportes')
+    data: ruta.endsWith('/eventos')
+      ? []
+      : ruta.endsWith('/aportes')
       ? aportes
       : { ...proyecto, puedeCargar: true },
   }))
 })
 
 describe('Portada y navegación de lectura', () => {
+  it('ubica el aporte al abrir directamente un enlace de búsqueda', async () => {
+    abrir(`/proyectos/${id}/intereses#aporte-ejemplo-INTERES-0`)
+    const titulo = await screen.findByRole('heading', { name: 'Música' })
+    await waitFor(() => expect(titulo.closest('li')).toHaveFocus())
+    expect(titulo.closest('li')).toHaveAttribute('id', 'aporte-ejemplo-INTERES-0')
+  })
   it('consulta el proyecto real, muestra seis bloques y limita a tres aportes', async () => {
     abrir()
     expect(screen.getByRole('status')).toHaveTextContent('Cargando el perfil')
@@ -81,6 +89,7 @@ describe('Portada y navegación de lectura', () => {
         .getAllByRole('heading', { level: 2 })
         .map((nodo) => nodo.textContent),
     ).toEqual([
+      'Próximos cambios',
       'Fortalezas',
       'Intereses',
       'Comunicación',

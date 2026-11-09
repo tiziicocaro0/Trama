@@ -14,6 +14,8 @@ const ESPACIOS = {
   bitacora: 'Bitácora',
   calendario: 'Calendario',
   conocelo: 'Conocelo en 5 minutos',
+  buscar: 'Búsqueda',
+  aportes: 'Aporte',
 }
 
 function mensajeDeError(error) {

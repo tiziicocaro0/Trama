@@ -1,6 +1,6 @@
-import { useCallback, useState } from 'react'
-import { useParams } from 'react-router-dom'
-import { listarBitacora } from '../../api/aportes.js'
+import { useCallback, useEffect, useState } from 'react'
+import { useParams, useSearchParams } from 'react-router-dom'
+import { listarAportes, listarBitacora } from '../../api/aportes.js'
 import { listarMiembros } from '../../api/miembros.js'
 import Boton from '../../components/ui/Boton.jsx'
 import { useAuth } from '../../hooks/useAuth.js'
@@ -22,6 +22,9 @@ import Cargando from '../../components/ui/Cargando.jsx'
 
 export default function BitacoraPage() {
   const { id } = useParams()
+  const [params] = useSearchParams()
+  const aporteBuscado = params.get('aporte')
+  const [seleccionado, setSeleccionado] = useState(null)
   const { usuario } = useAuth()
   const [filtros, setFiltros] = useState(FILTROS_INICIALES_BITACORA)
   const [observacionesExtra, setObservacionesExtra] = useState([])
@@ -48,6 +51,25 @@ export default function BitacoraPage() {
     id,
     cargarBitacoraYMiembros,
   )
+
+  useEffect(() => {
+    if (!aporteBuscado) return undefined
+    const controller = new AbortController()
+    listarAportes(id, controller.signal).then(
+      ({ aportes }) => {
+        if (!controller.signal.aborted) setSeleccionado({ proyectoId: id, id: aporteBuscado, aporte: aportes.find((item) => item.id === aporteBuscado && ['OBSERVACION', 'ABC'].includes(item.tipo)) })
+      },
+      () => { if (!controller.signal.aborted) setSeleccionado({ proyectoId: id, id: aporteBuscado, error: true }) },
+    )
+    return () => controller.abort()
+  }, [id, aporteBuscado])
+
+  useEffect(() => {
+    if (!aporteBuscado || !datos || seleccionado?.proyectoId !== id || seleccionado?.id !== aporteBuscado) return
+    const elemento = document.getElementById(`aporte-${aporteBuscado}`)
+    elemento?.scrollIntoView?.({ block: 'center' })
+    elemento?.focus({ preventScroll: true })
+  }, [id, aporteBuscado, datos, seleccionado])
 
   function reiniciarPaginas() {
     setObservacionesExtra([])
@@ -101,6 +123,8 @@ export default function BitacoraPage() {
 
   const baseObservaciones = datos?.observaciones ?? []
   const todasCombinadas = [...baseObservaciones, ...observacionesExtra]
+  const seleccionVigente = seleccionado?.proyectoId === id && seleccionado?.id === aporteBuscado
+  if (seleccionVigente && seleccionado.aporte && !todasCombinadas.some((item) => item.id === aporteBuscado)) todasCombinadas.push(seleccionado.aporte)
   const observacionesOrdenadas = ordenarObservacionesPorFecha(
     filtrarObservaciones(todasCombinadas, filtros),
   )
@@ -195,6 +219,8 @@ export default function BitacoraPage() {
                     {mensajeGuardado}
                   </p>
                 )}
+                {aporteBuscado && !seleccionVigente && <p role="status">Buscando el aporte…</p>}
+                {aporteBuscado && seleccionVigente && !seleccionado.aporte && <p role="alert">No encontramos este aporte o ya no está disponible.</p>}
 
                 {(mostrandoFormulario || observacionEnEdicion) && (
                   <FormularioObservacion
@@ -224,19 +250,17 @@ export default function BitacoraPage() {
                         miembros,
                         usuario,
                       )
-                      return esRegistroAbc(aporte) ? (
+                      return <div key={aporte.id} id={`aporte-${aporte.id}`} tabIndex={-1}>{esRegistroAbc(aporte) ? (
                         <TarjetaAbc
-                          key={aporte.id}
                           registro={aporte}
                           autorTexto={autorTexto}
                         />
                       ) : (
                         <TarjetaObservacion
-                          key={aporte.id}
                           observacion={aporte}
                           autorTexto={autorTexto}
                         />
-                      )
+                      )}</div>
                     })}
 
                     {hayMasPaginas && (

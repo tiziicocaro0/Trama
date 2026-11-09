@@ -1,5 +1,8 @@
 import { ArrowLeft } from '@phosphor-icons/react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
+import { useState } from 'react'
+import Campo from '../../../components/ui/Campo.jsx'
+import Boton from '../../../components/ui/Boton.jsx'
 import { calcularEdad } from '../perfil.js'
 import AvisoPlanGratuito from '../../plan/AvisoPlanGratuito.jsx'
 import FotoNinoCabecera from './FotoNinoCabecera.jsx'
@@ -9,6 +12,13 @@ import NavegacionPerfil from './NavegacionPerfil.jsx'
 // secciones. Foto y nombre a la izquierda, la botonera a la derecha.
 export default function CabeceraPerfil({ proyecto, seccion, puedeEditarFoto = false, onCambioFoto }) {
   const edad = calcularEdad(proyecto.fechaNacimiento)
+  const [busqueda, setBusqueda] = useState('')
+  const navigate = useNavigate()
+  function buscar(evento) {
+    evento.preventDefault()
+    const texto = busqueda.trim().replace(/\s+/g, ' ')
+    if (texto) navigate(`/proyectos/${proyecto.id}/buscar?${new URLSearchParams({ q: texto })}`)
+  }
   return (
     <header className="mb-6">
       <Link
@@ -35,6 +45,13 @@ export default function CabeceraPerfil({ proyecto, seccion, puedeEditarFoto = fa
         </div>
         <NavegacionPerfil proyectoId={proyecto.id} />
       </div>
+      <form role="search" onSubmit={buscar} className="mt-4 flex flex-wrap items-end gap-3 print:hidden">
+        <label className="min-w-0 flex-1">
+          <span className="mb-1 block text-sm font-semibold text-texto">Buscar aportes</span>
+          <Campo type="search" value={busqueda} onChange={(evento) => setBusqueda(evento.target.value)} maxLength={200} placeholder="Buscar por palabra o frase" />
+        </label>
+        <Boton type="submit">Buscar</Boton>
+      </form>
       {proyecto.soloLecturaPorPlan === true && (
         <div className="mt-5 print:hidden">
           <AvisoPlanGratuito />

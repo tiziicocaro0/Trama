@@ -250,6 +250,7 @@ describe('Calendario y eventos del niño (Tarea 5.0)', () => {
           fechaFinRecurrencia: null,
           tipo: 'COMUN',
           participanteIds: [],
+          esCambio: false,
         },
       )
     })
