@@ -97,7 +97,7 @@ describe('Portada y navegación de lectura', () => {
       screen.queryByText(/son ficticios y no pertenecen/),
     ).not.toBeInTheDocument()
     expect(
-      screen.getByRole('img', { name: /Foto de .* no disponible/ }),
+      screen.getByRole('img', { name: 'Foto de Niño de ejemplo no disponible' }),
     ).toBeInTheDocument()
     expect(
       screen.getByText('¡Sumá el primero!', { exact: false }),
@@ -114,6 +114,32 @@ describe('Portada y navegación de lectura', () => {
     )
     expect(screen.getAllByRole('link', { name: /^Ver todo:/ })).toHaveLength(6)
     expect(document.title).toBe('TRAMA · Perfil del niño')
+  })
+
+  it('en Información general toda la tarjeta lleva a su sección', async () => {
+    abrir()
+    const fortalezas = await screen.findByRole('region', { name: 'Fortalezas' })
+    await userEvent.click(within(fortalezas).getByRole('heading', { name: 'Fortalezas' }))
+    expect(await screen.findByText('Disfruta resolver desafíos')).toBeInTheDocument()
+    expect(screen.getAllByRole('article')).toHaveLength(4)
+  })
+
+  it('el + de una tarjeta abre la sección con el panel de agregar aporte', async () => {
+    abrir()
+    const mas = await screen.findByRole('link', { name: 'Agregar aporte en Fortalezas' })
+    expect(mas).toHaveAttribute('href', `/proyectos/${id}/fortalezas?agregar=1`)
+    await userEvent.click(mas)
+    const panel = await screen.findByRole('dialog', { name: 'Agregar aporte' })
+    expect(within(panel).getByRole('form', { name: 'Agregar aporte en Fortalezas' })).toBeInTheDocument()
+  })
+
+  it('sin permiso de carga las tarjetas no muestran el +', async () => {
+    cliente.get.mockImplementation(async (ruta) => ({
+      data: ruta.endsWith('/aportes') ? aportes : { ...proyecto, puedeCargar: false },
+    }))
+    abrir()
+    await screen.findByRole('region', { name: 'Fortalezas' })
+    expect(screen.queryByRole('link', { name: /^Agregar aporte en/ })).not.toBeInTheDocument()
   })
 
   it('abre todos los aportes recibidos del servidor con un clic y permite volver', async () => {
@@ -162,8 +188,8 @@ describe('Portada y navegación de lectura', () => {
     await screen.findByRole('heading', { name: 'Se organiza mejor al comer' })
     expect(screen.getByRole('button', { name: 'Agregar aporte' })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Alimentación' })).toBeInTheDocument()
-    expect(screen.getByRole('combobox', { name: 'Especialidad' })).toBeInTheDocument()
-    expect(screen.getByRole('combobox', { name: 'Visibilidad' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Especialidad' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Visibilidad' })).toBeInTheDocument()
     await userEvent.click(screen.getByRole('button', { name: 'Higiene y cuidado personal' }))
     expect(screen.queryByRole('heading', { name: 'Se organiza mejor al comer' })).not.toBeInTheDocument()
     expect(screen.getByText('Cepillado con secuencia visual')).toBeInTheDocument()

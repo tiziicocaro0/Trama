@@ -95,7 +95,10 @@ export function leerFortaleza(aporte) {
   if (aporte?.tipo !== 'FORTALEZA') return {}
   const datos = leerDatosAporte(aporte.datos)
   return {
-    contexto: CONTEXTOS_FORTALEZA[datos.contexto],
+    // En «Otro» va lo que escribió la persona
+    contexto: datos.contexto === 'OTRO' && datos.contextoOtro?.trim()
+      ? datos.contextoOtro.trim()
+      : CONTEXTOS_FORTALEZA[datos.contexto],
     ejemplo: typeof datos.ejemplo === 'string' ? datos.ejemplo.trim() : '',
   }
 }

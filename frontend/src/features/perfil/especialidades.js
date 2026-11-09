@@ -56,3 +56,16 @@ export function nombreEspecialidad({ especialidad, aclaracion }) {
     ? aclaracion.trim()
     : etiquetaEspecialidad(especialidad)
 }
+
+// Filtro de los aportes por área del autor: "SALUD" o "EDUCACION" ('' = todas)
+export const AREAS_PROFESIONALES = [
+  ['', 'Todas'],
+  ['SALUD', 'Profesional de salud'],
+  ['EDUCACION', 'Profesional educativo'],
+]
+
+export function coincideArea(aporte, area) {
+  if (!area) return true
+  const valores = especialidadesDelRol(area)
+  return aporte.autorEspecialidades?.some((item) => valores.includes(item.especialidad)) ?? false
+}

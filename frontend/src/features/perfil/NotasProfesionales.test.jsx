@@ -65,7 +65,7 @@ describe('Notas profesionales (4.2)', () => {
       await screen.findByRole('heading', { name: nota.titulo })
     ).closest('article')
     expect(
-      within(articulo).getByText('Cargado por: Laura Gómez · Psicopedagogía'),
+      within(articulo).getByText('Laura Gómez · Psicopedagogía'),
     ).toBeInTheDocument()
     expect(
       within(articulo).getByText('Orientación · Fecha: 20/10/2026'),
@@ -89,7 +89,7 @@ describe('Notas profesionales (4.2)', () => {
       screen.getByRole('group', { name: '¿Quién puede ver este aporte?' }),
     ).toBeInTheDocument()
     expect(
-      screen.getByRole('radio', { name: /Toda la red/ }),
+      screen.getByRole('button', { name: 'Elegir quién puede ver. Ahora: Toda la red' }),
     ).toBeInTheDocument()
   })
 

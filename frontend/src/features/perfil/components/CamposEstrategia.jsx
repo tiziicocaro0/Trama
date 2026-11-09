@@ -1,5 +1,6 @@
 import { CATEGORIAS_ESTRATEGIA, CONTEXTOS_ESTRATEGIA, ICONOS_ESTRATEGIA, RESULTADOS_ESTRATEGIA, TONOS_ESTRATEGIA } from '../camposAporte.js'
 import CasillaOvillo from '../../../components/ui/CasillaOvillo.jsx'
+import CampoDetalleOtro from './CampoDetalleOtro.jsx'
 
 export default function CamposEstrategia({ parte, extra, setExtra, errores, disabled }) {
   if (parte === 'categoria') return (
@@ -31,6 +32,7 @@ export default function CamposEstrategia({ parte, extra, setExtra, errores, disa
         <div className="flex flex-wrap gap-2">
           {CONTEXTOS_ESTRATEGIA.map(([valor, etiqueta]) => <CasillaOvillo key={valor} tamano="chico" className="min-h-11 rounded-full border border-borde bg-superficie px-3 has-checked:border-primario has-checked:bg-fondo" checked={extra.contextos?.includes(valor) ?? false} onChange={(event) => setExtra((actual) => ({ ...actual, contextos: event.target.checked ? [...(actual.contextos ?? []), valor] : (actual.contextos ?? []).filter((item) => item !== valor) }))} disabled={disabled}>{etiqueta}</CasillaOvillo>)}
         </div>
+        {extra.contextos?.includes('OTRO') && <CampoDetalleOtro id="contexto-otro-estrategia" valor={extra.contextoOtro} onCambiar={(texto) => setExtra((actual) => ({ ...actual, contextoOtro: texto }))} disabled={disabled} error={errores?.contextoOtro} />}
       </fieldset>
     </div>
   )

@@ -44,7 +44,7 @@ beforeEach(() => {
 })
 
 describe('8.1: descargar todos los datos', () => {
-  it('un tutor (aunque no sea el administrador) descarga el PDF y el JSON', async () => {
+  it('un tutor (aunque no sea el administrador) descarga el PDF, sin opción de JSON', async () => {
     const user = userEvent.setup()
     const clics = vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(() => {})
     abrir('TUTOR', false)
@@ -54,12 +54,8 @@ describe('8.1: descargar todos los datos', () => {
       responseType: 'blob',
     })
     expect(await screen.findByText('Descargamos los datos.')).toBeInTheDocument()
-    await user.click(screen.getByRole('button', { name: 'Descargar JSON' }))
-    expect(cliente.get).toHaveBeenCalledWith(`/proyectos/${id}/exportar`, {
-      params: { formato: 'json' },
-      responseType: 'blob',
-    })
-    expect(clics).toHaveBeenCalledTimes(2)
+    expect(screen.queryByRole('button', { name: 'Descargar JSON' })).not.toBeInTheDocument()
+    expect(clics).toHaveBeenCalledTimes(1)
     // El tutor que no es administrador no ve la zona para eliminar
     expect(screen.queryByRole('heading', { name: 'Eliminar perfil' })).not.toBeInTheDocument()
     clics.mockRestore()

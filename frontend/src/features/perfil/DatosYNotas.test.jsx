@@ -5,7 +5,17 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import AppRoutes from '../../routes/AppRoutes.jsx'
 import AuthContext from '../auth/AuthContext.js'
 import cliente from '../../api/cliente.js'
+import { limpiarAvisos, obtenerAvisos } from '../../components/avisos/avisosFlotantes.js'
+
+// Los avisos flotantes viven fuera de AppRoutes: se leen del registro de avisos
+const textosDeAvisos = () => obtenerAvisos().map((aviso) => aviso.texto)
 import { hoyIso } from '../../utils/fechas.js'
+
+// Las acciones de una tarjeta (editar, archivar, historial) están en sus tres puntitos
+async function abrirOpciones(titulo) {
+  const boton = await screen.findByRole('button', { name: `Más opciones: ${titulo}` })
+  if (boton.getAttribute('aria-expanded') !== 'true') await userEvent.click(boton)
+}
 
 vi.mock('../../api/cliente.js', () => ({
   default: {
@@ -57,6 +67,7 @@ function abrir(slug = '', autenticado = true) {
   )
 }
 beforeEach(() => {
+  limpiarAvisos()
   aportes = []
   puedeCrear = true
   cliente.get.mockReset().mockImplementation(async (ruta) => ({
@@ -88,7 +99,20 @@ describe('Datos personales y navegación compartida', () => {
       within(nav)
         .getAllByRole('link')
         .map((link) => link.textContent),
-    ).toEqual(['Vista general', 'Red', 'Datos personales', 'Notas'])
+    ).toEqual([
+      'Información general',
+      'Fortalezas',
+      'Intereses',
+      'Comunicación',
+      'Perfil sensorial',
+      'Estrategias',
+      'Rutinas',
+      'Si se desregula',
+      'Notas',
+      'Red',
+      'Datos personales',
+      'Recursos',
+    ])
     await userEvent.click(
       within(nav).getByRole('link', { name: 'Datos personales' }),
     )
@@ -117,7 +141,7 @@ describe('Datos personales y navegación compartida', () => {
       screen.getByRole('link', { name: 'Notas', exact: true }),
     ).toBeInTheDocument()
     await userEvent.click(
-      screen.getByRole('link', { name: 'Volver al perfil' }),
+      screen.getByRole('link', { name: /^Volver al perfil de / }),
     )
     expect(
       await screen.findByRole('heading', { name: 'Fortalezas' }),
@@ -234,7 +258,7 @@ describe('Notas con fecha y hora', () => {
     const articulo = screen.getByRole('article')
     expect(articulo.querySelector('time')).toHaveAttribute('datetime', instante)
     expect(articulo.querySelector('time')).toHaveTextContent(
-      /\d{2}\/\d{2}\/\d{4}.*\d{2}:\d{2}:\d{2}/,
+      /\d{2}\/\d{2}\/\d{4}.*\d{2}:\d{2}$/,
     )
     expect(within(articulo).getByText(/Creada:/)).toBeInTheDocument()
     expect(screen.queryByText(/Última edición:/)).not.toBeInTheDocument()
@@ -254,6 +278,7 @@ describe('Notas con fecha y hora', () => {
   it('edita una nota propia conservando fecha original y mostrando la última edición', async () => {
     aportes = [nota]
     abrir('notas')
+    await abrirOpciones('Nota ficticia')
     await userEvent.click(
       await screen.findByRole('button', { name: 'Editar nota: Nota ficticia' }),
     )
@@ -306,6 +331,6 @@ describe('Notas con fecha y hora', () => {
     expect(screen.getByRole('textbox', { name: 'Título' })).toHaveValue(
       'Nota pendiente',
     )
-    expect(screen.queryByText('Nota guardada.')).not.toBeInTheDocument()
+    expect(textosDeAvisos()).toHaveLength(0)
   })
 })

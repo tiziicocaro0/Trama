@@ -6,6 +6,12 @@ import AppRoutes from '../../routes/AppRoutes.jsx'
 import AuthContext from '../auth/AuthContext.js'
 import cliente from '../../api/cliente.js'
 
+// Las acciones de una tarjeta (editar, archivar, historial) están en sus tres puntitos
+async function abrirOpciones(titulo) {
+  const boton = await screen.findByRole('button', { name: `Más opciones: ${titulo}` })
+  if (boton.getAttribute('aria-expanded') !== 'true') await userEvent.click(boton)
+}
+
 vi.mock('../../api/cliente.js', () => ({ default: { defaults: { baseURL: '/api' }, get: vi.fn(), post: vi.fn(), put: vi.fn() } }))
 
 const id = '304d3b5e-8c8a-4a50-83d3-a84ade17b697'
@@ -36,7 +42,7 @@ describe('Comunicación', () => {
   it('carga la ruta, filtra datos reales y muestra autor y fecha', async () => {
     abrir()
     expect(await screen.findByRole('heading', { name: 'Usa imágenes' })).toBeInTheDocument()
-    expect(screen.getByText(/Cargado por: Persona ficticia/)).toBeInTheDocument()
+    expect(screen.getByText(/Persona ficticia/)).toBeInTheDocument()
     expect(screen.getByText(/Frases cortas/)).toBeInTheDocument()
     await userEvent.type(screen.getByRole('searchbox', { name: 'Buscar en comunicación' }), 'sin coincidencias')
     expect(screen.queryByRole('heading', { name: 'Usa imágenes' })).not.toBeInTheDocument()
@@ -66,15 +72,18 @@ describe('Comunicación', () => {
 
   it('edita, archiva y consulta historial real', async () => {
     abrir()
+    await abrirOpciones('Usa imágenes')
     await userEvent.click(await screen.findByRole('button', { name: 'Editar aporte: Usa imágenes' }))
     const formulario = screen.getByRole('form', { name: 'Editar aporte en Comunicación' })
     await userEvent.clear(within(formulario).getByRole('textbox', { name: '¿Qué evitar?' }))
     await userEvent.type(within(formulario).getByRole('textbox', { name: '¿Qué evitar?' }), 'Gritar')
     await userEvent.click(within(formulario).getByRole('button', { name: 'Guardar aporte' }))
     expect(cliente.put).toHaveBeenCalledWith(`/proyectos/${id}/aportes/a1`, expect.any(Object))
+    await abrirOpciones('Usa imágenes')
     await userEvent.click(await screen.findByRole('button', { name: 'Ver historial del aporte: Usa imágenes' }))
     expect(await screen.findByRole('list', { name: 'Versiones del aporte' })).toBeInTheDocument()
     await userEvent.click(screen.getByRole('button', { name: 'Cerrar modal' }))
+    await abrirOpciones('Usa imágenes')
     await userEvent.click(screen.getByRole('button', { name: 'Archivar aporte: Usa imágenes' }))
     expect(cliente.post).toHaveBeenCalledWith(`/proyectos/${id}/aportes/a1/archivar`)
   })

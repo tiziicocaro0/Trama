@@ -5,11 +5,6 @@ import { descargarTodosLosDatos } from '../../../api/exportacion.js'
 import { avisar, avisarError } from '../../../components/avisos/avisosFlotantes.js'
 import FiltrosExportacion from './FiltrosExportacion.jsx'
 
-const FORMATOS = [
-  { formato: 'pdf', etiqueta: 'Descargar PDF', variante: 'primary' },
-  { formato: 'json', etiqueta: 'Descargar JSON', variante: 'secondary' },
-]
-
 // 8.1: los tutores descargan toda la información del niño (derecho de acceso).
 export default function DescargarDatos({ proyecto }) {
   const [descargando, setDescargando] = useState(null)
@@ -43,22 +38,14 @@ export default function DescargarDatos({ proyecto }) {
       </h2>
       <p className="mt-2 text-texto-suave">
         Un archivo con todo lo que hay en el perfil de {proyecto.nombre}: datos personales, red,
-        aportes, notas, eventos y acuerdos. El PDF es para leer o imprimir; el JSON, para guardar
-        los datos o pasarlos a otro sistema.
+        aportes, notas, eventos y acuerdos, en un PDF para leer o imprimir.
       </p>
       <div className="mt-4 flex flex-col gap-3 sm:flex-row">
-        {FORMATOS.map(({ formato, etiqueta, variante }) => (
-          <Boton
-            key={formato}
-            variant={variante}
-            // El PDF abre antes los filtros; el JSON siempre trae todo
-            onClick={() => (formato === 'pdf' ? setFiltrosAbiertos(true) : descargar(formato))}
-            disabled={Boolean(descargando)}
-          >
-            <DownloadSimple size={18} aria-hidden="true" />
-            {descargando === formato && formato === 'json' ? 'Preparando…' : etiqueta}
-          </Boton>
-        ))}
+        {/* El PDF abre antes los filtros */}
+        <Boton onClick={() => setFiltrosAbiertos(true)} disabled={Boolean(descargando)}>
+          <DownloadSimple size={18} aria-hidden="true" />
+          Descargar PDF
+        </Boton>
       </div>
       <FiltrosExportacion
         abierto={filtrosAbiertos}

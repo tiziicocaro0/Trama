@@ -1,6 +1,6 @@
 import { TIPOS_NOTA } from './perfil.js'
 import { hoyIso } from '../../utils/fechas.js'
-import { Ear, Eye, Footprints, ForkKnife, Hand, HandHeart, HandPalm, Image, ListNumbers, MoonStars, PauseCircle, PersonSimple, PersonSimpleRun, PersonSimpleWalk, Shower, SlidersHorizontal, Sparkle, SquaresFour, TShirt, Toilet, ChatCircle, HandPointing, Hourglass, UsersThree, WaveSine } from '@phosphor-icons/react'
+import { Chalkboard, Ear, FirstAidKit, House, MapPin, MapTrifold, SoccerBall, Eye, Footprints, ForkKnife, Hand, HandHeart, HandPalm, Image, ListNumbers, MoonStars, PauseCircle, PersonSimple, PersonSimpleRun, PersonSimpleWalk, Shower, SlidersHorizontal, Sparkle, SquaresFour, TShirt, Toilet, ChatCircle, HandPointing, Hourglass, UsersThree, WaveSine } from '@phosphor-icons/react'
 
 export const textosPorTipo = {
   ESTRATEGIA: {
@@ -117,11 +117,6 @@ export const TONOS_DESREGULACION = {
   EVITAR: 'bg-miel/20 text-miel',
 }
 
-export const HOVER_CRUZ_DESREGULACION = {
-  SENALES: 'hover:bg-agua/30',
-  AYUDA: 'hover:bg-secundario/20',
-  EVITAR: 'hover:bg-miel/30',
-}
 
 export function validarCamposSensoriales(extra, titulo) {
   return {
@@ -301,4 +296,42 @@ export function datosSinVacios(datos) {
       .map(([clave, valor]) => [clave, typeof valor === 'string' ? valor.trim() : valor])
       .filter(([, valor]) => valor !== ''),
   )
+}
+
+// Al elegir «Otro» se puede escribir cuál, así no queda solo "Otro" (campo del back terminado en Otro/Otra).
+// Es opcional: Fortalezas e Intereses arrancan en «Otro» para no frenar la carga.
+export const LARGO_DETALLE_OTRO = 60
+export const DETALLES_OTRO = {
+  FORTALEZA: { campo: 'contexto', detalle: 'contextoOtro' },
+  INTERES: { campo: 'categoria', detalle: 'categoriaOtra' },
+  SENSORIAL: { campo: 'contexto', detalle: 'contextoOtro' },
+  ESTRATEGIA: { campo: 'contextos', detalle: 'contextoOtro' },
+  RUTINA: { campo: 'contextos', detalle: 'contextoOtro' },
+}
+
+export function eligioOtro(valor) {
+  return Array.isArray(valor) ? valor.includes('OTRO') : valor === 'OTRO'
+}
+
+// Si ya no está elegido «Otro», el detalle no se guarda
+export function sinDetalleSobrante(tipo, extra) {
+  const regla = DETALLES_OTRO[tipo]
+  if (!regla || eligioOtro(extra[regla.campo])) return extra
+  return { ...extra, [regla.detalle]: '' }
+}
+
+// Para mostrar: en «Otro» va lo que escribió la persona
+export function etiquetaOpcion(opciones, valor, detalle) {
+  if (valor === 'OTRO' && typeof detalle === 'string' && detalle.trim()) return detalle.trim()
+  return opciones.find(([codigo]) => codigo === valor)?.[1]
+}
+
+// Ícono de dónde pasa algo (casa, escuela, consultorio…): va chico en la tarjeta, junto a los tres puntitos
+export const ICONOS_LUGAR = {
+  CASA: House,
+  ESCUELA: Chalkboard,
+  CONSULTORIO: FirstAidKit,
+  ACTIVIDAD_EXTRACURRICULAR: SoccerBall,
+  DISTINTOS_CONTEXTOS: MapTrifold,
+  OTRO: MapPin,
 }

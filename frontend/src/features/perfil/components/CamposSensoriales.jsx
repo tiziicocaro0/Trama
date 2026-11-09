@@ -1,3 +1,4 @@
+import CampoDetalleOtro from './CampoDetalleOtro.jsx'
 import { CATEGORIAS_SENSORIALES, CONTEXTOS_SENSORIALES, ICONOS_SENSORIALES, TONOS_SENSORIALES } from '../camposAporte.js'
 
 export default function CamposSensoriales({ parte, extra, setExtra, errores, disabled }) {
@@ -7,6 +8,7 @@ export default function CamposSensoriales({ parte, extra, setExtra, errores, dis
       <div className="flex flex-wrap gap-2">
         {CONTEXTOS_SENSORIALES.map(([valor, etiqueta]) => <label key={valor} className="inline-flex min-h-11 items-center gap-2 rounded-full border border-borde bg-superficie px-3 has-checked:border-primario has-checked:bg-fondo"><input type="radio" name="contextoSensorial" checked={extra.contexto === valor} onChange={() => setExtra((actual) => ({ ...actual, contexto: actual.contexto === valor ? '' : valor }))} disabled={disabled} />{etiqueta}</label>)}
       </div>
+      {extra.contexto === 'OTRO' && <CampoDetalleOtro id="contexto-otro-sensorial" valor={extra.contextoOtro} onCambiar={(texto) => setExtra((actual) => ({ ...actual, contextoOtro: texto }))} disabled={disabled} error={errores?.contextoOtro} />}
     </fieldset>
   )
 

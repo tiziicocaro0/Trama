@@ -1,10 +1,11 @@
 import { useEffect, useRef, useState } from 'react'
 import Campo from '../../../components/ui/Campo.jsx'
 import CampoFecha from '../../../components/ui/CampoFecha.jsx'
+import CampoDetalleOtro from './CampoDetalleOtro.jsx'
 import CampoFormulario from '../../../components/ui/CampoFormulario.jsx'
 import { guardarAporte } from '../../../api/aportes.js'
 import { leerDatosAporte } from '../perfil.js'
-import { CATEGORIAS_COMUNICACION, FORMAS_COMUNICACION, CATEGORIAS_DESREGULACION, ICONOS_DESREGULACION,TONOS_DESREGULACION,camposPorTipo, datosSinVacios, textosPorTipo, validarCamposSensoriales, validarCamposEstrategia, validarCamposRutina, validarCamposDesregulacion, } from '../camposAporte.js'
+import { CATEGORIAS_COMUNICACION, FORMAS_COMUNICACION, CATEGORIAS_DESREGULACION, ICONOS_DESREGULACION,TONOS_DESREGULACION,camposPorTipo, datosSinVacios, DETALLES_OTRO, eligioOtro, sinDetalleSobrante, textosPorTipo, validarCamposSensoriales, validarCamposEstrategia, validarCamposRutina, validarCamposDesregulacion, } from '../camposAporte.js'
 import CamposSensoriales from './CamposSensoriales.jsx'
 import CamposEstrategia from './CamposEstrategia.jsx'
 import CamposRutina from './CamposRutina.jsx'
@@ -137,7 +138,7 @@ export default function EditorAporte({
         titulo: titulo.trim(),
         contenido: contenido.trim(),
         visibilidad,
-        ...(campos.length || esComunicacion || esSensorial || esEstrategia || esRutina || esDesregulacion ? { datos: JSON.stringify(datosSinVacios(esComunicacion && !extra.formasComunicacion?.includes('OTRA') ? { ...extra, otraForma: '' } : extraRutina)) } : {}),
+        ...(campos.length || esComunicacion || esSensorial || esEstrategia || esRutina || esDesregulacion ? { datos: JSON.stringify(datosSinVacios(sinDetalleSobrante(seccion.tipo, esComunicacion && !extra.formasComunicacion?.includes('OTRA') ? { ...extra, otraForma: '' } : extraRutina))) } : {}),
         ...(incluirArchivos
           ? { archivoIds: archivos.map((item) => item.id) }
           : {}),
@@ -258,7 +259,7 @@ export default function EditorAporte({
       {esRutina && <p className="text-sm text-texto-suave">Contá lo que ya puede hacer, dónde necesita apoyo o qué lo ayuda. No hace falta detallar cada paso.</p>}
       {esEstrategia && <CamposEstrategia extra={extra} setExtra={setExtra} errores={erroresCampos} disabled={enviando} />}
       {esRutina && <CamposRutina extra={extra} setExtra={setExtra} errores={erroresCampos} disabled={enviando} />}
-      {esSensorial && <CamposSensoriales parte="contexto" extra={extra} setExtra={setExtra} disabled={enviando} />}
+      {esSensorial && <CamposSensoriales parte="contexto" extra={extra} setExtra={setExtra} errores={erroresCampos} disabled={enviando} />}
       {esComunicacion && (
         <div className="space-y-4">
           <fieldset>
@@ -357,6 +358,15 @@ export default function EditorAporte({
                 </option>
               ))}
             </select>
+          )}
+          {DETALLES_OTRO[seccion.tipo]?.campo === nombre && eligioOtro(extra[nombre]) && (
+            <CampoDetalleOtro
+              id={`${nombre}-otro-${seccion.tipo}`}
+              valor={extra[DETALLES_OTRO[seccion.tipo].detalle]}
+              onCambiar={(texto) => setExtra((actual) => ({ ...actual, [DETALLES_OTRO[seccion.tipo].detalle]: texto }))}
+              disabled={enviando}
+              error={erroresCampos[DETALLES_OTRO[seccion.tipo].detalle]}
+            />
           )}
         </div>
       ))}

@@ -5,10 +5,22 @@ import {
   MagnifyingGlass,
 } from '@phosphor-icons/react'
 
-import {
-  ESPECIALIDADES_EDUCACION,
-  ESPECIALIDADES_SALUD,
-} from '../../features/perfil/especialidades.js'
+import { AREAS_PROFESIONALES } from '../../features/perfil/especialidades.js'
+import MenuFiltro from './MenuFiltro.jsx'
+
+const VISIBILIDADES = [
+  ['', 'Todas'],
+  ['TODOS', 'Toda la red'],
+  ['PROFESIONALES', 'Solo equipo profesional'],
+  ['SOLO_TUTORES', 'Solo tutores'],
+  ['SOLO_SALUD', 'Salud y tutores'],
+  ['SOLO_EDUCACION', 'Educación y tutores'],
+]
+
+const ORDENES = [
+  ['recientes', 'Más recientes'],
+  ['antiguos', 'Más antiguos'],
+]
 
 export default function BarraFiltrosAportes({
   busqueda,
@@ -25,9 +37,10 @@ export default function BarraFiltrosAportes({
   ariaBusqueda,
   extra,
 }) {
+  // La búsqueda a la izquierda; los filtros, solo con su ícono, a la derecha.
   return (
-    <div className="flex flex-nowrap items-center gap-3 overflow-x-auto border-b border-borde/50 pb-4">
-      <label className="relative block min-w-64 shrink-0">
+    <div className="flex flex-wrap items-center gap-3 border-b border-borde/50 pb-4">
+      <label className="relative block min-w-56 flex-1">
         <span className="sr-only">{ariaBusqueda ?? placeholder}</span>
 
         <MagnifyingGlass
@@ -46,84 +59,53 @@ export default function BarraFiltrosAportes({
         />
       </label>
 
-      <label className="inline-flex min-h-11 shrink-0 items-center gap-2 rounded-md border border-borde bg-superficie px-3 text-sm text-texto">
-        <Briefcase size={18} aria-hidden="true" />
-        <span className="sr-only">Especialidad</span>
-
-        <select
-          aria-label="Especialidad"
-          value={especialidad}
-          onChange={(event) => setEspecialidad(event.target.value)}
-          className="max-w-32 bg-transparent"
-        >
-          <option value="">Especialidad</option>
-
-          {[...ESPECIALIDADES_EDUCACION, ...ESPECIALIDADES_SALUD].map(
-            ({ valor, etiqueta }) => (
-              <option key={valor} value={valor}>
-                {etiqueta}
-              </option>
-            ),
-          )}
-        </select>
-      </label>
-
-      <label className="inline-flex min-h-11 shrink-0 items-center gap-2 rounded-md border border-borde bg-superficie px-3 text-sm text-texto">
-        <Eye size={18} aria-hidden="true" />
-        <span className="sr-only">Visibilidad</span>
-
-        <select
-          aria-label="Visibilidad"
-          value={visibilidad}
-          onChange={(event) => setVisibilidad(event.target.value)}
-          className="max-w-32 bg-transparent"
-        >
-          <option value="">Visibilidad</option>
-          <option value="TODOS">Toda la red</option>
-          <option value="PROFESIONALES">Solo equipo profesional</option>
-          <option value="SOLO_TUTORES">Solo tutores</option>
-          <option value="SOLO_SALUD">Salud y tutores</option>
-          <option value="SOLO_EDUCACION">Educación y tutores</option>
-        </select>
-      </label>
-
-      <label className="inline-flex min-h-11 shrink-0 items-center gap-2 rounded-md border border-borde bg-superficie px-3 text-sm text-texto">
-        <ArrowsDownUp size={18} aria-hidden="true" />
-        <span className="sr-only">Ordenar por fecha</span>
-
-        <select
-          aria-label="Ordenar por fecha"
-          value={orden}
-          onChange={(event) => setOrden(event.target.value)}
-          className="max-w-36 bg-transparent"
-        >
-          <option value="recientes">Más recientes</option>
-          <option value="antiguos">Más antiguos</option>
-        </select>
-      </label>
+      <div className="ml-auto flex items-center gap-2">
+        <MenuFiltro
+          etiqueta="Especialidad"
+          Icono={Briefcase}
+          valor={especialidad}
+          opciones={AREAS_PROFESIONALES}
+          onCambiar={setEspecialidad}
+        />
+        <MenuFiltro
+          etiqueta="Visibilidad"
+          Icono={Eye}
+          valor={visibilidad}
+          opciones={VISIBILIDADES}
+          onCambiar={setVisibilidad}
+        />
+        <MenuFiltro
+          etiqueta="Ordenar por fecha"
+          Icono={ArrowsDownUp}
+          valor={orden}
+          valorInicial="recientes"
+          opciones={ORDENES}
+          onCambiar={setOrden}
+        />
         {extra}
-      <label className="flex min-h-11 shrink-0 items-center gap-3 border-l border-borde px-3">
-        <button
-          type="button"
-          role="switch"
-          aria-checked={soloMios}
-          onClick={() => setSoloMios(!soloMios)}
-          className={`relative inline-flex h-7 w-12 shrink-0 items-center rounded-full border transition ${
-            soloMios
-              ? 'border-secundario bg-secundario'
-              : 'border-texto-suave bg-decoracion'
-          }`}
-        >
-          <span
-            aria-hidden="true"
-            className={`size-5 rounded-full bg-superficie transition ${
-              soloMios ? 'translate-x-6' : 'translate-x-1'
+        <label className="flex min-h-11 shrink-0 items-center gap-3 border-l border-borde pl-3">
+          <button
+            type="button"
+            role="switch"
+            aria-checked={soloMios}
+            onClick={() => setSoloMios(!soloMios)}
+            className={`relative inline-flex h-7 w-12 shrink-0 items-center rounded-full border transition ${
+              soloMios
+                ? 'border-secundario bg-secundario'
+                : 'border-texto-suave bg-decoracion'
             }`}
-          />
-        </button>
+          >
+            <span
+              aria-hidden="true"
+              className={`size-5 rounded-full bg-superficie transition ${
+                soloMios ? 'translate-x-6' : 'translate-x-1'
+              }`}
+            />
+          </button>
 
-        <span className="text-sm">Solo mis aportes</span>
-      </label>
+          <span className="text-sm">Solo mis aportes</span>
+        </label>
+      </div>
     </div>
   )
 }

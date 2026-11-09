@@ -63,7 +63,8 @@ class ContratoFrontendTest {
     @Test
     void visibilidades() {
         Set<String> front = todasLasCoincidencias(
-                Pattern.compile("value=\"([A-Z_]+)\""),
+                // Cada valor tiene su resumen en RESUMEN: "  TODOS: 'Toda la red',"
+                Pattern.compile("(?m)^\\s+([A-Z_]+): '"),
                 leer("components/ui/SelectorVisibilidad.jsx"));
         assertEquals(nombres(Visibilidad.class), front);
     }

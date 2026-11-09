@@ -1,10 +1,26 @@
-import { act, fireEvent, render, screen, within } from '@testing-library/react'
+import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router-dom'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import AppRoutes from '../../routes/AppRoutes.jsx'
 import AuthContext from '../auth/AuthContext.js'
 import cliente from '../../api/cliente.js'
+
+// Filtros compactos: se abre el menú del ícono y se elige la opción
+async function elegirFiltro(etiqueta, opcion) {
+  await userEvent.click(screen.getByRole('button', { name: new RegExp(`^${etiqueta}`) }))
+  await userEvent.click(screen.getByRole('menuitemradio', { name: opcion }))
+}
+import { limpiarAvisos, obtenerAvisos } from '../../components/avisos/avisosFlotantes.js'
+
+// Las acciones de una tarjeta (editar, archivar, historial) están en sus tres puntitos
+async function abrirOpciones(titulo) {
+  const boton = await screen.findByRole('button', { name: `Más opciones: ${titulo}` })
+  if (boton.getAttribute('aria-expanded') !== 'true') await userEvent.click(boton)
+}
+
+// Los avisos flotantes viven fuera de AppRoutes: se leen del registro de avisos
+const textosDeAvisos = () => obtenerAvisos().map((aviso) => aviso.texto)
 
 vi.mock('../../api/cliente.js', () => ({
   default: {
@@ -53,6 +69,7 @@ function abrir(slug = 'fortalezas') {
 }
 
 beforeEach(() => {
+  limpiarAvisos()
   lista = []
   puedeCrear = true
   cliente.get.mockReset().mockImplementation(async (ruta) => ({
@@ -96,11 +113,12 @@ describe('Crear y editar aportes de las seis secciones', () => {
         const formulario = screen.getByRole('form', { name: 'Agregar aporte en Rutinas' })
         await userEvent.click(within(formulario).getByRole('button', { name: 'Alimentación' }))
         await userEvent.click(within(formulario).getByRole('checkbox', { name: 'Casa' }))
-        await userEvent.click(within(formulario).getByRole('radio', { name: /Solo tutores/ }))
+        await userEvent.click(within(formulario).getByRole('checkbox', { name: /^Tutores/ }))
       } else {
-        await userEvent.click(
-          screen.getByRole('radio', { name: /Solo tutores/ }),
-        )
+        await userEvent.click(screen.getByRole('button', { name: /^Elegir quién puede ver/ }))
+        // Toda la red viene marcada: se desmarca todo y se deja solo a los tutores
+        await userEvent.click(screen.getByRole('checkbox', { name: /^Toda la red/ }))
+        await userEvent.click(screen.getByRole('checkbox', { name: /^Tutores/ }))
       }
       await userEvent.click(
         screen.getByRole('button', { name: 'Guardar aporte' }),
@@ -122,7 +140,7 @@ describe('Crear y editar aportes de las seis secciones', () => {
         })
       ).toBeInTheDocument()
       expect(screen.getByText('Nueva descripción ficticia')).toBeInTheDocument()
-      expect(screen.getByRole('status')).toHaveTextContent('Aporte guardado')
+      expect(textosDeAvisos().some((texto) => texto.startsWith('Listo. Tu aporte se guardó en'))).toBe(true)
     },
   )
 
@@ -145,7 +163,7 @@ describe('Crear y editar aportes de las seis secciones', () => {
     await userEvent.type(within(formulario).getByRole('textbox', { name: 'Nombre de la nueva categoría' }), 'Preparación para salir')
     await userEvent.type(within(formulario).getByRole('textbox', { name: 'Título del aporte' }), 'Prepara su mochila')
     await userEvent.type(within(formulario).getByRole('textbox', { name: 'Descripción' }), 'Revisa sus cosas con una lista visual')
-    await userEvent.click(within(formulario).getByRole('radio', { name: /Toda la red/ }))
+    await userEvent.click(within(formulario).getByRole('checkbox', { name: /^Toda la red/ }))
     await userEvent.click(within(formulario).getByRole('button', { name: 'Guardar aporte' }))
     expect(cliente.post).toHaveBeenCalledWith(`/proyectos/${id}/aportes`, expect.objectContaining({
       tipo: 'RUTINA',
@@ -165,14 +183,17 @@ describe('Crear y editar aportes de las seis secciones', () => {
     await userEvent.click(screen.getByRole('radio', { name: 'Le ayuda' }))
     await userEvent.click(screen.getByRole('radio', { name: 'Movimiento y equilibrio' }))
     await userEvent.click(screen.getByRole('radio', { name: 'Casa' }))
-    await userEvent.click(screen.getByRole('radio', { name: /Equipo profesional y tutores/ }))
+    await userEvent.click(screen.getByRole('button', { name: /^Elegir quién puede ver/ }))
+    await userEvent.click(screen.getByRole('checkbox', { name: /^Toda la red/ }))
+    await userEvent.click(screen.getByRole('checkbox', { name: /^Equipo de educación/ }))
+    await userEvent.click(screen.getByRole('checkbox', { name: /^Equipo de salud/ }))
     await userEvent.click(screen.getByRole('button', { name: 'Guardar aporte' }))
     expect(cliente.post).toHaveBeenCalledWith(`/proyectos/${id}/aportes`, expect.objectContaining({
       tipo: 'SENSORIAL', titulo: 'Busca balancearse', contenido: '', visibilidad: 'PROFESIONALES',
       datos: '{"lista":"AYUDA","categoria":"MOVIMIENTO_EQUILIBRIO","contexto":"CASA"}',
     }))
     expect(lista).toHaveLength(1)
-    expect(await screen.findByText('Aporte guardado.')).toBeInTheDocument()
+    await waitFor(() => expect(textosDeAvisos()).toContain('Listo. Tu aporte se guardó en Perfil sensorial.'))
     expect(await screen.findByRole('heading', { name: /Busca balancearse/ })).toBeInTheDocument()
   })
 
@@ -184,11 +205,11 @@ describe('Crear y editar aportes de las seis secciones', () => {
     abrir('sensorial')
     await screen.findByRole('heading', { name: 'Busca balancearse' })
     expect(screen.getAllByRole('article')).toHaveLength(2)
-    await userEvent.selectOptions(screen.getByRole('combobox', { name: 'Lista' }), 'CUESTA')
+    await elegirFiltro('Lista', 'Le cuesta')
     expect(screen.queryByRole('heading', { name: 'Busca balancearse' })).not.toBeInTheDocument()
     expect(screen.getByRole('heading', { name: 'Le molesta el ruido' })).toBeInTheDocument()
     expect(screen.queryByRole('button', { name: 'Editar aporte: Le molesta el ruido' })).not.toBeInTheDocument()
-    await userEvent.selectOptions(screen.getByRole('combobox', { name: 'Lista' }), '')
+    await elegirFiltro('Lista', 'Ambas listas')
     await userEvent.click(screen.getByRole('button', { name: 'Movimiento y equilibrio' }))
     expect(screen.getAllByRole('article')).toHaveLength(1)
     await userEvent.click(screen.getByRole('switch', { name: 'Solo mis aportes' }))
@@ -264,15 +285,16 @@ describe('Crear y editar aportes de las seis secciones', () => {
         datos: JSON.stringify({ contexto: 'CASA', ejemplo: 'Completó un rompecabezas de animales' }),
       }),
     )
-    expect(await screen.findByText('Contexto: Casa')).toBeInTheDocument()
-    expect(screen.getByText('Ejemplo: Completó un rompecabezas de animales')).toBeInTheDocument()
+    expect(await screen.findByRole('img', { name: 'Dónde: Casa' })).toBeInTheDocument()
+    expect(screen.getByText('Completó un rompecabezas de animales')).toBeInTheDocument()
+    await abrirOpciones('Arma rompecabezas')
     await userEvent.click(screen.getByRole('button', { name: 'Editar aporte: Arma rompecabezas' }))
     const ejemplo = screen.getByRole('textbox', { name: EJEMPLO_FORTALEZA })
     expect(ejemplo).toHaveValue('Completó un rompecabezas de animales')
     await userEvent.clear(ejemplo)
     await userEvent.type(ejemplo, 'Armó otro rompecabezas')
     await userEvent.click(screen.getByRole('button', { name: 'Guardar aporte' }))
-    expect(await screen.findByText('Ejemplo: Armó otro rompecabezas')).toBeInTheDocument()
+    expect(await screen.findByText('Armó otro rompecabezas')).toBeInTheDocument()
     expect(cliente.put).toHaveBeenCalledWith(
       `/proyectos/${id}/aportes/nuevo-aporte-ficticio`,
       expect.objectContaining({
@@ -281,9 +303,40 @@ describe('Crear y editar aportes de las seis secciones', () => {
     )
   })
 
+  it('al elegir Otro en dónde lo hace, deja escribir cuál y lo muestra en la tarjeta', async () => {
+    abrir()
+    await userEvent.click(await screen.findByRole('button', { name: 'Agregar aporte' }))
+    await userEvent.type(screen.getByRole('textbox', { name: TITULO_FORTALEZA }), 'Nada con confianza')
+    // Arranca en Otro: el campo para decir cuál ya está a la vista
+    await userEvent.type(screen.getByRole('textbox', { name: /^¿Cuál\?/ }), 'Club de natación')
+    await userEvent.click(screen.getByRole('button', { name: 'Guardar aporte' }))
+    expect(cliente.post).toHaveBeenCalledWith(
+      `/proyectos/${id}/aportes`,
+      expect.objectContaining({
+        datos: JSON.stringify({ contexto: 'OTRO', contextoOtro: 'Club de natación' }),
+      }),
+    )
+    expect(await screen.findByRole('img', { name: 'Dónde: Club de natación' })).toBeInTheDocument()
+  })
+
+  it('si cambia de Otro a otra opción, no guarda el detalle', async () => {
+    abrir()
+    await userEvent.click(await screen.findByRole('button', { name: 'Agregar aporte' }))
+    await userEvent.type(screen.getByRole('textbox', { name: TITULO_FORTALEZA }), 'Ordena sus útiles')
+    await userEvent.type(screen.getByRole('textbox', { name: /^¿Cuál\?/ }), 'Biblioteca')
+    await userEvent.selectOptions(screen.getByRole('combobox', { name: '¿Dónde lo hace?' }), 'ESCUELA')
+    expect(screen.queryByRole('textbox', { name: /^¿Cuál\?/ })).not.toBeInTheDocument()
+    await userEvent.click(screen.getByRole('button', { name: 'Guardar aporte' }))
+    expect(cliente.post).toHaveBeenCalledWith(
+      `/proyectos/${id}/aportes`,
+      expect.objectContaining({ datos: JSON.stringify({ contexto: 'ESCUELA' }) }),
+    )
+  })
+
   it('edita un aporte propio con sus datos actuales y guarda con PUT', async () => {
     lista = [aporteOriginal]
     abrir()
+    await abrirOpciones('Título ficticio original')
     await userEvent.click(
       await screen.findByRole('button', {
         name: 'Editar aporte: Título ficticio original',
@@ -327,7 +380,7 @@ describe('Crear y editar aportes de las seis secciones', () => {
     ]
     abrir()
     await screen.findByRole('heading', { name: aporteOriginal.titulo })
-    expect(screen.getByText('Cargado por: María Díaz')).toBeInTheDocument()
+    expect(screen.getByText('María Díaz')).toBeInTheDocument()
     expect(document.querySelector('time[datetime="2026-10-20T15:00:00Z"]')).not.toBeNull()
   })
 
@@ -370,6 +423,7 @@ describe('Crear y editar aportes de las seis secciones', () => {
   it('cancelar conserva el aporte original y devuelve el foco al botón', async () => {
     lista = [aporteOriginal]
     abrir()
+    await abrirOpciones('Título ficticio original')
     const editar = await screen.findByRole('button', {
       name: 'Editar aporte: Título ficticio original',
     })
@@ -379,7 +433,8 @@ describe('Crear y editar aportes de las seis secciones', () => {
       ' otro texto',
     )
     await userEvent.click(screen.getByRole('button', { name: 'Cancelar' }))
-    expect(editar).toHaveFocus()
+    // El foco vuelve a los tres puntitos de la tarjeta
+    expect(screen.getByRole('button', { name: 'Más opciones: Título ficticio original' })).toHaveFocus()
     expect(
       screen.getByRole('heading', { name: aporteOriginal.titulo }),
     ).toBeInTheDocument()
@@ -416,7 +471,7 @@ describe('Crear y editar aportes de las seis secciones', () => {
       expect(screen.getByRole('textbox', { name: TITULO_FORTALEZA })).toHaveValue(
         'Título ficticio',
       )
-      expect(screen.queryByText('Aporte guardado.')).not.toBeInTheDocument()
+      expect(textosDeAvisos()).toHaveLength(0)
     },
   )
 

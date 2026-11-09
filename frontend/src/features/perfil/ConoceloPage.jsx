@@ -10,6 +10,7 @@ import { Link, useParams } from 'react-router-dom'
 import { obtenerResumenProyecto } from '../../api/aportes.js'
 import Boton from '../../components/ui/Boton.jsx'
 import usePerfil from './hooks/usePerfil.js'
+import DatosRapidosNino from './components/DatosRapidosNino.jsx'
 import { leerDatosAporte } from './perfil.js'
 
 const ETIQUETAS_INTENSIDAD = {
@@ -145,8 +146,7 @@ export default function ConoceloPage() {
         ) : (
           proyecto && (
             <>
-              <div className="print:hidden">
-              </div>
+              <DatosRapidosNino proyecto={proyecto} />
 
               <div className="mb-6 flex flex-wrap items-center justify-between gap-4 rounded-lg bg-superficie p-5 shadow-sm sm:p-6">
                 <div>
