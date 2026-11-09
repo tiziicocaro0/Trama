@@ -80,7 +80,7 @@ El detalle de cada arreglo, con código y cómo verificarlo, está en [remediaci
 
 ## Gráficos
 
-Todos están en [graficos/](graficos/), con los colores de [branding.md](../branding.md) (paleta validada para daltonismo, en modo claro y oscuro).
+Todos están en [graficos/](graficos/), con los colores de [branding.md](../../branding.md) (paleta validada para daltonismo, en modo claro y oscuro).
 
 ![Tiempo de respuesta p95 según la cantidad de personas](graficos/latencia-p95.svg)
 
