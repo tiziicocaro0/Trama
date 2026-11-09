@@ -35,7 +35,7 @@ describe('Perfil del niño con cabecera fija', () => {
     abrir()
     const nombre = await screen.findByRole('heading', { name: 'Pepe', level: 1 })
     const botonera = screen.getByRole('navigation', { name: 'Espacios del perfil' })
-    expect(within(botonera).getByRole('link', { name: 'Vista general' })).toHaveAttribute('aria-current', 'page')
+    expect(within(botonera).getByRole('link', { name: 'Información general' })).toHaveAttribute('aria-current', 'page')
 
     await user.click(within(botonera).getByRole('link', { name: 'Red' }))
     expect(await screen.findByRole('heading', { name: 'Red', level: 2 })).toBeInTheDocument()
@@ -43,7 +43,7 @@ describe('Perfil del niño con cabecera fija', () => {
     // Es el mismo elemento: la cabecera quedó montada y solo cambió el botón marcado
     expect(screen.getByRole('heading', { name: 'Pepe', level: 1 })).toBe(nombre)
     expect(within(botonera).getByRole('link', { name: 'Red' })).toHaveAttribute('aria-current', 'page')
-    expect(within(botonera).getByRole('link', { name: 'Vista general' })).not.toHaveAttribute('aria-current')
+    expect(within(botonera).getByRole('link', { name: 'Información general' })).not.toHaveAttribute('aria-current')
     const pedidosDelPerfil = cliente.get.mock.calls.filter(([ruta]) => ruta === `/proyectos/${id}`)
     expect(pedidosDelPerfil).toHaveLength(1)
 

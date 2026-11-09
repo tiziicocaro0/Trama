@@ -18,6 +18,9 @@ export default function SubirArchivo({
   archivos = [],
   onChange,
   disabled = false,
+  // Recursos del niño: sube el archivo con esta visibilidad en vez de como adjunto
+  visibilidad,
+  etiqueta = 'Archivos adjuntos (opcional)',
 }) {
   const inputId = useId()
   const inputRef = useRef(null)
@@ -37,7 +40,7 @@ export default function SubirArchivo({
     setError('')
     setSubiendo(true)
     try {
-      const subido = await subirArchivo(proyectoId, archivo)
+      const subido = await subirArchivo(proyectoId, archivo, visibilidad)
       onChange?.([...archivos, subido])
     } catch (err) {
       setError(
@@ -91,7 +94,7 @@ export default function SubirArchivo({
         htmlFor={inputId}
         className="block font-semibold text-texto"
       >
-        Archivos adjuntos (opcional)
+        {etiqueta}
       </label>
 
       <div

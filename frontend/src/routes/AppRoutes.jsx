@@ -16,6 +16,7 @@ import NuevoAcompanamientoPage from '../features/acompanamientos/NuevoAcompanami
 import MiPerfilPage from '../features/cuenta/MiPerfilPage.jsx'
 import RedPage from '../features/perfil/RedPage.jsx'
 import DatosPersonalesPage from '../features/perfil/DatosPersonalesPage.jsx'
+import RecursosPage from '../features/perfil/RecursosPage.jsx'
 import ConoceloPage from '../features/perfil/ConoceloPage.jsx'
 import BitacoraPage from '../features/bitacora/BitacoraPage.jsx'
 import CalendarioPage from '../features/calendario/CalendarioPage.jsx'
@@ -27,7 +28,6 @@ import AceptarInvitacionPage from '../features/invitaciones/AceptarInvitacionPag
 import VerificarEmailPage from '../features/auth/verificar/VerificarEmailPage.jsx'
 import { Layout } from '../components/layout/Layout.jsx'
 import { ConBarraIconos } from '../components/layout/BarraIconos.jsx'
-import { Tarjeta } from '../components/ui/Tarjeta.jsx'
 import { Componentes } from '../pages/Componentes.jsx'
 
 const titles = {
@@ -40,17 +40,12 @@ const titles = {
   '/acompanamientos': 'Acompañamientos',
   '/panel': 'Panel de profesionales',
   '/acompanamientos/nuevo': 'Nuevo acompañamiento',
-  '/recursos': 'Recursos',
   '/calendario': 'Calendario',
   '/perfil': 'Mi perfil',
   '/cuenta/plan': 'Mi plan',
   '/cuenta/notificaciones': 'Notificaciones',
   '/institucion': 'Institución',
   '/componentes': 'Componentes',
-}
-
-function Proximamente({ titulo }) {
-  return <Tarjeta titulo={titulo}>Próximamente</Tarjeta>
 }
 
 export default function AppRoutes() {
@@ -64,6 +59,7 @@ export default function AppRoutes() {
       red: 'Red',
       miembros: 'Red',
       'datos-personales': 'Datos personales',
+      recursos: 'Recursos',
       notas: 'Notas',
       bitacora: 'Bitácora',
       calendario: 'Calendario',
@@ -211,6 +207,7 @@ export default function AppRoutes() {
         <Route path="conocelo" element={<ConoceloPage />} />
         <Route path="red" element={<RedPage />} />
         <Route path="datos-personales" element={<DatosPersonalesPage />} />
+        <Route path="recursos" element={<RecursosPage />} />
         <Route path="bitacora" element={<BitacoraPage />} />
         <Route path="calendario" element={<CalendarioPage />} />
         <Route path=":seccion" element={<PerfilPage />} />
@@ -232,7 +229,6 @@ export default function AppRoutes() {
       />
       {import.meta.env.DEV && <Route path="/componentes" element={<Componentes />} />}
       <Route element={<Acceso privado><Layout /></Acceso>}>
-        <Route path="/recursos" element={<Proximamente titulo="Recursos" />} />
         <Route path="/calendario" element={<CalendarioPage />} />
       </Route>
       <Route

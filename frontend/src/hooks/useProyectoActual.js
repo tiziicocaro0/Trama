@@ -66,6 +66,12 @@ export function obtenerItemsMenuPorRol(proyectoActual, rolCodigo, esAdmin) {
   }
 
   items.push({
+    ruta: `${base}/recursos`,
+    etiqueta: 'Recursos',
+    icono: 'recursos',
+  });
+
+  items.push({
     ruta: `${base}/bitacora`,
     etiqueta: 'Bitácora',
     icono: 'calendario',

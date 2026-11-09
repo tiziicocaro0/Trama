@@ -127,12 +127,11 @@ describe('Inicio de TRAMA', () => {
     expect(within(eventos).queryByText('Reunión con la docente')).not.toBeInTheDocument()
   })
 
-  it('Recursos aparece como Próximamente, sin enlaces que no llevan a nada', () => {
+  it('Recursos ya no está en Inicio: vive dentro del perfil de cada niño', () => {
     abrir()
-    const recursos = screen.getByRole('region', { name: 'Recursos' })
-    expect(within(recursos).getByText('Próximamente')).toBeVisible()
-    expect(within(recursos).getByText('Guías y materiales')).toBeVisible()
-    expect(within(recursos).queryAllByRole('link')).toHaveLength(0)
+    expect(screen.queryByRole('region', { name: 'Recursos' })).not.toBeInTheDocument()
+    const nav = screen.getByRole('navigation', { name: 'Navegación principal' })
+    expect(within(nav).queryByRole('link', { name: 'Recursos' })).not.toBeInTheDocument()
   })
 
   it('abre la agenda del usuario desde el sidebar y permite volver', async () => {
@@ -168,10 +167,6 @@ describe('Inicio de TRAMA', () => {
   })
 
   it.each([
-    ['recursos', 'Recursos'],
-    ['guias', 'Recursos'],
-    ['estrategias', 'Recursos'],
-    ['comunidad', 'Recursos'],
     ['calendario', 'Calendario'],
   ])('marca una única opción activa para %s', (seccion, opcion) => {
     abrir(`/inicio?seccion=${seccion}`)
@@ -183,11 +178,6 @@ describe('Inicio de TRAMA', () => {
     expect(within(nav).getAllByRole('link', { current: 'page' })).toHaveLength(
       1,
     )
-  })
-
-  it('Recursos desde el menú avisa que todavía no está disponible', () => {
-    abrir('/inicio?seccion=recursos')
-    expect(screen.getByRole('heading', { name: 'Recursos · Próximamente' })).toHaveFocus()
   })
 
   it('enlaza el sidebar y Ver todos a Acompañamientos, y Mi perfil a su página', () => {
@@ -227,9 +217,9 @@ describe('Inicio de TRAMA', () => {
     expect(hamburguesa).toHaveFocus()
 
     await user.click(hamburguesa)
-    await user.click(within(menu).getByRole('link', { name: 'Recursos' }))
+    await user.click(within(menu).getByRole('link', { name: 'Calendario' }))
     expect(menu).toHaveClass('hidden')
-    expect(screen.getByRole('heading', { name: 'Recursos · Próximamente' })).toBeInTheDocument()
+    expect(screen.getByText('Agenda del usuario autenticado')).toBeInTheDocument()
   })
 
   it('reutiliza el cierre de sesión desde el único botón del sidebar', async () => {

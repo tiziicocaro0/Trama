@@ -56,7 +56,8 @@ export function obtenerUrlDescargaArchivo(proyectoId, archivoId) {
   return `${prefijo}/proyectos/${encodeURIComponent(proyectoId)}/archivos/${encodeURIComponent(archivoId)}`
 }
 
-export async function subirArchivo(proyectoId, archivo) {
+// visibilidad: solo para un recurso del niño (pestaña Recursos). Sin ella es un adjunto.
+export async function subirArchivo(proyectoId, archivo, visibilidad) {
   if (!cliente.defaults.baseURL) {
     throw new Error('Falta configurar la conexión con TRAMA.')
   }
@@ -68,6 +69,7 @@ export async function subirArchivo(proyectoId, archivo) {
 
   const formData = new FormData()
   formData.append('archivo', archivo)
+  if (visibilidad) formData.append('visibilidad', visibilidad)
 
   try {
     const { data } = await cliente.post(
@@ -180,3 +182,19 @@ export async function obtenerVistaImagen(proyectoId, archivoId) {
   }
 }
 
+
+// Recursos del niño: lo subido directo a Recursos y los adjuntos de los aportes que la persona puede ver
+export async function listarRecursos(proyectoId, signal) {
+  const { data } = await cliente.get(
+    `/proyectos/${encodeURIComponent(proyectoId)}/archivos`,
+    signal ? { signal } : undefined,
+  )
+  return Array.isArray(data) ? data : []
+}
+
+// Como un aporte: no se borra, se archiva. Solo puede quien lo subió.
+export async function archivarRecurso(proyectoId, archivoId) {
+  await cliente.post(
+    `/proyectos/${encodeURIComponent(proyectoId)}/archivos/${encodeURIComponent(archivoId)}/archivar`,
+  )
+}
