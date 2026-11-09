@@ -1,4 +1,4 @@
-import { ChatCircle, Ear, FileImage, FilePdf, HandPointing, Hourglass, Image, Lock, SquaresFour, UsersThree } from '@phosphor-icons/react'
+import { ChatCircle, Ear, FileImage, FilePdf, HandPointing, Hourglass, PencilSimple, Archive, ClockCounterClockwise, Image, Lock, SquaresFour, UsersThree, HandPalm } from '@phosphor-icons/react'
 import { useState } from 'react'
 import {
   descargarArchivo,
@@ -15,19 +15,10 @@ import {
 } from '../../features/perfil/perfil.js'
 import ConfirmacionAporte from '../../features/perfil/components/ConfirmacionAporte.jsx'
 import DatosEstrategia from '../../features/perfil/components/DatosEstrategia.jsx'
-import { CATEGORIAS_COMUNICACION, CATEGORIAS_SENSORIALES, CONTEXTOS_SENSORIALES, FORMAS_COMUNICACION, ICONOS_SENSORIALES, TONOS_SENSORIALES, CONTEXTOS_RUTINA, ICONOS_RUTINA, TONOS_RUTINA, etiquetaCategoriaRutina } from '../../features/perfil/camposAporte.js'
+import { CATEGORIAS_COMUNICACION, CATEGORIAS_SENSORIALES, CONTEXTOS_SENSORIALES, FORMAS_COMUNICACION, ICONOS_SENSORIALES, TONOS_SENSORIALES, ICONOS_LISTA_SENSORIAL, TONOS_LISTA_SENSORIAL, CONTEXTOS_RUTINA, ICONOS_RUTINA, TONOS_RUTINA, etiquetaCategoriaRutina, ICONOS_DESREGULACION, TONOS_DESREGULACION, } from '../../features/perfil/camposAporte.js'
 
 const ETIQUETAS_TIPO_NOTA = Object.fromEntries(TIPOS_NOTA)
 const ICONOS_COMUNICACION = { EXPRESION: ChatCircle, COMPRENSION: Ear, NO_VERBAL: HandPointing, INTERACCION_SOCIAL: UsersThree, TIEMPO_ESPERA: Hourglass, APOYOS: Image }
-
-// 4.2: especialidades que declaró el autor en el proyecto, para mostrarlas a su lado
-function obtenerEspecialidades(aporte) {
-  if (!Array.isArray(aporte?.autorEspecialidades)) return null
-  const nombres = aporte.autorEspecialidades
-    .map((item) => etiquetaEspecialidad(item?.especialidad))
-    .filter(Boolean)
-  return nombres.length ? nombres.join(', ') : null
-}
 
 function obtenerAutor(aporte, autorProp) {
   if (typeof autorProp === 'string' && autorProp.trim()) return autorProp.trim()
@@ -75,7 +66,6 @@ export default function TarjetaAporte({
       ? formatearFechaHora(aporte.actualizadoEn)
       : null
   const nombreAutor = obtenerAutor(aporte, autor)
-  const especialidades = obtenerEspecialidades(aporte)
   const datosNota = esNota ? leerDatosAporte(aporte.datos) : {}
   const tipoNota = ETIQUETAS_TIPO_NOTA[datosNota.tipoNota] ?? null
   const fechaNota = formatearFechaCalendario(datosNota.fecha)
@@ -84,10 +74,11 @@ export default function TarjetaAporte({
   const sensorial = aporte.tipo === 'SENSORIAL' ? leerDatosAporte(aporte.datos) : null
   const estrategia = aporte.tipo === 'ESTRATEGIA' ? leerDatosAporte(aporte.datos) : null
   const rutina = aporte.tipo === 'RUTINA' ? leerDatosAporte(aporte.datos) : null
-  const categoriaSensorial = CATEGORIAS_SENSORIALES.find(([valor]) => valor === sensorial?.categoria)?.[1]
+  const desregulacion = aporte.tipo === 'DESREGULACION' ? leerDatosAporte(aporte.datos) : null
   const contextoSensorial = CONTEXTOS_SENSORIALES.find(([valor]) => valor === sensorial?.contexto)?.[1]
   const IconoSensorial = ICONOS_SENSORIALES[sensorial?.categoria]
-  const categoriaComunicacion = CATEGORIAS_COMUNICACION.find(([valor]) => valor === comunicacion?.categoria)?.[1]
+  const IconoListaSensorial = sensorial ? ICONOS_LISTA_SENSORIAL[sensorial.lista] : null
+  const etiquetaListaSensorial = sensorial?.lista === 'AYUDA' ? 'Le ayuda' : sensorial?.lista === 'CUESTA' ? 'Le cuesta' : null
   const IconoComunicacion = ICONOS_COMUNICACION[comunicacion?.categoria]
   const formasComunicacion = Array.isArray(comunicacion?.formasComunicacion)
     ? comunicacion.formasComunicacion.map((forma) => forma === 'OTRA' ? comunicacion.otraForma : FORMAS_COMUNICACION.find(([valor]) => valor === forma)?.[1]).filter(Boolean)
@@ -95,6 +86,34 @@ export default function TarjetaAporte({
   const categoriaRutina = rutina ? etiquetaCategoriaRutina(rutina) : ''
   const IconoRutina = ICONOS_RUTINA[rutina?.categoria] ?? (rutina?.categoria === 'PERSONALIZADA' ? SquaresFour : null)
   const contextosRutina = Array.isArray(rutina?.contextos) ? rutina.contextos.map((valor) => CONTEXTOS_RUTINA.find(([codigo]) => codigo === valor)?.[1]).filter(Boolean) : []
+  const IconoDesregulacion = ICONOS_DESREGULACION[desregulacion?.lista]
+
+  const IconoPrincipal =
+  IconoDesregulacion ??
+  IconoComunicacion ??
+  IconoSensorial ??
+  IconoRutina ??
+  null
+
+  const tonoPrincipal = desregulacion
+  ? TONOS_DESREGULACION[desregulacion.lista]
+  : sensorial
+    ? TONOS_SENSORIALES[sensorial.categoria]
+    : rutina
+      ? TONOS_RUTINA[rutina.categoria]
+      : comunicacion
+        ? 'bg-agua/20 text-agua'
+        : 'bg-secundario/15 text-secundario'
+
+
+  const inicialesAutor = nombreAutor
+  ? nombreAutor
+      .split(' ')
+      .map((parte) => parte[0])
+      .join('')
+      .slice(0, 2)
+      .toUpperCase()
+  : ''
 
   // 3.1: Identificar aportes con visibilidad restringida
   const esRestringido =
@@ -122,41 +141,17 @@ export default function TarjetaAporte({
   // Editar y archivar: solo el autor. Ver historial (3.2): cualquier miembro que ve el aporte
   const puedeModificar = aporte.puedeEditar && (alEditar || alArchivar)
 
+  const especialidadAutor =
+  aporte.autorEspecialidades?.[0]?.especialidad
+    ? etiquetaEspecialidad(aporte.autorEspecialidades[0].especialidad)
+    : null
+
   return (
     <article className="flex gap-2 py-2 text-texto">
-      <span
-        aria-hidden="true"
-        className="mt-2 size-1.5 shrink-0 rounded-full bg-miel"
-      />
       <div className="min-w-0 flex-1">
         {estrategia && <DatosEstrategia datos={estrategia} parte="categoria" />}
-        {sensorial && <p className="mb-2 flex flex-wrap items-center gap-2 text-sm font-semibold text-secundario">{IconoSensorial && <span className={`inline-flex size-10 items-center justify-center rounded-sm ${TONOS_SENSORIALES[sensorial.categoria]}`}><IconoSensorial size={24} aria-hidden="true" /></span>}{categoriaSensorial}{sensorial.lista === 'AYUDA' && <span className="rounded-full bg-secundario/10 px-2 py-1 text-secundario">Le ayuda</span>}{sensorial.lista === 'CUESTA' && <span className="rounded-full bg-primario/10 px-2 py-1 text-primario">Le cuesta</span>}</p>}
         {rutina && categoriaRutina && <p className="mb-2 flex items-center gap-2 text-sm font-semibold text-secundario"><span className={`inline-flex size-10 shrink-0 items-center justify-center rounded-sm ${TONOS_RUTINA[rutina.categoria] ?? 'bg-secundario/15 text-secundario'}`}>{IconoRutina && <IconoRutina size={24} aria-hidden="true" />}</span>{categoriaRutina}</p>}
-        {categoriaComunicacion && <p className="mb-2 flex items-center gap-2 text-xs font-semibold text-secundario">{IconoComunicacion && <IconoComunicacion size={24} aria-hidden="true" className="text-agua" />}{categoriaComunicacion}</p>}
-        <h3 className={`flex items-center gap-2 break-words leading-relaxed ${comunicacion ? 'font-display text-subtitulo' : 'text-base font-semibold'}`}>
-          <span className="min-w-0">{aporte.titulo}</span>
-
-          {/* 3.1: Candado para aportes restringidos */}
-          {esRestringido && (
-            <Lock
-              size={18}
-              weight="regular"
-              className="shrink-0 text-secundario"
-              role="img"
-              aria-label="Visibilidad restringida"
-            />
-          )}
-        </h3>
-
-        {aporte.contenido && (
-          <p
-            className={`mt-1 whitespace-pre-wrap break-words text-sm text-texto-suave ${resumen ? 'line-clamp-3' : ''}`}
-          >
-            {aporte.contenido}
-          </p>
-        )}
         {estrategia && <DatosEstrategia datos={estrategia} />}
-        {contextoSensorial && <p className="mt-1 text-sm text-texto-suave">Lugar o contexto: {contextoSensorial}</p>}
         {contextosRutina.length > 0 && <p className="mt-1 text-sm text-texto-suave">Dónde suele ocurrir: {contextosRutina.join(', ')}</p>}
         {(sensorial || estrategia || rutina) && esRestringido && <p className="mt-2 text-xs font-semibold text-secundario">{aporte.visibilidad === 'PROFESIONALES' ? 'Solo equipo profesional' : aporte.visibilidad === 'SOLO_TUTORES' ? 'Solo tutores' : aporte.visibilidad === 'SOLO_SALUD' ? 'Salud y tutores' : aporte.visibilidad === 'SOLO_EDUCACION' ? 'Educación y tutores' : 'Visibilidad restringida'}</p>}
 
@@ -173,9 +168,6 @@ export default function TarjetaAporte({
             Ejemplo: {fortaleza.ejemplo}
           </p>
         )}
-        {formasComunicacion.length > 0 && <p className="mt-2 text-sm"><strong>Cómo se comunica:</strong> {formasComunicacion.join(', ')}</p>}
-        {comunicacion?.comoHablarle && <p className="mt-2 whitespace-pre-wrap break-words text-sm"><strong>Cómo conviene hablarle:</strong> {comunicacion.comoHablarle}</p>}
-        {comunicacion?.queEvitar && <p className="mt-2 whitespace-pre-wrap break-words text-sm"><strong>Qué evitar:</strong> {comunicacion.queEvitar}</p>}
 
         {adjuntos.length > 0 && (
           <ul
@@ -214,23 +206,143 @@ export default function TarjetaAporte({
         {errorAdjunto && <p role="alert" className="mt-2 text-sm text-error">{errorAdjunto}</p>}
         {vistaAdjunto && <Modal abierto titulo={vistaAdjunto.nombre} onCerrar={() => { window.URL.revokeObjectURL(vistaAdjunto.url); setVistaAdjunto(null) }}><img src={vistaAdjunto.url} alt={vistaAdjunto.nombre} className="max-h-96 w-full object-contain" /></Modal>}
 
-        {(nombreAutor || (!esNota && fechaCreacion)) && (
-          <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-texto-suave">
-            {nombreAutor && (
-              <span>
-                {especialidades
-                  ? `Cargado por: ${nombreAutor} · ${especialidades}`
-                  : `Cargado por: ${nombreAutor}`}
+        <div className="space-y-5">
+          <div className="flex items-center gap-4">
+            {IconoPrincipal && (
+              <span
+                className={`flex size-14 shrink-0 items-center justify-center rounded-md ${tonoPrincipal}`}
+              >
+                <IconoPrincipal size={28} aria-hidden="true" />
               </span>
             )}
-            {!esNota && fechaCreacion && (
-              <time dateTime={fechaBase}>{fechaCreacion}</time>
+
+            <h3 className="font-display text-subtitulo leading-tight text-texto">
+              {aporte.titulo}
+            </h3>
+            {esRestringido && (
+              <Lock
+                size={18}
+                role="img"
+                aria-label="Visibilidad restringida"
+                className="shrink-0 text-texto-suave"
+              />
             )}
+              {sensorial && !resumen && etiquetaListaSensorial && IconoListaSensorial && (
+                <span
+                  className={`inline-flex items-center gap-2 rounded-full border px-3 py-1 text-sm font-semibold ${
+                    TONOS_LISTA_SENSORIAL[sensorial.lista]
+                  }`}
+                >
+                  <IconoListaSensorial size={16} aria-hidden="true" />
+                  {etiquetaListaSensorial}
+                </span>
+              )}
           </div>
-        )}
+
+          {aporte.contenido && (
+            <p
+              className={`text-base leading-relaxed text-texto-suave ${
+                resumen ? 'line-clamp-3' : ''
+              }`}
+            >
+              {aporte.contenido}
+            </p>
+          )}
+
+          {contextoSensorial && <p className="mt-1 text-sm text-texto-suave">Lugar o contexto: {contextoSensorial}</p>}
+
+
+          {comunicacion && !resumen && (
+            <div className="space-y-3">
+              {formasComunicacion.length > 0 && (
+                <div className="rounded-md border border-agua/20 bg-agua/10 p-4">
+                  <div className="flex items-center gap-2">
+                    <Image size={18} aria-hidden="true" className="text-agua" />
+                    <p className="text-sm font-semibold text-secundario">
+                      Cómo se comunica
+                    </p>
+                  </div>
+
+                  <p className="mt-2 text-sm leading-relaxed text-texto-suave">
+                    {formasComunicacion.join(', ')}
+                  </p>
+                </div>
+              )}
+
+              {comunicacion.comoHablarle && (
+                <div className="rounded-md border border-secundario/20 bg-secundario/10 p-4">
+                  <div className="flex items-center gap-2">
+                    <ChatCircle
+                      size={18}
+                      aria-hidden="true"
+                      className="text-secundario"
+                    />
+                    <p className="text-sm font-semibold text-secundario">
+                      Cómo conviene hablarle
+                    </p>
+                  </div>
+
+                  <p className="mt-2 whitespace-pre-wrap break-words text-sm leading-relaxed text-texto-suave">
+                    {comunicacion.comoHablarle}
+                  </p>
+                </div>
+              )}
+
+              {comunicacion.queEvitar && (
+                <div className="rounded-md border border-primario/20 bg-primario/10 p-4">
+                  <div className="flex items-center gap-2">
+                    <HandPalm
+                      size={18}
+                      aria-hidden="true"
+                      className="text-primario"
+                    />
+                    <p className="text-sm font-semibold text-primario">
+                      Qué evitar
+                    </p>
+                  </div>
+
+                  <p className="mt-2 whitespace-pre-wrap break-words text-sm leading-relaxed text-texto-suave">
+                    {comunicacion.queEvitar}
+                  </p>
+                </div>
+              )}
+            </div>
+          )}
+
+          {(nombreAutor || (!esNota && fechaCreacion)) && (
+            <div className="flex items-center gap-3">
+              {nombreAutor && (
+                <span
+                  aria-hidden="true"
+                  className="flex size-12 shrink-0 items-center justify-center rounded-full bg-decoracion font-semibold text-secundario"
+                >
+                  {inicialesAutor}
+                </span>
+              )}
+
+              <div className="text-sm text-texto-suave">
+                {nombreAutor && (
+                  <p className="font-semibold text-texto">
+                    {especialidadAutor
+                      ? `Cargado por: ${nombreAutor} · ${especialidadAutor}`
+                      : `Cargado por: ${nombreAutor}`}
+                  </p>
+                )}
+
+                {!esNota && fechaCreacion && (
+                  <time dateTime={fechaBase}>
+                    {fechaCreacion}
+                  </time>
+                )}
+              </div>
+            </div>
+          )}
+        </div>
 
         {/* 3.3: confirmar el aporte de otra persona */}
-        <ConfirmacionAporte aporte={aporte} />
+        {!resumen && (
+          <ConfirmacionAporte aporte={aporte} />
+        )}
 
         {esNota && (
           <div className="mt-3 space-y-1 text-sm text-texto-suave">
@@ -258,37 +370,42 @@ export default function TarjetaAporte({
           </div>
         )}
 
-        {(puedeModificar || alVerHistorial) && (
-          <div className="mt-2 flex flex-wrap items-center gap-4">
+        {!resumen && (puedeModificar || alVerHistorial) && (
+          <div className="mt-5 flex flex-wrap gap-3">
             {puedeModificar && alEditar && (
               <button
                 type="button"
                 onClick={alEditar}
                 disabled={archivando}
                 aria-label={`Editar ${sustantivo}: ${aporte.titulo}`}
-                className="inline-flex min-h-11 items-center rounded-sm font-semibold text-primario underline underline-offset-4 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-primario"
+                className="inline-flex min-h-11 items-center gap-2 rounded-md border border-secundario px-4 text-sm font-semibold text-secundario transition hover:bg-secundario/10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-secundario"
               >
+                <PencilSimple size={16} aria-hidden="true" />
                 Editar
               </button>
             )}
+
             {puedeModificar && alArchivar && (
               <button
                 type="button"
                 onClick={alArchivar}
                 disabled={archivando}
                 aria-label={`Archivar ${sustantivo}: ${aporte.titulo}`}
-                className="inline-flex min-h-11 items-center rounded-sm font-semibold text-secundario underline underline-offset-4 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-primario"
+                className="inline-flex min-h-11 items-center gap-2 rounded-md border border-miel px-4 text-sm font-semibold text-miel transition hover:bg-miel/10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-miel"
               >
+                <Archive size={16} aria-hidden="true" />
                 {archivando ? 'Archivando…' : 'Archivar'}
               </button>
             )}
+
             {alVerHistorial && (
               <button
                 type="button"
                 onClick={alVerHistorial}
                 aria-label={`Ver historial del ${sustantivo}: ${aporte.titulo}`}
-                className="inline-flex min-h-11 items-center rounded-sm font-semibold text-secundario underline underline-offset-4 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-primario"
+                className="inline-flex min-h-11 items-center gap-2 rounded-md border border-borde px-4 text-sm font-semibold text-texto-suave transition hover:bg-fondo focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primario"
               >
+                <ClockCounterClockwise size={16} aria-hidden="true" />
                 Ver historial
               </button>
             )}

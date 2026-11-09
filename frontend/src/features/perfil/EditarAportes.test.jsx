@@ -98,9 +98,8 @@ describe('Crear y editar aportes de las seis secciones', () => {
         await userEvent.click(within(formulario).getByRole('checkbox', { name: 'Casa' }))
         await userEvent.click(within(formulario).getByRole('radio', { name: /Solo tutores/ }))
       } else {
-        await userEvent.selectOptions(
-          screen.getByRole('combobox', { name: '¿Quién puede verlo?' }),
-          'SOLO_TUTORES',
+        await userEvent.click(
+          screen.getByRole('radio', { name: /Solo tutores/ }),
         )
       }
       await userEvent.click(
@@ -166,7 +165,7 @@ describe('Crear y editar aportes de las seis secciones', () => {
     await userEvent.click(screen.getByRole('radio', { name: 'Le ayuda' }))
     await userEvent.click(screen.getByRole('radio', { name: 'Movimiento y equilibrio' }))
     await userEvent.click(screen.getByRole('radio', { name: 'Casa' }))
-    await userEvent.click(screen.getByRole('radio', { name: /Solo equipo profesional/ }))
+    await userEvent.click(screen.getByRole('radio', { name: /Equipo profesional y tutores/ }))
     await userEvent.click(screen.getByRole('button', { name: 'Guardar aporte' }))
     expect(cliente.post).toHaveBeenCalledWith(`/proyectos/${id}/aportes`, expect.objectContaining({
       tipo: 'SENSORIAL', titulo: 'Busca balancearse', contenido: '', visibilidad: 'PROFESIONALES',
@@ -192,7 +191,7 @@ describe('Crear y editar aportes de las seis secciones', () => {
     await userEvent.selectOptions(screen.getByRole('combobox', { name: 'Lista' }), '')
     await userEvent.click(screen.getByRole('button', { name: 'Movimiento y equilibrio' }))
     expect(screen.getAllByRole('article')).toHaveLength(1)
-    await userEvent.click(screen.getAllByRole('checkbox', { name: 'Solo mis aportes' })[0])
+    await userEvent.click(screen.getByRole('switch', { name: 'Solo mis aportes' }))
     expect(screen.getByRole('heading', { name: 'Busca balancearse' })).toBeInTheDocument()
   })
 

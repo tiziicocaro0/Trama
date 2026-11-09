@@ -86,7 +86,10 @@ describe('Notas profesionales (4.2)', () => {
       screen.getByRole('textbox', { name: 'Texto de la nota (opcional)' }),
     ).toBeInTheDocument()
     expect(
-      screen.getByRole('combobox', { name: '¿Quién puede verlo?' }),
+      screen.getByRole('group', { name: '¿Quién puede ver este aporte?' }),
+    ).toBeInTheDocument()
+    expect(
+      screen.getByRole('radio', { name: /Toda la red/ }),
     ).toBeInTheDocument()
   })
 

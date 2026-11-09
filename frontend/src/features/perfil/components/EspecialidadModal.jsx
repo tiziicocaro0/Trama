@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Modal } from '../../../components/ui/Modal.jsx'
 import Boton from '../../../components/ui/Boton.jsx'
+import CasillaOvillo from '../../../components/ui/CasillaOvillo.jsx'
 import { Aviso } from '../../../components/ui/Aviso.jsx'
 import {
   ESPECIALIDADES_EDUCACION,
@@ -121,26 +122,18 @@ export default function EspecialidadModal({
           </legend>
           {opciones.map((opcion) => {
             const marcada = seleccionadas.has(opcion.valor)
-            const inputId = `esp-${opcion.valor}`
             const aclaracionId = `acl-${opcion.valor}`
             return (
               <div key={opcion.valor} className="space-y-2">
-                <label
-                  htmlFor={inputId}
-                  className="flex cursor-pointer items-center gap-3"
+                <CasillaOvillo
+                  checked={marcada}
+                  onChange={() => alternarEspecialidad(opcion.valor)}
+                  disabled={guardando}
                 >
-                  <input
-                    id={inputId}
-                    type="checkbox"
-                    checked={marcada}
-                    onChange={() => alternarEspecialidad(opcion.valor)}
-                    disabled={guardando}
-                    className="size-5 shrink-0 accent-primario"
-                  />
                   <span className="text-base">{opcion.etiqueta}</span>
-                </label>
+                </CasillaOvillo>
                 {marcada && (
-                  <div className="ml-8">
+                  <div className="ml-12">
                     <label
                       htmlFor={aclaracionId}
                       className="mb-1 block text-sm text-texto-suave"

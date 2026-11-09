@@ -1,5 +1,6 @@
 import { Check, SquaresFour } from '@phosphor-icons/react'
 import { CATEGORIAS_RUTINA, CATEGORIA_RUTINA_PERSONALIZADA, CONTEXTOS_RUTINA, ICONOS_RUTINA, TONOS_RUTINA } from '../camposAporte.js'
+import CasillaOvillo from '../../../components/ui/CasillaOvillo.jsx'
 
 export default function CamposRutina({ parte, extra, setExtra, errores, disabled }) {
   if (parte === 'categoria') return (
@@ -32,9 +33,7 @@ export default function CamposRutina({ parte, extra, setExtra, errores, disabled
     <div className="flex flex-wrap gap-2">
       {CONTEXTOS_RUTINA.map(([valor, etiqueta]) => {
         const seleccionada = extra.contextos?.includes(valor) ?? false
-        return <label key={valor} className="inline-flex min-h-11 cursor-pointer items-center gap-2 rounded-full border border-borde bg-superficie px-3 has-checked:border-secundario has-checked:bg-secundario/10">
-          <input type="checkbox" checked={seleccionada} onChange={(event) => setExtra((actual) => ({ ...actual, contextos: event.target.checked ? [...(actual.contextos ?? []), valor] : (actual.contextos ?? []).filter((item) => item !== valor) }))} disabled={disabled} />{etiqueta}
-        </label>
+        return <CasillaOvillo key={valor} tamano="chico" className="min-h-11 rounded-full border border-borde bg-superficie px-3 has-checked:border-secundario has-checked:bg-secundario/10" checked={seleccionada} onChange={(event) => setExtra((actual) => ({ ...actual, contextos: event.target.checked ? [...(actual.contextos ?? []), valor] : (actual.contextos ?? []).filter((item) => item !== valor) }))} disabled={disabled}>{etiqueta}</CasillaOvillo>
       })}
     </div>
     <p className="mt-1 text-sm text-texto-suave">Sirve para entender dónde se observa esta rutina. No es una categoría.</p>

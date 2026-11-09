@@ -52,6 +52,8 @@ Trama/
 
 **Nota:** el proyecto base del frontend todavía está en preparación.
 
+**Para levantar TODO:** docker compose --profile demo up -d --build 
+
 ## Clonar el repositorio
 
 Para descargar el proyecto por primera vez:
@@ -375,6 +377,42 @@ docker compose --profile backup run --rm --entrypoint sh backup \
 Para restaurar sobre la base y los archivos **reales**, agregar `--sobrescribir-real` al final.
 
 ⚠️ Guardar las claves **fuera** de los backups: sin `TRAMA_BACKUP_KEY` el backup no se puede abrir, y sin `TRAMA_CRYPTO_KEY` los campos sensibles de la base restaurada no se pueden leer.
+
+#### 7.1. Backups automáticos diarios en Windows
+
+Para automatizar los respaldos se incluye el script `backup-diario.bat`, ubicado en la raíz del proyecto.
+
+**Requisitos:**
+- Docker Desktop instalado y en funcionamiento.
+- MySQL y OpenBao disponibles.
+- OpenBao inicializado y desbloqueado.
+- Variables de entorno configuradas en `.env`.
+
+**Configuración del backup diario:**
+
+1. Abrir el Programador de tareas de Windows.
+2. Crear una tarea llamada `Trama - Backup diario`.
+3. Configurar un desencadenador diario a las **03:00**.
+4. En *Acciones*, seleccionar **Iniciar un programa** y elegir `backup-diario.bat` desde la carpeta del proyecto.
+5. Configurar la tarea para que se ejecute con los permisos y condiciones necesarios para acceder a Docker.
+
+**Funcionamiento:**
+
+El script ejecuta:
+
+```bat
+docker compose --profile backup run --rm backup
+```
+
+Cada respaldo se guarda en `backups/` con el formato `trama-AAAAMMDD-HHMMSS.tar.gz.gpg`.
+
+Las ejecuciones y los errores se registran en `backups/backup-diario.log`.
+
+**Retención:** el script identifica los respaldos con más de 30 días y registra sus nombres, pero actualmente no los elimina automáticamente.
+
+**Verificación:** ejecutar manualmente la tarea desde el Programador de tareas, comprobar que se genere un archivo cifrado y revisar `backup-diario.log`.
+
+**Importante:** la tarea solo puede ejecutarse correctamente si la computadora está disponible, Docker funciona y OpenBao está desbloqueado. Los backups locales no sustituyen una copia externa segura. Las claves de recuperación deben conservarse separadas de los archivos respaldados.
 
 ### 8. Actualizar los contenedores
 

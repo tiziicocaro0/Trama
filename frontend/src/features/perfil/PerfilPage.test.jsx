@@ -103,11 +103,15 @@ describe('Portada y navegación de lectura', () => {
       screen.getByText('¡Sumá el primero!', { exact: false }),
     ).toBeInTheDocument()
     expect(
-      screen.getByRole('complementary', { name: /Si se desregula/ }),
-    ).toHaveTextContent('Próximamente')
+      screen.getByRole('link', { name: /Ver guía/i }),
+    ).toBeInTheDocument()
+
     expect(
-      screen.queryByRole('button', { name: 'Si se desregula' }),
-    ).not.toBeInTheDocument()
+      screen.getByRole('link', { name: /Ver guía/i }),
+    ).toHaveAttribute(
+      'href',
+      `/proyectos/${id}/desregulacion`,
+    )
     expect(screen.getAllByRole('link', { name: /^Ver todo:/ })).toHaveLength(6)
     expect(document.title).toBe('TRAMA · Perfil del niño')
   })

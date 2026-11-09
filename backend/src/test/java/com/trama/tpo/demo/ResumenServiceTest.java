@@ -79,9 +79,33 @@ class ResumenServiceTest {
 
     private AporteResponse aporte(TipoAporte tipo, String titulo, String datos) {
         Instant ahora = Instant.now();
+
         return new AporteResponse(
-                UUID.randomUUID(), proyectoId, UUID.randomUUID(), "Autora Ficticia",
-                tipo, titulo, null, datos, Visibilidad.TODOS, false,
-                ahora, ahora, false, List.of(), List.of(), List.of(), 0, false, List.of());
-    }
+                UUID.randomUUID(),
+                proyectoId,
+                UUID.randomUUID(),
+                "Autora Ficticia",
+                tipo,
+                titulo,
+                null,
+                datos,
+                Visibilidad.TODOS,
+                false,
+                ahora,
+                ahora,
+                false,
+                List.of(),
+                List.of(),
+                List.of(),
+                0,
+                false,
+                List.of(),
+
+                // 3.4: el aporte ficticio no tiene una revisión pendiente.
+                false,
+
+                // 3.4: al no existir una revisión, tampoco tiene un ID asociado.
+                null
+        );
+}
 }

@@ -9,6 +9,7 @@ import com.trama.tpo.demo.entity.evento.EventoExcepcion;
 import com.trama.tpo.demo.entity.proyecto.Proyecto;
 import com.trama.tpo.demo.entity.usuario.Usuario;
 import com.trama.tpo.demo.repository.*;
+import com.trama.tpo.demo.entity.notificacion.TipoNotificacion;
 
 import com.trama.tpo.demo.exceptions.ApiException;
 import org.springframework.http.HttpStatus;
@@ -35,6 +36,7 @@ public class EventoService {
     private final PermisoService permisoService;
     private final UsuarioActual usuarioActual;
     private final AcuerdoRepository acuerdoRepository;
+    private final NotificacionService notificacionService;
 
     public EventoService(
             EventoRepository eventoRepository,
@@ -45,7 +47,8 @@ public class EventoService {
             ArchivoRepository archivoRepository,
             PermisoService permisoService,
             UsuarioActual usuarioActual,
-            AcuerdoRepository acuerdoRepository) {
+            AcuerdoRepository acuerdoRepository,
+            NotificacionService notificacionService) {
 
         this.eventoRepository = eventoRepository;
         this.excepcionRepository = excepcionRepository;
@@ -56,6 +59,7 @@ public class EventoService {
         this.permisoService = permisoService;
         this.usuarioActual = usuarioActual;
         this.acuerdoRepository = acuerdoRepository;
+        this.notificacionService = notificacionService;
     }
 
     // CREAR EVENTO UNICO O RECURRENTE (COMUN O REUNION)
@@ -90,12 +94,18 @@ public class EventoService {
                 .diaSemana(recurrente ? request.diaSemana() : null)
                 .fechaFinRecurrencia(recurrente
                         ? request.fechaFinRecurrencia() : null)
-                .esCambio(false)
+                .esCambio(Boolean.TRUE.equals(request.esCambio()))
                 .participantes(participantes)
                 .build();
 
-        return convertir(eventoRepository.saveAndFlush(evento));
-    }
+        Evento guardado = eventoRepository.saveAndFlush(evento);
+
+        if (Boolean.TRUE.equals(request.esCambio())) {
+            notificarCambioRutina(proyectoId);
+        }
+
+        return convertir(guardado);
+            }
 
     // LISTAR EVENTOS Y GENERAR OCURRENCIAS SEMANALES
     @Transactional(readOnly = true)
@@ -218,8 +228,18 @@ public class EventoService {
         evento.setTipo(tipo);
         evento.setParticipantes(participantes);
 
-        return convertir(eventoRepository.saveAndFlush(evento));
-    }
+        if (request.esCambio() != null) {
+            evento.setEsCambio(request.esCambio());
+        }
+
+        Evento guardado = eventoRepository.saveAndFlush(evento);
+
+        if (Boolean.TRUE.equals(request.esCambio())) {
+            notificarCambioRutina(proyectoId);
+        }
+
+        return convertir(guardado);
+        }
 
     // ELIMINAR EVENTO UNICO O TODA LA SERIE
     @Transactional
@@ -385,6 +405,18 @@ public class EventoService {
         return new ApiException(codigo, mensaje, estado);
     }
 
+    // 8.1: todos los eventos del proyecto, cada serie una sola vez (sin expandir las ocurrencias)
+    @Transactional(readOnly = true)
+    public List<EventoResponse> listarParaExportar(UUID proyectoId) {
+        permisoService.verificarMiembro(proyectoId);
+
+        return eventoRepository.findByProyectoIdAndFechaBetweenOrderByFechaAscHoraInicioAsc(
+                        proyectoId, LocalDate.of(1900, 1, 1), LocalDate.of(9999, 12, 31))
+                .stream()
+                .map(this::convertir)
+                .toList();
+    }
+
     private EventoResponse convertir(Evento evento) {
         return convertir(evento, evento.getFecha(), null);
     }
@@ -430,4 +462,24 @@ public class EventoService {
                 participanteIds
         );
     }
+    private void notificarCambioRutina(UUID proyectoId) {
+
+    UUID autorId = usuarioActual.obtenerId();
+
+    List<UUID> destinatarios = membresiaRepository
+            .findByProyectoId(proyectoId)
+            .stream()
+            .map(membresia -> membresia.getUsuario().getId())
+            .filter(id -> !id.equals(autorId))
+            .distinct()
+            .toList();
+
+    notificacionService.notificar(
+            destinatarios,
+            proyectoId,
+            TipoNotificacion.CAMBIO_CALENDARIO.name(),
+            "Se registró un cambio de rutina en el calendario.",
+            "/proyectos/" + proyectoId + "/calendario"
+    );
+}
 }

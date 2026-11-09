@@ -3,19 +3,23 @@ import { Link, NavLink, useLocation, useSearchParams } from 'react-router-dom'
 import { List, X } from '@phosphor-icons/react'
 import Logo from '../../components/ui/Logo.jsx'
 import HiloInicio from './HiloInicio.jsx'
-import { navegacion } from './navegacion.js'
+import useAuth from '../../hooks/useAuth.js'
+import { navegacionPara } from './navegacion.js'
 
 // Secciones con página propia: se marcan por la ruta, no por ?seccion=.
 // 9.2: la institución se abre desde Mi plan; los avisos por mail, desde Mi perfil.
 const RUTAS_PROPIAS = {
   plan: ['/cuenta/plan', '/institucion'],
   perfil: ['/perfil', '/cuenta/notificaciones'],
+  panel: ['/panel'],
 }
 const TODAS_LAS_RUTAS_PROPIAS = Object.values(RUTAS_PROPIAS).flat()
 
 export default function InicioSidebar({ cerrarSesion }) {
   const [params] = useSearchParams()
   const { pathname } = useLocation()
+  const { usuario } = useAuth()
+  const navegacion = navegacionPara(usuario)
   const seleccion = params.get('seccion') ?? ''
   const actual = ['guias', 'estrategias', 'comunidad'].includes(seleccion)
     ? 'recursos'

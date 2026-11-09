@@ -11,6 +11,7 @@ import PerfilPage from '../features/perfil/PerfilPage.jsx'
 import { seccionesPerfil } from '../features/perfil/perfil.js'
 import PerfilLayout from '../features/perfil/PerfilLayout.jsx'
 import AcompanamientosPage from '../features/acompanamientos/AcompanamientosPage.jsx'
+import PanelPage from '../features/panel/PanelPage.jsx'
 import NuevoAcompanamientoPage from '../features/acompanamientos/NuevoAcompanamientoPage.jsx'
 import MiPerfilPage from '../features/cuenta/MiPerfilPage.jsx'
 import RedPage from '../features/perfil/RedPage.jsx'
@@ -37,6 +38,7 @@ const titles = {
   '/verificar-email': 'Activar cuenta',
   '/inicio': 'Inicio',
   '/acompanamientos': 'Acompañamientos',
+  '/panel': 'Panel de profesionales',
   '/acompanamientos/nuevo': 'Nuevo acompañamiento',
   '/recursos': 'Recursos',
   '/calendario': 'Calendario',
@@ -142,6 +144,14 @@ export default function AppRoutes() {
         element={
           <Acceso privado>
             <AcompanamientosPage />
+          </Acceso>
+        }
+      />
+      <Route
+        path="/panel"
+        element={
+          <Acceso privado>
+            <PanelPage />
           </Acceso>
         }
       />

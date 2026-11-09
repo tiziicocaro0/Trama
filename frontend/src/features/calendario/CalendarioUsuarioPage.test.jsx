@@ -4,7 +4,7 @@ import { MemoryRouter } from 'react-router-dom'
 import { beforeEach, expect, it, vi } from 'vitest'
 import cliente from '../../api/cliente.js'
 import { hoyIso } from '../../utils/fechas.js'
-import { obtenerPeriodo, sumarDias, tituloDia } from './utils/periodo.js'
+import { obtenerPeriodo, tituloDia } from './utils/periodo.js'
 import CalendarioUsuarioPage from './CalendarioUsuarioPage.jsx'
 
 vi.mock('../../api/cliente.js', () => ({ default: { defaults: { baseURL: '/api' }, get: vi.fn(), post: vi.fn() } }))
@@ -26,7 +26,7 @@ beforeEach(() => {
 it('abre el formulario con día y horario y crea el evento en el acompañamiento elegido', async () => {
   abrir()
   await screen.findByRole('button', { name: 'Ver evento: Actividad Uno' })
-  const fecha = sumarDias(hoy, 1)
+  const fecha = obtenerPeriodo('semana', hoy).desde
   const botonAgregar = screen.getAllByRole('button', { name: `Agregar evento el ${tituloDia(fecha)} a las 10:00` })[0]
   await userEvent.click(botonAgregar)
   const selector = await screen.findByRole('dialog', { name: '¿En qué acompañamiento va el evento?' })

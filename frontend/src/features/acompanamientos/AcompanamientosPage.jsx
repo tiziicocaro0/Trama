@@ -7,6 +7,7 @@ import Campo from '../../components/ui/Campo.jsx'
 import InicioSidebar from '../inicio/InicioSidebar.jsx'
 import TarjetaProyecto from './components/TarjetaProyecto.jsx'
 import useAcompanamientos from './hooks/useAcompanamientos.js'
+import Cargando from '../../components/ui/Cargando.jsx'
 
 export default function AcompanamientosPage() {
   const { cerrarSesion } = useAuth()
@@ -48,7 +49,7 @@ export default function AcompanamientosPage() {
             </Boton>
           </header>
           {cargando ? (
-            <p role="status">Cargando tus acompañamientos…</p>
+            <Cargando mensaje="Cargando tus acompañamientos…" />
           ) : error ? (
             <div className="space-y-4 rounded-lg bg-superficie p-6">
               <p role="alert">{error}</p>

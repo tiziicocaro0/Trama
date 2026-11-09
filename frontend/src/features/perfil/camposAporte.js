@@ -1,6 +1,61 @@
 import { TIPOS_NOTA } from './perfil.js'
 import { hoyIso } from '../../utils/fechas.js'
-import { Ear, Eye, Footprints, ForkKnife, Hand, Image, ListNumbers, MoonStars, PauseCircle, PersonSimple, PersonSimpleRun, PersonSimpleWalk, Shower, SlidersHorizontal, Sparkle, SquaresFour, TShirt, Toilet } from '@phosphor-icons/react'
+import { Ear, Eye, Footprints, ForkKnife, Hand, HandHeart, HandPalm, Image, ListNumbers, MoonStars, PauseCircle, PersonSimple, PersonSimpleRun, PersonSimpleWalk, Shower, SlidersHorizontal, Sparkle, SquaresFour, TShirt, Toilet, ChatCircle, HandPointing, Hourglass, UsersThree, WaveSine } from '@phosphor-icons/react'
+
+export const textosPorTipo = {
+  COMUNICACION: {
+    introduccion:
+      'Compartí una observación sobre cómo se comunica, comprende o expresa lo que necesita.',
+    aclaracion:
+      'Usá ejemplos concretos y cotidianos para que otras personas de la red puedan entender qué le ayuda.',
+  },
+  
+  ESTRATEGIA: {
+    titulo: 'Título del aporte',
+    contenido: 'Qué se hizo',
+    introduccion:
+      'Compartí una estrategia que haya funcionado o que quieras registrar.',
+    aclaracion:
+      'Completá la información para que otras personas de la red puedan entender cuándo y cómo se aplicó.',
+  },
+
+  RUTINA: {
+    titulo: 'Título del aporte',
+    contenido: 'Descripción',
+    introduccion:
+      'Compartí una observación sobre cómo participa en una actividad cotidiana y qué suele ayudarle.',
+    aclaracion:
+      'Todos los campos son obligatorios, salvo el contexto y el archivo adjunto.',
+  },
+
+  DESREGULACION: {
+    titulo: 'Título del aporte',
+    contenido: 'Descripción',
+    placeholderTitulo:
+      'Ej. Se tapa los oídos cuando hay demasiado ruido',
+    hintTitulo:
+      'Resumí lo que observaste en una frase.',
+    placeholderContenido:
+      'Contá qué suele pasar, en qué situación lo observaste y qué respuesta viste.',
+    hintContenido:
+      'Usá palabras cotidianas: describí lo que viste y cómo respondió.',
+    introduccion:
+      'Compartí una señal, estrategia o pauta que pueda ayudar a acompañar mejor.',
+    aclaracion:
+      'Todos los campos son obligatorios, salvo el lugar, el archivo y la sugerencia para la guía.',
+  },
+
+  FORTALEZA: {
+    titulo: '¿Qué hace bien o disfruta?',
+  },
+
+  SENSORIAL: {
+    introduccion:
+      'Compartí una observación concreta, con palabras cotidianas y sin diagnósticos.',
+    aclaracion:
+      'La descripción y el archivo son opcionales.',
+  },
+}
 
 export const CATEGORIAS_COMUNICACION = [
   ['EXPRESION', 'Expresión'],
@@ -19,6 +74,24 @@ export const FORMAS_COMUNICACION = [
   ['OTRA', 'Otra'],
 ]
 
+export const TONOS_COMUNICACION = {
+  EXPRESION: 'bg-agua/20 text-agua border-agua/30',
+  COMPRENSION: 'bg-secundario/10 text-secundario border-secundario/30',
+  NO_VERBAL: 'bg-miel/20 text-miel border-miel/40',
+  INTERACCION_SOCIAL: 'bg-decoracion text-secundario border-borde',
+  TIEMPO_ESPERA: 'bg-primario/10 text-primario border-primario/20',
+  APOYOS: 'bg-agua/15 text-agua border-agua/30',
+}
+
+export const ICONOS_COMUNICACION = {
+  EXPRESION: ChatCircle,
+  COMPRENSION: Ear,
+  NO_VERBAL: HandPointing,
+  INTERACCION_SOCIAL: UsersThree,
+  TIEMPO_ESPERA: Hourglass,
+  APOYOS: Image,
+}
+
 export const CATEGORIAS_SENSORIALES = [
   ['VISION', 'Visión'],
   ['AUDICION', 'Audición'],
@@ -30,6 +103,39 @@ export const CATEGORIAS_SENSORIALES = [
 
 export const ICONOS_SENSORIALES = { VISION: Eye, AUDICION: Ear, TACTO: Hand, GUSTO_OLFATO: ForkKnife, CONCIENCIA_CORPORAL: PersonSimple, MOVIMIENTO_EQUILIBRIO: PersonSimpleRun }
 export const TONOS_SENSORIALES = { VISION: 'bg-agua/20 text-agua', AUDICION: 'bg-secundario/15 text-secundario', TACTO: 'bg-miel/20 text-miel', GUSTO_OLFATO: 'bg-agua/15 text-secundario', CONCIENCIA_CORPORAL: 'bg-primario/15 text-primario', MOVIMIENTO_EQUILIBRIO: 'bg-miel/15 text-secundario' }
+export const ICONOS_LISTA_SENSORIAL = {
+  AYUDA: Sparkle,
+  CUESTA: WaveSine,
+}
+
+export const TONOS_LISTA_SENSORIAL = {
+  AYUDA: 'bg-agua/15 text-agua border-agua/30',
+  CUESTA: 'bg-miel/15 text-miel border-miel/30',
+}
+
+export const CATEGORIAS_DESREGULACION = [
+  ['SENALES', 'Señales'],
+  ['AYUDA', 'Qué ayuda'],
+  ['EVITAR', 'Qué evitar'],
+]
+
+export const ICONOS_DESREGULACION = {
+  SENALES: Eye,
+  AYUDA: HandHeart,
+  EVITAR: HandPalm,
+}
+
+export const TONOS_DESREGULACION = {
+  SENALES: 'bg-agua/20 text-agua',
+  AYUDA: 'bg-secundario/15 text-secundario',
+  EVITAR: 'bg-miel/20 text-miel',
+}
+
+export const HOVER_CRUZ_DESREGULACION = {
+  SENALES: 'hover:bg-agua/30',
+  AYUDA: 'hover:bg-secundario/20',
+  EVITAR: 'hover:bg-miel/30',
+}
 
 export function validarCamposSensoriales(extra, titulo) {
   return {
@@ -116,6 +222,32 @@ export function validarCamposEstrategia(extra, contenido) {
   }
 }
 
+export const CAMPOS_DESREGULACION = [
+  ['SENALES', 'Señales'],
+  ['AYUDA', 'Qué ayuda'],
+  ['EVITAR', 'Qué evitar'],
+]
+
+export function validarCamposDesregulacion(extra, titulo, contenido, visibilidad) {
+  return {
+    ...(!CAMPOS_DESREGULACION.some(([valor]) => valor === extra.lista)
+      ? { lista: 'Elegí una lista.' }
+      : {}),
+
+    ...(!titulo.trim()
+      ? { titulo: 'Escribí un título para el aporte.' }
+      : {}),
+
+    ...(!contenido.trim()
+      ? { contenido: 'Contá brevemente qué observaste o qué ayuda.' }
+      : {}),
+
+    ...(!['TODOS', 'PROFESIONALES', 'SOLO_TUTORES'].includes(visibilidad)
+      ? { visibilidad: 'Elegí quién puede ver este aporte.' }
+      : {}),
+  }
+}
+
 // 2.1 y 2.2: campos propios que el back exige en "datos" para estos tipos.
 // Arrancan en un valor neutro para no frenar la carga; se pueden cambiar.
 export const camposPorTipo = {
@@ -174,14 +306,6 @@ export const camposPorTipo = {
     },
     { nombre: 'fecha', etiqueta: 'Fecha', tipo: 'fecha', inicial: hoyIso },
   ],
-}
-
-// 2.2: textos propios del formulario según la sección; el resto usa los genéricos.
-export const textosPorTipo = {
-  ESTRATEGIA: { titulo: 'Título del aporte', contenido: 'Qué se hizo' },
-  FORTALEZA: {
-    titulo: '¿Qué hace bien o disfruta?',
-  },
 }
 
 // Los campos de texto opcionales vacíos no se mandan (ej. el ejemplo de una fortaleza).
