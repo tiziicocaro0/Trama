@@ -263,6 +263,9 @@ describe('SubirArchivo y adjuntos en aportes (Tarea 4.3)', () => {
         screen.getByRole('textbox', { name: 'Título' }),
         'Título con adjunto',
       )
+      fireEvent.change(screen.getByRole('textbox', { name: tipo === 'NOTA_PROFESIONAL' ? 'Texto de la nota' : 'Descripción' }), {
+        target: { value: 'Texto ficticio' },
+      })
       if (tipo === 'COMUNICACION') {
         await userEvent.click(screen.getByRole('radio', { name: 'Expresión' }))
         await userEvent.click(screen.getByRole('checkbox', { name: 'Pictogramas' }))

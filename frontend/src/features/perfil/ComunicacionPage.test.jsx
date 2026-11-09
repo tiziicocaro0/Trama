@@ -65,6 +65,7 @@ describe('Comunicación', () => {
     await userEvent.type(within(formulario).getByRole('textbox', { name: 'Otra forma de comunicación' }), 'Tablero')
     await userEvent.type(within(formulario).getByRole('textbox', { name: '¿Cómo conviene hablarle?' }), 'Con calma')
     await userEvent.type(within(formulario).getByRole('textbox', { name: '¿Qué evitar?' }), 'Apurarlo')
+    await userEvent.type(within(formulario).getByRole('textbox', { name: 'Descripción' }), 'Usa un tablero')
     await userEvent.click(within(formulario).getByRole('button', { name: 'Guardar aporte' }))
     expect(cliente.post).toHaveBeenCalledWith(`/proyectos/${id}/aportes`, expect.objectContaining({ datos: expect.stringContaining('"OTRA"') }))
     expect(await screen.findByRole('heading', { name: 'Nuevo aporte' })).toBeInTheDocument()

@@ -73,6 +73,9 @@ export default function EditorAporte({
   async function guardar(event) {
     event.preventDefault()
     if (pendiente.current) return
+    // La descripción es obligatoria en todas las secciones: su aviso se muestra junto con los demás
+    const errorContenido = contenido.trim() ? '' : esNota ? 'Escribí el texto de la nota.' : 'Escribí una descripción.'
+    const conContenido = (errores) => (errorContenido && !errores.contenido ? { ...errores, contenido: errorContenido } : errores)
     if (esComunicacion) {
       const errores = {
         ...(!extra.categoria ? { categoria: 'Elegí una categoría.' } : {}),
@@ -83,23 +86,23 @@ export default function EditorAporte({
         ...(!extra.comoHablarle?.trim() ? { comoHablarle: 'Contanos cómo conviene hablarle.' } : {}),
         ...(!extra.queEvitar?.trim() ? { queEvitar: 'Contanos qué conviene evitar.' } : {}),
       }
-      setErroresCampos(errores)
-      if (Object.keys(errores).length) return
+      setErroresCampos(conContenido(errores))
+      if (Object.keys(conContenido(errores)).length) return
     }
     if (esSensorial) {
       const errores = validarCamposSensoriales(extra, titulo)
-      setErroresCampos(errores)
-      if (Object.keys(errores).length) return
+      setErroresCampos(conContenido(errores))
+      if (Object.keys(conContenido(errores)).length) return
     }
     if (esEstrategia) {
       const errores = validarCamposEstrategia(extra, contenido)
-      setErroresCampos(errores)
-      if (Object.keys(errores).length) return
+      setErroresCampos(conContenido(errores))
+      if (Object.keys(conContenido(errores)).length) return
     }
     if (esRutina) {
       const errores = validarCamposRutina(extra, titulo, contenido, visibilidad)
-      setErroresCampos(errores)
-      if (Object.keys(errores).length) return
+      setErroresCampos(conContenido(errores))
+      if (Object.keys(conContenido(errores)).length) return
     }
     if (esDesregulacion) {
       const errores = validarCamposDesregulacion(
@@ -109,16 +112,21 @@ export default function EditorAporte({
         visibilidad,
       )
 
-      setErroresCampos(errores)
+      setErroresCampos(conContenido(errores))
 
-      if (Object.keys(errores).length) return
+      if (Object.keys(conContenido(errores)).length) return
     }
     if (
       !titulo.trim() ||
       titulo.trim().length > 150 ||
+      errorContenido ||
       contenido.length > 10000
     ) {
-      setErroresCampos((actual) => ({ ...actual, titulo: !titulo.trim() || titulo.trim().length > 150 ? 'Escribí un título de hasta 150 caracteres.' : '' }))
+      setErroresCampos((actual) => ({
+        ...actual,
+        titulo: !titulo.trim() || titulo.trim().length > 150 ? 'Escribí un título de hasta 150 caracteres.' : '',
+        contenido: actual.contenido || errorContenido,
+      }))
       setError(contenido.length > 10000 ? 'La descripción no puede superar los 10000 caracteres.' : '')
       requestAnimationFrame(() => alerta.current?.focus())
       return
@@ -235,8 +243,8 @@ export default function EditorAporte({
           htmlFor={`contenido-aporte-${seccion.tipo}`}
           className="mb-2 block font-semibold"
         >
-          {esSensorial ? 'Descripción u observación (opcional)' : esRutina ? 'Descripción' : textos.contenido ??
-            (esNota ? 'Texto de la nota (opcional)' : 'Descripción (opcional)')}
+          {esSensorial ? 'Descripción u observación' : esRutina ? 'Descripción' : textos.contenido ??
+            (esNota ? 'Texto de la nota' : 'Descripción')}
         </label>
         <textarea
           id={`contenido-aporte-${seccion.tipo}`}
@@ -247,7 +255,7 @@ export default function EditorAporte({
           maxLength={10000}
           rows={4}
           disabled={enviando}
-          aria-required={esRutina}
+          aria-required="true"
           aria-invalid={Boolean(erroresCampos.contenido)}
           className="w-full rounded-md border border-borde bg-superficie p-4 text-base text-texto focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primario"        />
         {textos.hintContenido && (

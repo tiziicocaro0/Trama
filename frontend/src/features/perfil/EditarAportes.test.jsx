@@ -32,7 +32,7 @@ vi.mock('../../api/cliente.js', () => ({
 }))
 // 2.2: el formulario de fortalezas pregunta qué hace bien, dónde y pide un ejemplo (en "datos")
 const TITULO_FORTALEZA = '¿Qué hace bien o disfruta?'
-const DESCRIPCION_FORTALEZA = 'Descripción (opcional)'
+const DESCRIPCION_FORTALEZA = 'Descripción'
 const EJEMPLO_FORTALEZA = 'Ejemplo (opcional)'
 const id = '304d3b5e-8c8a-4a50-83d3-a84ade17b697'
 const proyecto = { id, nombre: 'Niño ficticio', fechaNacimiento: '2018-05-12' }
@@ -92,7 +92,7 @@ beforeEach(() => {
 describe('Crear y editar aportes de las seis secciones', () => {
   it.each([
     ['fortalezas', 'FORTALEZA', TITULO_FORTALEZA, DESCRIPCION_FORTALEZA],
-    ['intereses', 'INTERES', 'Título', 'Descripción (opcional)'],
+    ['intereses', 'INTERES', 'Título', 'Descripción'],
     ['rutinas', 'RUTINA', 'Título del aporte', 'Descripción'],
   ])(
     'agrega un aporte en %s y lo muestra al volver a consultar el servidor',
@@ -172,13 +172,14 @@ describe('Crear y editar aportes de las seis secciones', () => {
     expect(await screen.findByRole('button', { name: /Preparación para salir/ })).toBeInTheDocument()
   })
 
-  it('exige lista y categoría sensorial, y guarda la observación opcional en la API', async () => {
+  it('exige lista, categoría sensorial y descripción, y guarda en la API', async () => {
     abrir('sensorial')
     await userEvent.click(await screen.findByRole('button', { name: 'Agregar aporte' }))
     await userEvent.type(screen.getByRole('textbox', { name: 'Título' }), 'Busca balancearse')
     await userEvent.click(screen.getByRole('button', { name: 'Guardar aporte' }))
     expect(screen.getByText('Elegí una lista.')).toBeInTheDocument()
     expect(screen.getByText('Elegí una categoría sensorial.')).toBeInTheDocument()
+    expect(screen.getByText('Escribí una descripción.')).toBeInTheDocument()
     expect(cliente.post).not.toHaveBeenCalled()
     await userEvent.click(screen.getByRole('radio', { name: 'Le ayuda' }))
     await userEvent.click(screen.getByRole('radio', { name: 'Movimiento y equilibrio' }))
@@ -187,9 +188,10 @@ describe('Crear y editar aportes de las seis secciones', () => {
     await userEvent.click(screen.getByRole('checkbox', { name: /^Toda la red/ }))
     await userEvent.click(screen.getByRole('checkbox', { name: /^Equipo de educación/ }))
     await userEvent.click(screen.getByRole('checkbox', { name: /^Equipo de salud/ }))
+    fireEvent.change(screen.getByRole('textbox', { name: 'Descripción u observación' }), { target: { value: 'Se hamaca para calmarse' } })
     await userEvent.click(screen.getByRole('button', { name: 'Guardar aporte' }))
     expect(cliente.post).toHaveBeenCalledWith(`/proyectos/${id}/aportes`, expect.objectContaining({
-      tipo: 'SENSORIAL', titulo: 'Busca balancearse', contenido: '', visibilidad: 'PROFESIONALES',
+      tipo: 'SENSORIAL', titulo: 'Busca balancearse', contenido: 'Se hamaca para calmarse', visibilidad: 'PROFESIONALES',
       datos: '{"lista":"AYUDA","categoria":"MOVIMIENTO_EQUILIBRIO","contexto":"CASA"}',
     }))
     expect(lista).toHaveLength(1)
@@ -228,6 +230,7 @@ describe('Crear y editar aportes de las seis secciones', () => {
     await userEvent.click(screen.getByRole('radio', { name: 'Le cuesta' }))
     await userEvent.click(screen.getByRole('radio', { name: 'Tacto' }))
     await userEvent.type(screen.getByRole('textbox', { name: 'Título' }), 'Le incomoda el agua en la cara')
+    fireEvent.change(screen.getByRole('textbox', { name: 'Descripción u observación' }), { target: { value: 'Llora al lavarse' } })
     fireEvent.drop(screen.getByTestId('zona-soltar-archivo'), { dataTransfer: { files: [new File(['imagen'], 'pictograma.png', { type: 'image/png' })] } })
     expect(await screen.findByText('pictograma.png')).toBeInTheDocument()
     await userEvent.click(screen.getByRole('button', { name: 'Guardar aporte' }))
@@ -243,6 +246,7 @@ describe('Crear y editar aportes de las seis secciones', () => {
       screen.getByRole('textbox', { name: 'Título' }),
       'Dinosaurios',
     )
+    fireEvent.change(screen.getByRole('textbox', { name: 'Descripción' }), { target: { value: 'Descripción ficticia' } })
     await userEvent.selectOptions(
       screen.getByRole('combobox', { name: 'Categoría' }),
       'TEMA',
@@ -269,6 +273,7 @@ describe('Crear y editar aportes de las seis secciones', () => {
       await screen.findByRole('button', { name: 'Agregar aporte' }),
     )
     await userEvent.type(screen.getByRole('textbox', { name: TITULO_FORTALEZA }), 'Arma rompecabezas')
+    fireEvent.change(screen.getByRole('textbox', { name: 'Descripción' }), { target: { value: 'Descripción ficticia' } })
     await userEvent.selectOptions(
       screen.getByRole('combobox', { name: '¿Dónde lo hace?' }),
       'CASA',
@@ -307,6 +312,7 @@ describe('Crear y editar aportes de las seis secciones', () => {
     abrir()
     await userEvent.click(await screen.findByRole('button', { name: 'Agregar aporte' }))
     await userEvent.type(screen.getByRole('textbox', { name: TITULO_FORTALEZA }), 'Nada con confianza')
+    fireEvent.change(screen.getByRole('textbox', { name: 'Descripción' }), { target: { value: 'Descripción ficticia' } })
     // Arranca en Otro: el campo para decir cuál ya está a la vista
     await userEvent.type(screen.getByRole('textbox', { name: /^¿Cuál\?/ }), 'Club de natación')
     await userEvent.click(screen.getByRole('button', { name: 'Guardar aporte' }))
@@ -323,6 +329,7 @@ describe('Crear y editar aportes de las seis secciones', () => {
     abrir()
     await userEvent.click(await screen.findByRole('button', { name: 'Agregar aporte' }))
     await userEvent.type(screen.getByRole('textbox', { name: TITULO_FORTALEZA }), 'Ordena sus útiles')
+    fireEvent.change(screen.getByRole('textbox', { name: 'Descripción' }), { target: { value: 'Descripción ficticia' } })
     await userEvent.type(screen.getByRole('textbox', { name: /^¿Cuál\?/ }), 'Biblioteca')
     await userEvent.selectOptions(screen.getByRole('combobox', { name: '¿Dónde lo hace?' }), 'ESCUELA')
     expect(screen.queryByRole('textbox', { name: /^¿Cuál\?/ })).not.toBeInTheDocument()
@@ -441,15 +448,14 @@ describe('Crear y editar aportes de las seis secciones', () => {
     expect(cliente.put).not.toHaveBeenCalled()
   })
 
-  it('rechaza títulos vacíos sin llamar a la API', async () => {
+  it('rechaza título y descripción vacíos sin llamar a la API', async () => {
     abrir()
     await userEvent.click(
       await screen.findByRole('button', { name: 'Agregar aporte' }),
     )
     fireEvent.submit(screen.getByRole('form'))
-    expect(await screen.findByRole('alert')).toHaveTextContent(
-      'Escribí un título',
-    )
+    expect(await screen.findByText('Escribí un título de hasta 150 caracteres.')).toBeInTheDocument()
+    expect(screen.getByText('Escribí una descripción.')).toBeInTheDocument()
     expect(cliente.post).not.toHaveBeenCalled()
   })
 
@@ -466,6 +472,7 @@ describe('Crear y editar aportes de las seis secciones', () => {
       fireEvent.change(screen.getByRole('textbox', { name: TITULO_FORTALEZA }), {
         target: { value: 'Título ficticio' },
       })
+      fireEvent.change(screen.getByRole('textbox', { name: 'Descripción' }), { target: { value: 'Descripción ficticia' } })
       fireEvent.submit(screen.getByRole('form'))
       await screen.findByRole('alert')
       expect(screen.getByRole('textbox', { name: TITULO_FORTALEZA })).toHaveValue(
@@ -489,6 +496,7 @@ describe('Crear y editar aportes de las seis secciones', () => {
     fireEvent.change(screen.getByRole('textbox', { name: TITULO_FORTALEZA }), {
       target: { value: 'Título ficticio' },
     })
+    fireEvent.change(screen.getByRole('textbox', { name: 'Descripción' }), { target: { value: 'Descripción ficticia' } })
     const form = screen.getByRole('form')
     fireEvent.submit(form)
     fireEvent.submit(form)

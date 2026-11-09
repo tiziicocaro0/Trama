@@ -83,7 +83,7 @@ describe('Notas profesionales (4.2)', () => {
     expect(screen.getByLabelText('Fecha')).toBeInTheDocument()
     expect(screen.getByRole('textbox', { name: 'Título' })).toBeInTheDocument()
     expect(
-      screen.getByRole('textbox', { name: 'Texto de la nota (opcional)' }),
+      screen.getByRole('textbox', { name: 'Texto de la nota' }),
     ).toBeInTheDocument()
     expect(
       screen.getByRole('group', { name: '¿Quién puede ver este aporte?' }),

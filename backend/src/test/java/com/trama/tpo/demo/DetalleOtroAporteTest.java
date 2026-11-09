@@ -104,6 +104,19 @@ class DetalleOtroAporteTest {
                 .andExpect(jsonPath("$.codigo").value("DETALLE_OTRO_INVALIDO"));
     }
 
+    @Test
+    void unAporteDelPerfilSinDescripcionNoSeGuarda() throws Exception {
+        String cuerpo = """
+                {"tipo":"FORTALEZA","titulo":"Prueba","contenido":"   ","datos":"{\\"contexto\\":\\"CASA\\"}","visibilidad":"TODOS"}
+                """;
+        mockMvc.perform(post("/api/proyectos/{id}/aportes", proyecto.getId())
+                        .header("Authorization", "Bearer " + jwtService.generateToken(tutora.getId()))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(cuerpo))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.codigo").value("CONTENIDO_OBLIGATORIO"));
+    }
+
     private org.springframework.test.web.servlet.ResultActions crear(String tipo, String datos) throws Exception {
         String cuerpo = """
                 {"tipo":"%s","titulo":"Prueba","contenido":"Texto","datos":"%s","visibilidad":"TODOS"}

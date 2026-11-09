@@ -44,6 +44,7 @@ class PermisosPerfilTest {
             {
               "tipo": "FORTALEZA",
               "titulo": "Arma rompecabezas",
+              "contenido": "Empieza por los bordes",
               "datos": "{\\"contexto\\":\\"CASA\\"}",
               "visibilidad": "TODOS"
             }

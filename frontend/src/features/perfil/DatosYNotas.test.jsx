@@ -248,7 +248,7 @@ describe('Notas con fecha y hora', () => {
       target: { value: 'Nota ficticia nueva' },
     })
     fireEvent.change(
-      screen.getByRole('textbox', { name: 'Texto de la nota (opcional)' }),
+      screen.getByRole('textbox', { name: 'Texto de la nota' }),
       { target: { value: 'Texto ficticio nuevo' } },
     )
     await userEvent.click(screen.getByRole('button', { name: 'Guardar nota' }))
@@ -283,7 +283,7 @@ describe('Notas con fecha y hora', () => {
       await screen.findByRole('button', { name: 'Editar nota: Nota ficticia' }),
     )
     fireEvent.change(
-      screen.getByRole('textbox', { name: 'Texto de la nota (opcional)' }),
+      screen.getByRole('textbox', { name: 'Texto de la nota' }),
       { target: { value: 'Texto ficticio editado' } },
     )
     await userEvent.click(screen.getByRole('button', { name: 'Guardar nota' }))

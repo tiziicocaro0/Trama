@@ -42,7 +42,9 @@ import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.EnumSet;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 @Service
@@ -111,6 +113,7 @@ public class AporteService {
         validarSensorial(request);
         validarEstrategia(request);
         validarAbc(request);
+        validarContenido(request);
 
         UUID usuarioId = usuarioActual.obtenerId();
 
@@ -309,6 +312,7 @@ public class AporteService {
         validarSensorial(request);
         validarEstrategia(request);
         validarAbc(request);
+        validarContenido(request);
 
         // Guardar la versión anterior antes de editar
         AporteVersion version = AporteVersion.builder()
@@ -679,6 +683,23 @@ public class AporteService {
         }
     }
 
+    // Las secciones del perfil y las notas profesionales necesitan descripción.
+    // La bitácora (observaciones, ABC) y las sugerencias tienen sus propios campos.
+    static final Set<TipoAporte> TIPOS_CON_DESCRIPCION = EnumSet.of(
+            TipoAporte.INTERES, TipoAporte.FORTALEZA, TipoAporte.COMUNICACION, TipoAporte.SENSORIAL,
+            TipoAporte.ESTRATEGIA, TipoAporte.RUTINA, TipoAporte.DESREGULACION, TipoAporte.NOTA_PROFESIONAL);
+
+    private void validarContenido(AporteRequest request) {
+        if (TIPOS_CON_DESCRIPCION.contains(request.tipo())
+                && (request.contenido() == null || request.contenido().isBlank())) {
+            throw new ApiException(
+                    "CONTENIDO_OBLIGATORIO",
+                    "La descripción es obligatoria",
+                    HttpStatus.BAD_REQUEST
+            );
+        }
+    }
+
     // Al elegir «Otro» se aclara cuál (contextoOtro, categoriaOtra…): texto corto, como una etiqueta
     static final int LARGO_DETALLE_OTRO = 60;
 
@@ -862,4 +883,4 @@ public class AporteService {
             );
         }
     }
-}
+}
