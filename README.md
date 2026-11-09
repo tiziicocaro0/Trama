@@ -559,9 +559,18 @@ cd backend
 .\mvnw.cmd spring-boot:run  # Windows
 ```
 
-### Datos mock (DataSeeder)
+### Datos de prueba (solo desarrollo)
 
-Con el perfil `dev` (el que viene por defecto), la clase `DataSeeder` carga datos ficticios la primera vez que arranca la app. Si ya existen, no hace nada.
+La app no trae datos ficticios: ni el jar ni la imagen de Docker los incluyen. Para ver la app con datos y probarla, hay un comando aparte que levanta el back con datos de prueba en otra base (`trama_prueba`). La base `trama` de todos los días no se toca.
+
+```bash
+.\datos-prueba.cmd                  # Windows
+sh scripts/datos-prueba.sh          # macOS / Linux
+```
+
+Con `-Reiniciar` (Windows) o `--reiniciar` (macOS / Linux) se borra `trama_prueba` y se vuelve a cargar desde cero. El front se levanta como siempre (`npm run dev`).
+
+Carga 3 niños con su red, y en Tomi aportes de las seis secciones del perfil y notas profesionales, con autores, lugares, visibilidades y fechas variados. Mientras corre con datos de prueba, los mails van a Mailpit (`http://localhost:8025`) y nunca a Gmail.
 
 Usuarios de prueba, todos con la contraseña `Trama1234!`:
 
@@ -575,9 +584,9 @@ Usuarios de prueba, todos con la contraseña `Trama1234!`:
 | `tutora.valen@trama.test` | Tutora admin de Valen |
 | `tutor.juli@trama.test` | Tutor admin de Juli |
 
-**Regla:** cada historia que crea una tabla nueva agrega sus datos mock al `DataSeeder`.
+**Cómo funciona:** el código vive en `backend/src/test/java/com/trama/datosprueba/`. `TramaConDatosDePrueba` arranca la app con los perfiles `dev` y `datosprueba` (`./mvnw spring-boot:test-run`), y `CargadorDatosDePrueba` carga los datos la primera vez. Como está en `src/test`, nunca entra en el build; y como los nombres no terminan en `Test`, el CI no lo corre.
 
-Para volver a cargar los datos desde cero, vaciar las tablas y levantar la app de nuevo.
+**Regla:** cada historia que suma una pantalla o una tabla nueva agrega sus datos en `CargadorDatosDePrueba`.
 
 
 ### Frontend
@@ -623,7 +632,7 @@ private String contenido;
 - **Nunca en el código ni en el repositorio.** En local va en el `.env`, que está ignorado por git. En el CI se genera una clave nueva en cada corrida.
 - **Distinta en cada entorno:** cada integrante genera la suya con `openssl rand -base64 32`, y producción tiene la propia.
 - Si falta o no tiene 32 bytes, la app no arranca.
-- ⚠️ **Si se pierde o se cambia la clave, lo cifrado con ella ya no se puede leer.** En local alcanza con vaciar las tablas y dejar que el `DataSeeder` vuelva a cargar los datos. En producción, la clave se guarda y se respalda aparte.
+- ⚠️ **Si se pierde o se cambia la clave, lo cifrado con ella ya no se puede leer.** En local alcanza con reiniciar los datos de prueba (`datos-prueba.cmd -Reiniciar`). En producción, la clave se guarda y se respalda aparte.
 
 ### Reglas para el equipo
 
@@ -646,4 +655,4 @@ Actualmente se trabaja en:
 
 ## Equipo
 
-Proyecto académico desarrollado por el equipo de Trama.
+Proyecto académico desarrollado por el equipo de Trama.
