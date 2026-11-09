@@ -73,7 +73,8 @@ public class LineaDeTiempoPdf {
     }
 
     // Los tres colores, para que se entienda la línea de tiempo
-    private Paragraph leyenda() {
+    // También la usa PdfService para las tarjetas con color (8.3)
+    public Paragraph leyenda() {
         Paragraph leyenda = new Paragraph();
         String[][] tonos = { { "FAMILIA", "Familia" }, { "DOCENTE", "Docentes" }, { "PROFESIONAL", "Profesionales" } };
         for (String[] tono : tonos) {
@@ -104,13 +105,18 @@ public class LineaDeTiempoPdf {
     }
 
     private PdfPCell caja(Hito hito) {
-        Color color = color(hito.tono());
+        return caja(hito.tono(), hito.etiqueta(), hito.titulo(), hito.cuerpo());
+    }
+
+    // La caja del color de quien aportó. También la usan las tarjetas con color del perfil (8.3)
+    public PdfPCell caja(Tono tono, String etiqueta, String titulo, String cuerpo) {
+        Color color = color(tono);
 
         Paragraph contenido = new Paragraph();
-        contenido.add(new Phrase(valor(hito.etiqueta()) + "\n", estilo.etiqueta));
-        contenido.add(new Phrase(valor(hito.titulo()), estilo.negrita));
-        if (hito.cuerpo() != null && !hito.cuerpo().isBlank()) {
-            contenido.add(new Phrase("\n" + hito.cuerpo(), estilo.texto));
+        contenido.add(new Phrase(valor(etiqueta) + "\n", estilo.etiqueta));
+        contenido.add(new Phrase(valor(titulo), estilo.negrita));
+        if (cuerpo != null && !cuerpo.isBlank()) {
+            contenido.add(new Phrase("\n" + cuerpo, estilo.texto));
         }
 
         PdfPCell interior = new PdfPCell();

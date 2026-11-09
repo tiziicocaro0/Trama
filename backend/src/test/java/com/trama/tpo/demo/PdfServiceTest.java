@@ -77,4 +77,16 @@ class PdfServiceTest {
 
         assertThat(new String(pdf, 0, 5, StandardCharsets.US_ASCII)).isEqualTo("%PDF-");
     }
+
+    // 8.3: tarjetas con el color de quien aportó y la leyenda en una sección sin título
+    @Test
+    void unaTarjetaConColorYLaLeyendaNoFallan() {
+        byte[] pdf = pdfService.generar("Datos de prueba", List.of(
+                new Seccion(null, List.of(new PdfService.Leyenda())),
+                new Seccion("Fortalezas", List.of(
+                        new Tarjeta("02/11/2026 · Tutora Prueba · Familia", "Le gusta dibujar", "Texto de prueba", Tono.FAMILIA),
+                        new Tarjeta("01/11/2026 · Docente Prueba · Docente", "Ayuda a sus compañeros", null, Tono.DOCENTE)))));
+
+        assertThat(new String(pdf, 0, 5, StandardCharsets.US_ASCII)).isEqualTo("%PDF-");
+    }
 }
