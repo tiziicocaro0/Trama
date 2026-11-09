@@ -64,6 +64,11 @@ class ContratoBaseDeDatosTest {
     }
 
     @Test
+    void visibilidadDeRecursos() {
+        assertEquals(nombres(Visibilidad.class), valoresDelCheck("ck_archivo_visibilidad"));
+    }
+
+    @Test
     void especialidades() {
         assertEquals(nombres(Especialidad.class), valoresDelCheck("ck_mesp_especialidad"));
     }

@@ -1,6 +1,7 @@
 package com.trama.tpo.demo.service;
 
 import com.trama.tpo.demo.aporte.Aporte;
+import com.trama.tpo.demo.aporte.Visibilidad;
 import com.trama.tpo.demo.entity.archivo.Archivo;
 import com.trama.tpo.demo.entity.dto.ArchivoResponse;
 import com.trama.tpo.demo.entity.proyecto.Proyecto;
@@ -86,6 +87,15 @@ public class ArchivoService {
 
     @Transactional
     public ArchivoResponse subir(UUID proyectoId, MultipartFile archivo) {
+        return subir(proyectoId, archivo, null);
+    }
+
+    /**
+     * visibilidad != null: es un recurso del niño (pestaña Recursos) y queda con esa visibilidad.
+     * null: es un adjunto, que después se vincula a un aporte o a un evento.
+     */
+    @Transactional
+    public ArchivoResponse subir(UUID proyectoId, MultipartFile archivo, Visibilidad visibilidad) {
 
         permisoService.verificarMiembro(proyectoId);
         permisoService.verificarPuedeEditar(proyectoId);
@@ -156,6 +166,7 @@ public class ArchivoService {
                 .tipoMime(tipoMime)
                 .tamanoBytes(tamano)
                 .ruta(rutaEnDisco)
+                .visibilidad(visibilidad)
                 .build();
 
         return ArchivoResponse.from(archivoRepository.saveAndFlush(entidad));
@@ -173,6 +184,12 @@ public class ArchivoService {
                         "El archivo solicitado no existe",
                         HttpStatus.NOT_FOUND
                 ));
+
+        // Recurso del niño: lo ve quien tiene acceso a su visibilidad, como un aporte
+        if (archivo.getVisibilidad() != null
+                && !permisoService.puedeVerVisibilidad(proyectoId, archivo.getVisibilidad())) {
+            throw new AccessDeniedException("No tenés permiso para descargar este archivo");
+        }
 
         List<Aporte> aportesVinculados = aporteRepository
                 .findByProyectoIdAndArchivosId(proyectoId, archivoId);

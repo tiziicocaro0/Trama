@@ -227,6 +227,11 @@ public class PermisoService {
         }
     }
 
+    // Recursos del niño: la misma regla de visibilidad que los aportes, sin tipo de aporte
+    public boolean puedeVerVisibilidad(UUID proyectoId, Visibilidad visibilidad) {
+        return visibilidadesPermitidas(obtenerMembresia(proyectoId).getRol()).contains(visibilidad);
+    }
+
     // 1.8: para filtrar el listado en la base
     public boolean ocultaNotasProfesionales(UUID proyectoId) {
         return ocultaNotasProfesionales(obtenerMembresia(proyectoId));

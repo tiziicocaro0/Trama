@@ -1,5 +1,6 @@
 package com.trama.tpo.demo.entity.archivo;
 
+import com.trama.tpo.demo.aporte.Visibilidad;
 import com.trama.tpo.demo.entity.proyecto.Proyecto;
 import com.trama.tpo.demo.entity.usuario.Usuario;
 
@@ -49,6 +50,17 @@ public class Archivo {
     @JdbcTypeCode(SqlTypes.CHAR)
     @Column(name = "ruta", nullable = false, unique = true, columnDefinition = "CHAR(36)")
     private String ruta;
+
+    // Solo los recursos del niño (subidos directo a la pestaña Recursos) tienen visibilidad propia.
+    // null = adjunto de un aporte, imagen de un evento o foto: siguen las reglas de donde están.
+    @Enumerated(EnumType.STRING)
+    @Column(name = "visibilidad", length = 20)
+    private Visibilidad visibilidad;
+
+    // Un recurso no se borra: se archiva, como los aportes.
+    @Builder.Default
+    @Column(name = "archivado", nullable = false)
+    private Boolean archivado = false;
 
     @CreationTimestamp
     @Column(name = "fecha", nullable = false, updatable = false)
