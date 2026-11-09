@@ -1,33 +1,5 @@
 import RadioOvillo from './RadioOvillo.jsx'
 
-const OPCIONES_VISIBILIDAD = [
-  [
-    'TODOS',
-    'Toda la red',
-    'Visible para todas las personas autorizadas que acompañan al niño.',
-  ],
-  [
-    'SOLO_TUTORES',
-    'Solo tutores',
-    'Visible únicamente para los tutores autorizados.',
-  ],
-  [
-    'SOLO_SALUD',
-    'Salud y tutores',
-    'Visible para profesionales de salud y tutores autorizados.',
-  ],
-  [
-    'SOLO_EDUCACION',
-    'Educación y tutores',
-    'Visible para profesionales de educación y tutores autorizados.',
-  ],
-  [
-    'PROFESIONALES',
-    'Equipo profesional y tutores',
-    'Visible para profesionales autorizados y tutores.',
-  ],
-]
-
 export default function SelectorVisibilidad({
   id,
   value,
@@ -41,21 +13,60 @@ export default function SelectorVisibilidad({
       </legend>
 
       <div className="space-y-2">
-        {OPCIONES_VISIBILIDAD.map(
-          ([valor, etiqueta, descripcion]) => (
-            <RadioOvillo
-              key={valor}
-              name={id}
-              value={valor}
-              checked={value === valor}
-              onChange={onChange}
-              disabled={disabled}
-              descripcion={descripcion}
-            >
-              {etiqueta}
-            </RadioOvillo>
-          ),
-        )}
+        <RadioOvillo
+          name={id}
+          value="TODOS"
+          checked={value === 'TODOS'}
+          onChange={onChange}
+          disabled={disabled}
+          descripcion="Visible para todas las personas autorizadas que acompañan al niño."
+        >
+          Toda la red
+        </RadioOvillo>
+
+        <RadioOvillo
+          name={id}
+          value="SOLO_TUTORES"
+          checked={value === 'SOLO_TUTORES'}
+          onChange={onChange}
+          disabled={disabled}
+          descripcion="Visible únicamente para los tutores autorizados."
+        >
+          Solo tutores
+        </RadioOvillo>
+
+        <RadioOvillo
+          name={id}
+          value="SOLO_SALUD"
+          checked={value === 'SOLO_SALUD'}
+          onChange={onChange}
+          disabled={disabled}
+          descripcion="Visible para profesionales de salud y tutores autorizados."
+        >
+          Salud y tutores
+        </RadioOvillo>
+
+        <RadioOvillo
+          name={id}
+          value="SOLO_EDUCACION"
+          checked={value === 'SOLO_EDUCACION'}
+          onChange={onChange}
+          disabled={disabled}
+          descripcion="Visible para profesionales de educación y tutores autorizados."
+        >
+          Educación y tutores
+        </RadioOvillo>
+
+        <RadioOvillo
+          name={id}
+          value="PROFESIONALES"
+          checked={value === 'PROFESIONALES'}
+          onChange={onChange}
+          disabled={disabled}
+          descripcion="Visible para profesionales autorizados y tutores."
+        >
+          Equipo profesional y tutores
+        </RadioOvillo>
       </div>
     </fieldset>
   )
