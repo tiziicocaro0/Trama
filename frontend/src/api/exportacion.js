@@ -48,3 +48,12 @@ export async function descargarMisAportes(proyectoId, formato) {
   )
   guardarArchivo(respuesta.data, `trama-mis-aportes-${hoy()}.${formato}`)
 }
+
+// 8.3: el perfil o "Conocelo en 5 minutos" en PDF (cualquier miembro, solo lo que puede ver)
+export async function descargarPdfPerfil(proyectoId, seccion) {
+  const respuesta = await cliente.get(
+    `/proyectos/${encodeURIComponent(proyectoId)}/exportar-perfil`,
+    { params: { seccion }, responseType: 'blob' },
+  )
+  guardarArchivo(respuesta.data, `trama-${seccion}-${hoy()}.pdf`)
+}

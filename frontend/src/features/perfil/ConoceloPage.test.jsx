@@ -194,6 +194,33 @@ describe('Conocelo en 5 minutos (Tarea 2.8)', () => {
     ).toBeInTheDocument()
   })
 
+  // 8.3: "Descargar PDF" en Conocelo (al lado de Imprimir) y en la portada
+  it('descarga el PDF de Conocelo y el del perfil desde la portada', async () => {
+    const user = userEvent.setup()
+    window.URL.createObjectURL = vi.fn(() => 'blob:pdf')
+    window.URL.revokeObjectURL = vi.fn()
+    const clics = vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(() => {})
+    try {
+      abrir(`/proyectos/${proyectoId}/conocelo`)
+      await screen.findByRole('button', { name: 'Imprimir' })
+      await user.click(screen.getByRole('button', { name: 'Descargar PDF' }))
+      expect(cliente.get).toHaveBeenCalledWith(`/proyectos/${proyectoId}/exportar-perfil`, {
+        params: { seccion: 'conocelo' },
+        responseType: 'blob',
+      })
+
+      await user.click(screen.getAllByRole('link', { name: 'Volver al perfil' })[0])
+      expect(await screen.findByText('¿Vas a una reunión? Llevá el perfil en PDF')).toBeInTheDocument()
+      await user.click(screen.getByRole('button', { name: 'Descargar PDF' }))
+      expect(cliente.get).toHaveBeenCalledWith(`/proyectos/${proyectoId}/exportar-perfil`, {
+        params: { seccion: 'perfil' },
+        responseType: 'blob',
+      })
+    } finally {
+      clics.mockRestore()
+    }
+  })
+
   it('invoca el diálogo de impresión del navegador al pulsar Imprimir', async () => {
     const user = userEvent.setup()
     const printSpy = vi.spyOn(window, 'print').mockImplementation(() => {})
