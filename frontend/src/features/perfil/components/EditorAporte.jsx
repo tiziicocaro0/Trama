@@ -12,6 +12,7 @@ import CamposDesregulacion from './CamposDesregulacion.jsx'
 import AdjuntosAporte from './AdjuntosAporte.jsx'
 import PieEditorAporte from './PieEditorAporte.jsx'
 import { hoyIso } from '../../../utils/fechas.js'
+import CasillaOvillo from '../../../components/ui/CasillaOvillo.jsx'
 
 const SECCIONES_CON_ADJUNTOS = ['NOTA_PROFESIONAL', 'COMUNICACION', 'SENSORIAL', 'ESTRATEGIA', 'RUTINA']
 
@@ -276,10 +277,9 @@ export default function EditorAporte({
             <legend className="mb-2 font-semibold">¿Cómo se comunica?</legend>
             <div className="flex flex-wrap gap-2">
               {FORMAS_COMUNICACION.map(([valor, etiqueta]) => (
-                <label key={valor} className="inline-flex cursor-pointer items-center gap-2 rounded-full border border-borde bg-superficie px-3 py-2 has-checked:border-primario has-checked:bg-fondo">
-                  <input type="checkbox" checked={extra.formasComunicacion?.includes(valor) ?? false} onChange={(event) => setExtra((actual) => ({ ...actual, formasComunicacion: event.target.checked ? [...(actual.formasComunicacion ?? []), valor] : (actual.formasComunicacion ?? []).filter((forma) => forma !== valor) }))} disabled={enviando} />
+                <CasillaOvillo key={valor} tamano="chico" className="rounded-full border border-borde bg-superficie px-3 py-2 has-checked:border-primario has-checked:bg-fondo" checked={extra.formasComunicacion?.includes(valor) ?? false} onChange={(event) => setExtra((actual) => ({ ...actual, formasComunicacion: event.target.checked ? [...(actual.formasComunicacion ?? []), valor] : (actual.formasComunicacion ?? []).filter((forma) => forma !== valor) }))} disabled={enviando}>
                   {etiqueta}
-                </label>
+                </CasillaOvillo>
               ))}
             </div>
             {erroresCampos.formasComunicacion && <p role="alert" className="mt-1 text-sm text-error">{erroresCampos.formasComunicacion}</p>}

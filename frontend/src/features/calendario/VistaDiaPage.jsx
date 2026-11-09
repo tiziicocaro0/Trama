@@ -7,6 +7,7 @@ import Boton from '../../components/ui/Boton.jsx'
 import usePerfil from '../perfil/hooks/usePerfil.js'
 import { esFechaIsoValida, sumarDias } from './utils/periodo.js'
 import { hoyIso } from '../../utils/fechas.js'
+import Cargando from '../../components/ui/Cargando.jsx'
 
 function fechaVisible(fecha) {
   const [anio, mes, dia] = fecha.split('-').map(Number)
@@ -129,7 +130,7 @@ export default function VistaDiaPage() {
           <p className="mt-2 text-xl text-texto-suave sm:text-2xl">Esto es lo que tenés hoy</p>
         </header>
 
-        {cargando && <p role="status" className="py-8 text-center text-lg text-texto-suave">Cargando las actividades…</p>}
+        {cargando && <Cargando mensaje="Cargando las actividades…" />}
         {error && <div className="mx-auto max-w-xl rounded-lg border border-error bg-superficie p-6 text-center"><p role="alert" className="text-lg text-error">{error}</p><Boton onClick={reintentar} className="mt-4">Reintentar</Boton></div>}
         {!cargando && !error && actividades.length === 0 && <p className="rounded-lg border border-borde bg-superficie px-6 py-10 text-center font-display text-2xl text-texto sm:py-14 sm:text-3xl">Hoy no hay actividades programadas.</p>}
         {!cargando && !error && actividades.length > 0 && (

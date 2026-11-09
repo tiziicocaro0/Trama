@@ -8,6 +8,13 @@ import { Cargando } from '../components/ui/Cargando';
 import { Modal } from '../components/ui/Modal';
 import { Selector } from '../components/ui/Selector';
 import { Tarjeta } from '../components/ui/Tarjeta';
+import { SeccionCasillas } from './componentes/SeccionCasillas.jsx';
+import { SeccionInterruptores } from './componentes/SeccionInterruptores.jsx';
+import { SeccionMasCampos } from './componentes/SeccionMasCampos.jsx';
+import { SeccionOvillo } from './componentes/SeccionOvillo.jsx';
+import { SeccionPasos } from './componentes/SeccionPasos.jsx';
+import { SeccionTarjetaAporte } from './componentes/SeccionTarjetaAporte.jsx';
+import { SeccionTipografia } from './componentes/SeccionTipografia.jsx';
 const COLORES_PALETA = [
   {
     nombre: 'Crema',
@@ -138,6 +145,14 @@ export function Componentes() {
           </div>
         </Modal>
       </Tarjeta>
+
+      <SeccionTipografia />
+      <SeccionCasillas />
+      <SeccionOvillo />
+      <SeccionInterruptores />
+      <SeccionMasCampos />
+      <SeccionPasos />
+      <SeccionTarjetaAporte />
     </div>
   );
 }

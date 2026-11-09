@@ -13,10 +13,10 @@ import useAuth from '../../hooks/useAuth.js'
 import { leerDatosAporte } from './perfil.js'
 import { CATEGORIAS_COMUNICACION, CATEGORIAS_RUTINA, TONOS_COMUNICACION, ICONOS_COMUNICACION, CONTEXTOS_RUTINA, claveCategoriaRutina } from './camposAporte.js'
 import { CATEGORIAS_SENSORIALES, ICONOS_SENSORIALES, TONOS_SENSORIALES, CATEGORIAS_ESTRATEGIA, ICONOS_ESTRATEGIA, RESULTADOS_ESTRATEGIA, TONOS_ESTRATEGIA, CATEGORIAS_DESREGULACION, ICONOS_DESREGULACION, TONOS_DESREGULACION, HOVER_CRUZ_DESREGULACION } from './camposAporte.js'
-import { ESPECIALIDADES_EDUCACION, ESPECIALIDADES_SALUD } from './especialidades.js'
 import FiltrosRutinas from './components/FiltrosRutinas.jsx'
 import AvisoEliminacion from './eliminacion/AvisoEliminacion.jsx'
 import useProyectoActual from '../../hooks/useProyectoActual.js'
+import Cargando from '../../components/ui/Cargando.jsx'
 
 
 export default function PerfilPage() {
@@ -199,9 +199,7 @@ function encabezadoCompleto({
             </Boton>
           </div>
         ) : cargando ? (
-          <p role="status" className="py-12 text-center">
-            Cargando el perfil…
-          </p>
+          <Cargando mensaje="Cargando el perfil…" />
         ) : error ? (
           <div className="space-y-5 rounded-lg bg-superficie p-6">
             <h1 className="font-display text-h1 text-secundario">

@@ -2,6 +2,7 @@ import { Plus, SquaresFour, X } from '@phosphor-icons/react'
 import { CATEGORIAS_RUTINA, ICONOS_RUTINA, TONOS_RUTINA, claveCategoriaRutina, etiquetaCategoriaRutina } from '../camposAporte.js'
 import { leerDatosAporte } from '../perfil.js'
 import BarraFiltrosAportes from '../../../components/ui/BarraFiltrosAportes.jsx'
+import CasillaOvillo from '../../../components/ui/CasillaOvillo.jsx'
 
 
 export default function FiltrosRutinas({ busqueda, setBusqueda, categoria, setCategoria, especialidad, setEspecialidad, visibilidad, setVisibilidad, orden, setOrden, soloMios, setSoloMios, alAgregar, puedeCrear, aportes = [] }) {

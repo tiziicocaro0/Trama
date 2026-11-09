@@ -30,7 +30,11 @@ public record AporteResponse(
         // 3.3: cuántos confirmaron, si el usuario actual ya confirmó y los nombres (para el hover)
         Integer confirmaciones,
         Boolean yoConfirme,
-        List<String> confirmadoPor
+        List<String> confirmadoPor,
+        // 3.4: indica si el aporte tiene una solicitud de revisión pendiente.
+        Boolean revisionPendiente,
+        // 3.4: ID de la solicitud pendiente para que el autor pueda marcarla como revisada.
+        UUID revisionPendienteId
 ) {
 
     public AporteResponse(
@@ -65,7 +69,9 @@ public record AporteResponse(
                 List.of(),
                 0,
                 false,
-                List.of()
+                List.of(),
+                false,
+                null
         );
     }
 }

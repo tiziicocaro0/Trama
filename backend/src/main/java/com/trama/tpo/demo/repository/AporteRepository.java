@@ -9,6 +9,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -49,5 +50,22 @@ public interface AporteRepository extends JpaRepository<Aporte, UUID> {
             @Param("visibilidades") List<Visibilidad> visibilidades,
             // 1.8: NOTA_PROFESIONAL para un familiar sin permiso de ver notas; si no, null
             @Param("tipoOculto") TipoAporte tipoOculto
+    );
+
+    // 7.1: Contar aportes visibles creados en los ultimos 7 dias para el panel profesional
+    @Query("""
+            SELECT COUNT(a)
+            FROM Aporte a
+            WHERE a.proyecto.id = :proyectoId
+              AND a.archivado = false
+              AND a.visibilidad IN :visibilidades
+              AND (:tipoOculto IS NULL OR a.tipo <> :tipoOculto)
+              AND a.creadoEn >= :desde
+            """)
+    long contarAportesNuevosVisibles(
+            @Param("proyectoId") UUID proyectoId,
+            @Param("visibilidades") List<Visibilidad> visibilidades,
+            @Param("tipoOculto") TipoAporte tipoOculto,
+            @Param("desde") Instant desde
     );
 }
