@@ -5,7 +5,7 @@ import useProyectoActual from '../../hooks/useProyectoActual.js'
 import { obtenerProyecto } from '../../api/proyectos.js'
 import CabeceraPerfil from './components/CabeceraPerfil.jsx'
 import PerfilContext from './PerfilContext.js'
-import { seccionesPerfil } from './perfil.js'
+import { seccionesPerfil, seccionDesregulacion, } from './perfil.js'
 
 const ESPACIOS = {
   red: 'Red',
@@ -55,7 +55,13 @@ export default function PerfilLayout() {
   const error = resultado?.id === id ? resultado.error : null
 
   const slug = pathname.replace(/\/+$/, '').split('/')[3] ?? ''
-  const titulo = ESPACIOS[slug] ?? seccionesPerfil.find((item) => item.slug === slug)?.titulo
+  const seccionActual =
+    slug === seccionDesregulacion.slug
+      ? seccionDesregulacion
+      : seccionesPerfil.find((item) => item.slug === slug)
+
+  const titulo = ESPACIOS[slug] ?? seccionActual?.titulo
+
   const seccion = titulo ? { titulo } : undefined
 
   if (!proyecto) {

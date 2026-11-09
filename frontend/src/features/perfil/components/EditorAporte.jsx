@@ -4,10 +4,11 @@ import CampoFecha from '../../../components/ui/CampoFecha.jsx'
 import CampoFormulario from '../../../components/ui/CampoFormulario.jsx'
 import { guardarAporte } from '../../../api/aportes.js'
 import { leerDatosAporte } from '../perfil.js'
-import { CATEGORIAS_COMUNICACION, FORMAS_COMUNICACION, camposPorTipo, datosSinVacios, textosPorTipo, validarCamposSensoriales, validarCamposEstrategia, validarCamposRutina } from '../camposAporte.js'
+import { CATEGORIAS_COMUNICACION, FORMAS_COMUNICACION, CATEGORIAS_DESREGULACION, ICONOS_DESREGULACION,TONOS_DESREGULACION,camposPorTipo, datosSinVacios, textosPorTipo, validarCamposSensoriales, validarCamposEstrategia, validarCamposRutina, validarCamposDesregulacion, } from '../camposAporte.js'
 import CamposSensoriales from './CamposSensoriales.jsx'
 import CamposEstrategia from './CamposEstrategia.jsx'
 import CamposRutina from './CamposRutina.jsx'
+import CamposDesregulacion from './CamposDesregulacion.jsx'
 import AdjuntosAporte from './AdjuntosAporte.jsx'
 import PieEditorAporte from './PieEditorAporte.jsx'
 import { hoyIso } from '../../../utils/fechas.js'
@@ -36,6 +37,7 @@ export default function EditorAporte({
       ...(seccion.tipo === 'SENSORIAL' ? { lista: '', categoria: '', contexto: '' } : {}),
       ...(seccion.tipo === 'ESTRATEGIA' ? { categoria: '', situacion: '', resultado: '', contextos: [] } : {}),
       ...(seccion.tipo === 'RUTINA' ? { categoria: '', contextos: [] } : {}),
+      ...(seccion.tipo === 'DESREGULACION' ? { lista: '' } : {}),
       ...guardados,
       ...Object.fromEntries(
         campos.map(({ nombre, inicial }) => [
@@ -57,6 +59,7 @@ export default function EditorAporte({
   const esSensorial = seccion.tipo === 'SENSORIAL'
   const esEstrategia = seccion.tipo === 'ESTRATEGIA'
   const esRutina = seccion.tipo === 'RUTINA'
+  const esDesregulacion = seccion.tipo === 'DESREGULACION'
   const permiteAdjuntos = SECCIONES_CON_ADJUNTOS.includes(seccion.tipo)
   const sustantivo = esNota ? 'nota' : 'aporte'
   const textos = textosPorTipo[seccion.tipo] ?? {}
@@ -96,6 +99,18 @@ export default function EditorAporte({
       setErroresCampos(errores)
       if (Object.keys(errores).length) return
     }
+    if (esDesregulacion) {
+      const errores = validarCamposDesregulacion(
+        extra,
+        titulo,
+        contenido,
+        visibilidad,
+      )
+
+      setErroresCampos(errores)
+
+      if (Object.keys(errores).length) return
+    }
     if (
       !titulo.trim() ||
       titulo.trim().length > 150 ||
@@ -122,7 +137,7 @@ export default function EditorAporte({
         titulo: titulo.trim(),
         contenido: contenido.trim(),
         visibilidad,
-        ...(campos.length || esComunicacion || esSensorial || esEstrategia || esRutina ? { datos: JSON.stringify(datosSinVacios(esComunicacion && !extra.formasComunicacion?.includes('OTRA') ? { ...extra, otraForma: '' } : extraRutina)) } : {}),
+        ...(campos.length || esComunicacion || esSensorial || esEstrategia || esRutina || esDesregulacion ? { datos: JSON.stringify(datosSinVacios(esComunicacion && !extra.formasComunicacion?.includes('OTRA') ? { ...extra, otraForma: '' } : extraRutina)) } : {}),
         ...(incluirArchivos
           ? { archivoIds: archivos.map((item) => item.id) }
           : {}),
@@ -146,36 +161,72 @@ export default function EditorAporte({
       aria-busy={enviando}
       className="mt-4 space-y-4 rounded-md border border-borde bg-bienvenida-luz p-4"
     >
-      <p className="font-semibold text-secundario">
-        {aporte
-          ? `Editar ${sustantivo}`
-          : esNota
-            ? 'Nueva nota'
-            : 'Nuevo aporte'}
-      </p>
+      {!textos.introduccion && (
+        <p className="font-semibold text-secundario">
+          {aporte
+            ? `Editar ${sustantivo}`
+            : esNota
+              ? 'Nueva nota'
+              : 'Nuevo aporte'}
+        </p>
+      )}
+
+      {(textos.introduccion || textos.aclaracion) && (
+        <div className="space-y-2">
+          {textos.introduccion && (
+            <p className="text-base leading-relaxed text-texto-suave">
+              {textos.introduccion}
+            </p>
+          )}
+
+          {textos.aclaracion && (
+            <p className="text-sm text-texto-suave">
+              {textos.aclaracion}
+            </p>
+          )}
+        </div>
+      )}
       {esSensorial && <CamposSensoriales extra={extra} setExtra={setExtra} errores={erroresCampos} disabled={enviando} />}
       {esEstrategia && <CamposEstrategia parte="categoria" extra={extra} setExtra={setExtra} errores={erroresCampos} disabled={enviando} />}
       {esRutina && <>
-        <p className="text-sm text-texto-suave">Compartí una observación sobre cómo participa en una actividad cotidiana y qué suele ayudarle. No es una evaluación ni una lista de pasos.</p>
-        <p className="text-sm text-texto-suave">Todos los campos son obligatorios, salvo el contexto y el archivo adjunto.</p>
-        <CamposRutina parte="categoria" extra={extra} setExtra={setExtra} errores={erroresCampos} disabled={enviando} />
+       <CamposRutina parte="categoria" extra={extra} setExtra={setExtra} errores={erroresCampos} disabled={enviando} />
       </>}
+
+      {esDesregulacion && (
+        <CamposDesregulacion
+          extra={extra}
+          setExtra={setExtra}
+          errores={erroresCampos}
+          disabled={enviando}
+        />
+      )}
       <CampoFormulario
         id={`titulo-aporte-${seccion.tipo}`}
         label={etiquetaTitulo}
-        hint={esSensorial ? 'Resumí lo que observaste en una frase, hasta 150 caracteres' : esEstrategia ? 'Resumí la estrategia en una frase breve, hasta 150 caracteres' : esRutina ? 'Resumí lo observado en una frase.' : 'Obligatorio, hasta 150 caracteres'}
+        hint={
+          textos.hintTitulo ??
+          (esSensorial
+            ? 'Resumí lo que observaste en una frase, hasta 150 caracteres'
+            : esEstrategia
+              ? 'Resumí la estrategia en una frase breve, hasta 150 caracteres'
+              : esRutina
+                ? 'Resumí lo observado en una frase.'
+                : 'Obligatorio, hasta 150 caracteres')
+        }
       >
-          <Campo
+        <Campo
           name="titulo"
-          placeholder={etiquetaTitulo}
+          placeholder={textos.placeholderTitulo ?? etiquetaTitulo}
           value={titulo}
           onChange={(event) => setTitulo(event.target.value)}
           required
           aria-invalid={Boolean(erroresCampos.titulo)}
           maxLength={150}
           disabled={enviando}
+          tamanio="base"
         />
       </CampoFormulario>
+
       {erroresCampos.titulo && <p role="alert" className="text-sm text-error">{erroresCampos.titulo}</p>}
       <div>
         <label
@@ -190,13 +241,18 @@ export default function EditorAporte({
           name="contenido"
           value={contenido}
           onChange={(event) => setContenido(event.target.value)}
+          placeholder={textos.placeholderContenido ?? ''}
           maxLength={10000}
           rows={4}
           disabled={enviando}
           aria-required={esRutina}
           aria-invalid={Boolean(erroresCampos.contenido)}
-          className="w-full rounded-md border border-borde bg-superficie p-4 text-texto focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primario"
-        />
+          className="w-full rounded-md border border-borde bg-superficie p-4 text-base text-texto focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primario"        />
+        {textos.hintContenido && (
+          <p className="mt-2 text-sm text-texto-suave">
+            {textos.hintContenido}
+          </p>
+        )}
       </div>
       {erroresCampos.contenido && <p role="alert" className="text-sm text-error">{erroresCampos.contenido}</p>}
       {esRutina && <p className="text-sm text-texto-suave">Contá lo que ya puede hacer, dónde necesita apoyo o qué lo ayuda. No hace falta detallar cada paso.</p>}
@@ -321,7 +377,7 @@ export default function EditorAporte({
         </p>
       )}
       {esRutina && <p className="rounded-sm bg-agua/15 p-3 text-sm text-secundario">Tu nombre, rol o especialidad y la fecha se agregarán automáticamente al guardar.</p>}
-      <PieEditorAporte tipo={seccion.tipo} visibilidad={visibilidad} onVisibilidad={(event) => setVisibilidad(event.target.value)} disabled={enviando} sensorial={esSensorial || esEstrategia || esRutina} errorVisibilidad={erroresCampos.visibilidad} sustantivo={sustantivo} alCancelar={alCancelar} />
+      <PieEditorAporte tipo={seccion.tipo} visibilidad={visibilidad} onVisibilidad={(event) => setVisibilidad(event.target.value)} disabled={enviando} errorVisibilidad={erroresCampos.visibilidad} sustantivo={sustantivo} alCancelar={alCancelar} />
     </form>
   )
 }

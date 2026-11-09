@@ -75,7 +75,7 @@ it('combina resultado, categoría, búsqueda, especialidad, autor y visibilidad 
   await userEvent.click(screen.getByRole('button', { name: 'Anticipación y secuenciación' }))
   await userEvent.selectOptions(screen.getByRole('combobox', { name: 'Especialidad' }), 'PSICOLOGIA')
   await userEvent.type(screen.getByRole('searchbox', { name: 'Buscar en estrategias' }), 'Secuencia')
-  await userEvent.click(screen.getAllByRole('checkbox', { name: 'Solo mis aportes' })[0])
+  await userEvent.click(screen.getByRole('switch', { name: 'Solo mis aportes' }))
   expect(screen.getAllByRole('article')).toHaveLength(1)
   expect(screen.getByRole('heading', { name: 'Secuencia de pasos' })).toBeInTheDocument()
   await userEvent.selectOptions(screen.getByRole('combobox', { name: 'Visibilidad' }), 'SOLO_TUTORES')

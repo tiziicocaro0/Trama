@@ -6,7 +6,10 @@ export default function CampoFormulario({ id, label, error, hint, children }) {
     .join(' ')
   return (
     <div>
-      <label htmlFor={id} className="sr-only">
+      <label
+        htmlFor={id}
+        className="mb-2 block font-semibold text-texto"
+      >
         {label}
       </label>
       {cloneElement(children, {

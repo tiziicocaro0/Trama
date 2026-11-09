@@ -3,17 +3,16 @@ import {
   CalendarBlank,
   ChatCircle,
   Ear,
+  Heart,
   Lightbulb,
   NotePencil,
   Palette,
   Star,
-  Plus,
   X,
 } from '@phosphor-icons/react'
 import { Fragment, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { archivarAporte } from '../../../api/aportes.js'
-import Boton from '../../../components/ui/Boton.jsx'
 import TarjetaAporte from '../../../components/ui/TarjetaAporte.jsx'
 import EditorAporte from './EditorAporte.jsx'
 import HistorialAporte from './HistorialAporte.jsx'
@@ -27,6 +26,7 @@ const iconos = {
   ESTRATEGIA: Lightbulb,
   RUTINA: CalendarBlank,
   NOTA_PROFESIONAL: NotePencil,
+  DESREGULACION: Heart,
 }
 
 export default function BloquePerfil({
@@ -81,7 +81,8 @@ export default function BloquePerfil({
   const esSensorial = seccion.tipo === 'SENSORIAL' && completo
   const esEstrategia = seccion.tipo === 'ESTRATEGIA' && completo
   const esRutina = seccion.tipo === 'RUTINA' && completo
-  const esPanel = esComunicacion || esSensorial || esEstrategia || esRutina
+  const esDesregulacion = seccion.tipo === 'DESREGULACION' && completo
+  const esPanel = esComunicacion || esSensorial || esEstrategia || esRutina || esDesregulacion
   const visibles = completo ? aportes : aportes.slice(0, 3)
   const agrupados = esSensorial
     ? ['AYUDA', 'CUESTA', ''].flatMap((lista) => visibles.filter((aporte) => (leerDatosAporte(aporte.datos).lista || '') === lista))
@@ -92,8 +93,8 @@ export default function BloquePerfil({
       aria-labelledby={`titulo-${seccion.slug}`}
       className={esPanel ? 'flex min-w-0 flex-col' : 'flex min-w-0 flex-col rounded-lg bg-superficie p-5 shadow-sm sm:p-6'}
     >
-      <div className={esSensorial || esEstrategia || esRutina ? 'sr-only' : 'mb-3 flex items-center gap-3'}>
-        <span
+        <div className={esPanel ? 'sr-only' : 'mb-3 flex items-center gap-3'}>
+          <span
           className={`flex size-10 shrink-0 items-center justify-center rounded-sm ${seccion.tono}`}
         >
           <Icon size={24} aria-hidden="true" />
@@ -145,12 +146,7 @@ export default function BloquePerfil({
           </p>
         </div>
       )}
-      {puedeCrear && !editor && !esRutina && (
-        <Boton variant={esPanel ? 'primary' : 'secondary'} onClick={abrirEditor} className={esPanel ? 'fixed bottom-20 right-4 z-30 shadow-md md:static md:mb-4 md:self-end' : 'mb-4'}>
-          {esNota ? 'Agregar nota' : 'Agregar aporte'}
-        </Boton>
-      )}
-      {puedeCrear && !editor && esRutina && <button type="button" onClick={abrirEditor} className="fixed bottom-20 right-4 z-30 inline-flex min-h-14 items-center gap-2 rounded-full bg-primario px-5 font-semibold text-superficie shadow-md focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primario md:hidden"><Plus size={20} aria-hidden="true" /><span>Agregar aporte</span></button>}
+ 
       {historialDe && (
         <HistorialAporte
           key={historialDe.id}
@@ -168,11 +164,14 @@ export default function BloquePerfil({
             role={esPanel ? 'dialog' : undefined}
             aria-modal={esPanel ? 'true' : undefined}
             aria-labelledby={esPanel ? 'titulo-panel-aporte' : undefined}
-            className={esPanel ? 'h-full w-full overflow-y-auto bg-superficie p-4 shadow-md sm:max-w-xl' : ''}
+            className={esPanel ? 'w-full overflow-y-auto rounded-l-2xl bg-superficie p-4 shadow-md sm:max-w-xl' : ''}
           >
             {esPanel && (
               <div className="flex items-center justify-between border-b border-borde pb-3">
-                <h2 id="titulo-panel-aporte" className="font-display text-h2 text-secundario">
+                <h2
+                  id="titulo-panel-aporte"
+                  className="ml-4 font-display text-h2 text-secundario"
+                >
                   {editor.id ? 'Editar aporte' : 'Agregar aporte'}
                 </h2>
                 <button type="button" onClick={cancelar} aria-label="Cerrar panel de aporte" className="flex min-h-11 min-w-11 items-center justify-center rounded-sm text-primario focus-visible:outline-2 focus-visible:outline-primario">

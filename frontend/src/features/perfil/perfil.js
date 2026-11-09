@@ -37,6 +37,12 @@ export const seccionesPerfil = [
   },
 ]
 
+export const seccionDesregulacion = {
+  slug: 'desregulacion',
+  titulo: 'Si se desregula',
+  tipo: 'DESREGULACION',
+}
+
 export const seccionNotas = {
   slug: 'notas',
   titulo: 'Notas',

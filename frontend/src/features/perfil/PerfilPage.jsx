@@ -1,18 +1,18 @@
-import { Heart, Sparkle } from '@phosphor-icons/react'
+import { Heart, Plus, Sparkle, X, } from '@phosphor-icons/react'
 import { Link, useParams } from 'react-router-dom'
 import { useState } from 'react'
 import Boton from '../../components/ui/Boton.jsx'
-import CasillaOvillo from '../../components/ui/CasillaOvillo.jsx'
 import { Aviso } from '../../components/ui/Aviso.jsx'
 import BloquePerfil from './components/BloquePerfil.jsx'
+import BarraFiltrosAportes from '../../components/ui/BarraFiltrosAportes.jsx'
+import ChipFiltro from '../../components/ui/ChipFiltro.jsx'
 import usePerfil from './hooks/usePerfil.js'
-import { LEYENDA_NOTAS, seccionesPerfil, seccionNotas } from './perfil.js'
+import { LEYENDA_NOTAS, seccionesPerfil, seccionNotas, seccionDesregulacion, } from './perfil.js'
 import { listarAportes } from '../../api/aportes.js'
 import useAuth from '../../hooks/useAuth.js'
 import { leerDatosAporte } from './perfil.js'
-import { CATEGORIAS_COMUNICACION, CATEGORIAS_RUTINA, CONTEXTOS_RUTINA, claveCategoriaRutina } from './camposAporte.js'
-import { CATEGORIAS_SENSORIALES, ICONOS_SENSORIALES, CATEGORIAS_ESTRATEGIA, ICONOS_ESTRATEGIA, RESULTADOS_ESTRATEGIA, TONOS_ESTRATEGIA } from './camposAporte.js'
-import { ESPECIALIDADES_EDUCACION, ESPECIALIDADES_SALUD } from './especialidades.js'
+import { CATEGORIAS_COMUNICACION, CATEGORIAS_RUTINA, TONOS_COMUNICACION, ICONOS_COMUNICACION, CONTEXTOS_RUTINA, claveCategoriaRutina } from './camposAporte.js'
+import { CATEGORIAS_SENSORIALES, ICONOS_SENSORIALES, TONOS_SENSORIALES, CATEGORIAS_ESTRATEGIA, ICONOS_ESTRATEGIA, RESULTADOS_ESTRATEGIA, TONOS_ESTRATEGIA, CATEGORIAS_DESREGULACION, ICONOS_DESREGULACION, TONOS_DESREGULACION, HOVER_CRUZ_DESREGULACION } from './camposAporte.js'
 import FiltrosRutinas from './components/FiltrosRutinas.jsx'
 import AvisoEliminacion from './eliminacion/AvisoEliminacion.jsx'
 import useProyectoActual from '../../hooks/useProyectoActual.js'
@@ -38,15 +38,21 @@ export default function PerfilPage() {
   const [resultadoEstrategia, setResultadoEstrategia] = useState('')
   const [orden, setOrden] = useState('recientes')
   const [soloMios, setSoloMios] = useState(false)
-  const [filtrosAbiertos, setFiltrosAbiertos] = useState(false)
   const seccion =
     slug === seccionNotas.slug
       ? seccionNotas
-      : seccionesPerfil.find((item) => item.slug === slug || (slug === 'perfil-sensorial' && item.tipo === 'SENSORIAL'))
+      : slug === seccionDesregulacion.slug
+        ? seccionDesregulacion
+        : seccionesPerfil.find(
+            (item) =>
+              item.slug === slug ||
+              (slug === 'perfil-sensorial' && item.tipo === 'SENSORIAL'),
+          )
   const esComunicacion = seccion?.tipo === 'COMUNICACION'
   const esSensorial = seccion?.tipo === 'SENSORIAL'
   const esEstrategia = seccion?.tipo === 'ESTRATEGIA'
   const esRutina = seccion?.tipo === 'RUTINA'
+  const esDesregulacion = seccion?.tipo === 'DESREGULACION'
   const aportesRutina = esRutina && datos?.aportes
     ? datos.aportes.filter((aporte) => {
       const datosRutina = leerDatosAporte(aporte.datos)
@@ -95,6 +101,84 @@ export default function PerfilPage() {
         ? new Date(b.creadoEn) - new Date(a.creadoEn)
         : new Date(a.creadoEn) - new Date(b.creadoEn))
     : null
+  const aportesDesregulacion = esDesregulacion && datos?.aportes
+    ? datos.aportes.filter((aporte) => {
+          const datosDesregulacion = leerDatosAporte(aporte.datos)
+          return aporte.tipo === 'DESREGULACION'
+            && (!categoria || datosDesregulacion.lista === categoria)
+            && (!visibilidad || aporte.visibilidad === visibilidad)
+            && (!especialidad || aporte.autorEspecialidades?.some(
+              (item) => item.especialidad === especialidad
+            ))
+            && (!soloMios || aporte.autorId === usuario?.id)
+            && (
+              !busqueda.trim() ||
+              [
+                aporte.titulo,
+                aporte.contenido,
+                ...Object.values(datosDesregulacion),
+              ]
+                .join(' ')
+                .toLocaleLowerCase('es')
+                .includes(busqueda.trim().toLocaleLowerCase('es'))
+            )
+        })
+        .sort((a, b) =>
+          orden === 'recientes'
+            ? new Date(b.creadoEn) - new Date(a.creadoEn)
+            : new Date(a.creadoEn) - new Date(b.creadoEn)
+        )
+    : null
+
+  function encabezadoConBoton(titulo, descripcion, alAgregar, puedeCrear, textoBoton = 'Agregar aporte',) {
+  return (
+    <div className="mb-5 flex flex-wrap items-start justify-between gap-4">
+      <div className="min-w-0 max-w-3xl">
+        <p className="font-display text-h1 text-secundario">
+          {titulo}
+        </p>
+
+        {descripcion && (
+          <p className="mt-1 text-texto-suave">
+            {descripcion}
+          </p>
+        )}
+      </div>
+
+      {puedeCrear && (
+        <Boton onClick={alAgregar} className="shrink-0">
+          <Plus size={18} aria-hidden="true" />
+          {textoBoton}
+        </Boton>
+      )}
+    </div>
+  )
+}
+
+function encabezadoCompleto({
+  titulo,
+  descripcion,
+  alAgregar,
+  puedeCrear,
+  filtros,
+  categorias,
+}) {
+  return (
+    <div className="mb-5 space-y-4">
+      {encabezadoConBoton(
+        titulo,
+        descripcion,
+        alAgregar,
+        puedeCrear,
+      )}
+
+      {filtros}
+
+      {categorias}
+    </div>
+  )
+}
+
   return (
     <div className="min-h-svh bg-fondo text-texto">
       <a href="#contenido-perfil" className="skip-link">
@@ -135,38 +219,91 @@ export default function PerfilPage() {
               <AvisoEliminacion proyecto={proyecto} esAdmin={esAdmin} onCancelada={() => setCancelacionEn(id)} />
             )}
             {!seccion && (
-              <>
-                <div className="mb-4 flex flex-wrap items-center justify-between gap-4 rounded-md border border-primario/30 bg-superficie p-4 shadow-sm sm:p-5">
-                  <div>
-                    <p className="flex items-center gap-2 font-semibold text-primario">
-                      <Sparkle size={20} aria-hidden="true" />
-                      Resumen rápido del perfil
-                    </p>
-                    <p className="mt-1 text-sm text-texto-suave">
-                      Intereses principales, cómo comunicarse, qué lo ayuda, qué
-                      evitar y qué hacer si se desregula en una sola página.
-                    </p>
+              <div className="mb-6 grid gap-4 lg:grid-cols-12">
+                <section className="relative overflow-hidden rounded-lg border border-primario/20 bg-superficie p-5 shadow-sm sm:p-6 lg:col-span-8">
+                  <svg
+                    aria-hidden="true"
+                    viewBox="0 0 360 120"
+                    className="pointer-events-none absolute right-0 top-0 hidden h-28 w-80 text-miel/70 md:block"
+                    fill="none"
+                  >
+                    <path
+                      d="M8 72
+                        C 75 22, 150 108, 220 58
+                        C 252 36, 277 22, 296 30
+                        C 315 38, 314 63, 294 74
+                        C 275 84, 257 72, 261 55
+                        C 266 34, 301 23, 347 7"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                  </svg>
+
+                  <div className="relative z-10 flex h-full flex-col justify-between gap-5">
+                    <div>
+                      <div className="mb-3 flex items-center gap-2">
+                        <span
+                          aria-hidden="true"
+                          className="flex size-8 items-center justify-center rounded-full bg-primario text-xs font-bold text-superficie"
+                        >
+                          5'
+                        </span>
+
+                        <p className="text-xs font-bold uppercase tracking-wide text-secundario">
+                          Resumen rápido del perfil
+                        </p>
+                      </div>
+
+                      <p className="font-display text-h1 text-primario">
+                        Conocelo en 5 minutos
+                      </p>
+
+                      <p className="mt-2 max-w-xl text-sm leading-relaxed text-texto-suave">
+                        Intereses, cómo comunicarse, qué lo ayuda, qué evitar y qué hacer si
+                        se desregula, en una sola página.
+                      </p>
+                    </div>
+
+                    <div>
+                      <Boton to={`/proyectos/${id}/conocelo`} aria-label="Conocelo en 5 minutos">
+                        Abrir resumen
+                      </Boton>
+                    </div>
                   </div>
-                  <Boton to={`/proyectos/${id}/conocelo`}>
-                    Conocelo en 5 minutos
-                  </Boton>
-                </div>
-                <aside
-                  aria-label="Si se desregula · Próximamente"
-                  className="mb-6 rounded-md border border-borde bg-superficie/70 p-4 sm:p-5"
-                >
-                  <p className="flex items-center gap-2 font-semibold text-primario">
-                    <Heart size={20} aria-hidden="true" />
-                    Si se desregula{' '}
-                    <span className="ml-auto text-sm font-normal text-texto-suave">
-                      Próximamente
-                    </span>
-                  </p>
-                  <p className="mt-2 text-sm text-texto-suave">
-                    Este espacio estará disponible más adelante.
-                  </p>
-                </aside>
-              </>
+                </section>
+
+                <section className="rounded-lg border border-miel bg-miel/10 p-5 shadow-sm sm:p-6 lg:col-span-4">
+                  <div className="flex h-full flex-col justify-between gap-5">
+                    <div>
+                      <span
+                        aria-hidden="true"
+                        className="mb-3 flex size-9 items-center justify-center rounded-md bg-primario/10 text-primario"
+                      >
+                        <Heart size={20} weight="fill" />
+                      </span>
+
+                      <p className="font-display text-h2 text-secundario">
+                        Si se desregula
+                      </p>
+
+                      <p className="mt-2 max-w-xl text-sm leading-relaxed text-texto-suave">
+                        Señales, qué ayuda y qué evitar en un momento difícil.
+                      </p>
+                    </div>
+
+                    <div>
+                      <Boton
+                        to={`/proyectos/${id}/desregulacion`}
+                        variant="secondary"
+                      >
+                        Ver guía
+                      </Boton>
+                    </div>
+                  </div>
+                </section>
+              </div>
             )}
             {mensajeGuardado && (
               <p role="status" className="mb-4 text-secundario">
@@ -189,67 +326,6 @@ export default function PerfilPage() {
                 Podés consultar este perfil en modo de solo lectura.
               </p>
             )}
-            {esComunicacion && (
-              <section aria-label="Buscar y filtrar aportes de comunicación" className="mb-5 space-y-4">
-                <div>
-                  <p className="font-display text-h1 text-secundario">Comunicación</p>
-                  <p className="text-texto-suave">Cómo comprende, expresa lo que necesita y se comunica mejor en distintos contextos.</p>
-                </div>
-                <label className="block">
-                  <span className="sr-only">Buscar en comunicación</span>
-                  <input type="search" value={busqueda} onChange={(event) => setBusqueda(event.target.value)} placeholder="Buscar en comunicación…" className="min-h-11 w-full rounded-md border border-borde bg-superficie px-4 py-2 text-texto focus-visible:outline-2 focus-visible:outline-primario" />
-                </label>
-                <div className="flex flex-wrap gap-3">
-                  <label><span className="sr-only">Visibilidad</span><select aria-label="Visibilidad" value={visibilidad} onChange={(event) => setVisibilidad(event.target.value)} className="min-h-11 rounded-sm border border-borde bg-superficie px-3"><option value="">Toda visibilidad</option><option value="TODOS">Toda la red</option><option value="SOLO_SALUD">Solo salud</option><option value="SOLO_EDUCACION">Solo educación</option><option value="SOLO_TUTORES">Solo tutores</option></select></label>
-                  <label><span className="sr-only">Ordenar por fecha</span><select aria-label="Ordenar por fecha" value={orden} onChange={(event) => setOrden(event.target.value)} className="min-h-11 rounded-sm border border-borde bg-superficie px-3"><option value="recientes">Más recientes</option><option value="antiguos">Más antiguos</option></select></label>
-                  <button type="button" onClick={() => setFiltrosAbiertos(true)} className="min-h-11 rounded-sm border border-borde bg-superficie px-3">Más filtros</button>
-                  <div className="hidden md:flex"><CasillaOvillo checked={soloMios} onChange={(event) => setSoloMios(event.target.checked)}>Solo mis aportes</CasillaOvillo></div>
-                </div>
-                <div className="flex flex-wrap gap-2" aria-label="Categorías de comunicación">
-                  {[["", "Todos"], ...CATEGORIAS_COMUNICACION].map(([valor, etiqueta]) => <button key={valor} type="button" onClick={() => setCategoria(valor)} aria-pressed={categoria === valor} className={`min-h-11 rounded-full border px-4 py-2 ${categoria === valor ? 'border-primario bg-primario text-superficie' : 'border-borde bg-superficie text-secundario'}`}>{etiqueta}</button>)}
-                </div>
-                {filtrosAbiertos && <div className="fixed inset-0 z-40 flex items-end bg-texto/40 md:items-center md:justify-center"><div role="dialog" aria-modal="true" aria-label="Filtros" className="w-full rounded-lg bg-superficie p-6 md:max-w-md"><div className="flex items-center justify-between"><h3 className="font-display text-h2">Filtros</h3><button type="button" onClick={() => setFiltrosAbiertos(false)} aria-label="Cerrar filtros" className="min-h-11 px-3">Cerrar</button></div><CasillaOvillo className="mt-5" checked={soloMios} onChange={(event) => setSoloMios(event.target.checked)}>Solo mis aportes</CasillaOvillo></div></div>}
-              </section>
-            )}
-            {esSensorial && (
-              <section aria-label="Buscar y filtrar aportes sensoriales" className="mb-5 space-y-4">
-                <div>
-                  <p className="font-display text-h1 text-secundario">Perfil sensorial</p>
-                  <p className="text-texto-suave">Cómo responde a distintos estímulos del entorno, qué sensaciones busca o evita y qué lo ayuda a sentirse más cómodo y regulado.</p>
-                </div>
-                <label className="block"><span className="sr-only">Buscar en perfil sensorial</span><input type="search" value={busqueda} onChange={(event) => setBusqueda(event.target.value)} placeholder="Buscar en perfil sensorial…" className="min-h-11 w-full rounded-md border border-borde bg-superficie px-4 py-2 text-texto focus-visible:outline-2 focus-visible:outline-primario" /></label>
-                <div className="flex gap-3 overflow-x-auto pb-1 md:flex-wrap md:overflow-visible">
-                  <select aria-label="Especialidad" value={especialidad} onChange={(event) => setEspecialidad(event.target.value)} className="min-h-11 max-w-full shrink-0 rounded-sm border border-borde bg-superficie px-3"><option value="">Todas las especialidades</option>{[...ESPECIALIDADES_EDUCACION, ...ESPECIALIDADES_SALUD].map(({ valor, etiqueta }) => <option key={valor} value={valor}>{etiqueta}</option>)}</select>
-                  <select aria-label="Visibilidad" value={visibilidad} onChange={(event) => setVisibilidad(event.target.value)} className="min-h-11 rounded-sm border border-borde bg-superficie px-3"><option value="">Toda visibilidad</option><option value="TODOS">Toda la red</option><option value="PROFESIONALES">Solo equipo profesional</option><option value="SOLO_TUTORES">Solo tutores</option><option value="SOLO_SALUD">Salud y tutores</option><option value="SOLO_EDUCACION">Educación y tutores</option></select>
-                  <select aria-label="Ordenar por fecha" value={orden} onChange={(event) => setOrden(event.target.value)} className="min-h-11 rounded-sm border border-borde bg-superficie px-3"><option value="recientes">Más recientes</option><option value="antiguos">Más antiguos</option></select>
-                  <select aria-label="Lista" value={listaSensorial} onChange={(event) => setListaSensorial(event.target.value)} className="min-h-11 rounded-sm border border-borde bg-superficie px-3"><option value="">Ambas listas</option><option value="AYUDA">Le ayuda</option><option value="CUESTA">Le cuesta</option></select>
-                  <button type="button" onClick={() => setFiltrosAbiertos(true)} className="min-h-11 shrink-0 rounded-sm border border-borde bg-superficie px-3 md:hidden">Filtros{soloMios ? ' (1)' : ''}</button>
-                  <div className="hidden md:flex"><CasillaOvillo className="whitespace-nowrap" checked={soloMios} onChange={(event) => setSoloMios(event.target.checked)}>Solo mis aportes</CasillaOvillo></div>
-                </div>
-                <div className="flex gap-2 overflow-x-auto pb-1 md:flex-wrap md:overflow-visible" aria-label="Categorías sensoriales">
-                  {[['', 'Todos'], ...CATEGORIAS_SENSORIALES].map(([valor, etiqueta]) => { const Icono = ICONOS_SENSORIALES[valor]; return <button key={valor} type="button" onClick={() => setCategoria(valor)} aria-pressed={categoria === valor} className={`inline-flex min-h-11 shrink-0 items-center gap-2 rounded-full border px-4 py-2 ${categoria === valor ? 'border-primario bg-primario text-superficie' : 'border-borde bg-superficie text-secundario'}`}>{Icono && <Icono size={20} aria-hidden="true" />}{etiqueta}</button> })}
-                </div>
-                {filtrosAbiertos && <div className="fixed inset-0 z-40 flex items-end bg-texto/40 md:items-center md:justify-center"><div role="dialog" aria-modal="true" aria-label="Filtros sensoriales" className="w-full rounded-lg bg-superficie p-6 md:max-w-md"><div className="flex items-center justify-between"><h3 className="font-display text-h2">Filtros</h3><button type="button" onClick={() => setFiltrosAbiertos(false)} aria-label="Cerrar filtros" className="min-h-11 px-3">Cerrar</button></div><CasillaOvillo className="mt-5" checked={soloMios} onChange={(event) => setSoloMios(event.target.checked)}>Solo mis aportes</CasillaOvillo></div></div>}
-              </section>
-            )}
-            {esEstrategia && (
-              <section aria-label="Buscar y filtrar estrategias" className="mb-5 space-y-4">
-                <div><p className="font-display text-h1 text-secundario">Estrategias</p><p className="text-texto-suave">Apoyos y formas de acompañamiento que facilitan la comprensión, la participación y la autonomía en distintos contextos.</p></div>
-                <label className="block"><span className="sr-only">Buscar en estrategias</span><input type="search" value={busqueda} onChange={(event) => setBusqueda(event.target.value)} placeholder="Buscar en estrategias…" className="min-h-11 w-full rounded-md border border-borde bg-superficie px-4 py-2 text-texto focus-visible:outline-2 focus-visible:outline-primario" /></label>
-                <div className="flex gap-3 overflow-x-auto pb-1 md:flex-wrap md:overflow-visible">
-                  <select aria-label="Especialidad" value={especialidad} onChange={(event) => setEspecialidad(event.target.value)} className="min-h-11 max-w-full shrink-0 rounded-sm border border-borde bg-superficie px-3"><option value="">Todas las especialidades</option>{[...ESPECIALIDADES_EDUCACION, ...ESPECIALIDADES_SALUD].map(({ valor, etiqueta }) => <option key={valor} value={valor}>{etiqueta}</option>)}</select>
-                  <select aria-label="Visibilidad" value={visibilidad} onChange={(event) => setVisibilidad(event.target.value)} className="min-h-11 shrink-0 rounded-sm border border-borde bg-superficie px-3"><option value="">Toda visibilidad</option><option value="TODOS">Toda la red</option><option value="PROFESIONALES">Solo equipo profesional</option><option value="SOLO_TUTORES">Solo tutores</option><option value="SOLO_SALUD">Salud y tutores</option><option value="SOLO_EDUCACION">Educación y tutores</option></select>
-                  <select aria-label="Ordenar por fecha" value={orden} onChange={(event) => setOrden(event.target.value)} className="min-h-11 shrink-0 rounded-sm border border-borde bg-superficie px-3"><option value="recientes">Más recientes</option><option value="antiguos">Más antiguos</option></select>
-                  <select aria-label="Resultado" value={resultadoEstrategia} onChange={(event) => setResultadoEstrategia(event.target.value)} className="min-h-11 shrink-0 rounded-sm border border-borde bg-superficie px-3"><option value="">Todos los resultados</option>{RESULTADOS_ESTRATEGIA.map(([valor, etiqueta]) => <option key={valor} value={valor}>{etiqueta}</option>)}</select>
-                  <button type="button" onClick={() => setFiltrosAbiertos(true)} className="min-h-11 shrink-0 rounded-sm border border-borde bg-superficie px-3 md:hidden">Filtros{soloMios ? ' (1)' : ''}</button>
-                  <div className="hidden md:flex"><CasillaOvillo className="whitespace-nowrap" checked={soloMios} onChange={(event) => setSoloMios(event.target.checked)}>Solo mis aportes</CasillaOvillo></div>
-                </div>
-                <div className="flex gap-2 overflow-x-auto pb-1 md:flex-wrap md:overflow-visible" aria-label="Categorías de estrategias">
-                  {[['', 'Todos'], ...CATEGORIAS_ESTRATEGIA].map(([valor, etiqueta]) => { const Icono = ICONOS_ESTRATEGIA[valor]; return <button key={valor} type="button" onClick={() => setCategoria(valor)} aria-pressed={categoria === valor} className={`inline-flex min-h-11 shrink-0 items-center gap-2 rounded-full border px-4 py-2 ${categoria === valor ? 'border-primario bg-primario text-superficie' : valor ? `border-borde ${TONOS_ESTRATEGIA[valor]}` : 'border-borde bg-superficie text-secundario'}`}>{Icono && <Icono size={20} aria-hidden="true" />}{etiqueta}</button> })}
-                </div>
-                {filtrosAbiertos && <div className="fixed inset-0 z-40 flex items-end bg-texto/40 md:items-center md:justify-center"><div role="dialog" aria-modal="true" aria-label="Filtros de estrategias" className="w-full rounded-lg bg-superficie p-6 md:max-w-md"><div className="flex items-center justify-between"><h3 className="font-display text-h2">Filtros</h3><button type="button" onClick={() => setFiltrosAbiertos(false)} aria-label="Cerrar filtros" className="min-h-11 px-3">Cerrar</button></div><CasillaOvillo className="mt-5" checked={soloMios} onChange={(event) => setSoloMios(event.target.checked)}>Solo mis aportes</CasillaOvillo></div></div>}
-              </section>
-            )}
             <div
               className={
                 seccion ? 'grid gap-5' : 'grid grid-cols-1 gap-5 md:grid-cols-2'
@@ -259,12 +335,336 @@ export default function PerfilPage() {
                 <BloquePerfil
                   key={item.slug}
                   seccion={item}
-                  aportes={esComunicacion ? aportesComunicacion : esSensorial ? aportesSensoriales : esEstrategia ? aportesEstrategia : esRutina ? aportesRutina : datos.aportes.filter(
+                  aportes={esComunicacion ? aportesComunicacion : esSensorial ? aportesSensoriales : esEstrategia ? aportesEstrategia : esRutina ? aportesRutina : esDesregulacion ? aportesDesregulacion : datos.aportes.filter(
                     (aporte) => aporte.tipo === item.tipo,
                   )}
                   proyectoId={id}
                   completo={Boolean(seccion)}
-                  encabezado={esRutina ? (alAgregar) => <FiltrosRutinas busqueda={busqueda} setBusqueda={setBusqueda} categoria={categoria} setCategoria={setCategoria} especialidad={especialidad} setEspecialidad={setEspecialidad} visibilidad={visibilidad} setVisibilidad={setVisibilidad} orden={orden} setOrden={setOrden} soloMios={soloMios} setSoloMios={setSoloMios} filtrosAbiertos={filtrosAbiertos} setFiltrosAbiertos={setFiltrosAbiertos} alAgregar={alAgregar} puedeCrear={proyecto.puedeCargar === true} aportes={datos.aportes.filter((aporte) => aporte.tipo === 'RUTINA')} /> : undefined}
+                  encabezado={(alAgregar) => {
+                    if (!seccion) return null
+
+                    if (item.tipo === 'RUTINA') {
+                      return (
+                        <FiltrosRutinas
+                          busqueda={busqueda}
+                          setBusqueda={setBusqueda}
+                          categoria={categoria}
+                          setCategoria={setCategoria}
+                          especialidad={especialidad}
+                          setEspecialidad={setEspecialidad}
+                          visibilidad={visibilidad}
+                          setVisibilidad={setVisibilidad}
+                          orden={orden}
+                          setOrden={setOrden}
+                          soloMios={soloMios}
+                          setSoloMios={setSoloMios}
+                          alAgregar={alAgregar}
+                          puedeCrear={proyecto.puedeCargar === true}
+                          aportes={datos.aportes.filter(
+                            (aporte) => aporte.tipo === 'RUTINA',
+                          )}
+                        />
+                      )
+                    }
+
+                    if (item.tipo === 'COMUNICACION') {
+                      return encabezadoCompleto({
+                        titulo: 'Comunicación',
+                        descripcion:
+                          'Cómo comprende, expresa lo que necesita y se comunica mejor en distintos contextos.',
+                        alAgregar,
+                        puedeCrear: proyecto.puedeCargar === true,
+
+                        filtros: (
+                          <BarraFiltrosAportes
+                            busqueda={busqueda}
+                            setBusqueda={setBusqueda}
+                            especialidad={especialidad}
+                            setEspecialidad={setEspecialidad}
+                            visibilidad={visibilidad}
+                            setVisibilidad={setVisibilidad}
+                            orden={orden}
+                            setOrden={setOrden}
+                            soloMios={soloMios}
+                            setSoloMios={setSoloMios}
+                            placeholder="Buscar en comunicación…"
+                            ariaBusqueda="Buscar en comunicación"
+                          />
+                        ),
+
+                        categorias: (
+                          <div
+                            className="flex gap-2 overflow-x-auto pb-1 md:flex-wrap md:overflow-visible"
+                            aria-label="Categorías de comunicación"
+                          >
+                          <button
+                              type="button"
+                              onClick={() => setCategoria('')}
+                              aria-pressed={!categoria}
+                              className={`min-h-11 shrink-0 rounded-full border px-4 py-2 ${
+                                !categoria
+                                  ? 'border-primario bg-primario text-superficie'
+                                  : 'border-borde bg-superficie text-secundario'
+                              }`}
+                            >
+                              Todos
+                            </button>
+
+                            {CATEGORIAS_COMUNICACION.map(([valor, etiqueta]) => {
+                              const Icono = ICONOS_COMUNICACION[valor]
+                              const activa = categoria === valor
+
+                              return (
+                                <ChipFiltro
+                                  key={valor}
+                                  activo={activa}
+                                  etiqueta={etiqueta}
+                                  Icono={Icono}
+                                  tono={TONOS_COMUNICACION[valor]}
+                                  onClick={() => setCategoria(activa ? '' : valor)}
+                                />
+                              )
+                            })}
+                          </div>
+                        ),
+                      })
+                    }
+
+                    if (item.tipo === 'SENSORIAL') {
+                      return encabezadoCompleto({
+                        titulo: 'Perfil sensorial',
+                        descripcion:
+                          'Cómo responde a distintos estímulos del entorno, qué sensaciones busca o evita y qué lo ayuda a sentirse más cómodo y regulado.',
+                        alAgregar,
+                        puedeCrear: proyecto.puedeCargar === true,
+
+                        filtros: (
+                          <BarraFiltrosAportes
+                            busqueda={busqueda}
+                            setBusqueda={setBusqueda}
+                            especialidad={especialidad}
+                            setEspecialidad={setEspecialidad}
+                            visibilidad={visibilidad}
+                            setVisibilidad={setVisibilidad}
+                            orden={orden}
+                            setOrden={setOrden}
+                            soloMios={soloMios}
+                            setSoloMios={setSoloMios}
+                            placeholder="Buscar en perfil sensorial…"
+                            ariaBusqueda="Buscar en perfil sensorial"
+                            extra={
+                              <label className="inline-flex min-h-11 shrink-0 items-center rounded-md border border-borde bg-superficie px-3 text-sm text-texto">
+                                <span className="sr-only">Lista</span>
+
+                                <select
+                                  aria-label="Lista"
+                                  value={listaSensorial}
+                                  onChange={(event) =>
+                                    setListaSensorial(event.target.value)
+                                  }
+                                  className="bg-transparent"
+                                >
+                                  <option value="">Ambas listas</option>
+                                  <option value="AYUDA">Le ayuda</option>
+                                  <option value="CUESTA">Le cuesta</option>
+                                </select>
+                              </label>
+                            }
+                          />
+                        ),
+
+                        categorias: (
+                          <div
+                            className="flex gap-2 overflow-x-auto pb-1 md:flex-wrap md:overflow-visible"
+                            aria-label="Categorías sensoriales"
+                          >
+                            <button
+                              type="button"
+                              onClick={() => setCategoria('')}
+                              aria-pressed={!categoria}
+                              className={`min-h-11 shrink-0 rounded-full border px-4 py-2 ${
+                                !categoria
+                                  ? 'border-primario bg-primario text-superficie'
+                                  : 'border-borde bg-superficie text-secundario'
+                              }`}
+                            >
+                              Todos
+                            </button>
+
+                            {CATEGORIAS_SENSORIALES.map(([valor, etiqueta]) => {
+                              const Icono = ICONOS_SENSORIALES[valor]
+                              const activa = categoria === valor
+
+                              return (
+                                <ChipFiltro
+                                  key={valor}
+                                  activo={activa}
+                                  etiqueta={etiqueta}
+                                  Icono={Icono}
+                                  tono={TONOS_SENSORIALES[valor]}
+                                  onClick={() => setCategoria(activa ? '' : valor)}
+                                />
+                              )
+                            })}
+                          </div>
+                        ),
+                      })
+                    }
+
+                    if (item.tipo === 'ESTRATEGIA') {
+                      return encabezadoCompleto({
+                        titulo: 'Estrategias',
+                        descripcion:
+                          'Apoyos y formas de acompañamiento que facilitan la comprensión, la participación y la autonomía en distintos contextos.',
+                        alAgregar,
+                        puedeCrear: proyecto.puedeCargar === true,
+
+                        filtros: (
+                          <BarraFiltrosAportes
+                            busqueda={busqueda}
+                            setBusqueda={setBusqueda}
+                            especialidad={especialidad}
+                            setEspecialidad={setEspecialidad}
+                            visibilidad={visibilidad}
+                            setVisibilidad={setVisibilidad}
+                            orden={orden}
+                            setOrden={setOrden}
+                            soloMios={soloMios}
+                            setSoloMios={setSoloMios}
+                            placeholder="Buscar en estrategias…"
+                            ariaBusqueda="Buscar en estrategias"
+                            extra={
+                              <label className="inline-flex min-h-11 shrink-0 items-center rounded-md border border-borde bg-superficie px-3 text-sm text-texto">
+                                <span className="sr-only">Resultado</span>
+
+                                <select
+                                  aria-label="Resultado"
+                                  value={resultadoEstrategia}
+                                  onChange={(event) =>
+                                    setResultadoEstrategia(event.target.value)
+                                  }
+                                  className="max-w-40 bg-transparent"
+                                >
+                                  <option value="">Todos los resultados</option>
+
+                                  {RESULTADOS_ESTRATEGIA.map(([valor, etiqueta]) => (
+                                    <option key={valor} value={valor}>
+                                      {etiqueta}
+                                    </option>
+                                  ))}
+                                </select>
+                              </label>
+                            }
+                          />
+                        ),
+
+                        categorias: (
+                          <div
+                            className="flex gap-2 overflow-x-auto pb-1 md:flex-wrap md:overflow-visible"
+                            aria-label="Categorías de estrategias"
+                          >
+                            {CATEGORIAS_ESTRATEGIA.map(([valor, etiqueta]) => {
+                              const Icono = ICONOS_ESTRATEGIA[valor]
+                              const activa = categoria === valor
+
+                              return (
+                                <ChipFiltro
+                                  key={valor}
+                                  activo={activa}
+                                  etiqueta={etiqueta}
+                                  Icono={Icono}
+                                  tono={TONOS_ESTRATEGIA[valor]}
+                                  onClick={() => setCategoria(activa ? '' : valor)}
+                                />
+                              )
+                            })}
+                          </div>
+                        ),
+                      })
+                    }
+
+                    if (item.tipo === 'DESREGULACION') {
+                      return encabezadoCompleto({
+                        titulo: 'Si se desregula',
+                        descripcion:
+                          'Pautas para reconocer una desregulación y acompañar de la manera que mejor funciona.',
+                        alAgregar,
+                        puedeCrear: proyecto.puedeCargar === true,
+
+                        filtros: (
+                          <BarraFiltrosAportes
+                            busqueda={busqueda}
+                            setBusqueda={setBusqueda}
+                            especialidad={especialidad}
+                            setEspecialidad={setEspecialidad}
+                            visibilidad={visibilidad}
+                            setVisibilidad={setVisibilidad}
+                            orden={orden}
+                            setOrden={setOrden}
+                            soloMios={soloMios}
+                            setSoloMios={setSoloMios}
+                            placeholder="Buscar en desregulación…"
+                            ariaBusqueda="Buscar en desregulación"
+                          />
+                        ),
+
+                        categorias: (
+                          <div
+                            className="flex gap-2 overflow-x-auto pb-1 md:flex-wrap md:overflow-visible"
+                            aria-label="Categorías de desregulación"
+                          >
+                            <button
+                              type="button"
+                              onClick={() => setCategoria('')}
+                              aria-pressed={!categoria}
+                              className={`min-h-11 shrink-0 rounded-full border px-4 py-2 ${
+                                !categoria
+                                  ? 'border-primario bg-primario text-superficie'
+                                  : 'border-borde bg-superficie text-secundario'
+                              }`}
+                            >
+                              Todos
+                            </button>
+
+                            {CATEGORIAS_DESREGULACION.map(([valor, etiqueta]) => {
+                              const Icono = ICONOS_DESREGULACION[valor]
+                              const activa = categoria === valor
+
+                              return (
+                                <ChipFiltro
+                                  key={valor}
+                                  activo={activa}
+                                  etiqueta={etiqueta}
+                                  Icono={Icono}
+                                  tono={TONOS_DESREGULACION[valor]}
+                                  hoverCruz={HOVER_CRUZ_DESREGULACION[valor]}
+                                  onClick={() => setCategoria(activa ? '' : valor)}
+                                />
+                              )
+                            })}
+                          </div>
+                        ),
+                      })
+                    }
+
+                    if (item.tipo === 'NOTA_PROFESIONAL') {
+                      return encabezadoConBoton(
+                        'Notas profesionales',
+                        null,
+                        alAgregar,
+                        proyecto.puedeCargarNotas === true,
+                        'Agregar nota',
+                      )
+                    }
+
+                    return encabezadoConBoton(
+                      item.titulo,
+                      item.descripcion ?? null,
+                      alAgregar,
+                      proyecto.puedeCargar === true,
+                    )
+                  }}                  
+                  
                   puedeCrear={
                     item.tipo === 'NOTA_PROFESIONAL'
                       ? proyecto.puedeCargarNotas === true
