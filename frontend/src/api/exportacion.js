@@ -8,14 +8,22 @@ export async function descargarTodosLosDatos(proyectoId, formato, filtros = {}) 
     `/proyectos/${encodeURIComponent(proyectoId)}/exportar`,
     { params: { formato, ...parametrosDeFiltro(filtros) }, responseType: 'blob' },
   )
-  const blob =
-    respuesta.data instanceof Blob ? respuesta.data : new Blob([respuesta.data])
-  const hoy = new Date()
-  const fecha = `${hoy.getFullYear()}-${String(hoy.getMonth() + 1).padStart(2, '0')}-${String(hoy.getDate()).padStart(2, '0')}`
+  guardarArchivo(respuesta.data, `trama-datos-${hoy()}.${formato}`)
+}
+
+// La fecha de hoy en la compu (AAAA-MM-DD), para el nombre del archivo
+function hoy() {
+  const fecha = new Date()
+  return `${fecha.getFullYear()}-${String(fecha.getMonth() + 1).padStart(2, '0')}-${String(fecha.getDate()).padStart(2, '0')}`
+}
+
+// Hace que el navegador baje el archivo con ese nombre
+function guardarArchivo(datos, nombre) {
+  const blob = datos instanceof Blob ? datos : new Blob([datos])
   const url = window.URL.createObjectURL(blob)
   const enlace = document.createElement('a')
   enlace.href = url
-  enlace.download = `trama-datos-${fecha}.${formato}`
+  enlace.download = nombre
   document.body.appendChild(enlace)
   enlace.click()
   enlace.remove()
@@ -30,4 +38,13 @@ function parametrosDeFiltro({ desde, hasta, tipos, usuarios }) {
   if (tipos?.length) parametros.tipos = tipos.join(',')
   if (usuarios?.length) parametros.usuarios = usuarios.join(',')
   return parametros
+}
+
+// 8.3: el perfil o "Conocelo en 5 minutos" en PDF (cualquier miembro, solo lo que puede ver)
+export async function descargarPdfPerfil(proyectoId, seccion) {
+  const respuesta = await cliente.get(
+    `/proyectos/${encodeURIComponent(proyectoId)}/exportar-perfil`,
+    { params: { seccion }, responseType: 'blob' },
+  )
+  guardarArchivo(respuesta.data, `trama-${seccion}-${hoy()}.pdf`)
 }

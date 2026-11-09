@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import cliente from './cliente.js'
-import { descargarTodosLosDatos } from './exportacion.js'
+import { descargarPdfPerfil, descargarTodosLosDatos } from './exportacion.js'
 
 vi.mock('./cliente.js', () => ({
   default: { defaults: { baseURL: '/api' }, get: vi.fn() },
@@ -33,6 +33,16 @@ describe('8.1: descargar todos los datos', () => {
 
     expect(cliente.get).toHaveBeenCalledWith('/proyectos/p1/exportar', {
       params: { formato: 'pdf', desde: '2026-09-01', hasta: '2026-11-06', tipos: 'FAMILIA,DOCENTE', usuarios: 'u1,u2' },
+      responseType: 'blob',
+    })
+  })
+
+  // 8.3
+  it('descarga el PDF del perfil o de Conocelo con su sección', async () => {
+    await descargarPdfPerfil('p1', 'conocelo')
+
+    expect(cliente.get).toHaveBeenCalledWith('/proyectos/p1/exportar-perfil', {
+      params: { seccion: 'conocelo' },
       responseType: 'blob',
     })
   })
