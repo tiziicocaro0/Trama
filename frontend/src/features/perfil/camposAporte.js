@@ -3,6 +3,13 @@ import { hoyIso } from '../../utils/fechas.js'
 import { Chalkboard, Ear, FirstAidKit, House, MapPin, MapTrifold, SoccerBall, Eye, Footprints, ForkKnife, Hand, HandHeart, HandPalm, Image, ListNumbers, MoonStars, PauseCircle, PersonSimple, PersonSimpleRun, PersonSimpleWalk, Shower, SlidersHorizontal, Sparkle, SquaresFour, TShirt, Toilet, ChatCircle, HandPointing, Hourglass, UsersThree, WaveSine } from '@phosphor-icons/react'
 
 export const textosPorTipo = {
+  COMUNICACION: {
+    introduccion:
+      'Compartí una observación sobre cómo se comunica, comprende o expresa lo que necesita.',
+    aclaracion:
+      'Usá ejemplos concretos y cotidianos para que otras personas de la red puedan entender qué le ayuda.',
+  },
+  
   ESTRATEGIA: {
     titulo: 'Título del aporte',
     contenido: 'Qué se hizo',
@@ -40,6 +47,13 @@ export const textosPorTipo = {
 
   FORTALEZA: {
     titulo: '¿Qué hace bien o disfruta?',
+  },
+
+  SENSORIAL: {
+    introduccion:
+      'Compartí una observación concreta, con palabras cotidianas y sin diagnósticos.',
+    aclaracion:
+      'La descripción y el archivo son opcionales.',
   },
 }
 

@@ -1,6 +1,7 @@
 package com.trama.tpo.demo.controllers;
 
 import com.trama.tpo.demo.service.ExportacionPdfService;
+import com.trama.tpo.demo.service.ExportacionPerfilService;
 import com.trama.tpo.demo.service.ExportacionService;
 import com.trama.tpo.demo.service.FiltroAportes;
 
@@ -18,23 +19,27 @@ import java.util.List;
 import java.util.UUID;
 
 // 8.1: descargar toda la información del niño (solo tutores)
+// 8.3: el perfil o "Conocelo en 5 minutos" en PDF (cualquier miembro, solo lo que puede ver)
 @RestController
-@RequestMapping("/api/proyectos/{proyectoId}/exportar")
+@RequestMapping("/api/proyectos/{proyectoId}")
 public class ExportacionController {
 
     private static final ZoneId ZONA = ZoneId.of("America/Argentina/Buenos_Aires");
 
     private final ExportacionService exportacionService;
     private final ExportacionPdfService exportacionPdfService;
+    private final ExportacionPerfilService exportacionPerfilService;
 
     public ExportacionController(
             ExportacionService exportacionService,
-            ExportacionPdfService exportacionPdfService) {
+            ExportacionPdfService exportacionPdfService,
+            ExportacionPerfilService exportacionPerfilService) {
         this.exportacionService = exportacionService;
         this.exportacionPdfService = exportacionPdfService;
+        this.exportacionPerfilService = exportacionPerfilService;
     }
 
-    @GetMapping
+    @GetMapping("/exportar")
     public ResponseEntity<?> exportar(
             @PathVariable UUID proyectoId,
             // Opcional acá para que el permiso se verifique antes (un no tutor recibe 403, no 400)
@@ -64,5 +69,24 @@ public class ExportacionController {
                 .headers(encabezados)
                 .contentType(MediaType.APPLICATION_JSON)
                 .body(exportacionService.exportar(proyectoId));
+    }
+
+    @GetMapping("/exportar-perfil")
+    public ResponseEntity<byte[]> exportarPerfil(
+            @PathVariable UUID proyectoId,
+            // Opcional acá para que el permiso se verifique antes (un ajeno recibe 403, no 400)
+            @RequestParam(required = false) String seccion) {
+
+        String elegida = exportacionPerfilService.verificarPedido(proyectoId, seccion);
+
+        // Sin el nombre del niño en el nombre del archivo
+        String archivo = "trama-" + elegida + "-" + LocalDate.now(ZONA) + ".pdf";
+        HttpHeaders encabezados = new HttpHeaders();
+        encabezados.setContentDisposition(ContentDisposition.attachment().filename(archivo).build());
+
+        return ResponseEntity.ok()
+                .headers(encabezados)
+                .contentType(MediaType.APPLICATION_PDF)
+                .body(exportacionPerfilService.exportar(proyectoId, elegida));
     }
 }

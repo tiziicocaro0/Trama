@@ -7,10 +7,12 @@ import java.time.LocalDate;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.List;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import com.lowagie.text.Document;
+import com.lowagie.text.Element;
 import com.lowagie.text.Image;
 import com.lowagie.text.PageSize;
 import com.lowagie.text.Paragraph;
@@ -47,14 +49,22 @@ public class PdfService {
         }
     }
 
-    public sealed interface Bloque permits Texto, Tabla, Tarjeta, LineaDeTiempo {}
+    public sealed interface Bloque permits Texto, Tabla, Tarjeta, LineaDeTiempo, Leyenda {}
 
     public record Texto(String contenido) implements Bloque {}
 
     public record Tabla(List<String> columnas, List<List<String>> filas) implements Bloque {}
 
     /** Por ejemplo: etiqueta "FORTALEZA · 02/11/2026 · María P.", título y texto. */
-    public record Tarjeta(String etiqueta, String titulo, String cuerpo) implements Bloque {}
+    /** tono opcional: con tono, la tarjeta toma el color de quien aportó (8.3); sin tono, la crema de siempre. */
+    public record Tarjeta(String etiqueta, String titulo, String cuerpo, Tono tono) implements Bloque {
+        public Tarjeta(String etiqueta, String titulo, String cuerpo) {
+            this(etiqueta, titulo, cuerpo, null);
+        }
+    }
+
+    /** La referencia de colores (familia, docentes, profesionales). */
+    public record Leyenda() implements Bloque {}
 
     /** Quién aportó: define el color de la caja en la línea de tiempo. */
     public enum Tono { FAMILIA, DOCENTE, PROFESIONAL, NEUTRO }
@@ -83,28 +93,35 @@ public class PdfService {
             documento.add(banda(titulo));
 
             for (Seccion seccion : secciones) {
-                Paragraph subtitulo = new Paragraph(seccion.titulo(), estilo.subtitulo);
-                subtitulo.setSpacingBefore(14);
-                subtitulo.setSpacingAfter(6);
-                documento.add(subtitulo);
+                List<Element> elementos = elementosDe(seccion);
 
-                if (seccion.bloques() == null || seccion.bloques().isEmpty()) {
-                    documento.add(new Paragraph("Sin datos", estilo.texto));
+                // Una sección sin título (por ejemplo, la leyenda de colores) va directo
+                if (seccion.titulo() == null) {
+                    for (Element elemento : elementos) {
+                        documento.add(elemento);
+                    }
                     continue;
                 }
-                for (Bloque bloque : seccion.bloques()) {
-                    if (bloque instanceof LineaDeTiempo linea) {
-                        for (com.lowagie.text.Element elemento : lineaDeTiempo.armar(linea)) {
-                            documento.add(elemento);
-                        }
-                        continue;
-                    }
-                    documento.add(switch (bloque) {
-                        case Texto t -> parrafo(t.contenido());
-                        case Tabla t -> tabla(t);
-                        case Tarjeta t -> tarjeta(t);
-                        case LineaDeTiempo l -> throw new IllegalStateException("Se arma arriba");
-                    });
+
+                // El subtítulo va pegado a su primer bloque: nunca queda solo al pie de una página
+                PdfPTable encabezado = new PdfPTable(1);
+                encabezado.setWidthPercentage(100);
+                encabezado.setKeepTogether(true);
+                PdfPCell subtitulo = new PdfPCell(new Paragraph(seccion.titulo(), estilo.subtitulo));
+                subtitulo.setBorder(Rectangle.NO_BORDER);
+                subtitulo.setPadding(0);
+                subtitulo.setPaddingTop(14);
+                subtitulo.setPaddingBottom(6);
+                encabezado.addCell(subtitulo);
+                PdfPCell primero = new PdfPCell();
+                primero.addElement(elementos.get(0));
+                primero.setBorder(Rectangle.NO_BORDER);
+                primero.setPadding(0);
+                encabezado.addCell(primero);
+                documento.add(encabezado);
+
+                for (Element elemento : elementos.subList(1, elementos.size())) {
+                    documento.add(elemento);
                 }
             }
 
@@ -118,6 +135,24 @@ public class PdfService {
                     "No se pudo generar el PDF",
                     HttpStatus.INTERNAL_SERVER_ERROR);
         }
+    }
+
+    // Los elementos de una sección; si no tiene bloques, "Sin datos"
+    private List<Element> elementosDe(Seccion seccion) {
+        if (seccion.bloques() == null || seccion.bloques().isEmpty()) {
+            return List.of(new Paragraph("Sin datos", estilo.texto));
+        }
+        List<Element> elementos = new ArrayList<>();
+        for (Bloque bloque : seccion.bloques()) {
+            switch (bloque) {
+                case Texto t -> elementos.add(parrafo(t.contenido()));
+                case Tabla t -> elementos.add(tabla(t));
+                case Tarjeta t -> elementos.add(tarjeta(t));
+                case LineaDeTiempo l -> elementos.addAll(lineaDeTiempo.armar(l));
+                case Leyenda l -> elementos.add(lineaDeTiempo.leyenda());
+            }
+        }
+        return elementos;
     }
 
     // Título en Handlee terracota sobre una banda crema
@@ -158,6 +193,12 @@ public class PdfService {
 
     // Fondo crema claro con borde; etiqueta terracota, título en negrita y el texto
     private PdfPTable tarjeta(Tarjeta tarjeta) {
+        if (tarjeta.tono() != null) {
+            PdfPTable conColor = new PdfPTable(1);
+            conColor.setWidthPercentage(100);
+            conColor.addCell(lineaDeTiempo.caja(tarjeta.tono(), tarjeta.etiqueta(), tarjeta.titulo(), tarjeta.cuerpo()));
+            return conColor;
+        }
         Paragraph contenido = new Paragraph();
         contenido.add(new Phrase(valor(tarjeta.etiqueta()) + "\n", estilo.etiqueta));
         contenido.add(new Phrase(valor(tarjeta.titulo()), estilo.negrita));

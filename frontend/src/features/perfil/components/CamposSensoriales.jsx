@@ -14,7 +14,6 @@ export default function CamposSensoriales({ parte, extra, setExtra, errores, dis
 
   return (
     <div className="space-y-4">
-      <p className="text-sm text-texto-suave">Compartí una observación concreta, con palabras cotidianas y sin diagnósticos. La descripción y el archivo son opcionales.</p>
       <fieldset>
         <legend className="mb-2 font-semibold">¿Cómo le resulta?</legend>
         <div className="flex flex-wrap gap-2">
