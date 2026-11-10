@@ -194,22 +194,27 @@ describe('Conocelo en 5 minutos (Tarea 2.8)', () => {
     ).toBeInTheDocument()
   })
 
-  it('invoca el diálogo de impresión del navegador al pulsar Imprimir', async () => {
+  it('descarga el resumen en PDF desde el back (8.3)', async () => {
     const user = userEvent.setup()
-    const printSpy = vi.spyOn(window, 'print').mockImplementation(() => {})
+    const crearUrl = vi.fn(() => 'blob:conocelo')
+    window.URL.createObjectURL = crearUrl
+    window.URL.revokeObjectURL = vi.fn()
+    const pedidoAnterior = cliente.get.getMockImplementation()
+    cliente.get.mockImplementation(async (ruta, opciones) =>
+      ruta.endsWith('/exportar-perfil')
+        ? { data: new Blob(['pdf'], { type: 'application/pdf' }) }
+        : pedidoAnterior(ruta, opciones),
+    )
 
-    try {
-      abrir(`/proyectos/${proyectoId}/conocelo`)
+    abrir(`/proyectos/${proyectoId}/conocelo`)
+    await user.click(await screen.findByRole('button', { name: 'Descargar PDF' }))
 
-      const botonImprimir = await screen.findByRole('button', {
-        name: 'Imprimir',
-      })
-      await user.click(botonImprimir)
-
-      expect(printSpy).toHaveBeenCalledTimes(1)
-    } finally {
-      printSpy.mockRestore()
-    }
+    expect(cliente.get).toHaveBeenCalledWith(`/proyectos/${proyectoId}/exportar-perfil`, {
+      params: { seccion: 'conocelo' },
+      responseType: 'blob',
+    })
+    expect(crearUrl).toHaveBeenCalledTimes(1)
+    expect(screen.queryByRole('button', { name: 'Imprimir' })).not.toBeInTheDocument()
   })
 
   it('no muestra el resumen si el usuario no tiene permiso (403)', async () => {
