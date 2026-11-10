@@ -203,6 +203,7 @@ class ArchivoControllerTest {
                                 {
                                   "tipo": "COMUNICACION",
                                   "titulo": "Informe solo para tutores",
+                                  "contenido": "Usa la imagen para pedir",
                                   "datos": "{\\\"categoria\\\":\\\"APOYOS\\\",\\\"formasComunicacion\\\":[\\\"PICTOGRAMAS\\\"],\\\"comoHablarle\\\":\\\"Mostrar la imagen\\\",\\\"queEvitar\\\":\\\"Apurarlo\\\"}",
                                   "visibilidad": "SOLO_TUTORES",
                                   "archivoIds": ["%s"]

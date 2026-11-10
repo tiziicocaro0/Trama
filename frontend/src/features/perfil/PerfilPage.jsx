@@ -1,18 +1,23 @@
-import { FilePdf, Heart, Plus, Sparkle, X, } from '@phosphor-icons/react'
+import { FilePdf, Heart, ListBullets, Plus, Sparkle, Target, X, } from '@phosphor-icons/react'
 import { Link, useParams } from 'react-router-dom'
 import { useState } from 'react'
 import Boton from '../../components/ui/Boton.jsx'
 import { Aviso } from '../../components/ui/Aviso.jsx'
+import InfoAyuda from '../../components/ui/InfoAyuda.jsx'
+import { avisar } from '../../components/avisos/avisosFlotantes.js'
 import BloquePerfil from './components/BloquePerfil.jsx'
+import DatosRapidosNino from './components/DatosRapidosNino.jsx'
 import BarraFiltrosAportes from '../../components/ui/BarraFiltrosAportes.jsx'
 import ChipFiltro from '../../components/ui/ChipFiltro.jsx'
+import MenuFiltro from '../../components/ui/MenuFiltro.jsx'
 import usePerfil from './hooks/usePerfil.js'
+import { coincideArea } from './especialidades.js'
 import { LEYENDA_NOTAS, seccionesPerfil, seccionNotas, seccionDesregulacion, } from './perfil.js'
 import { listarAportes } from '../../api/aportes.js'
 import useAuth from '../../hooks/useAuth.js'
 import { leerDatosAporte } from './perfil.js'
 import { CATEGORIAS_COMUNICACION, CATEGORIAS_RUTINA, TONOS_COMUNICACION, ICONOS_COMUNICACION, CONTEXTOS_RUTINA, claveCategoriaRutina } from './camposAporte.js'
-import { CATEGORIAS_SENSORIALES, ICONOS_SENSORIALES, TONOS_SENSORIALES, CATEGORIAS_ESTRATEGIA, ICONOS_ESTRATEGIA, RESULTADOS_ESTRATEGIA, TONOS_ESTRATEGIA, CATEGORIAS_DESREGULACION, ICONOS_DESREGULACION, TONOS_DESREGULACION, HOVER_CRUZ_DESREGULACION } from './camposAporte.js'
+import { CATEGORIAS_SENSORIALES, ICONOS_SENSORIALES, TONOS_SENSORIALES, CATEGORIAS_ESTRATEGIA, ICONOS_ESTRATEGIA, RESULTADOS_ESTRATEGIA, TONOS_ESTRATEGIA, CATEGORIAS_DESREGULACION, ICONOS_DESREGULACION, TONOS_DESREGULACION } from './camposAporte.js'
 import FiltrosRutinas from './components/FiltrosRutinas.jsx'
 import AvisoEliminacion from './eliminacion/AvisoEliminacion.jsx'
 import useProyectoActual from '../../hooks/useProyectoActual.js'
@@ -26,7 +31,6 @@ export default function PerfilPage() {
     id,
     listarAportes,
   )
-  const [mensajeGuardado, setMensajeGuardado] = useState('')
   // 8.2: aviso de eliminación programada en la portada (se oculta al cancelarla)
   const { esAdmin } = useProyectoActual()
   const [cancelacionEn, setCancelacionEn] = useState(null)
@@ -60,7 +64,7 @@ export default function PerfilPage() {
       return aporte.tipo === 'RUTINA'
         && (!categoria || claveCategoriaRutina(datosRutina) === categoria)
         && (!visibilidad || aporte.visibilidad === visibilidad)
-        && (!especialidad || aporte.autorEspecialidades?.some((item) => item.especialidad === especialidad))
+        && coincideArea(aporte, especialidad)
         && (!soloMios || aporte.autorId === usuario?.id)
         && (!busqueda.trim() || [aporte.titulo, aporte.contenido, CATEGORIAS_RUTINA.find(([valor]) => valor === datosRutina.categoria)?.[1], ...(datosRutina.contextos ?? []).map((valor) => CONTEXTOS_RUTINA.find(([codigo]) => codigo === valor)?.[1]), ...Object.values(datosRutina)].flat().join(' ').toLocaleLowerCase('es').includes(busqueda.trim().toLocaleLowerCase('es')))
     }).sort((a, b) => orden === 'recientes' ? new Date(b.creadoEn) - new Date(a.creadoEn) : new Date(a.creadoEn) - new Date(b.creadoEn))
@@ -70,7 +74,7 @@ export default function PerfilPage() {
       && (!categoria || leerDatosAporte(aporte.datos).categoria === categoria)
       && (!resultadoEstrategia || leerDatosAporte(aporte.datos).resultado === resultadoEstrategia)
       && (!visibilidad || aporte.visibilidad === visibilidad)
-      && (!especialidad || aporte.autorEspecialidades?.some((item) => item.especialidad === especialidad))
+      && coincideArea(aporte, especialidad)
       && (!soloMios || aporte.autorId === usuario?.id)
       && (!busqueda.trim() || [aporte.titulo, aporte.contenido, ...Object.values(leerDatosAporte(aporte.datos))]
         .join(' ').toLocaleLowerCase('es').includes(busqueda.trim().toLocaleLowerCase('es'))))
@@ -83,7 +87,7 @@ export default function PerfilPage() {
       && (!categoria || leerDatosAporte(aporte.datos).categoria === categoria)
       && (!listaSensorial || leerDatosAporte(aporte.datos).lista === listaSensorial)
       && (!visibilidad || aporte.visibilidad === visibilidad)
-      && (!especialidad || aporte.autorEspecialidades?.some((item) => item.especialidad === especialidad))
+      && coincideArea(aporte, especialidad)
       && (!soloMios || aporte.autorId === usuario?.id)
       && (!busqueda.trim() || [aporte.titulo, aporte.contenido, ...Object.values(leerDatosAporte(aporte.datos))]
         .join(' ').toLocaleLowerCase('es').includes(busqueda.trim().toLocaleLowerCase('es'))))
@@ -108,9 +112,7 @@ export default function PerfilPage() {
           return aporte.tipo === 'DESREGULACION'
             && (!categoria || datosDesregulacion.lista === categoria)
             && (!visibilidad || aporte.visibilidad === visibilidad)
-            && (!especialidad || aporte.autorEspecialidades?.some(
-              (item) => item.especialidad === especialidad
-            ))
+            && coincideArea(aporte, especialidad)
             && (!soloMios || aporte.autorId === usuario?.id)
             && (
               !busqueda.trim() ||
@@ -131,12 +133,14 @@ export default function PerfilPage() {
         )
     : null
 
-  function encabezadoConBoton(titulo, descripcion, alAgregar, puedeCrear, textoBoton = 'Agregar aporte',) {
+  function encabezadoConBoton(titulo, descripcion, alAgregar, puedeCrear, textoBoton = 'Agregar aporte', info = null) {
   return (
     <div className="mb-5 flex flex-wrap items-start justify-between gap-4">
       <div className="min-w-0 max-w-3xl">
-        <p className="font-display text-h1 text-secundario">
+        <p className="flex items-center gap-2 font-display text-h1 text-secundario">
           {titulo}
+          {/* Una aclaración que se ve al pasar el mouse por el (i) */}
+          {info && <InfoAyuda etiqueta={info.etiqueta}>{info.texto}</InfoAyuda>}
         </p>
 
         {descripcion && (
@@ -219,6 +223,7 @@ function encabezadoCompleto({
             {!seccion && cancelacionEn !== id && (
               <AvisoEliminacion proyecto={proyecto} esAdmin={esAdmin} onCancelada={() => setCancelacionEn(id)} />
             )}
+            {!seccion && <DatosRapidosNino proyecto={proyecto} />}
             {!seccion && (
               <div className="mb-6 grid gap-4 lg:grid-cols-12">
                 <section className="relative overflow-hidden rounded-lg border border-primario/20 bg-superficie p-5 shadow-sm sm:p-6 lg:col-span-8">
@@ -319,20 +324,12 @@ function encabezadoCompleto({
                 <DescargarPdfPerfil proyectoId={id} seccion="perfil" />
               </div>
             )}
-            {mensajeGuardado && (
-              <p role="status" className="mb-4 text-secundario">
-                {mensajeGuardado}
-              </p>
-            )}
             {seccion?.tipo === 'NOTA_PROFESIONAL' && (
-              <div className="mb-4 space-y-2">
-                <Aviso>{LEYENDA_NOTAS}</Aviso>
-                {proyecto.puedeCargarNotas !== true && (
-                  <p className="text-sm text-texto-suave">
-                    Las notas las cargan los profesionales de educación y salud.
-                  </p>
-                )}
-              </div>
+              proyecto.puedeCargarNotas !== true && (
+                <p className="mb-4 text-sm text-texto-suave">
+                  Las notas las cargan los profesionales de educación y salud.
+                </p>
+              )
             )}
             {proyecto.puedeCargar !== true &&
               proyecto.soloLecturaPorPlan !== true && (
@@ -347,7 +344,7 @@ function encabezadoCompleto({
             >
               {(seccion ? [seccion] : seccionesPerfil).map((item) => (
                 <BloquePerfil
-                  key={item.slug}
+                  key={`${item.slug}-${seccion ? 'completo' : 'resumen'}`}
                   seccion={item}
                   aportes={esComunicacion ? aportesComunicacion : esSensorial ? aportesSensoriales : esEstrategia ? aportesEstrategia : esRutina ? aportesRutina : esDesregulacion ? aportesDesregulacion : datos.aportes.filter(
                     (aporte) => aporte.tipo === item.tipo,
@@ -467,22 +464,13 @@ function encabezadoCompleto({
                             placeholder="Buscar en perfil sensorial…"
                             ariaBusqueda="Buscar en perfil sensorial"
                             extra={
-                              <label className="inline-flex min-h-11 shrink-0 items-center rounded-md border border-borde bg-superficie px-3 text-sm text-texto">
-                                <span className="sr-only">Lista</span>
-
-                                <select
-                                  aria-label="Lista"
-                                  value={listaSensorial}
-                                  onChange={(event) =>
-                                    setListaSensorial(event.target.value)
-                                  }
-                                  className="bg-transparent"
-                                >
-                                  <option value="">Ambas listas</option>
-                                  <option value="AYUDA">Le ayuda</option>
-                                  <option value="CUESTA">Le cuesta</option>
-                                </select>
-                              </label>
+                              <MenuFiltro
+                                etiqueta="Lista"
+                                Icono={ListBullets}
+                                valor={listaSensorial}
+                                opciones={[['', 'Ambas listas'], ['AYUDA', 'Le ayuda'], ['CUESTA', 'Le cuesta']]}
+                                onCambiar={setListaSensorial}
+                              />
                             }
                           />
                         ),
@@ -548,26 +536,13 @@ function encabezadoCompleto({
                             placeholder="Buscar en estrategias…"
                             ariaBusqueda="Buscar en estrategias"
                             extra={
-                              <label className="inline-flex min-h-11 shrink-0 items-center rounded-md border border-borde bg-superficie px-3 text-sm text-texto">
-                                <span className="sr-only">Resultado</span>
-
-                                <select
-                                  aria-label="Resultado"
-                                  value={resultadoEstrategia}
-                                  onChange={(event) =>
-                                    setResultadoEstrategia(event.target.value)
-                                  }
-                                  className="max-w-40 bg-transparent"
-                                >
-                                  <option value="">Todos los resultados</option>
-
-                                  {RESULTADOS_ESTRATEGIA.map(([valor, etiqueta]) => (
-                                    <option key={valor} value={valor}>
-                                      {etiqueta}
-                                    </option>
-                                  ))}
-                                </select>
-                              </label>
+                              <MenuFiltro
+                                etiqueta="Resultado"
+                                Icono={Target}
+                                valor={resultadoEstrategia}
+                                opciones={[['', 'Todos los resultados'], ...RESULTADOS_ESTRATEGIA]}
+                                onCambiar={setResultadoEstrategia}
+                              />
                             }
                           />
                         ),
@@ -651,7 +626,6 @@ function encabezadoCompleto({
                                   etiqueta={etiqueta}
                                   Icono={Icono}
                                   tono={TONOS_DESREGULACION[valor]}
-                                  hoverCruz={HOVER_CRUZ_DESREGULACION[valor]}
                                   onClick={() => setCategoria(activa ? '' : valor)}
                                 />
                               )
@@ -668,6 +642,7 @@ function encabezadoCompleto({
                         alAgregar,
                         proyecto.puedeCargarNotas === true,
                         'Agregar nota',
+                        { etiqueta: 'Sobre las notas', texto: LEYENDA_NOTAS },
                       )
                     }
 
@@ -685,15 +660,12 @@ function encabezadoCompleto({
                       : proyecto.puedeCargar === true
                   }
                   alGuardar={(accion) => {
-                    const esNota = item.tipo === 'NOTA_PROFESIONAL'
-                    setMensajeGuardado(
+                    // Como en el mockup: un aviso flotante que dice dónde quedó guardado
+                    const cosa = item.tipo === 'NOTA_PROFESIONAL' ? 'Tu nota' : 'Tu aporte'
+                    avisar(
                       accion === 'archivado'
-                        ? esNota
-                          ? 'Nota archivada.'
-                          : 'Aporte archivado.'
-                        : esNota
-                          ? 'Nota guardada.'
-                          : 'Aporte guardado.',
+                        ? `Listo. ${cosa} se archivó.`
+                        : `Listo. ${cosa} se guardó en ${item.titulo}.`,
                     )
                     reintentar()
                   }}

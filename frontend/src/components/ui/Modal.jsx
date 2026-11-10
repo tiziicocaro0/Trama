@@ -2,7 +2,8 @@ import { useEffect, useRef } from 'react';
 
 // cerrarAlTocarFuera: tocar el fondo o apretar Escape cierra el modal. Solo para
 // formularios que no pierden lo escrito al cerrarse (por ejemplo, porque guardan un borrador).
-export function Modal({ abierto, titulo, onCerrar, cerrarAlTocarFuera = false, children }) {
+// ancho: clase de ancho máximo; el visor de Recursos usa uno mayor para ver la imagen grande.
+export function Modal({ abierto, titulo, onCerrar, cerrarAlTocarFuera = false, ancho = 'max-w-lg', children }) {
   const cerrarActual = useRef(onCerrar);
   useEffect(() => {
     cerrarActual.current = onCerrar;
@@ -27,7 +28,7 @@ export function Modal({ abierto, titulo, onCerrar, cerrarAlTocarFuera = false, c
         if (cerrarAlTocarFuera && evento.target === evento.currentTarget) onCerrar?.();
       }}
     >
-      <div className="max-h-full w-full max-w-lg overflow-y-auto overscroll-contain rounded-3xl border border-oliva/20 bg-crema p-4 shadow-lg sm:p-6">
+      <div className={`max-h-full w-full ${ancho} overflow-y-auto overscroll-contain rounded-3xl border border-oliva/20 bg-crema p-4 shadow-lg sm:p-6`}>
         <div className="mb-4 flex items-center justify-between gap-4">
           <h2
             id="modal-titulo"

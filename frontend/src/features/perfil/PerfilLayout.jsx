@@ -10,6 +10,7 @@ import { seccionesPerfil, seccionDesregulacion, } from './perfil.js'
 const ESPACIOS = {
   red: 'Red',
   'datos-personales': 'Datos personales',
+  recursos: 'Recursos',
   notas: 'Notas',
   bitacora: 'Bitácora',
   calendario: 'Calendario',

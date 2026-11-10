@@ -1,33 +1,12 @@
-import {
-  ArrowRight,
-  CalendarBlank,
-  ChatCircle,
-  Ear,
-  Heart,
-  Lightbulb,
-  NotePencil,
-  Palette,
-  Star,
-  X,
-} from '@phosphor-icons/react'
-import { Fragment, useRef, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Plus, X } from '@phosphor-icons/react'
+import { Fragment, useEffect, useRef, useState } from 'react'
+import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { archivarAporte } from '../../../api/aportes.js'
 import TarjetaAporte from '../../../components/ui/TarjetaAporte.jsx'
 import EditorAporte from './EditorAporte.jsx'
 import HistorialAporte from './HistorialAporte.jsx'
 import { leerDatosAporte } from '../perfil.js'
-
-const iconos = {
-  FORTALEZA: Star,
-  INTERES: Palette,
-  COMUNICACION: ChatCircle,
-  SENSORIAL: Ear,
-  ESTRATEGIA: Lightbulb,
-  RUTINA: CalendarBlank,
-  NOTA_PROFESIONAL: NotePencil,
-  DESREGULACION: Heart,
-}
+import { ICONOS_APORTE } from '../iconosAporte.js'
 
 export default function BloquePerfil({
   seccion,
@@ -38,12 +17,34 @@ export default function BloquePerfil({
   alGuardar,
   encabezado,
 }) {
-  const [editor, setEditor] = useState(null)
+  const [params, setParams] = useSearchParams()
+  // El + de Información general llega con ?agregar=1: el panel arranca abierto
+  const [editor, setEditor] = useState(() =>
+    completo && puedeCrear && params.get('agregar') === '1' ? {} : null,
+  )
   const [archivandoId, setArchivandoId] = useState(null)
   const [errorArchivo, setErrorArchivo] = useState('')
   // 3.2: aporte cuyo historial está abierto
   const [historialDe, setHistorialDe] = useState(null)
   const disparador = useRef(null)
+  const navigate = useNavigate()
+  const rutaSeccion = `/proyectos/${proyectoId}/${seccion.slug}`
+
+  // Una vez abierto, se saca ?agregar=1 de la dirección para que recargar no lo vuelva a abrir
+  useEffect(() => {
+    if (!completo || params.get('agregar') !== '1') return
+    setParams((actuales) => {
+      const siguientes = new URLSearchParams(actuales)
+      siguientes.delete('agregar')
+      return siguientes
+    }, { replace: true })
+  }, [completo, params, setParams])
+
+  // En Información general toda la tarjeta lleva a la sección (salvo sus propios botones y links)
+  function abrirSeccion(evento) {
+    if (completo || evento.target.closest('a, button, input, select, textarea, label')) return
+    navigate(rutaSeccion)
+  }
 
   function abrirEditor(event, aporte = {}) {
     disparador.current = event.currentTarget
@@ -75,14 +76,11 @@ export default function BloquePerfil({
     }
   }
 
-  const Icon = iconos[seccion.tipo]
+  const Icon = ICONOS_APORTE[seccion.tipo]
   const esNota = seccion.tipo === 'NOTA_PROFESIONAL'
-  const esComunicacion = seccion.tipo === 'COMUNICACION' && completo
   const esSensorial = seccion.tipo === 'SENSORIAL' && completo
-  const esEstrategia = seccion.tipo === 'ESTRATEGIA' && completo
-  const esRutina = seccion.tipo === 'RUTINA' && completo
-  const esDesregulacion = seccion.tipo === 'DESREGULACION' && completo
-  const esPanel = esComunicacion || esSensorial || esEstrategia || esRutina || esDesregulacion
+  // En la página de una sección los aportes van en tarjetas sueltas, con el título arriba (el encabezado)
+  const esPanel = completo
   const visibles = completo ? aportes : aportes.slice(0, 3)
   const agrupados = esSensorial
     ? ['AYUDA', 'CUESTA', ''].flatMap((lista) => visibles.filter((aporte) => (leerDatosAporte(aporte.datos).lista || '') === lista))
@@ -91,7 +89,8 @@ export default function BloquePerfil({
   return (
     <section
       aria-labelledby={`titulo-${seccion.slug}`}
-      className={esPanel ? 'flex min-w-0 flex-col' : 'flex min-w-0 flex-col rounded-lg bg-superficie p-5 shadow-sm sm:p-6'}
+      onClick={abrirSeccion}
+      className={esPanel ? 'flex min-w-0 flex-col' : 'flex min-w-0 cursor-pointer flex-col rounded-lg bg-superficie p-5 shadow-sm ring-primario/30 transition-shadow hover:shadow-md hover:ring-2 motion-reduce:transition-none sm:p-6'}
     >
         <div className={esPanel ? 'sr-only' : 'mb-3 flex items-center gap-3'}>
           <span
@@ -105,6 +104,16 @@ export default function BloquePerfil({
         >
           {seccion.titulo}
         </h2>
+        {!completo && puedeCrear && (
+          <Link
+            to={`${rutaSeccion}?agregar=1`}
+            aria-label={`Agregar ${esNota ? 'nota' : 'aporte'} en ${seccion.titulo}`}
+            title={`Agregar ${esNota ? 'nota' : 'aporte'}`}
+            className="ml-auto flex size-10 shrink-0 items-center justify-center rounded-full bg-primario text-superficie transition-colors hover:bg-primario-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primario motion-reduce:transition-none"
+          >
+            <Plus size={20} weight="bold" aria-hidden="true" />
+          </Link>
+        )}
       </div>
       {encabezado?.(abrirDesdeEncabezado)}
       {errorArchivo && (
@@ -158,27 +167,26 @@ export default function BloquePerfil({
           }}
         />
       )}
+      {/* Agregar o editar siempre abre el panel lateral derecho, en todas las secciones */}
       {editor && (
-        <div className={esPanel ? 'fixed inset-0 z-60 flex justify-end bg-texto/40' : ''}>
+        <div className="fixed inset-0 z-60 flex justify-end bg-texto/40">
           <div
-            role={esPanel ? 'dialog' : undefined}
-            aria-modal={esPanel ? 'true' : undefined}
-            aria-labelledby={esPanel ? 'titulo-panel-aporte' : undefined}
-            className={esPanel ? 'w-full overflow-y-auto rounded-l-2xl bg-superficie p-4 shadow-md sm:max-w-xl' : ''}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="titulo-panel-aporte"
+            className="w-full overflow-y-auto rounded-l-2xl bg-superficie p-4 shadow-md sm:max-w-xl"
           >
-            {esPanel && (
-              <div className="flex items-center justify-between border-b border-borde pb-3">
-                <h2
-                  id="titulo-panel-aporte"
-                  className="ml-4 font-display text-h2 text-secundario"
-                >
-                  {editor.id ? 'Editar aporte' : 'Agregar aporte'}
-                </h2>
-                <button type="button" onClick={cancelar} aria-label="Cerrar panel de aporte" className="flex min-h-11 min-w-11 items-center justify-center rounded-sm text-primario focus-visible:outline-2 focus-visible:outline-primario">
-                  <X size={24} aria-hidden="true" />
-                </button>
-              </div>
-            )}
+            <div className="flex items-center justify-between border-b border-borde pb-3">
+              <h2
+                id="titulo-panel-aporte"
+                className="ml-4 font-display text-h2 text-secundario"
+              >
+                {`${editor.id ? 'Editar' : 'Agregar'} ${esNota ? 'nota' : 'aporte'}`}
+              </h2>
+              <button type="button" onClick={cancelar} aria-label="Cerrar panel de aporte" className="flex min-h-11 min-w-11 items-center justify-center rounded-sm text-primario focus-visible:outline-2 focus-visible:outline-primario">
+                <X size={24} aria-hidden="true" />
+              </button>
+            </div>
             <EditorAporte
               key={editor.id ?? 'nuevo'}
               seccion={seccion}
@@ -194,12 +202,13 @@ export default function BloquePerfil({
         </div>
       )}
       {!completo && (
+        // Para teclado y lectores de pantalla: con el mouse se toca toda la tarjeta
         <Link
-          to={`/proyectos/${proyectoId}/${seccion.slug}`}
+          to={rutaSeccion}
           aria-label={`Ver todo: ${seccion.titulo}`}
-          className="mt-auto flex min-h-11 items-center justify-between gap-3 rounded-sm font-semibold text-primario hover:underline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-primario"
+          className="sr-only rounded-sm font-semibold text-primario focus-visible:not-sr-only focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-primario"
         >
-          Ver todo <ArrowRight size={20} aria-hidden="true" />
+          Ver todo
         </Link>
       )}
     </section>

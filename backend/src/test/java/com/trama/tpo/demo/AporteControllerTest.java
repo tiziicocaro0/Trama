@@ -62,7 +62,7 @@ class AporteControllerTest {
             """;
 
     private static final String SENSORIAL_VALIDO = """
-            {"tipo":"SENSORIAL","titulo":"Busca balancearse","contenido":"",
+            {"tipo":"SENSORIAL","titulo":"Busca balancearse","contenido":"Se hamaca para calmarse",
              "datos":"{\\\"lista\\\":\\\"AYUDA\\\",\\\"categoria\\\":\\\"MOVIMIENTO_EQUILIBRIO\\\",\\\"contexto\\\":\\\"CASA\\\"}",
              "visibilidad":"PROFESIONALES"}
             """;

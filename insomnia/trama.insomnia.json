@@ -40,7 +40,7 @@
       "_type": "request_group",
       "parentId": "wrk_trama",
       "name": "1. Login (correr primero)",
-      "description": "Loguea a los usuarios del DataSeeder y guarda sus tokens en el entorno. Correr toda la carpeta antes de las demás.",
+      "description": "Loguea a los usuarios de los datos de prueba y guarda sus tokens en el entorno. Correr toda la carpeta antes de las demás.",
       "metaSortKey": 100
     },
     {
@@ -301,7 +301,7 @@
       "name": "Registro con email ya usado",
       "method": "POST",
       "url": "{{ _.base_url }}/auth/registro",
-      "description": "`tutor@trama.test` ya existe (DataSeeder). Código `EMAIL_EN_USO`.\n\n**Respuesta esperada:** `409`",
+      "description": "`tutor@trama.test` ya existe (datos de prueba). Código `EMAIL_EN_USO`.\n\n**Respuesta esperada:** `409`",
       "metaSortKey": 320,
       "authentication": {},
       "headers": [
@@ -787,7 +787,7 @@
       "_type": "request_group",
       "parentId": "wrk_trama",
       "name": "6. Bloqueo de cuenta (5 intentos)",
-      "description": "Usa el usuario creado en 'Registro exitoso'. NUNCA usar un usuario del DataSeeder: queda bloqueado 15 minutos.",
+      "description": "Usa el usuario creado en 'Registro exitoso'. NUNCA usar un usuario de los datos de prueba: queda bloqueado 15 minutos.",
       "metaSortKey": 930
     },
     {

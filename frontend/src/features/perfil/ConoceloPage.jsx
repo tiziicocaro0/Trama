@@ -4,12 +4,12 @@ import {
   Heart,
   Lightbulb,
   Palette,
-  Printer,
 } from '@phosphor-icons/react'
 import { Link, useParams } from 'react-router-dom'
 import { obtenerResumenProyecto } from '../../api/aportes.js'
 import Boton from '../../components/ui/Boton.jsx'
 import usePerfil from './hooks/usePerfil.js'
+import DatosRapidosNino from './components/DatosRapidosNino.jsx'
 import { leerDatosAporte } from './perfil.js'
 import DescargarPdfPerfil from './components/DescargarPdfPerfil.jsx'
 
@@ -110,11 +110,6 @@ export default function ConoceloPage() {
   const queEvitar = resumen?.sensorial ?? []
   const desregulacion = resumen?.desregulacion ?? []
 
-  function imprimirResumen() {
-    if (typeof window !== 'undefined' && typeof window.print === 'function') {
-      window.print()
-    }
-  }
 
   return (
     <div className="min-h-svh bg-fondo text-texto">
@@ -146,8 +141,7 @@ export default function ConoceloPage() {
         ) : (
           proyecto && (
             <>
-              <div className="print:hidden">
-              </div>
+              <DatosRapidosNino proyecto={proyecto} />
 
               <div className="mb-6 flex flex-wrap items-center justify-between gap-4 rounded-lg bg-superficie p-5 shadow-sm sm:p-6">
                 <div>
@@ -159,11 +153,7 @@ export default function ConoceloPage() {
                     en el perfil y tenés permiso para ver.
                   </p>
                 </div>
-                <div className="flex flex-wrap gap-3 print:hidden">
-                  <Boton variant="secondary" onClick={imprimirResumen}>
-                    <Printer size={20} aria-hidden="true" />
-                    Imprimir
-                  </Boton>
+                <div className="print:hidden">
                   {/* 8.3: el PDF de TRAMA, con fecha y solo lo que la persona puede ver */}
                   <DescargarPdfPerfil proyectoId={id} seccion="conocelo" />
                 </div>

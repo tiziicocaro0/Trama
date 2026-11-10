@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { PencilSimple } from '@phosphor-icons/react'
+import { Crown, PencilSimple, UserMinus } from '@phosphor-icons/react'
 import { useParams, useSearchParams } from 'react-router-dom'
 import {
   cambiarEspecialidades,
@@ -263,27 +263,32 @@ export default function RedPage() {
                           </div>
 
                           {esAdmin && (
-                            <div className="flex shrink-0 flex-wrap justify-end gap-2">
+                            <div className="flex shrink-0 justify-end gap-1">
                               {persona.rol === 'FAMILIAR' && (
-                                <Boton
-                                  variant="secondary"
+                                <button
+                                  type="button"
                                   onClick={() => convertirEnCoTutor(persona)}
                                   disabled={convirtiendoId === persona.id}
+                                  aria-label="Hacer co-tutor"
+                                  title={`Hacer co-tutor a ${nombre}`}
+                                  className="flex size-10 items-center justify-center rounded-full text-secundario transition-colors hover:bg-decoracion focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primario disabled:cursor-not-allowed disabled:opacity-60 motion-reduce:transition-none"
                                 >
-                                  Hacer co-tutor
-                                </Boton>
+                                  <Crown size={20} aria-hidden="true" />
+                                </button>
                               )}
                               {/* Nadie se quita el acceso a sí mismo */}
                               {!esMiPerfil && (
-                                <Boton
-                                  variant="danger"
+                                <button
+                                  type="button"
                                   onClick={() => {
                                     setMiembroSeleccionado(persona)
                                   }}
                                   aria-label={`Quitar acceso a ${nombre}`}
+                                  title={`Quitar acceso a ${nombre}`}
+                                  className="flex size-10 items-center justify-center rounded-full text-error transition-colors hover:bg-decoracion focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primario motion-reduce:transition-none"
                                 >
-                                  Quitar acceso
-                                </Boton>
+                                  <UserMinus size={20} aria-hidden="true" />
+                                </button>
                               )}
                             </div>
                           )}

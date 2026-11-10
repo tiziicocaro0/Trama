@@ -42,7 +42,9 @@ import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.EnumSet;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 @Service
@@ -104,12 +106,14 @@ public class AporteService {
         }
         validarInteres(request);
         validarFortaleza(request);
+        validarDetallesOtro(request);
         validarObservacion(request);
         validarNota(request);
         validarComunicacion(request);
         validarSensorial(request);
         validarEstrategia(request);
         validarAbc(request);
+        validarContenido(request);
 
         UUID usuarioId = usuarioActual.obtenerId();
 
@@ -301,12 +305,14 @@ public class AporteService {
         // Validar los datos específicos del aporte
         validarInteres(request);
         validarFortaleza(request);
+        validarDetallesOtro(request);
         validarObservacion(request);
         validarNota(request);
         validarComunicacion(request);
         validarSensorial(request);
         validarEstrategia(request);
         validarAbc(request);
+        validarContenido(request);
 
         // Guardar la versión anterior antes de editar
         AporteVersion version = AporteVersion.builder()
@@ -514,7 +520,8 @@ public class AporteService {
                 confirmantes.stream().anyMatch(c -> c.usuarioId().equals(usuarioActual.obtenerId())),
                 confirmantes.stream().map(ConfirmacionAporteService.Confirmante::nombre).toList(),
                 revisionPendiente,
-                revisionPendienteId
+                revisionPendienteId,
+                aporte.getAutor().getFotoRuta() != null
         );
     }
 
@@ -674,6 +681,55 @@ public class AporteService {
                         HttpStatus.BAD_REQUEST
                 );
         }
+    }
+
+    // Las secciones del perfil y las notas profesionales necesitan descripción.
+    // La bitácora (observaciones, ABC) y las sugerencias tienen sus propios campos.
+    static final Set<TipoAporte> TIPOS_CON_DESCRIPCION = EnumSet.of(
+            TipoAporte.INTERES, TipoAporte.FORTALEZA, TipoAporte.COMUNICACION, TipoAporte.SENSORIAL,
+            TipoAporte.ESTRATEGIA, TipoAporte.RUTINA, TipoAporte.DESREGULACION, TipoAporte.NOTA_PROFESIONAL);
+
+    private void validarContenido(AporteRequest request) {
+        if (TIPOS_CON_DESCRIPCION.contains(request.tipo())
+                && (request.contenido() == null || request.contenido().isBlank())) {
+            throw new ApiException(
+                    "CONTENIDO_OBLIGATORIO",
+                    "La descripción es obligatoria",
+                    HttpStatus.BAD_REQUEST
+            );
+        }
+    }
+
+    // Al elegir «Otro» se aclara cuál (contextoOtro, categoriaOtra…): texto corto, como una etiqueta
+    static final int LARGO_DETALLE_OTRO = 60;
+
+    private void validarDetallesOtro(AporteRequest request) {
+        if (request.datos() == null || request.datos().isBlank()) {
+            return;
+        }
+        JsonNode datos;
+        try {
+            datos = mapper.readTree(request.datos());
+        } catch (JsonProcessingException e) {
+            return; // el validador de cada tipo ya avisa que los datos no son válidos
+        }
+        if (datos == null || !datos.isObject()) {
+            return;
+        }
+        datos.fields().forEachRemaining(campo -> {
+            String nombre = campo.getKey();
+            if (!nombre.endsWith("Otro") && !nombre.endsWith("Otra")) {
+                return;
+            }
+            JsonNode valor = campo.getValue();
+            if (!valor.isTextual() || valor.asText().length() > LARGO_DETALLE_OTRO) {
+                throw new ApiException(
+                        "DETALLE_OTRO_INVALIDO",
+                        "Lo que escribas en «Otro» puede tener hasta " + LARGO_DETALLE_OTRO + " caracteres",
+                        HttpStatus.BAD_REQUEST
+                );
+            }
+        });
     }
 
     private void validarFortaleza(AporteRequest request) {

@@ -6,7 +6,7 @@
 --
 -- Importante: el contenido de los aportes va cifrado con la clave de cada entorno,
 -- así que este script solo carga títulos (contenido y datos en NULL).
--- El texto cifrado lo completa el DataSeeder en Java, que sí tiene la clave.
+-- El texto cifrado lo completa CargadorDatosDePrueba en Java (backend/src/test), que sí tiene la clave.
 -- Los ids son fijos para que los tests y el front puedan usarlos.
 -- =====================================================================
 
@@ -63,7 +63,7 @@ INSERT INTO invitacion (id, proyecto_id, invitado_por, email, rol, token_hash, v
   (UUID_TO_BIN(UUID()), @p_tomi, @u_tutor, 'fono@trama.test', 'SALUD',
    '43ba5181b89aee5fa32eb686fb5c9ae71294787c9a2cd50b0f62b9562647f71f', NOW() + INTERVAL 7 DAY);
 
--- ---------- Aportes de Tomi (solo títulos; el contenido cifrado lo agrega el DataSeeder) ----------
+-- ---------- Aportes de Tomi (solo títulos; el contenido cifrado lo agrega CargadorDatosDePrueba) ----------
 -- Tomados de la diapositiva "Perfil del niño" de la presentación.
 INSERT INTO aporte (id, proyecto_id, autor_id, tipo, titulo, visibilidad) VALUES
   (UUID_TO_BIN(UUID()), @p_tomi, @u_tutor,   'INTERES',          'Trenes',                                 'TODOS'),

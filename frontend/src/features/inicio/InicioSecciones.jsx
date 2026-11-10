@@ -1,10 +1,4 @@
-import {
-  ArrowRight,
-  BookOpen,
-  Lightbulb,
-  Plus,
-  Users,
-} from '@phosphor-icons/react'
+import { ArrowRight, Plus } from '@phosphor-icons/react'
 import { Link } from 'react-router-dom'
 import Boton from '../../components/ui/Boton.jsx'
 import { fechaLocal } from '../calendario/utils/periodo.js'
@@ -27,28 +21,6 @@ const tonos = [
     fondo: 'bg-agua/5',
     icono: 'bg-agua/20 text-secundario',
     fecha: 'bg-agua/20 text-secundario',
-  },
-]
-
-// Módulos que todavía no existen: se muestran como "Próximamente", sin enlaces.
-const recursosFuturos = [
-  {
-    titulo: 'Guías y materiales',
-    descripcion: 'Recursos para el día a día',
-    icon: BookOpen,
-    tono: 'bg-decoracion text-primario',
-  },
-  {
-    titulo: 'Estrategias',
-    descripcion: 'Herramientas prácticas',
-    icon: Lightbulb,
-    tono: 'bg-agua/20 text-exito',
-  },
-  {
-    titulo: 'Comunidad',
-    descripcion: 'Experiencias y consejos',
-    icon: Users,
-    tono: 'bg-agua/15 text-secundario',
   },
 ]
 
@@ -208,37 +180,6 @@ export function Eventos({ resumen }) {
           ))}
         </ul>
       )}
-    </Panel>
-  )
-}
-
-export function Recursos() {
-  return (
-    <Panel
-      id="recursos-titulo"
-      titulo="Recursos"
-      accion={
-        <span className="rounded-full bg-decoracion px-3 py-1 text-sm font-semibold text-primario">
-          Próximamente
-        </span>
-      }
-    >
-      <ul className="divide-y divide-borde/40">
-        {recursosFuturos.map(({ titulo, descripcion, icon: Icon, tono }) => (
-          <li key={titulo} className="flex items-center gap-3 py-3">
-            <span className={`flex size-12 shrink-0 items-center justify-center rounded-full ${tono}`}>
-              <Icon size={32} weight="light" aria-hidden="true" />
-            </span>
-            <span className="min-w-0">
-              <span className="block font-bold">{titulo}</span>
-              <span className="mt-1 block text-sm text-texto-suave">{descripcion}</span>
-            </span>
-          </li>
-        ))}
-      </ul>
-      <p className="mt-2 text-xs text-texto-suave">
-        Estamos preparando guías, estrategias y un espacio para compartir experiencias.
-      </p>
     </Panel>
   )
 }

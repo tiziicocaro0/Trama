@@ -1,10 +1,11 @@
 import { useEffect, useRef, useState } from 'react'
 import Campo from '../../../components/ui/Campo.jsx'
 import CampoFecha from '../../../components/ui/CampoFecha.jsx'
+import CampoDetalleOtro from './CampoDetalleOtro.jsx'
 import CampoFormulario from '../../../components/ui/CampoFormulario.jsx'
 import { guardarAporte } from '../../../api/aportes.js'
 import { leerDatosAporte } from '../perfil.js'
-import { CATEGORIAS_COMUNICACION, FORMAS_COMUNICACION, CATEGORIAS_DESREGULACION, ICONOS_DESREGULACION,TONOS_DESREGULACION,camposPorTipo, datosSinVacios, textosPorTipo, validarCamposSensoriales, validarCamposEstrategia, validarCamposRutina, validarCamposDesregulacion, } from '../camposAporte.js'
+import { CATEGORIAS_COMUNICACION, FORMAS_COMUNICACION, CATEGORIAS_DESREGULACION, ICONOS_DESREGULACION,TONOS_DESREGULACION,camposPorTipo, datosSinVacios, DETALLES_OTRO, eligioOtro, sinDetalleSobrante, textosPorTipo, validarCamposSensoriales, validarCamposEstrategia, validarCamposRutina, validarCamposDesregulacion, } from '../camposAporte.js'
 import CamposSensoriales from './CamposSensoriales.jsx'
 import CamposEstrategia from './CamposEstrategia.jsx'
 import CamposRutina from './CamposRutina.jsx'
@@ -72,6 +73,9 @@ export default function EditorAporte({
   async function guardar(event) {
     event.preventDefault()
     if (pendiente.current) return
+    // La descripción es obligatoria en todas las secciones: su aviso se muestra junto con los demás
+    const errorContenido = contenido.trim() ? '' : esNota ? 'Escribí el texto de la nota.' : 'Escribí una descripción.'
+    const conContenido = (errores) => (errorContenido && !errores.contenido ? { ...errores, contenido: errorContenido } : errores)
     if (esComunicacion) {
       const errores = {
         ...(!extra.categoria ? { categoria: 'Elegí una categoría.' } : {}),
@@ -82,23 +86,23 @@ export default function EditorAporte({
         ...(!extra.comoHablarle?.trim() ? { comoHablarle: 'Contanos cómo conviene hablarle.' } : {}),
         ...(!extra.queEvitar?.trim() ? { queEvitar: 'Contanos qué conviene evitar.' } : {}),
       }
-      setErroresCampos(errores)
-      if (Object.keys(errores).length) return
+      setErroresCampos(conContenido(errores))
+      if (Object.keys(conContenido(errores)).length) return
     }
     if (esSensorial) {
       const errores = validarCamposSensoriales(extra, titulo)
-      setErroresCampos(errores)
-      if (Object.keys(errores).length) return
+      setErroresCampos(conContenido(errores))
+      if (Object.keys(conContenido(errores)).length) return
     }
     if (esEstrategia) {
       const errores = validarCamposEstrategia(extra, contenido)
-      setErroresCampos(errores)
-      if (Object.keys(errores).length) return
+      setErroresCampos(conContenido(errores))
+      if (Object.keys(conContenido(errores)).length) return
     }
     if (esRutina) {
       const errores = validarCamposRutina(extra, titulo, contenido, visibilidad)
-      setErroresCampos(errores)
-      if (Object.keys(errores).length) return
+      setErroresCampos(conContenido(errores))
+      if (Object.keys(conContenido(errores)).length) return
     }
     if (esDesregulacion) {
       const errores = validarCamposDesregulacion(
@@ -108,16 +112,21 @@ export default function EditorAporte({
         visibilidad,
       )
 
-      setErroresCampos(errores)
+      setErroresCampos(conContenido(errores))
 
-      if (Object.keys(errores).length) return
+      if (Object.keys(conContenido(errores)).length) return
     }
     if (
       !titulo.trim() ||
       titulo.trim().length > 150 ||
+      errorContenido ||
       contenido.length > 10000
     ) {
-      setErroresCampos((actual) => ({ ...actual, titulo: !titulo.trim() || titulo.trim().length > 150 ? 'Escribí un título de hasta 150 caracteres.' : '' }))
+      setErroresCampos((actual) => ({
+        ...actual,
+        titulo: !titulo.trim() || titulo.trim().length > 150 ? 'Escribí un título de hasta 150 caracteres.' : '',
+        contenido: actual.contenido || errorContenido,
+      }))
       setError(contenido.length > 10000 ? 'La descripción no puede superar los 10000 caracteres.' : '')
       requestAnimationFrame(() => alerta.current?.focus())
       return
@@ -138,7 +147,7 @@ export default function EditorAporte({
         titulo: titulo.trim(),
         contenido: contenido.trim(),
         visibilidad,
-        ...(campos.length || esComunicacion || esSensorial || esEstrategia || esRutina || esDesregulacion ? { datos: JSON.stringify(datosSinVacios(esComunicacion && !extra.formasComunicacion?.includes('OTRA') ? { ...extra, otraForma: '' } : extraRutina)) } : {}),
+        ...(campos.length || esComunicacion || esSensorial || esEstrategia || esRutina || esDesregulacion ? { datos: JSON.stringify(datosSinVacios(sinDetalleSobrante(seccion.tipo, esComunicacion && !extra.formasComunicacion?.includes('OTRA') ? { ...extra, otraForma: '' } : extraRutina))) } : {}),
         ...(incluirArchivos
           ? { archivoIds: archivos.map((item) => item.id) }
           : {}),
@@ -234,8 +243,8 @@ export default function EditorAporte({
           htmlFor={`contenido-aporte-${seccion.tipo}`}
           className="mb-2 block font-semibold"
         >
-          {esSensorial ? 'Descripción u observación (opcional)' : esRutina ? 'Descripción' : textos.contenido ??
-            (esNota ? 'Texto de la nota (opcional)' : 'Descripción (opcional)')}
+          {esSensorial ? 'Descripción u observación' : esRutina ? 'Descripción' : textos.contenido ??
+            (esNota ? 'Texto de la nota' : 'Descripción')}
         </label>
         <textarea
           id={`contenido-aporte-${seccion.tipo}`}
@@ -246,7 +255,7 @@ export default function EditorAporte({
           maxLength={10000}
           rows={4}
           disabled={enviando}
-          aria-required={esRutina}
+          aria-required="true"
           aria-invalid={Boolean(erroresCampos.contenido)}
           className="w-full rounded-md border border-borde bg-superficie p-4 text-base text-texto focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primario"        />
         {textos.hintContenido && (
@@ -259,7 +268,7 @@ export default function EditorAporte({
       {esRutina && <p className="text-sm text-texto-suave">Contá lo que ya puede hacer, dónde necesita apoyo o qué lo ayuda. No hace falta detallar cada paso.</p>}
       {esEstrategia && <CamposEstrategia extra={extra} setExtra={setExtra} errores={erroresCampos} disabled={enviando} />}
       {esRutina && <CamposRutina extra={extra} setExtra={setExtra} errores={erroresCampos} disabled={enviando} />}
-      {esSensorial && <CamposSensoriales parte="contexto" extra={extra} setExtra={setExtra} disabled={enviando} />}
+      {esSensorial && <CamposSensoriales parte="contexto" extra={extra} setExtra={setExtra} errores={erroresCampos} disabled={enviando} />}
       {esComunicacion && (
         <div className="space-y-4">
           <fieldset>
@@ -358,6 +367,15 @@ export default function EditorAporte({
                 </option>
               ))}
             </select>
+          )}
+          {DETALLES_OTRO[seccion.tipo]?.campo === nombre && eligioOtro(extra[nombre]) && (
+            <CampoDetalleOtro
+              id={`${nombre}-otro-${seccion.tipo}`}
+              valor={extra[DETALLES_OTRO[seccion.tipo].detalle]}
+              onCambiar={(texto) => setExtra((actual) => ({ ...actual, [DETALLES_OTRO[seccion.tipo].detalle]: texto }))}
+              disabled={enviando}
+              error={erroresCampos[DETALLES_OTRO[seccion.tipo].detalle]}
+            />
           )}
         </div>
       ))}

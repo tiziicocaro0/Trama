@@ -103,7 +103,7 @@ describe('Red de profesionales', () => {
     expect(screen.getByText('Docente primario')).toBeInTheDocument()
     expect(document.title).toBe('TRAMA · Red')
     await userEvent.click(
-      screen.getByRole('link', { name: 'Volver al perfil' }),
+      screen.getByRole('link', { name: /^Volver al perfil de / }),
     )
     expect(
       await screen.findByRole('heading', { name: 'Fortalezas' }),
@@ -310,7 +310,7 @@ describe('Red de profesionales', () => {
     const botonQuitar = await screen.findByRole('button', {
       name: 'Quitar acceso a Familiar ficticio Ejemplo',
     })
-    expect(botonQuitar).toHaveClass('bg-error')
+    expect(botonQuitar).toHaveClass('text-error')
     await userEvent.click(botonQuitar)
     await userEvent.click(screen.getByRole('button', { name: 'Confirmar' }))
 
@@ -336,7 +336,7 @@ describe('Red de profesionales', () => {
     for (const [nombre, destino] of [
       ['Inicio', '/inicio'],
       ['Acompañamientos', '/acompanamientos'],
-      ['Recursos', '/inicio?seccion=recursos'],
+      ['Mi perfil', '/perfil'],
       ['Mi plan', '/cuenta/plan'],
     ]) {
       expect(within(nav).getByRole('link', { name: nombre })).toHaveAttribute('href', destino)

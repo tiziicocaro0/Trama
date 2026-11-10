@@ -10,7 +10,6 @@ import { Selector } from '../ui/Selector';
 
 const ITEMS_NAVEGACION = [
   { ruta: '/acompanamientos', etiqueta: 'Acompañamientos', icono: 'acompanamientos' },
-  { ruta: '/recursos', etiqueta: 'Recursos', icono: 'recursos' },
   { ruta: '/calendario', etiqueta: 'Calendario', icono: 'calendario' },
   { ruta: '/perfil', etiqueta: 'Mi perfil', icono: 'perfil' },
 ];

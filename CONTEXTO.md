@@ -229,7 +229,7 @@ Los valores los completa Zoe con los tokens de Sofía. Tailwind genera las clase
 
 ## Datos mock y tablas nuevas
 
-- Cada historia crea las tablas que necesita con su migración y agrega sus datos mock al `DataSeeder`.
+- Cada historia crea las tablas que necesita con su migración y agrega sus datos de prueba en `CargadorDatosDePrueba` (backend/src/test, ver README «Datos de prueba»).
 
 - Se cargan con el perfil `dev` desde un script de seed (historia 0.12).
 - Usuarios de prueba: `tutor@trama.test`, `docente@trama.test`, `psico@trama.test`, todos con la contraseña `Trama1234!`.
@@ -273,4 +273,4 @@ cd frontend && npm install           # instala dependencias y los hooks de Husky
 cd frontend && npm run dev           # frontend en http://localhost:5173
 cd frontend && npm test              # tests del frontend
 git config core.hooksPath .githooks  # una sola vez, activa los hooks del backend
-```
+```

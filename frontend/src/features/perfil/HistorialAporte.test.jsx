@@ -6,6 +6,12 @@ import AppRoutes from '../../routes/AppRoutes.jsx'
 import AuthContext from '../auth/AuthContext.js'
 import cliente from '../../api/cliente.js'
 
+// Las acciones de una tarjeta (editar, archivar, historial) están en sus tres puntitos
+async function abrirOpciones(titulo) {
+  const boton = await screen.findByRole('button', { name: `Más opciones: ${titulo}` })
+  if (boton.getAttribute('aria-expanded') !== 'true') await userEvent.click(boton)
+}
+
 vi.mock('../../api/cliente.js', () => ({
   default: {
     defaults: { baseURL: '/api' },
@@ -70,6 +76,7 @@ beforeEach(() => {
 describe('Historial de versiones (3.2)', () => {
   it('cualquier miembro abre el historial y ve las versiones con fecha, autor y contenido', async () => {
     abrir()
+    await abrirOpciones('Arma rompecabezas')
     await userEvent.click(
       await screen.findByRole('button', {
         name: 'Ver historial del aporte: Arma rompecabezas',
@@ -99,6 +106,7 @@ describe('Historial de versiones (3.2)', () => {
 
   it('al cerrar el historial el foco vuelve al botón', async () => {
     abrir()
+    await abrirOpciones('Arma rompecabezas')
     const boton = await screen.findByRole('button', {
       name: 'Ver historial del aporte: Arma rompecabezas',
     })
@@ -106,7 +114,8 @@ describe('Historial de versiones (3.2)', () => {
     await screen.findByRole('dialog')
     await userEvent.click(screen.getByRole('button', { name: 'Cerrar modal' }))
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
-    expect(boton).toHaveFocus()
+    // El foco vuelve a los tres puntitos de la tarjeta
+    expect(screen.getByRole('button', { name: 'Más opciones: Arma rompecabezas' })).toHaveFocus()
   })
 
   it('muestra un error claro si no puede cargar el historial', async () => {
@@ -116,6 +125,7 @@ describe('Historial de versiones (3.2)', () => {
       return { data: { ...proyecto, puedeCargar: true } }
     })
     abrir()
+    await abrirOpciones('Arma rompecabezas')
     await userEvent.click(
       await screen.findByRole('button', {
         name: 'Ver historial del aporte: Arma rompecabezas',

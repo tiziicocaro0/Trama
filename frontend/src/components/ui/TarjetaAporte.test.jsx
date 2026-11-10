@@ -3,6 +3,12 @@ import userEvent from '@testing-library/user-event'
 import { describe, expect, it, vi } from 'vitest'
 import TarjetaAporte from './TarjetaAporte.jsx'
 
+// Las acciones de una tarjeta (editar, archivar, historial) están en sus tres puntitos
+async function abrirOpciones(titulo) {
+  const boton = await screen.findByRole('button', { name: `Más opciones: ${titulo}` })
+  if (boton.getAttribute('aria-expanded') !== 'true') await userEvent.click(boton)
+}
+
 const aporteBase = {
   id: '1',
   tipo: 'INTERES',
@@ -18,7 +24,9 @@ describe('TarjetaAporte - RF-06 y Tarea 3.0', () => {
     'muestra el contexto %s de una fortaleza sin ejemplo',
     (contexto) => {
       render(<TarjetaAporte aporte={{ ...aporteBase, tipo: 'FORTALEZA', datos: JSON.stringify({ contexto }) }} />)
-      expect(screen.getByText(`Contexto: ${contexto[0]}${contexto.slice(1).toLowerCase()}`)).toBeInTheDocument()
+      // El lugar se ve como un ícono chico al lado de los tres puntitos, sin el rótulo "Contexto:"
+      expect(screen.getByRole('img', { name: `Dónde: ${contexto[0]}${contexto.slice(1).toLowerCase()}` })).toBeInTheDocument()
+      expect(screen.queryByText(/^Contexto:/)).not.toBeInTheDocument()
       expect(screen.queryByText(/^Ejemplo:/)).not.toBeInTheDocument()
     },
   )
@@ -85,27 +93,22 @@ describe('TarjetaAporte - RF-06 y Tarea 3.0', () => {
 
     expect(screen.getByText('Disfruta dibujar animales')).toBeInTheDocument()
     expect(
-      screen.getByText('Cargado por: Marta Fernández'),
+      screen.getByText('Marta Fernández'),
     ).toBeInTheDocument()
     expect(document.querySelector('time')).toHaveAttribute(
       'datetime',
       '2026-10-20T14:30:00Z',
     )
 
-    const botonEditar = screen.getByRole('button', {
-      name: 'Editar aporte: Le gusta dibujar',
-    })
-    const botonArchivar = screen.getByRole('button', {
-      name: 'Archivar aporte: Le gusta dibujar',
-    })
-
-    expect(botonEditar).toBeInTheDocument()
-    expect(botonArchivar).toBeInTheDocument()
-
-    await userEvent.click(botonEditar)
+    // Editar y archivar viven en los tres puntitos; al elegir una opción el menú se cierra
+    await abrirOpciones('Le gusta dibujar')
+    expect(screen.getByRole('button', { name: 'Archivar aporte: Le gusta dibujar' })).toBeInTheDocument()
+    await userEvent.click(screen.getByRole('button', { name: 'Editar aporte: Le gusta dibujar' }))
     expect(alEditar).toHaveBeenCalledTimes(1)
+    expect(screen.queryByRole('button', { name: 'Archivar aporte: Le gusta dibujar' })).not.toBeInTheDocument()
 
-    await userEvent.click(botonArchivar)
+    await abrirOpciones('Le gusta dibujar')
+    await userEvent.click(screen.getByRole('button', { name: 'Archivar aporte: Le gusta dibujar' }))
     expect(alArchivar).toHaveBeenCalledTimes(1)
   })
 
@@ -143,6 +146,7 @@ describe('TarjetaAporte - RF-06 y Tarea 3.0', () => {
       />,
     )
 
+    await abrirOpciones('Le gusta dibujar')
     await user.click(
       screen.getByRole('button', {
         name: 'Ver historial del aporte: Le gusta dibujar',
@@ -160,7 +164,7 @@ describe('TarjetaAporte - RF-06 y Tarea 3.0', () => {
     ).not.toBeInTheDocument()
   })
 
-  it('con historial disponible, quien no es autor sigue sin ver Editar ni Archivar', () => {
+  it('con historial disponible, quien no es autor sigue sin ver Editar ni Archivar', async () => {
     render(
       <TarjetaAporte
         aporte={{ ...aporteBase, puedeEditar: false }}
@@ -176,6 +180,7 @@ describe('TarjetaAporte - RF-06 y Tarea 3.0', () => {
     expect(
       screen.queryByRole('button', { name: 'Archivar aporte: Le gusta dibujar' }),
     ).not.toBeInTheDocument()
+    await abrirOpciones('Le gusta dibujar')
     expect(
       screen.getByRole('button', {
         name: 'Ver historial del aporte: Le gusta dibujar',

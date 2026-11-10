@@ -1,29 +1,17 @@
-import { useEffect, useRef } from 'react'
-import { Link, useSearchParams } from 'react-router-dom'
+import { useSearchParams } from 'react-router-dom'
 import useAuth from '../../hooks/useAuth.js'
 import InicioSidebar from './InicioSidebar.jsx'
-import { Acompanamientos, Eventos, Recursos } from './InicioSecciones.jsx'
+import { Acompanamientos, Eventos } from './InicioSecciones.jsx'
 import HiloInicio from './HiloInicio.jsx'
 import useResumenInicio from './useResumenInicio.js'
 import CalendarioUsuarioPage from '../calendario/CalendarioUsuarioPage.jsx'
-
-// Secciones que todavía no existen: se abren desde el menú y avisan "Próximamente".
-const seccionesFuturas = { recursos: 'Recursos' }
 
 export default function InicioPage() {
   const { usuario, cerrarSesion } = useAuth()
   const [params] = useSearchParams()
   const seleccion = params.get('seccion')
-  const seccion = Object.hasOwn(seccionesFuturas, seleccion)
-    ? seccionesFuturas[seleccion]
-    : null
-  const tituloPendiente = useRef(null)
   // Con el calendario abierto, el resumen no hace falta.
   const resumen = useResumenInicio(seleccion !== 'calendario')
-
-  useEffect(() => {
-    if (seccion) tituloPendiente.current?.focus()
-  }, [seccion])
 
   return (
     <div className="min-h-svh bg-bienvenida-papel text-texto lg:flex">
@@ -51,35 +39,11 @@ export default function InicioPage() {
             </p>
             <HiloInicio />
           </header>
-          {seleccion === 'calendario' ? <CalendarioUsuarioPage /> : seccion && (
-            <section
-              aria-labelledby="seccion-pendiente"
-              className="mb-6 rounded-lg border border-borde bg-superficie p-5"
-            >
-              <h2
-                ref={tituloPendiente}
-                tabIndex={-1}
-                id="seccion-pendiente"
-                className="text-subtitulo font-bold text-primario"
-              >
-                {seccion} · Próximamente
-              </h2>
-              <p className="mt-2 text-texto-suave">
-                Este espacio todavía no está disponible.
-              </p>
-              <Link
-                to="/inicio"
-                className="mt-3 inline-flex min-h-11 items-center font-bold text-primario underline underline-offset-4 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-primario"
-              >
-                Volver al inicio
-              </Link>
-            </section>
-          )}
+          {seleccion === 'calendario' && <CalendarioUsuarioPage />}
           {seleccion !== 'calendario' && <>
             <Acompanamientos resumen={resumen} />
-            <div className="mt-4 grid min-w-0 gap-4 lg:grid-cols-2">
+            <div className="mt-4 min-w-0">
               <Eventos resumen={resumen} />
-              <Recursos />
             </div>
           </>}
         </div>

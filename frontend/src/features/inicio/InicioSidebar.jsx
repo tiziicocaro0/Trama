@@ -21,9 +21,7 @@ export default function InicioSidebar({ cerrarSesion }) {
   const { usuario } = useAuth()
   const navegacion = navegacionPara(usuario)
   const seleccion = params.get('seccion') ?? ''
-  const actual = ['guias', 'estrategias', 'comunidad'].includes(seleccion)
-    ? 'recursos'
-    : seleccion
+  const actual = seleccion
   // En el celular el menú se abre con la hamburguesa; en pantallas grandes está siempre.
   const [abierto, setAbierto] = useState(false)
   const botonMenu = useRef(null)

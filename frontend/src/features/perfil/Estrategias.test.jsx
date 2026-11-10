@@ -6,6 +6,22 @@ import AppRoutes from '../../routes/AppRoutes.jsx'
 import AuthContext from '../auth/AuthContext.js'
 import cliente from '../../api/cliente.js'
 
+// Filtros compactos: se abre el menú del ícono y se elige la opción
+async function elegirFiltro(etiqueta, opcion) {
+  await userEvent.click(screen.getByRole('button', { name: new RegExp(`^${etiqueta}`) }))
+  await userEvent.click(screen.getByRole('menuitemradio', { name: opcion }))
+}
+import { limpiarAvisos, obtenerAvisos } from '../../components/avisos/avisosFlotantes.js'
+
+// Las acciones de una tarjeta (editar, archivar, historial) están en sus tres puntitos
+async function abrirOpciones(titulo) {
+  const boton = await screen.findByRole('button', { name: `Más opciones: ${titulo}` })
+  if (boton.getAttribute('aria-expanded') !== 'true') await userEvent.click(boton)
+}
+
+// Los avisos flotantes viven fuera de AppRoutes: se leen del registro de avisos
+const textosDeAvisos = () => obtenerAvisos().map((aviso) => aviso.texto)
+
 vi.mock('../../api/cliente.js', () => ({ default: { defaults: { baseURL: '/api' }, get: vi.fn(), post: vi.fn(), put: vi.fn() } }))
 
 const id = '304d3b5e-8c8a-4a50-83d3-a84ade17b697'
@@ -23,6 +39,7 @@ function abrir() {
 }
 
 beforeEach(() => {
+  limpiarAvisos()
   lista = []
   cliente.get.mockReset().mockImplementation(async (ruta) => ({ data: ruta.endsWith('/aportes') ? lista : { id, nombre: 'Niño ficticio', fechaNacimiento: '2018-05-12', puedeCargar: true } }))
   cliente.post.mockReset().mockImplementation(async (ruta, datos) => {
@@ -71,14 +88,14 @@ it('combina resultado, categoría, búsqueda, especialidad, autor y visibilidad 
   ]
   abrir()
   await screen.findByRole('heading', { name: 'Secuencia de pasos' })
-  await userEvent.selectOptions(screen.getByRole('combobox', { name: 'Resultado' }), 'FUNCIONO')
+  await elegirFiltro('Resultado', 'Funcionó')
   await userEvent.click(screen.getByRole('button', { name: 'Anticipación y secuenciación' }))
-  await userEvent.selectOptions(screen.getByRole('combobox', { name: 'Especialidad' }), 'PSICOLOGIA')
+  await elegirFiltro('Especialidad', 'Profesional de salud')
   await userEvent.type(screen.getByRole('searchbox', { name: 'Buscar en estrategias' }), 'Secuencia')
   await userEvent.click(screen.getByRole('switch', { name: 'Solo mis aportes' }))
   expect(screen.getAllByRole('article')).toHaveLength(1)
   expect(screen.getByRole('heading', { name: 'Secuencia de pasos' })).toBeInTheDocument()
-  await userEvent.selectOptions(screen.getByRole('combobox', { name: 'Visibilidad' }), 'SOLO_TUTORES')
+  await elegirFiltro('Visibilidad', 'Solo tutores')
   expect(screen.queryByRole('article')).not.toBeInTheDocument()
 })
 
@@ -91,17 +108,20 @@ it('precarga, edita, muestra historial y archiva solo aportes propios', async ()
   abrir()
   await screen.findByRole('heading', { name: 'Secuencia de pasos' })
   expect(screen.queryByRole('button', { name: 'Editar aporte: Pausa breve' })).not.toBeInTheDocument()
+  await abrirOpciones('Secuencia de pasos')
   await userEvent.click(screen.getByRole('button', { name: 'Editar aporte: Secuencia de pasos' }))
   expect(screen.getByRole('textbox', { name: 'En qué situación' })).toHaveValue('Antes de salir')
   await userEvent.click(screen.getByRole('radio', { name: 'Funcionó en parte' }))
   await userEvent.click(screen.getByRole('button', { name: 'Guardar aporte' }))
   expect(cliente.put).toHaveBeenCalledWith(`/proyectos/${id}/aportes/propio`, expect.objectContaining({ tipo: 'ESTRATEGIA', datos: expect.stringContaining('FUNCIONO_EN_PARTE') }))
+  await abrirOpciones('Secuencia de pasos')
   await userEvent.click(await screen.findByRole('button', { name: 'Ver historial del aporte: Secuencia de pasos' }))
   expect(await screen.findByRole('list', { name: 'Versiones del aporte' })).toBeInTheDocument()
   await userEvent.click(screen.getByRole('button', { name: 'Cerrar modal' }))
+  await abrirOpciones('Secuencia de pasos')
   await userEvent.click(screen.getByRole('button', { name: 'Archivar aporte: Secuencia de pasos' }))
   await waitFor(() => expect(cliente.post).toHaveBeenCalledWith(`/proyectos/${id}/aportes/propio/archivar`))
-  expect(await screen.findByText('Aporte archivado.')).toBeInTheDocument()
+  await waitFor(() => expect(textosDeAvisos()).toContain('Listo. Tu aporte se archivó.'))
 })
 
 it('adjunta un archivo real al guardar la estrategia', async () => {

@@ -18,9 +18,9 @@ describe('Fechas de calendario y notas', () => {
         '2026-10-18T01:30:45Z',
         'America/Argentina/Buenos_Aires',
       ),
-    ).toBe('17/10/2026, 22:30:45')
+    ).toBe('17/10/2026, 22:30')
     expect(formatearFechaHora('2026-10-18T01:30:45Z', 'UTC')).toBe(
-      '18/10/2026, 01:30:45',
+      '18/10/2026, 01:30',
     )
   })
   it.each([null, '', 'incorrecta'])(

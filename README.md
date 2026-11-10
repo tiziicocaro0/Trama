@@ -378,42 +378,6 @@ Para restaurar sobre la base y los archivos **reales**, agregar `--sobrescribir-
 
 ⚠️ Guardar las claves **fuera** de los backups: sin `TRAMA_BACKUP_KEY` el backup no se puede abrir, y sin `TRAMA_CRYPTO_KEY` los campos sensibles de la base restaurada no se pueden leer.
 
-#### 7.1. Backups automáticos diarios en Windows
-
-Para automatizar los respaldos se incluye el script `backup-diario.bat`, ubicado en la raíz del proyecto.
-
-**Requisitos:**
-- Docker Desktop instalado y en funcionamiento.
-- MySQL y OpenBao disponibles.
-- OpenBao inicializado y desbloqueado.
-- Variables de entorno configuradas en `.env`.
-
-**Configuración del backup diario:**
-
-1. Abrir el Programador de tareas de Windows.
-2. Crear una tarea llamada `Trama - Backup diario`.
-3. Configurar un desencadenador diario a las **03:00**.
-4. En *Acciones*, seleccionar **Iniciar un programa** y elegir `backup-diario.bat` desde la carpeta del proyecto.
-5. Configurar la tarea para que se ejecute con los permisos y condiciones necesarios para acceder a Docker.
-
-**Funcionamiento:**
-
-El script ejecuta:
-
-```bat
-docker compose --profile backup run --rm backup
-```
-
-Cada respaldo se guarda en `backups/` con el formato `trama-AAAAMMDD-HHMMSS.tar.gz.gpg`.
-
-Las ejecuciones y los errores se registran en `backups/backup-diario.log`.
-
-**Retención:** el script identifica los respaldos con más de 30 días y registra sus nombres, pero actualmente no los elimina automáticamente.
-
-**Verificación:** ejecutar manualmente la tarea desde el Programador de tareas, comprobar que se genere un archivo cifrado y revisar `backup-diario.log`.
-
-**Importante:** la tarea solo puede ejecutarse correctamente si la computadora está disponible, Docker funciona y OpenBao está desbloqueado. Los backups locales no sustituyen una copia externa segura. Las claves de recuperación deben conservarse separadas de los archivos respaldados.
-
 ### 8. Actualizar los contenedores
 
 Después de traer cambios de `develop` que tocan el `docker-compose.yml`, el `Dockerfile` o el backend:
@@ -559,25 +523,52 @@ cd backend
 .\mvnw.cmd spring-boot:run  # Windows
 ```
 
-### Datos mock (DataSeeder)
+### Datos de prueba (solo desarrollo)
 
-Con el perfil `dev` (el que viene por defecto), la clase `DataSeeder` carga datos ficticios la primera vez que arranca la app. Si ya existen, no hace nada.
+La app no trae datos ficticios: ni el jar ni la imagen de Docker los incluyen. Para verla con un perfil completo (revisar la estética, mostrarla o grabar un video) hay un comando aparte que levanta el back con datos de prueba en otra base, `trama_prueba`. La base `trama` de todos los días no se toca.
 
-Usuarios de prueba, todos con la contraseña `Trama1234!`:
+**Cómo levantarla:** dos terminales.
 
-| Email | Rol |
-|---|---|
-| `tutor@trama.test` | Tutora admin de Tomi |
-| `cotutor@trama.test` | Co-tutor de Tomi |
-| `familiar@trama.test` | Familiar en los 3 proyectos |
-| `docente@trama.test` | Docente en los 3 proyectos |
-| `psico@trama.test` | Psicólogo en los 3 proyectos (en el 3.º, solo lectura por plan gratuito) |
-| `tutora.valen@trama.test` | Tutora admin de Valen |
-| `tutor.juli@trama.test` | Tutor admin de Juli |
+```powershell
+# Terminal 1, en la raíz del repo: el back con los datos de prueba
+.\datos-prueba.cmd              # Windows (la primera vez o para volver a empezar: .\datos-prueba.cmd -Reiniciar)
+sh scripts/datos-prueba.sh      # macOS / Linux (o: sh scripts/datos-prueba.sh --reiniciar)
 
-**Regla:** cada historia que crea una tabla nueva agrega sus datos mock al `DataSeeder`.
+# Terminal 2, en la carpeta frontend: el front como siempre
+cd frontend
+npm run dev
+```
 
-Para volver a cargar los datos desde cero, vaciar las tablas y levantar la app de nuevo.
+Después se abre `http://localhost:5173`. Sin `-Reiniciar` se conserva lo que hayas cambiado; con `-Reiniciar` se borra `trama_prueba` y se vuelve a cargar desde cero.
+
+**Qué carga:** un solo niño, **Valentina (Valen)**, 8 años, 2.º grado en una escuela híbrida, con toda su red aportando. Cada persona carga en las secciones que le corresponden: 36 aportes entre fortalezas, intereses, comunicación, perfil sensorial, estrategias, rutinas, "si se desregula" y notas profesionales, con lugares, visibilidades y fechas variados. También hay pictogramas y PDFs como adjuntos y en la pestaña Recursos, varios "Yo también lo observé", y un calendario con actividades semanales, cambios de rutina y reuniones de equipo (una ya hecha, con su acta).
+
+**Usuarios**, todos con la contraseña `Trama1234!`:
+
+| Email | Quién es | Rol en la red de Valen |
+|---|---|---|
+| `tutor@trama.test` | Laura Ruiz, la mamá | Tutora admin |
+| `cotutor@trama.test` | Pablo Gómez, el papá | Co-tutor admin |
+| `familiar@trama.test` | Elena Sosa, la abuela | Familiar (puede cargar) |
+| `docente@trama.test` | María Díaz | Docente de primaria |
+| `psico@trama.test` | Diego Torres | Psicólogo (salud) |
+| `terapeuta@trama.test` | Sofía Ramos | Terapeuta ocupacional (salud) |
+
+Con las cuentas `@trama.test`, los mails van a Mailpit (`http://localhost:8025`) y nunca a Gmail.
+
+**Con cuentas reales (por ejemplo, para grabar un video):** en el `.env` de tu PC (nunca en el repo) agregá los mails que quieras usar y reiniciá los datos con `-Reiniciar`:
+
+```
+DATOS_PRUEBA_EMAIL_TUTOR=...      # reemplaza a Laura, tutora
+DATOS_PRUEBA_EMAIL_DOCENTE=...    # reemplaza a María, docente
+DATOS_PRUEBA_EMAIL_TERAPEUTA=...  # reemplaza a Sofía, terapeuta ocupacional
+```
+
+Entran con la contraseña `Trama1234!` y, como los mails son de verdad, funcionan recuperar contraseña e invitaciones (los mails salen por Gmail). Al cargar, esas cuentas reciben algunos avisos de "nota nueva"; las `@trama.test` nunca reciben mails.
+
+**Cómo funciona:** el código vive en `backend/src/test/java/com/trama/datosprueba/`. `TramaConDatosDePrueba` arranca la app con los perfiles `dev` y `datosprueba` (`./mvnw spring-boot:test-run`), `CargadorDatosDePrueba` crea la red, `AportesDeValen` carga lo que aporta cada persona y `EventosDeValen` arma el calendario, con los mismos services que usa la app. Como está en `src/test`, nunca entra en el build; y como los nombres no terminan en `Test`, el CI no lo corre.
+
+**Regla:** cada historia que suma una pantalla o una tabla nueva agrega sus datos en `AportesDeValen` (o en `CargadorDatosDePrueba` si es parte de la red).
 
 
 ### Frontend
@@ -623,7 +614,7 @@ private String contenido;
 - **Nunca en el código ni en el repositorio.** En local va en el `.env`, que está ignorado por git. En el CI se genera una clave nueva en cada corrida.
 - **Distinta en cada entorno:** cada integrante genera la suya con `openssl rand -base64 32`, y producción tiene la propia.
 - Si falta o no tiene 32 bytes, la app no arranca.
-- ⚠️ **Si se pierde o se cambia la clave, lo cifrado con ella ya no se puede leer.** En local alcanza con vaciar las tablas y dejar que el `DataSeeder` vuelva a cargar los datos. En producción, la clave se guarda y se respalda aparte.
+- ⚠️ **Si se pierde o se cambia la clave, lo cifrado con ella ya no se puede leer.** En local alcanza con reiniciar los datos de prueba (`datos-prueba.cmd -Reiniciar`). En producción, la clave se guarda y se respalda aparte.
 
 ### Reglas para el equipo
 

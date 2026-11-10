@@ -1,6 +1,6 @@
 # Pruebas manuales del backend con Insomnia
 
-Colección de [Insomnia](https://insomnia.rest/) para probar a mano la API de TRAMA. Sirve para ver qué responde el backend a cada pedido y para comprobar los permisos con los usuarios ficticios del `DataSeeder`.
+Colección de [Insomnia](https://insomnia.rest/) para probar a mano la API de TRAMA. Sirve para ver qué responde el backend a cada pedido y para comprobar los permisos con los usuarios ficticios de los datos de prueba (README, «Datos de prueba»).
 
 Son 35 pedidos en 6 carpetas. Cada uno trae una descripción de qué prueba y qué respuesta esperar, y un test automático que verifica el código HTTP.
 
@@ -17,7 +17,9 @@ Son 35 pedidos en 6 carpetas. Cada uno trae una descripción de qué prueba y qu
   ./mvnw spring-boot:run
   ```
 
-  Con el perfil `dev`, el `DataSeeder` carga los usuarios y proyectos ficticios la primera vez.
+  Levantá el back con `datos-prueba.cmd` (o `sh scripts/datos-prueba.sh`): carga los usuarios y proyectos ficticios la primera vez.
+
+  > ⚠️ La colección todavía usa los 3 niños de los datos anteriores (Tomi, Valen y Juli). Los datos de prueba actuales tienen un solo niño, Valen: las carpetas que usan a Tomi o a Juli hay que actualizarlas.
 
 ## Paso 1: importar la colección
 
@@ -27,7 +29,7 @@ Son 35 pedidos en 6 carpetas. Cada uno trae una descripción de qué prueba y qu
 
 ## Paso 2: cargar los ids de los niños
 
-Los ids de los proyectos son UUID aleatorios: cambian cada vez que se carga el `DataSeeder`. Por eso hay que copiarlos a mano.
+Los ids de los proyectos son UUID aleatorios: cambian cada vez que se cargan los datos de prueba. Por eso hay que copiarlos a mano.
 
 1. Consultá los ids en la base:
 
@@ -49,7 +51,7 @@ Los ids de los proyectos son UUID aleatorios: cambian cada vez que se carga el `
 2. En Insomnia, abrí el entorno: el selector de entornos arriba a la izquierda → **Manage Environments** → **Base Environment**.
 3. Reemplazá los valores `PEGAR-UUID-DE-...` de `proyecto_tomi`, `proyecto_valen` y `proyecto_juli` con los ids reales.
 
-Si vaciás la base y el `DataSeeder` vuelve a cargar los datos, los ids cambian y hay que repetir este paso.
+Si reiniciás los datos de prueba, los ids cambian y hay que repetir este paso.
 
 ## Paso 3: correr las carpetas en orden
 
@@ -59,7 +61,7 @@ Para correr una carpeta entera: clic derecho sobre la carpeta → **Run Folder**
 
 | Carpeta | Qué prueba | Pedidos |
 |---|---|---|
-| **1. Login (correr primero)** | Login de los 7 usuarios del DataSeeder. Guarda `token_tutor`, `token_familiar`, etc. Errores de login | 10 |
+| **1. Login (correr primero)** | Login de los 7 usuarios de los datos de prueba. Guarda `token_tutor`, `token_familiar`, etc. Errores de login | 10 |
 | **2. Registro** | Alta de usuario, email repetido, contraseña débil y datos vacíos | 4 |
 | **3. Mi perfil** | `GET /auth/yo` con token, sin token y con un token inventado | 3 |
 | **4. Ver un niño** | `GET /proyectos/{id}`: miembros sí, ajenos no, ids inventados y numéricos | 8 |
@@ -137,7 +139,7 @@ Abrí la pestaña **Tests** de la respuesta: cada pedido verifica su código HTT
 | Marta envía la configuración sin campos | `400` | `@NotNull` en los dos campos |
 | Restaurar la configuración original | `200` | Deja `familiarPuedeCargar = true` y `familiarVeNotas = false` |
 
-**Corré siempre "Restaurar" al final**, así Tomi queda como lo cargó el `DataSeeder`.
+**Corré siempre "Restaurar" al final**, así Tomi queda como en los datos de prueba.
 
 ### 6. Bloqueo de cuenta
 
@@ -147,7 +149,7 @@ Abrí la pestaña **Tests** de la respuesta: cada pedido verifica su código HTT
    - El 5.º responde **`429 CUENTA_BLOQUEADA`**. El test de ese pedido espera `401`, así que en el 5.º intento **va a aparecer en rojo, y eso es lo correcto**.
 3. Mandá **"Contraseña correcta con la cuenta bloqueada"**: responde `429`, porque la cuenta queda bloqueada 15 minutos aunque la contraseña sea correcta.
 
-> ⚠️ **Nunca pruebes el bloqueo con un usuario del DataSeeder.** Quedaría bloqueado 15 minutos y no podrías usarlo en las otras carpetas.
+> ⚠️ **Nunca pruebes el bloqueo con un usuario de los datos de prueba.** Quedaría bloqueado 15 minutos y no podrías usarlo en las otras carpetas.
 
 ## Formato de los errores
 
@@ -179,7 +181,7 @@ docker exec trama-mysql sh -c 'mysql -uroot -p"$MYSQL_ROOT_PASSWORD" trama -e "D
 |---|---|---|
 | Todo responde `401` | Los tokens están vacíos o vencidos | Correr la carpeta 1 |
 | Los pedidos de proyectos responden `400` | `proyecto_tomi` todavía dice `PEGAR-UUID-DE-TOMI` | Hacer el paso 2 |
-| Los pedidos de proyectos responden `403` con Marta | Los ids cambiaron porque se recargó el DataSeeder | Repetir el paso 2 |
+| Los pedidos de proyectos responden `403` con Marta | Los ids cambiaron porque se reiniciaron los datos de prueba | Repetir el paso 2 |
 | `Error: Couldn't connect to server` | El backend no está corriendo | `cd backend && ./mvnw spring-boot:run` |
 | Login de un usuario mock responde `429` | Quedó bloqueado por intentos fallidos | Esperar 15 minutos |
 | Los scripts no hacen nada | Insomnia es anterior a la versión 9 | Actualizar Insomnia |

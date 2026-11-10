@@ -16,7 +16,7 @@ function renderRoute(path = '/') {
 }
 
 describe('Navegación de bienvenida', () => {
-  it.each(['/inicio', '/acompanamientos', '/acompanamientos/nuevo', '/proyectos', '/proyectos/nuevo', '/proyectos/ejemplo', '/proyectos/ejemplo/red', '/proyectos/ejemplo/datos-personales', '/proyectos/ejemplo/notas', '/recursos', '/calendario', '/perfil', '/panel'])(
+  it.each(['/inicio', '/acompanamientos', '/acompanamientos/nuevo', '/proyectos', '/proyectos/nuevo', '/proyectos/ejemplo', '/proyectos/ejemplo/red', '/proyectos/ejemplo/datos-personales', '/proyectos/ejemplo/notas', '/proyectos/ejemplo/recursos', '/calendario', '/perfil', '/panel'])(
     'protege el acceso directo a %s sin sesión', (path) => {
       renderRoute(path)
       expect(screen.getByRole('heading', { name: 'Hola de nuevo' })).toBeInTheDocument()
