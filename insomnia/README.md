@@ -19,6 +19,8 @@ Son 35 pedidos en 6 carpetas. Cada uno trae una descripción de qué prueba y qu
 
   Levantá el back con `datos-prueba.cmd` (o `sh scripts/datos-prueba.sh`): carga los usuarios y proyectos ficticios la primera vez.
 
+  > ⚠️ La colección todavía usa los 3 niños de los datos anteriores (Tomi, Valen y Juli). Los datos de prueba actuales tienen un solo niño, Valen: las carpetas que usan a Tomi o a Juli hay que actualizarlas.
+
 ## Paso 1: importar la colección
 
 1. Abrí Insomnia.

@@ -1,10 +1,14 @@
 package com.trama.datosprueba;
 
+import java.awt.Color;
 import java.nio.ByteBuffer;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDate;
+import java.time.ZoneId;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 import org.slf4j.Logger;
@@ -13,17 +17,18 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Profile;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.trama.tpo.demo.aporte.TipoAporte;
 import com.trama.tpo.demo.aporte.Visibilidad;
 import com.trama.tpo.demo.entity.dto.AporteRequest;
-import com.trama.tpo.demo.entity.dto.AporteResponse;
-
 import com.trama.tpo.demo.entity.membresia.Especialidad;
 import com.trama.tpo.demo.entity.membresia.Membresia;
 import com.trama.tpo.demo.entity.membresia.MembresiaEspecialidad;
@@ -41,31 +46,39 @@ import com.trama.tpo.demo.repository.ProyectoRepository;
 import com.trama.tpo.demo.repository.UsuarioEspecialidadRepository;
 import com.trama.tpo.demo.repository.UsuarioRepository;
 import com.trama.tpo.demo.service.AporteService;
+import com.trama.tpo.demo.service.ArchivoService;
+import com.trama.tpo.demo.service.ConfirmacionAporteService;
 
-// Datos ficticios para ver y probar la app en una PC de desarrollo.
+// Datos ficticios para ver la app con un perfil completo (estética, demos y videos).
 // Vive en src/test: nunca entra en el jar ni en la imagen de Docker, así que la app
 // hosteada no puede cargarlos. Solo corre con el perfil "datosprueba", que activa
-// TramaConDatosDePrueba (scripts/datos-prueba.ps1 o .sh) sobre la base trama_prueba.
+// TramaConDatosDePrueba (datos-prueba.cmd o scripts/datos-prueba.sh) sobre la base trama_prueba.
 // Está fuera del paquete com.trama.tpo.demo para que el escaneo de la app no lo encuentre.
+//
+// Un solo niño, Valen, con toda su red aportando (ver AportesDeValen).
 @Component
 @Profile("datosprueba")
 public class CargadorDatosDePrueba implements CommandLineRunner {
 
     private static final Logger log = LoggerFactory.getLogger(CargadorDatosDePrueba.class);
     private static final String PASSWORD = "Trama1234!";
+    private static final ZoneId ZONA = ZoneId.of("America/Argentina/Buenos_Aires");
 
     private final UsuarioRepository usuarioRepository;
     private final ProyectoRepository proyectoRepository;
     private final MembresiaRepository membresiaRepository;
     private final UsuarioEspecialidadRepository usuarioEspecialidadRepository;
+    private final PreferenciaNotificacionRepository preferenciaRepository;
     private final PasswordEncoder passwordEncoder;
     private final AporteService aporteService;
+    private final ArchivoService archivoService;
+    private final ConfirmacionAporteService confirmacionService;
     private final JdbcTemplate jdbcTemplate;
-    private final PreferenciaNotificacionRepository preferenciaRepository;
+    private final ObjectMapper mapper = new ObjectMapper();
 
     // Para grabar un video con cuentas reales: en el .env (nunca en el repo) se pueden poner
     // DATOS_PRUEBA_EMAIL_TUTOR, DATOS_PRUEBA_EMAIL_DOCENTE y DATOS_PRUEBA_EMAIL_TERAPEUTA.
-    // Reemplazan a Marta (tutora de Tomi), María (docente) y Diego (salud). Si faltan, quedan los @trama.test.
+    // Reemplazan a Laura (tutora), María (docente) y Sofía (terapeuta). Si faltan, quedan los @trama.test.
     private final String emailTutor;
     private final String emailDocente;
     private final String emailTerapeuta;
@@ -75,10 +88,12 @@ public class CargadorDatosDePrueba implements CommandLineRunner {
             ProyectoRepository proyectoRepository,
             MembresiaRepository membresiaRepository,
             UsuarioEspecialidadRepository usuarioEspecialidadRepository,
+            PreferenciaNotificacionRepository preferenciaRepository,
             PasswordEncoder passwordEncoder,
             AporteService aporteService,
+            ArchivoService archivoService,
+            ConfirmacionAporteService confirmacionService,
             JdbcTemplate jdbcTemplate,
-            PreferenciaNotificacionRepository preferenciaRepository,
             @Value("${DATOS_PRUEBA_EMAIL_TUTOR:}") String emailTutor,
             @Value("${DATOS_PRUEBA_EMAIL_DOCENTE:}") String emailDocente,
             @Value("${DATOS_PRUEBA_EMAIL_TERAPEUTA:}") String emailTerapeuta) {
@@ -87,13 +102,15 @@ public class CargadorDatosDePrueba implements CommandLineRunner {
         this.proyectoRepository = proyectoRepository;
         this.membresiaRepository = membresiaRepository;
         this.usuarioEspecialidadRepository = usuarioEspecialidadRepository;
+        this.preferenciaRepository = preferenciaRepository;
         this.passwordEncoder = passwordEncoder;
         this.aporteService = aporteService;
+        this.archivoService = archivoService;
+        this.confirmacionService = confirmacionService;
         this.jdbcTemplate = jdbcTemplate;
-        this.preferenciaRepository = preferenciaRepository;
         this.emailTutor = elegirEmail(emailTutor, "tutor@trama.test");
         this.emailDocente = elegirEmail(emailDocente, "docente@trama.test");
-        this.emailTerapeuta = elegirEmail(emailTerapeuta, "psico@trama.test");
+        this.emailTerapeuta = elegirEmail(emailTerapeuta, "terapeuta@trama.test");
     }
 
     private static String elegirEmail(String configurado, String porDefecto) {
@@ -109,172 +126,117 @@ public class CargadorDatosDePrueba implements CommandLineRunner {
             return;
         }
 
-        // Usuarios basados en nuestras user personas
-        Usuario tutor = crearUsuario("Marta", "Fernández", emailTutor);
-        Usuario cotutor = crearUsuario("Jorge", "Fernández", "cotutor@trama.test");
-        Usuario familiar = crearUsuario("Elena", "Sosa", "familiar@trama.test");
-        Usuario docente = crearUsuario("María", "Díaz", emailDocente);
-        Usuario psico = crearUsuario("Diego", "Torres", emailTerapeuta);
-        Usuario tutoraValen = crearUsuario("Laura", "Ruiz", "tutora.valen@trama.test");
-        Usuario tutorJuli = crearUsuario("Pablo", "Gómez", "tutor.juli@trama.test");
+        // La red de Valen, basada en nuestras user personas
+        Usuario laura = crearUsuario("Laura", "Ruiz", emailTutor);
+        Usuario pablo = crearUsuario("Pablo", "Gómez", "cotutor@trama.test");
+        Usuario elena = crearUsuario("Elena", "Sosa", "familiar@trama.test");
+        Usuario maria = crearUsuario("María", "Díaz", emailDocente);
+        Usuario diego = crearUsuario("Diego", "Torres", "psico@trama.test");
+        Usuario sofia = crearUsuario("Sofía", "Ramos", emailTerapeuta);
 
-        // 9.4: cuentas profesionales con sus especialidades declaradas.
-        // terapeuta@ todavía no está en ningún niño: sirve para probar invitaciones.
-        declararProfesional(docente, Especialidad.DOCENTE_PRIMARIO);
-        declararProfesional(psico, Especialidad.PSICOLOGIA);
-        psico.setMatricula("MN 12345");
-        usuarioRepository.save(psico);
-        declararProfesional(crearUsuario("Sofía", "Ramos", "terapeuta@trama.test"),
-                Especialidad.TERAPIA_OCUPACIONAL, Especialidad.ACOMPANANTE_TERAPEUTICO);
+        // 9.4: cuentas profesionales con sus especialidades declaradas
+        declararProfesional(maria, null, Especialidad.DOCENTE_PRIMARIO);
+        declararProfesional(diego, "MN 12345", Especialidad.PSICOLOGIA);
+        declararProfesional(sofia, "MN 67890", Especialidad.TERAPIA_OCUPACIONAL, Especialidad.ACOMPANANTE_TERAPEUTICO);
 
         // Las cuentas @trama.test no existen: no se les mandan mails (si no, Gmail devuelve rebotes)
         sinMailsParaCuentasFicticias();
 
-        // Niños ficticios
-        Proyecto tomi = crearProyecto("Tomás", "Fernández", "Tomi",
-                LocalDate.of(2017, 5, 12), "Escuela N.º 12 D.E. 4", "3.º grado", TipoEscuela.COMUN);
-        Proyecto valen = crearProyecto("Valentina", "Ruiz", "Valen",
-                LocalDate.of(2018, 9, 3), "Instituto San Martín", "2.º grado", TipoEscuela.HIBRIDA);
-        Proyecto juli = crearProyecto("Julián", "Gómez", "Juli",
-                LocalDate.of(2016, 2, 20), "Escuela N.º 7 D.E. 9", "4.º grado", TipoEscuela.ESPECIAL);
+        Proyecto valen = proyectoRepository.save(Proyecto.builder()
+                .nombre("Valentina")
+                .apellido("Ruiz")
+                .apodo("Valen")
+                .fechaNacimiento(LocalDate.of(2018, 9, 3))
+                .escuela("Instituto San Martín")
+                .grado("2.º grado")
+                .tipoEscuela(TipoEscuela.HIBRIDA)
+                .consentimientoFecha(Instant.now())
+                .build());
 
-        // Cada proyecto con miembros de los 4 roles
-        crearMembresia(tutor, tomi, Rol.TUTOR, true, null, null);
-        crearMembresia(cotutor, tomi, Rol.TUTOR, true, null, null);
-        crearMembresia(familiar, tomi, Rol.FAMILIAR, false, null, null);
-        crearMembresia(docente, tomi, Rol.EDUCACION, false,
-                Especialidad.DOCENTE_PRIMARIO, null);
-        crearMembresia(psico, tomi, Rol.SALUD, false,
-                Especialidad.PSICOLOGIA, "MN 12345");
+        crearMembresia(laura, valen, Rol.TUTOR, true, null, null);
+        crearMembresia(pablo, valen, Rol.TUTOR, true, null, null);
+        crearMembresia(elena, valen, Rol.FAMILIAR, false, null, null);
+        crearMembresia(maria, valen, Rol.EDUCACION, false, Especialidad.DOCENTE_PRIMARIO, null);
+        crearMembresia(diego, valen, Rol.SALUD, false, Especialidad.PSICOLOGIA, "MN 12345");
+        crearMembresia(sofia, valen, Rol.SALUD, false, Especialidad.TERAPIA_OCUPACIONAL, "MN 67890");
 
-        crearMembresia(tutoraValen, valen, Rol.TUTOR, true, null, null);
-        crearMembresia(familiar, valen, Rol.FAMILIAR, false, null, null);
-        crearMembresia(docente, valen, Rol.EDUCACION, false,
-                Especialidad.DOCENTE_PRIMARIO, null);
-        crearMembresia(psico, valen, Rol.SALUD, false,
-                Especialidad.PSICOLOGIA, "MN 12345");
+        new AportesDeValen(this, valen.getId(), laura, pablo, elena, maria, diego, sofia).cargar();
 
-        crearMembresia(tutorJuli, juli, Rol.TUTOR, true, null, null);
-        crearMembresia(familiar, juli, Rol.FAMILIAR, false, null, null);
-        crearMembresia(docente, juli, Rol.EDUCACION, false,
-                Especialidad.DOCENTE_PRIMARIO, null);
-        crearMembresia(psico, juli, Rol.SALUD, false,
-                Especialidad.PSICOLOGIA, "MN 12345");
-
-        // Con el plan gratuito los profesionales editan en sus dos niños más antiguos:
-        // se fechan las altas para que sean siempre Tomi y Valen (Juli queda de solo lectura).
-        fecharAltas(tomi, 60);
-        fecharAltas(valen, 45);
-        fecharAltas(juli, 30);
-
-        cargarAportesDeTomi(tutor, cotutor, docente, psico, tomi);
-
+        SecurityContextHolder.clearContext();
         log.info("Datos de prueba cargados. Contraseña de todos los usuarios: {}", PASSWORD);
     }
 
-    // Aportes de las seis secciones del perfil y notas profesionales, con autores y fechas variados.
-    // Se cargan con AporteService, así pasan por las mismas validaciones que desde la app.
-    private void cargarAportesDeTomi(Usuario tutor, Usuario cotutor, Usuario docente, Usuario psico, Proyecto tomi) {
+    // ------------------------------------------------------------------
+    // Lo que usa AportesDeValen: todo se carga como si lo hiciera esa persona desde la app,
+    // con los mismos services (y las mismas validaciones y permisos).
+    // ------------------------------------------------------------------
 
-        UUID id = tomi.getId();
+    UUID aporte(Usuario autor, UUID proyectoId, int haceDias, TipoAporte tipo,
+            String titulo, String contenido, String datos, Visibilidad visibilidad, UUID... archivos) {
 
-        // Intereses
-        aporte(tutor, id, 2, TipoAporte.INTERES, "Los dinosaurios", "Sabe el nombre de más de 30 y los ordena por tamaño.",
-                "{\"categoria\":\"TEMA\",\"intensidad\":\"ALTA\"}", Visibilidad.TODOS);
-        aporte(cotutor, id, 9, TipoAporte.INTERES, "Armar trenes con bloques", "Puede pasar una hora armando vías.",
-                "{\"categoria\":\"JUEGO\",\"intensidad\":\"ALTA\"}", Visibilidad.TODOS);
-        aporte(docente, id, 15, TipoAporte.INTERES, "Bluey", "Se calma mirando un capítulo en el recreo largo.",
-                "{\"categoria\":\"PERSONAJE\",\"intensidad\":\"MEDIA\"}", Visibilidad.TODOS);
-        aporte(tutor, id, 21, TipoAporte.INTERES, "Tapitas de colores", "Las junta y las clasifica por color.",
-                "{\"categoria\":\"OTRO\",\"intensidad\":\"BAJA\",\"categoriaOtra\":\"Colecciones\"}", Visibilidad.TODOS);
+        comoUsuario(autor);
+        UUID creado = aporteService.crear(proyectoId,
+                new AporteRequest(tipo, titulo, contenido, datos, visibilidad,
+                        archivos.length == 0 ? null : List.of(archivos))).id();
 
-        // Fortalezas: una por cada lugar, para ver los íconos
-        aporte(tutor, id, 1, TipoAporte.FORTALEZA, "Arma rompecabezas de 100 piezas", "Empieza siempre por los bordes.",
-                "{\"contexto\":\"CASA\",\"ejemplo\":\"El domingo terminó uno de animales sin ayuda.\"}", Visibilidad.TODOS);
-        aporte(docente, id, 4, TipoAporte.FORTALEZA, "Memoriza rutas y horarios", "Recuerda el orden de las materias de toda la semana.",
-                "{\"contexto\":\"ESCUELA\",\"ejemplo\":\"Avisó que los jueves hay música antes que el profe.\"}", Visibilidad.TODOS);
-        aporte(psico, id, 12, TipoAporte.FORTALEZA, "Sigue consignas con apoyo visual", "Con una secuencia de tres pasos completa la tarea.",
-                "{\"contexto\":\"CONSULTORIO\"}", Visibilidad.PROFESIONALES);
-        aporte(cotutor, id, 18, TipoAporte.FORTALEZA, "Muy constante en natación", "No falta nunca y respeta los turnos.",
-                "{\"contexto\":\"OTRO\",\"contextoOtro\":\"Club de natación\"}", Visibilidad.TODOS);
-
-        // Comunicación
-        aporte(psico, id, 3, TipoAporte.COMUNICACION, "Pide ayuda con una tarjeta", "Usa la tarjeta de ayuda cuando se traba.",
-                "{\"categoria\":\"EXPRESION\",\"formasComunicacion\":[\"VERBAL\",\"PICTOGRAMAS\"],"
-                        + "\"comoHablarle\":\"Frases cortas y de a una consigna.\",\"queEvitar\":\"Preguntas encadenadas.\"}",
-                Visibilidad.TODOS);
-        aporte(docente, id, 10, TipoAporte.COMUNICACION, "Necesita tiempo para responder", "Contesta si se lo espera unos segundos.",
-                "{\"categoria\":\"TIEMPO_ESPERA\",\"formasComunicacion\":[\"VERBAL\"],"
-                        + "\"comoHablarle\":\"Esperar sin repetir la pregunta.\",\"queEvitar\":\"Apurarlo o completar sus frases.\"}",
-                Visibilidad.TODOS);
-        aporte(tutor, id, 16, TipoAporte.COMUNICACION, "Señala lo que quiere", "Cuando está cansado señala en vez de hablar.",
-                "{\"categoria\":\"NO_VERBAL\",\"formasComunicacion\":[\"GESTOS\"],"
-                        + "\"comoHablarle\":\"Nombrar lo que señala y ofrecer dos opciones.\",\"queEvitar\":\"Pedirle que lo diga con palabras.\"}",
-                Visibilidad.SOLO_TUTORES);
-
-        // Sensorial
-        aporte(docente, id, 5, TipoAporte.SENSORIAL, "Le molesta el timbre del recreo", "Se tapa los oídos y se queda quieto.",
-                "{\"lista\":\"CUESTA\",\"categoria\":\"AUDICION\",\"contexto\":\"ESCUELA\"}", Visibilidad.TODOS);
-        aporte(tutor, id, 8, TipoAporte.SENSORIAL, "Lo calma la manta pesada", "Antes de dormir la pide él.",
-                "{\"lista\":\"AYUDA\",\"categoria\":\"TACTO\",\"contexto\":\"CASA\"}", Visibilidad.TODOS);
-        aporte(psico, id, 20, TipoAporte.SENSORIAL, "Hamacarse lo regula", "Cinco minutos de hamaca antes de la sesión.",
-                "{\"lista\":\"AYUDA\",\"categoria\":\"MOVIMIENTO_EQUILIBRIO\",\"contexto\":\"CONSULTORIO\"}", Visibilidad.PROFESIONALES);
-
-        // Estrategias
-        aporte(psico, id, 6, TipoAporte.ESTRATEGIA, "Anticipar con agenda visual", "Mostrar la agenda del día al llegar.",
-                "{\"categoria\":\"ANTICIPACION_SECUENCIACION\",\"situacion\":\"Cambios de actividad\","
-                        + "\"resultado\":\"FUNCIONO\",\"contextos\":[\"CASA\",\"ESCUELA\"]}",
-                Visibilidad.TODOS);
-        aporte(docente, id, 13, TipoAporte.ESTRATEGIA, "Rincón de pausa en el aula", "Puede ir al rincón cuando lo necesita.",
-                "{\"categoria\":\"REGULACION_PAUSAS\",\"situacion\":\"Mucho ruido en clase\","
-                        + "\"resultado\":\"FUNCIONO_EN_PARTE\",\"contextos\":[\"ESCUELA\"]}",
-                Visibilidad.TODOS);
-        aporte(cotutor, id, 25, TipoAporte.ESTRATEGIA, "Temporizador para terminar de jugar", "Avisar con un reloj de arena.",
-                "{\"categoria\":\"ANTICIPACION_SECUENCIACION\",\"situacion\":\"Dejar la tablet\","
-                        + "\"resultado\":\"NO_FUNCIONO\",\"contextos\":[\"CASA\"]}",
-                Visibilidad.TODOS);
-
-        // Rutinas
-        aporte(tutor, id, 7, TipoAporte.RUTINA, "Desayuno siempre en el mismo orden", "Leche, tostada y después la fruta.",
-                "{\"categoria\":\"ALIMENTACION\",\"contextos\":[\"CASA\"]}", Visibilidad.TODOS);
-        aporte(cotutor, id, 11, TipoAporte.RUTINA, "Se viste con la ropa preparada", "Dejarla la noche anterior en la silla.",
-                "{\"categoria\":\"VESTIDO\",\"contextos\":[\"CASA\"]}", Visibilidad.TODOS);
-        aporte(tutor, id, 19, TipoAporte.RUTINA, "Cuento antes de dormir", "Siempre el mismo libro, a la misma hora.",
-                "{\"categoria\":\"SUENO_DESCANSO\",\"contextos\":[\"CASA\"]}", Visibilidad.TODOS);
-
-        // Desregulación
-        aporte(docente, id, 4, TipoAporte.DESREGULACION, "Se balancea y habla más fuerte", "Suele pasar antes del recreo.",
-                "{\"lista\":\"SENALES\"}", Visibilidad.TODOS);
-        aporte(tutor, id, 14, TipoAporte.DESREGULACION, "Salir a un lugar tranquilo", "Acompañarlo sin hablar mucho.",
-                "{\"lista\":\"AYUDA\"}", Visibilidad.TODOS);
-        aporte(psico, id, 22, TipoAporte.DESREGULACION, "No tocarlo sin avisar", "Empeora si lo agarran del brazo.",
-                "{\"lista\":\"EVITAR\"}", Visibilidad.PROFESIONALES);
-
-        // Notas profesionales
-        aporte(psico, id, 3, TipoAporte.NOTA_PROFESIONAL, "Avances en tolerancia a la espera",
-                "En las últimas sesiones espera su turno con apoyo del temporizador.",
-                "{\"tipoNota\":\"OBSERVACION\",\"fecha\":\"" + LocalDate.now().minusDays(3) + "\"}", Visibilidad.PROFESIONALES);
-        aporte(docente, id, 17, TipoAporte.NOTA_PROFESIONAL, "Sugerencias para el acto escolar",
-                "Ensayar con anticipación y ubicarlo cerca de la salida.",
-                "{\"tipoNota\":\"ORIENTACION\",\"fecha\":\"" + LocalDate.now().minusDays(17) + "\"}", Visibilidad.TODOS);
-
-        SecurityContextHolder.clearContext();
+        // Se fecha hace unos días, en horario de día, para que el perfil tenga historia.
+        // Se corre la fecha que ya tiene (en vez de escribir una nueva) para no depender de la zona horaria.
+        Instant fecha = LocalDate.now(ZONA)
+                .minusDays(haceDias)
+                .atTime(9 + haceDias * 7 % 11, haceDias * 13 % 60)
+                .atZone(ZONA)
+                .toInstant();
+        long minutos = Duration.between(fecha, Instant.now()).toMinutes();
+        // MySQL asigna de izquierda a derecha: actualizado_en toma la creado_en ya corrida
+        jdbcTemplate.update("UPDATE aporte SET creado_en = DATE_SUB(creado_en, INTERVAL ? MINUTE), "
+                + "actualizado_en = creado_en WHERE id = ?", minutos, bytes(creado));
+        return creado;
     }
 
-    // Crea el aporte como si lo cargara el autor y lo fecha hace unos días
-    private void aporte(Usuario autor, UUID proyectoId, int haceDias, TipoAporte tipo,
-            String titulo, String contenido, String datos, Visibilidad visibilidad) {
+    void confirmar(Usuario usuario, UUID aporteId) {
+        byte[] proyecto = jdbcTemplate.queryForObject(
+                "SELECT proyecto_id FROM aporte WHERE id = ?", byte[].class, bytes(aporteId));
+        ByteBuffer buffer = ByteBuffer.wrap(proyecto);
+        comoUsuario(usuario);
+        confirmacionService.confirmar(new UUID(buffer.getLong(), buffer.getLong()), aporteId);
+    }
 
-        User principal = new User(autor.getId().toString(), "", List.of());
+    // Con visibilidad es un recurso suelto (pestaña Recursos); sin ella, un adjunto para un aporte
+    UUID imagen(Usuario autor, UUID proyectoId, String nombre, String titulo, String[] pasos,
+            Color color, Visibilidad visibilidad) {
+        return subir(autor, proyectoId, new MockMultipartFile("archivo", nombre, "image/png",
+                ArchivosDePrueba.pictograma(titulo, pasos, color)), visibilidad);
+    }
+
+    UUID pdf(Usuario autor, UUID proyectoId, String nombre, String titulo, String texto, Visibilidad visibilidad) {
+        return subir(autor, proyectoId, new MockMultipartFile("archivo", nombre, "application/pdf",
+                ArchivosDePrueba.pdf(titulo, texto)), visibilidad);
+    }
+
+    // JSON de "datos" a partir de pares clave, valor (en orden)
+    String datos(Object... claveValor) {
+        Map<String, Object> mapa = new LinkedHashMap<>();
+        for (int i = 0; i < claveValor.length; i += 2) {
+            mapa.put((String) claveValor[i], claveValor[i + 1]);
+        }
+        try {
+            return mapper.writeValueAsString(mapa);
+        } catch (JsonProcessingException e) {
+            throw new IllegalStateException(e);
+        }
+    }
+
+    // ------------------------------------------------------------------
+
+    private UUID subir(Usuario autor, UUID proyectoId, MockMultipartFile archivo, Visibilidad visibilidad) {
+        comoUsuario(autor);
+        return archivoService.subir(proyectoId, archivo, visibilidad).id();
+    }
+
+    private void comoUsuario(Usuario usuario) {
+        User principal = new User(usuario.getId().toString(), "", List.of());
         SecurityContextHolder.getContext().setAuthentication(
                 new UsernamePasswordAuthenticationToken(principal, null, principal.getAuthorities()));
-
-        AporteResponse creado = aporteService.crear(proyectoId,
-                new AporteRequest(tipo, titulo, contenido, datos, visibilidad));
-
-        Instant fecha = Instant.now().minus(Duration.ofDays(haceDias)).minus(Duration.ofMinutes(haceDias * 37L));
-        jdbcTemplate.update("UPDATE aporte SET creado_en = ?, actualizado_en = ? WHERE id = ?",
-                java.sql.Timestamp.from(fecha), java.sql.Timestamp.from(fecha), bytes(creado.id()));
     }
 
     private void sinMailsParaCuentasFicticias() {
@@ -294,11 +256,6 @@ public class CargadorDatosDePrueba implements CommandLineRunner {
         }
     }
 
-    private void fecharAltas(Proyecto proyecto, int haceDias) {
-        jdbcTemplate.update("UPDATE membresia SET fecha_alta = ? WHERE proyecto_id = ?",
-                java.sql.Timestamp.from(Instant.now().minus(Duration.ofDays(haceDias))), bytes(proyecto.getId()));
-    }
-
     private static byte[] bytes(UUID id) {
         return ByteBuffer.allocate(16)
                 .putLong(id.getMostSignificantBits())
@@ -307,22 +264,18 @@ public class CargadorDatosDePrueba implements CommandLineRunner {
     }
 
     private Usuario crearUsuario(String nombre, String apellido, String email) {
-
-        Usuario usuario = Usuario.builder()
+        return usuarioRepository.save(Usuario.builder()
                 .nombre(nombre)
                 .apellido(apellido)
                 .email(email)
                 .passwordHash(passwordEncoder.encode(PASSWORD))
-                .build();
-
-        return usuarioRepository.save(usuario);
+                .build());
     }
 
-    private void declararProfesional(Usuario usuario, Especialidad... especialidades) {
-
+    private void declararProfesional(Usuario usuario, String matricula, Especialidad... especialidades) {
         usuario.setTipoCuenta(TipoCuenta.PROFESIONAL);
+        usuario.setMatricula(matricula);
         usuarioRepository.save(usuario);
-
         for (Especialidad especialidad : especialidades) {
             usuarioEspecialidadRepository.save(UsuarioEspecialidad.builder()
                     .usuarioId(usuario.getId())
@@ -331,55 +284,21 @@ public class CargadorDatosDePrueba implements CommandLineRunner {
         }
     }
 
-    private Proyecto crearProyecto(
-            String nombre,
-            String apellido,
-            String apodo,
-            LocalDate fechaNacimiento,
-            String escuela,
-            String grado,
-            TipoEscuela tipoEscuela) {
-
-        Proyecto proyecto = Proyecto.builder()
-                .nombre(nombre)
-                .apellido(apellido)
-                .apodo(apodo)
-                .fechaNacimiento(fechaNacimiento)
-                .escuela(escuela)
-                .grado(grado)
-                .tipoEscuela(tipoEscuela)
-                .consentimientoFecha(Instant.now())
-                .build();
-
-        return proyectoRepository.save(proyecto);
-    }
-
-    private void crearMembresia(
-            Usuario usuario,
-            Proyecto proyecto,
-            Rol rol,
-            boolean esAdmin,
-            Especialidad especialidad,
-            String matricula) {
-
-        Membresia membresia = Membresia.builder()
+    private void crearMembresia(Usuario usuario, Proyecto proyecto, Rol rol, boolean esAdmin,
+            Especialidad especialidad, String matricula) {
+        Membresia membresia = membresiaRepository.save(Membresia.builder()
                 .usuario(usuario)
                 .proyecto(proyecto)
                 .rol(rol)
                 .esAdmin(esAdmin)
                 .matricula(matricula)
-                .build();
-
-        membresia = membresiaRepository.save(membresia);
-
-        // Si tiene especialidad, agregar a la tabla de especialidades.
+                .build());
+        // Si tiene especialidad, agregar a la tabla de especialidades
         if (especialidad != null) {
-            MembresiaEspecialidad me = MembresiaEspecialidad.builder()
+            membresia.getEspecialidades().add(MembresiaEspecialidad.builder()
                     .membresia(membresia)
                     .especialidad(especialidad)
-                    .build();
-
-            membresia.getEspecialidades().add(me);
+                    .build());
             membresiaRepository.save(membresia);
         }
     }
