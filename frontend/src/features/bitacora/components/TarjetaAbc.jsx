@@ -15,7 +15,7 @@ export default function TarjetaAbc({ registro, autorTexto }) {
     ETIQUETAS_CONTEXTO[info.contexto] ?? info.contexto ?? 'Sin contexto'
 
   return (
-    <article className="rounded-lg border-l-4 border-agua bg-superficie p-6 shadow-sm">
+    <article id={`aporte-${registro.id}`} className="scroll-mt-6 rounded-lg border-l-4 border-agua bg-superficie p-6 shadow-sm">
       <div className="flex flex-wrap items-center justify-between gap-2 text-sm text-texto-suave">
         <div className="flex flex-wrap items-center gap-2">
           <span className="inline-flex items-center rounded-full bg-agua px-3 py-1 text-xs font-semibold text-superficie">

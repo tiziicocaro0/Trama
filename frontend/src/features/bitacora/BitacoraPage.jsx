@@ -18,6 +18,7 @@ import FormularioAbc from './components/FormularioAbc.jsx'
 import FormularioObservacion from './components/FormularioObservacion.jsx'
 import TarjetaAbc from './components/TarjetaAbc.jsx'
 import TarjetaObservacion from './components/TarjetaObservacion.jsx'
+import useIrAlAporte from '../perfil/hooks/useIrAlAporte.js'
 import Cargando from '../../components/ui/Cargando.jsx'
 
 export default function BitacoraPage() {
@@ -113,6 +114,8 @@ export default function BitacoraPage() {
   const cantidadUltimaPagina =
     ultimaTandaCantidad ?? baseObservaciones.length
   const hayMasPaginas = cantidadUltimaPagina >= TAMANIO_PAGINA_BITACORA
+  // 4.5: si se llega desde la búsqueda, se baja hasta la observación
+  useIrAlAporte(observacionesOrdenadas.length > 0)
 
   return (
     <main
