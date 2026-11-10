@@ -50,9 +50,15 @@ export default function BarraIconos() {
           const destino = titulo === 'Calendario' && idProyectoActual
             ? `/proyectos/${idProyectoActual}/calendario`
             : to
+          const estaEnCalendario =
+            pathname.endsWith('/calendario') && Boolean(idProyectoActual)
+
           const actual =
-            (to === '/acompanamientos' && Boolean(idProyectoActual)) ||
-            (titulo === 'Calendario' && pathname.endsWith('/calendario') && Boolean(idProyectoActual))
+            (titulo === 'Calendario' && estaEnCalendario) ||
+            (to === '/acompanamientos' &&
+              Boolean(idProyectoActual) &&
+              !estaEnCalendario)
+              
           return (
             <li key={titulo}>
               <Link

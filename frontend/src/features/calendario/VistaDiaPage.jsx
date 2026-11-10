@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
+import { useNavigate, useParams, useSearchParams, useLocation } from 'react-router-dom'
 import { CalendarBlank, CalendarCheck, CaretLeft, CaretRight, MoonStars, Sun, SunHorizon, X } from '@phosphor-icons/react'
 import { obtenerVistaImagen } from '../../api/archivos.js'
 import { listarEventos } from '../../api/eventos.js'
@@ -62,6 +62,7 @@ function TarjetaActividad({ actividad, imagen }) {
 export default function VistaDiaPage() {
   const { id: proyectoId = '' } = useParams()
   const [searchParams] = useSearchParams()
+  const location = useLocation()
   const fechaInicial = esFechaIsoValida(searchParams.get('fecha')) ? searchParams.get('fecha') : hoyIso()
   const [fecha, setFecha] = useState(fechaInicial)
   const navegar = useNavigate()
@@ -101,6 +102,13 @@ export default function VistaDiaPage() {
   }, [actividades, proyectoId])
 
   function volverAlCalendario() {
+    const volverA = location.state?.volverA
+
+    if (volverA) {
+      navegar(volverA)
+      return
+    }
+
     navegar(`/proyectos/${proyectoId}/calendario?fecha=${fecha}`)
   }
 

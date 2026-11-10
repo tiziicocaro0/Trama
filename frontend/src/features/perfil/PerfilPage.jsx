@@ -16,6 +16,8 @@ import { CATEGORIAS_SENSORIALES, ICONOS_SENSORIALES, TONOS_SENSORIALES, CATEGORI
 import FiltrosRutinas from './components/FiltrosRutinas.jsx'
 import AvisoEliminacion from './eliminacion/AvisoEliminacion.jsx'
 import useProyectoActual from '../../hooks/useProyectoActual.js'
+import useVistaSimple from './useVistaSimple.js'
+import VistaSimplePortada from './components/VistaSimplePortada.jsx'
 import Cargando from '../../components/ui/Cargando.jsx'
 
 
@@ -26,6 +28,7 @@ export default function PerfilPage() {
     listarAportes,
   )
   const [mensajeGuardado, setMensajeGuardado] = useState('')
+  const { vistaSimple, setVistaSimple } = useVistaSimple()
   // 8.2: aviso de eliminación programada en la portada (se oculta al cancelarla)
   const { esAdmin } = useProyectoActual()
   const [cancelacionEn, setCancelacionEn] = useState(null)
@@ -180,7 +183,7 @@ function encabezadoCompleto({
 }
 
   return (
-    <div className="min-h-svh bg-fondo text-texto">
+    <div className={`${vistaSimple ? '' : 'min-h-svh'} bg-fondo text-texto`}>
       <a href="#contenido-perfil" className="skip-link">
         Saltar al contenido
       </a>
@@ -218,7 +221,7 @@ function encabezadoCompleto({
             {!seccion && cancelacionEn !== id && (
               <AvisoEliminacion proyecto={proyecto} esAdmin={esAdmin} onCancelada={() => setCancelacionEn(id)} />
             )}
-            {!seccion && (
+            {!seccion && !vistaSimple && (
               <div className="mb-6 grid gap-4 lg:grid-cols-12">
                 <section className="relative overflow-hidden rounded-lg border border-primario/20 bg-superficie p-5 shadow-sm sm:p-6 lg:col-span-8">
                   <svg
@@ -305,6 +308,9 @@ function encabezadoCompleto({
                 </section>
               </div>
             )}
+            {!seccion && vistaSimple && (
+              <VistaSimplePortada id={id} />
+            )}
             {mensajeGuardado && (
               <p role="status" className="mb-4 text-secundario">
                 {mensajeGuardado}
@@ -331,7 +337,8 @@ function encabezadoCompleto({
                 seccion ? 'grid gap-5' : 'grid grid-cols-1 gap-5 md:grid-cols-2'
               }
             >
-              {(seccion ? [seccion] : seccionesPerfil).map((item) => (
+            {(!vistaSimple || seccion) &&
+              (seccion ? [seccion] : seccionesPerfil).map((item) => (
                 <BloquePerfil
                   key={item.slug}
                   seccion={item}
