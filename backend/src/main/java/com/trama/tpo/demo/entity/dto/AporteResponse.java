@@ -36,7 +36,9 @@ public record AporteResponse(
         // 3.4: ID de la solicitud pendiente para que el autor pueda marcarla como revisada.
         UUID revisionPendienteId,
         // Si el autor tiene foto de cuenta: la tarjeta la muestra junto al título
-        Boolean autorTieneFoto
+        Boolean autorTieneFoto,
+        // 6.2: cuántos comentarios tiene el aporte
+        Integer comentarios
 ) {
 
     public AporteResponse(
@@ -74,7 +76,8 @@ public record AporteResponse(
                 List.of(),
                 false,
                 null,
-                false
+                false,
+                0
         );
     }
 }

@@ -108,7 +108,10 @@ class ResumenServiceTest {
                 null,
 
                 // La autora ficticia no tiene foto de cuenta.
-                false
+                false,
+
+                // 6.2: sin comentarios.
+                0
         );
 }
-}
+}

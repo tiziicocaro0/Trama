@@ -19,6 +19,7 @@ import com.trama.tpo.demo.exceptions.ApiException;
 import com.trama.tpo.demo.repository.AporteRepository;
 import com.trama.tpo.demo.repository.AporteVersionRepository;
 import com.trama.tpo.demo.repository.ArchivoRepository;
+import com.trama.tpo.demo.repository.ComentarioRepository;
 import com.trama.tpo.demo.repository.MembresiaRepository;
 import com.trama.tpo.demo.repository.ProyectoRepository;
 import com.trama.tpo.demo.repository.UsuarioRepository;
@@ -62,6 +63,7 @@ public class AporteService {
     private final ConfirmacionAporteService confirmacionAporteService;
     private final AvisoNotaService avisoNotaService;
     private final SolicitudRevisionRepository solicitudRevisionRepository;
+    private final ComentarioRepository comentarioRepository;
     // Lee el JSON "datos" de cada tipo de aporte (fechas incluidas).
     private final ObjectMapper mapper = new ObjectMapper().findAndRegisterModules();
 
@@ -77,7 +79,8 @@ public class AporteService {
             RegistroAccionService registroAccionService,
             ConfirmacionAporteService confirmacionAporteService,
             AvisoNotaService avisoNotaService,
-            SolicitudRevisionRepository solicitudRevisionRepository) {
+            SolicitudRevisionRepository solicitudRevisionRepository,
+            ComentarioRepository comentarioRepository) {
 
         this.aporteRepository = aporteRepository;
         this.aporteVersionRepository = aporteVersionRepository;
@@ -91,6 +94,7 @@ public class AporteService {
         this.confirmacionAporteService = confirmacionAporteService;
         this.avisoNotaService = avisoNotaService;
         this.solicitudRevisionRepository = solicitudRevisionRepository;
+        this.comentarioRepository = comentarioRepository;
     }
 
     // CREAR APORTE
@@ -162,6 +166,7 @@ public class AporteService {
                 true,
                 especialidadesPorAutor(proyectoId),
                 List.of(),
+                Map.of(),
                 Map.of()
         );
     }
@@ -266,13 +271,18 @@ public class AporteService {
                                 .toList()
                 );
 
+        // 6.2: cuántos comentarios tiene cada aporte, también en una sola consulta
+        Map<UUID, Integer> comentarios =
+                contarComentarios(aportes.stream().map(Aporte::getId).toList());
+
         return aportes.stream()
                 .map(aporte -> convertirRespuesta(
                         aporte,
                         puedeCargar,
                         especialidades,
                         confirmantes.getOrDefault(aporte.getId(), List.of()),
-                        revisionesPendientes
+                        revisionesPendientes,
+                        comentarios
                 ))
                 .toList();
     }
@@ -353,7 +363,8 @@ public class AporteService {
                 especialidadesPorAutor(proyectoId),
                 confirmacionAporteService.confirmantesPorAporte(List.of(guardado.getId()))
                         .getOrDefault(guardado.getId(), List.of()),
-                obtenerRevisionesPendientes(List.of(guardado.getId()))
+                obtenerRevisionesPendientes(List.of(guardado.getId())),
+                contarComentarios(List.of(guardado.getId()))
         );
     }
 
@@ -476,7 +487,8 @@ public class AporteService {
         boolean puedeCargar,
         Map<UUID, List<EspecialidadItemResponse>> especialidades,
         List<ConfirmacionAporteService.Confirmante> confirmantes,
-        Map<UUID, UUID> revisionesPendientes) {
+        Map<UUID, UUID> revisionesPendientes,
+        Map<UUID, Integer> comentarios) {
 
         boolean esAutor = aporte.getAutor().getId()
                 .equals(usuarioActual.obtenerId());
@@ -521,8 +533,19 @@ public class AporteService {
                 confirmantes.stream().map(ConfirmacionAporteService.Confirmante::nombre).toList(),
                 revisionPendiente,
                 revisionPendienteId,
-                aporte.getAutor().getFotoRuta() != null
+                aporte.getAutor().getFotoRuta() != null,
+                comentarios.getOrDefault(aporte.getId(), 0)
         );
+    }
+
+    private Map<UUID, Integer> contarComentarios(List<UUID> aporteIds) {
+        if (aporteIds.isEmpty()) {
+            return Map.of();
+        }
+        return comentarioRepository.contarPorAporte(aporteIds).stream()
+                .collect(Collectors.toMap(
+                        fila -> (UUID) fila[0],
+                        fila -> ((Number) fila[1]).intValue()));
     }
 
     private static String nombreCompleto(Usuario usuario) {
