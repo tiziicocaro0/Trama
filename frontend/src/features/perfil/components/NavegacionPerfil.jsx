@@ -105,7 +105,11 @@ export default function NavegacionPerfil({ proyectoId }) {
       <ul className="-mb-px flex gap-4">
         {enFila.map(({ titulo, destino, seleccionado }) => (
           <li key={titulo} className="shrink-0">
-            <Link to={destino} aria-current={seleccionado ? 'page' : undefined} className={clasePestana(seleccionado)}>
+            <Link
+              to={destino}
+              aria-current={seleccionado ? 'page' : undefined}
+              className={clasePestana(seleccionado)}
+            >
               {titulo}
             </Link>
           </li>

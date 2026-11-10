@@ -16,6 +16,7 @@ import NuevoAcompanamientoPage from '../features/acompanamientos/NuevoAcompanami
 import MiPerfilPage from '../features/cuenta/MiPerfilPage.jsx'
 import RedPage from '../features/perfil/RedPage.jsx'
 import DatosPersonalesPage from '../features/perfil/DatosPersonalesPage.jsx'
+import BusquedaPage from '../features/perfil/BusquedaPage.jsx'
 import RecursosPage from '../features/perfil/RecursosPage.jsx'
 import ConoceloPage from '../features/perfil/ConoceloPage.jsx'
 import BitacoraPage from '../features/bitacora/BitacoraPage.jsx'
@@ -60,6 +61,7 @@ export default function AppRoutes() {
       miembros: 'Red',
       'datos-personales': 'Datos personales',
       recursos: 'Recursos',
+      buscar: 'Buscar en el perfil',
       notas: 'Notas',
       bitacora: 'Bitácora',
       calendario: 'Calendario',
@@ -74,7 +76,8 @@ export default function AppRoutes() {
         : null
     const invitacion = pathname.startsWith('/invitaciones/') ? 'Invitación' : null
     document.title = `TRAMA · ${titles[pathname] ?? tituloPerfil ?? invitacion ?? 'Página no encontrada'}`
-    document.querySelector('main')?.focus()
+    // El foco va al contenido (lectores de pantalla) sin mover la página
+    document.querySelector('main')?.focus({ preventScroll: true })
   }, [pathname])
 
   return (
@@ -208,6 +211,7 @@ export default function AppRoutes() {
         <Route path="red" element={<RedPage />} />
         <Route path="datos-personales" element={<DatosPersonalesPage />} />
         <Route path="recursos" element={<RecursosPage />} />
+        <Route path="buscar" element={<BusquedaPage />} />
         <Route path="bitacora" element={<BitacoraPage />} />
         <Route path="calendario" element={<CalendarioPage />} />
         <Route path=":seccion" element={<PerfilPage />} />

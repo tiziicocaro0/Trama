@@ -11,6 +11,7 @@ const ESPACIOS = {
   red: 'Red',
   'datos-personales': 'Datos personales',
   recursos: 'Recursos',
+  buscar: 'Buscar en el perfil',
   notas: 'Notas',
   bitacora: 'Bitácora',
   calendario: 'Calendario',
@@ -101,7 +102,11 @@ export default function PerfilLayout() {
             onCambioFoto={recargarProyecto}
           />
         </div>
-        <Outlet />
+        {/* Alto mínimo de una pantalla: mientras carga la sección nueva, la página no se achica
+            y no salta el desplazamiento al cambiar de pestaña */}
+        <div className="min-h-svh">
+          <Outlet />
+        </div>
       </div>
     </PerfilContext.Provider>
   )
