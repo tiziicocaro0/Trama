@@ -1,5 +1,6 @@
 import { IdentificationCard } from '@phosphor-icons/react'
 import Campo from '../../../../components/ui/Campo.jsx'
+import RadioOvillo from '../../../../components/ui/RadioOvillo.jsx'
 import CampoFormulario from '../../../../components/ui/CampoFormulario.jsx'
 import SelectorEspecialidades from '../../../perfil/components/SelectorEspecialidades.jsx'
 import { AREAS_PROFESIONALES, TIPOS_CUENTA } from '../tipoCuenta.js'
@@ -10,25 +11,17 @@ function Opciones({ nombre, legend, opciones, valor, onElegir, error, enviando }
     <fieldset aria-describedby={error ? idError : undefined} className="space-y-3">
       <legend className="mb-3 text-lg text-texto">{legend}</legend>
       {opciones.map((opcion) => (
-        <label
+        <RadioOvillo
           key={opcion.valor}
-          className={`flex min-h-11 cursor-pointer items-start gap-3 rounded-md border bg-superficie p-4 has-focus-visible:outline-2 has-focus-visible:outline-primario ${valor === opcion.valor ? 'border-primario' : 'border-borde'}`}
+          name={nombre}
+          value={opcion.valor}
+          checked={valor === opcion.valor}
+          onChange={() => onElegir(opcion.valor)}
+          disabled={enviando}
+          descripcion={opcion.descripcion}
         >
-          <input
-            type="radio"
-            name={nombre}
-            value={opcion.valor}
-            checked={valor === opcion.valor}
-            onChange={() => onElegir(opcion.valor)}
-            disabled={enviando}
-            aria-invalid={Boolean(error)}
-            className="mt-1 size-5 shrink-0 accent-primario"
-          />
-          <span>
-            <span className="block font-bold text-texto">{opcion.titulo}</span>
-            <span className="block text-texto-suave">{opcion.descripcion}</span>
-          </span>
-        </label>
+          {opcion.titulo}
+        </RadioOvillo>
       ))}
       {error && (
         <p id={idError} className="text-sm text-error">
