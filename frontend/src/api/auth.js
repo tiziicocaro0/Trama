@@ -177,6 +177,8 @@ export async function obtenerIdentidad() {
       typeof data.matricula === 'string' && data.matricula.trim() ? data.matricula : null,
     tieneFoto: data.tieneFoto === true,
     tieneComprobanteMatricula: data.tieneComprobanteMatricula === true,
+    // 7.0: la vista simple se guarda en la cuenta
+    vistaSimple: data.vistaSimple === true,
   }
 }
 

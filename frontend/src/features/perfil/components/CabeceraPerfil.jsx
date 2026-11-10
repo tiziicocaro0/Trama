@@ -1,6 +1,7 @@
 import { ArrowLeft } from '@phosphor-icons/react'
-import { useState } from 'react'
+import { useContext, useState } from 'react'
 import { Link } from 'react-router-dom'
+import AuthContext from '../../auth/AuthContext.js'
 import { calcularEdad } from '../perfil.js'
 import AvisoPlanGratuito from '../../plan/AvisoPlanGratuito.jsx'
 import BuscadorPerfil from './BuscadorPerfil.jsx'
@@ -16,6 +17,8 @@ export default function CabeceraPerfil({ proyecto, seccion, puedeEditarFoto = fa
   const edad = calcularEdad(proyecto.fechaNacimiento)
   // Mientras el buscador está abierto, los datos del niño quedan solo con sus íconos
   const [buscando, setBuscando] = useState(false)
+  // 7.0: en la vista simple no van las pestañas ni el buscador, solo los botones grandes
+  const vistaSimple = Boolean(useContext(AuthContext)?.usuario?.vistaSimple)
   return (
     <header className="mb-6">
       <Link
@@ -43,11 +46,13 @@ export default function CabeceraPerfil({ proyecto, seccion, puedeEditarFoto = fa
         <div className="order-last basis-full md:order-none md:basis-auto md:flex-1">
           <DatosRapidosNino proyecto={proyecto} compacto={buscando} />
         </div>
-        <div className={`flex justify-end md:order-last ${buscando ? 'basis-full sm:basis-auto' : ''}`}>
-          <BuscadorPerfil key={proyecto.id} proyectoId={proyecto.id} alCambiar={setBuscando} />
-        </div>
+        {!vistaSimple && (
+          <div className={`flex justify-end md:order-last ${buscando ? 'basis-full sm:basis-auto' : ''}`}>
+            <BuscadorPerfil key={proyecto.id} proyectoId={proyecto.id} alCambiar={setBuscando} />
+          </div>
+        )}
       </div>
-      <NavegacionPerfil proyectoId={proyecto.id} />
+      {!vistaSimple && <NavegacionPerfil proyectoId={proyecto.id} />}
       {proyecto.soloLecturaPorPlan === true && (
         <div className="mt-5 print:hidden">
           <AvisoPlanGratuito />

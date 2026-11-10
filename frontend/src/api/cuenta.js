@@ -44,3 +44,9 @@ export async function actualizarMisDatos({ nombre, apellido }) {
   })
   return data
 }
+
+// 7.0: la vista simple se guarda en la cuenta, así se mantiene al volver a entrar
+export async function actualizarVistaSimple(activa) {
+  const { data } = await cliente.put('/usuarios/yo/vista-simple', { activa })
+  return data
+}

@@ -20,6 +20,8 @@ import BusquedaPage from '../features/perfil/BusquedaPage.jsx'
 import RecursosPage from '../features/perfil/RecursosPage.jsx'
 import ConoceloPage from '../features/perfil/ConoceloPage.jsx'
 import BitacoraPage from '../features/bitacora/BitacoraPage.jsx'
+import EnCasaPage from '../features/perfil/EnCasaPage.jsx'
+import { PortadaSegunVista } from '../features/perfil/PortadaSimple.jsx'
 import CalendarioPage from '../features/calendario/CalendarioPage.jsx'
 import VistaDiaPage from '../features/calendario/VistaDiaPage.jsx'
 import PlanPage from '../features/plan/PlanPage.jsx'
@@ -63,6 +65,7 @@ export default function AppRoutes() {
       recursos: 'Recursos',
       buscar: 'Buscar en el perfil',
       notas: 'Notas',
+      'en-casa': 'En casa',
       bitacora: 'Bitácora',
       calendario: 'Calendario',
       hoy: 'Mostrarle el día',
@@ -206,13 +209,14 @@ export default function AppRoutes() {
           </Acceso>
         }
       >
-        <Route index element={<PerfilPage />} />
+        <Route index element={<PortadaSegunVista />} />
         <Route path="conocelo" element={<ConoceloPage />} />
         <Route path="red" element={<RedPage />} />
         <Route path="datos-personales" element={<DatosPersonalesPage />} />
         <Route path="recursos" element={<RecursosPage />} />
         <Route path="buscar" element={<BusquedaPage />} />
         <Route path="bitacora" element={<BitacoraPage />} />
+        <Route path="en-casa" element={<EnCasaPage />} />
         <Route path="calendario" element={<CalendarioPage />} />
         <Route path=":seccion" element={<PerfilPage />} />
       </Route>
