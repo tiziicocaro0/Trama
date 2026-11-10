@@ -1,7 +1,8 @@
-import { House, SignOut } from '@phosphor-icons/react'
+import { Eye, House, SignOut } from '@phosphor-icons/react'
 import { Link, useLocation } from 'react-router-dom'
 import useAuth from '../../hooks/useAuth.js'
 import { navegacionPara } from '../../features/inicio/navegacion.js'
+import useVistaSimple from '../../features/perfil/useVistaSimple.js'
 
 const CLASE_ICONO =
   'group relative flex size-12 items-center justify-center rounded-md text-texto-suave hover:bg-decoracion hover:text-primario focus-visible:outline-2 focus-visible:outline-primario'
@@ -22,6 +23,7 @@ function Etiqueta({ children }) {
 // pantallas grandes y abajo en el celular.
 export default function BarraIconos() {
   const { usuario, cerrarSesion } = useAuth()
+  const { vistaSimple, setVistaSimple } = useVistaSimple()
   const { pathname } = useLocation()
   const idProyectoActual = pathname.match(/^\/proyectos\/([^/]+)/)?.[1]
   const items = [
@@ -66,6 +68,24 @@ export default function BarraIconos() {
           )
         })}
         <li className="lg:mt-auto">
+          <button
+            type="button"
+            onClick={() => setVistaSimple(!vistaSimple)}
+            aria-pressed={vistaSimple}
+            className={`${CLASE_ICONO} ${
+              vistaSimple ? 'bg-decoracion text-primario' : ''
+            }`}
+          >
+            <Eye size={24} aria-hidden="true" />
+            <span className="sr-only">
+              {vistaSimple ? 'Desactivar Vista simple' : 'Activar Vista simple'}
+            </span>
+            <Etiqueta>
+              {vistaSimple ? 'Desactivar Vista simple' : 'Activar Vista simple'}
+            </Etiqueta>
+          </button>
+        </li>
+        <li>
           <button type="button" onClick={() => cerrarSesion()} className={CLASE_ICONO}>
             <SignOut size={24} aria-hidden="true" />
             <span className="sr-only">Cerrar sesión</span>

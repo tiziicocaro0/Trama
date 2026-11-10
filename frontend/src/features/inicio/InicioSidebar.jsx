@@ -5,6 +5,7 @@ import Logo from '../../components/ui/Logo.jsx'
 import HiloInicio from './HiloInicio.jsx'
 import useAuth from '../../hooks/useAuth.js'
 import { navegacionPara } from './navegacion.js'
+import useVistaSimple from '../perfil/useVistaSimple.js'
 
 // Secciones con página propia: se marcan por la ruta, no por ?seccion=.
 // 9.2: la institución se abre desde Mi plan; los avisos por mail, desde Mi perfil.
@@ -19,6 +20,8 @@ export default function InicioSidebar({ cerrarSesion }) {
   const [params] = useSearchParams()
   const { pathname } = useLocation()
   const { usuario } = useAuth()
+  const { vistaSimple, setVistaSimple } = useVistaSimple()
+  const [mostrarInfoVistaSimple, setMostrarInfoVistaSimple] = useState(false);
   const navegacion = navegacionPara(usuario)
   const seleccion = params.get('seccion') ?? ''
   const actual = ['guias', 'estrategias', 'comunidad'].includes(seleccion)
@@ -28,6 +31,33 @@ export default function InicioSidebar({ cerrarSesion }) {
   const [abierto, setAbierto] = useState(false)
   const botonMenu = useRef(null)
   const botonCerrar = useRef(null)
+  const infoVistaSimpleRef = useRef(null);
+
+  useEffect(() => {
+    function cerrarAlHacerClickAfuera(evento) {
+      if (
+        mostrarInfoVistaSimple &&
+        infoVistaSimpleRef.current &&
+        !infoVistaSimpleRef.current.contains(evento.target)
+      ) {
+        setMostrarInfoVistaSimple(false);
+      }
+    }
+
+    function cerrarConEscape(evento) {
+      if (evento.key === 'Escape') {
+        setMostrarInfoVistaSimple(false);
+      }
+    }
+
+    document.addEventListener('mousedown', cerrarAlHacerClickAfuera);
+    document.addEventListener('keydown', cerrarConEscape);
+
+    return () => {
+      document.removeEventListener('mousedown', cerrarAlHacerClickAfuera);
+      document.removeEventListener('keydown', cerrarConEscape);
+    };
+  }, [mostrarInfoVistaSimple]);
 
   function cerrar() {
     setAbierto(false)
@@ -143,6 +173,78 @@ export default function InicioSidebar({ cerrarSesion }) {
         </ul>
       </nav>
       <div className="mt-6 flex flex-col">
+        <div className="mt-4 mb-8 px-8">
+          <div className="rounded-md bg-decoracion/50 px-4 py-3">
+            <div className="flex items-start justify-between gap-3">
+              <div className="min-w-0">
+                <div className="flex items-center gap-1.5">
+                  <span className="whitespace-nowrap text-sm font-semibold text-texto">
+                    Vista simple
+                  </span>
+
+                  <div ref={infoVistaSimpleRef} className="relative">
+                    <button
+                      type="button"
+                      aria-label="Información sobre Vista simple"
+                      aria-expanded={mostrarInfoVistaSimple}
+                      onClick={(evento) => {
+                        evento.stopPropagation()
+                        setMostrarInfoVistaSimple((actual) => !actual)
+                      }}
+                      className="inline-flex size-4 items-center justify-center rounded-full border border-oliva/30 bg-superficie text-xs font-semibold text-oliva transition hover:bg-miel/15"
+                    >
+                      i
+                    </button>
+
+                    {mostrarInfoVistaSimple && (
+                      <div
+                        role="note"
+                        className="absolute left-0 top-6 z-40 w-64 rounded-2xl border border-miel/40 bg-superficie p-4 text-left shadow-lg"
+                      >
+                        <p className="font-display text-base text-terracota">
+                          Vista simple
+                        </p>
+
+                        <p className="mt-2 text-xs leading-relaxed text-texto-suave">
+                          Muestra una versión reducida del perfil con accesos rápidos a
+                          Conocelo en 5 minutos, Si se desregula, Hoy y Cargar
+                          observación.
+                        </p>
+
+                        <p className="mt-2 text-xs font-medium text-oliva">
+                          Podés volver al perfil completo cuando quieras.
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                <p className="mt-1 text-xs leading-snug text-texto-suave">
+                  Acceso rápido a lo esencial del perfil
+                </p>
+              </div>
+
+              <label
+                htmlFor="vista-simple"
+                className="relative mt-1 inline-flex shrink-0 cursor-pointer items-center"
+              >
+                <input
+                  id="vista-simple"
+                  type="checkbox"
+                  role="switch"
+                  aria-label="Activar Vista simple"
+                  checked={vistaSimple}
+                  onChange={(evento) => setVistaSimple(evento.target.checked)}
+                  className="peer sr-only"
+                />
+
+                <span className="h-6 w-11 rounded-full bg-texto-suave/25 transition peer-checked:bg-secundario" />
+
+                <span className="absolute left-1 size-4 rounded-full bg-superficie transition-transform peer-checked:translate-x-5" />
+              </label>
+            </div>
+          </div>
+        </div>
         <p className="px-8 font-display text-subtitulo leading-6 font-bold text-agua">
           Distintas miradas,
           <br />
