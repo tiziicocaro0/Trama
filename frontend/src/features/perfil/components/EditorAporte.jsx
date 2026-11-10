@@ -286,10 +286,9 @@ export default function EditorAporte({
             <legend className="mb-2 font-semibold">¿Sobre qué aspecto querés aportar?</legend>
             <div className="flex flex-wrap gap-2">
               {CATEGORIAS_COMUNICACION.map(([valor, etiqueta]) => (
-                <label key={valor} className="inline-flex cursor-pointer items-center gap-2 rounded-full border border-borde bg-superficie px-3 py-2 has-checked:border-primario has-checked:bg-fondo">
-                  <input type="radio" name="categoriaComunicacion" value={valor} checked={extra.categoria === valor} onChange={() => setExtra((actual) => ({ ...actual, categoria: valor }))} disabled={enviando} />
+                <CasillaOvillo key={valor} tipo="radio" tamano="chico" name="categoriaComunicacion" value={valor} className="min-h-11 rounded-full border border-borde bg-superficie px-3 has-checked:border-primario has-checked:bg-fondo" checked={extra.categoria === valor} onChange={() => setExtra((actual) => ({ ...actual, categoria: valor }))} disabled={enviando}>
                   {etiqueta}
-                </label>
+                </CasillaOvillo>
               ))}
             </div>
             {erroresCampos.categoria && <p role="alert" className="mt-1 text-sm text-error">{erroresCampos.categoria}</p>}

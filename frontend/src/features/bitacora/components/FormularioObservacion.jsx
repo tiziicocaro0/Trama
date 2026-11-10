@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { guardarAporte } from '../../../api/aportes.js'
 import Boton from '../../../components/ui/Boton.jsx'
+import CampoFechaHora from '../../../components/ui/CampoFechaHora.jsx'
 import PreguntaGuia from '../../../components/ui/PreguntaGuia.jsx'
 import SelectorVisibilidad from '../../../components/ui/SelectorVisibilidad.jsx'
 import {
@@ -120,24 +121,13 @@ export default function FormularioObservacion({
       {/* 2.9: una pregunta guía y un ejemplo, en positivo */}
       <PreguntaGuia tipo="OBSERVACION" />
 
-      <div>
-        <label
-          htmlFor="fecha-observacion"
-          className="mb-2 block font-semibold"
-        >
-          Fecha y hora
-        </label>
-        <input
-          id="fecha-observacion"
-          name="fecha"
-          type="datetime-local"
-          value={fecha}
-          onChange={(event) => setFecha(event.target.value)}
-          required
-          disabled={enviando}
-          className="min-h-14 w-full rounded-md border border-borde bg-superficie px-4 py-3 text-texto focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primario"
-        />
-      </div>
+      <CampoFechaHora
+        id="fecha-observacion"
+        value={fecha}
+        onChange={setFecha}
+        required
+        disabled={enviando}
+      />
 
       <div>
         <label

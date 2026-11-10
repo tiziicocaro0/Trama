@@ -7,7 +7,7 @@ export default function CamposEstrategia({ parte, extra, setExtra, errores, disa
     <fieldset>
       <legend className="mb-2 font-semibold">¿Qué tipo de estrategia querés compartir?</legend>
       <div className="flex flex-wrap gap-2">
-        {CATEGORIAS_ESTRATEGIA.map(([valor, etiqueta]) => { const Icono = ICONOS_ESTRATEGIA[valor]; return <label key={valor} className={`inline-flex min-h-11 items-center gap-2 rounded-full border border-borde px-3 has-checked:border-primario ${TONOS_ESTRATEGIA[valor]}`}><input type="radio" name="categoriaEstrategia" checked={extra.categoria === valor} onChange={() => setExtra((actual) => ({ ...actual, categoria: valor }))} disabled={disabled} /><Icono size={20} aria-hidden="true" />{etiqueta}</label> })}
+        {CATEGORIAS_ESTRATEGIA.map(([valor, etiqueta]) => { const Icono = ICONOS_ESTRATEGIA[valor]; return <CasillaOvillo key={valor} tipo="radio" tamano="chico" name="categoriaEstrategia" className={`min-h-11 rounded-full border border-borde px-3 has-checked:border-primario ${TONOS_ESTRATEGIA[valor]}`} checked={extra.categoria === valor} onChange={() => setExtra((actual) => ({ ...actual, categoria: valor }))} disabled={disabled}><span className="inline-flex items-center gap-2"><Icono size={20} aria-hidden="true" />{etiqueta}</span></CasillaOvillo> })}
       </div>
       {errores.categoria && <p role="alert" className="mt-1 text-sm text-error">{errores.categoria}</p>}
     </fieldset>
@@ -23,7 +23,7 @@ export default function CamposEstrategia({ parte, extra, setExtra, errores, disa
       <fieldset>
         <legend className="mb-2 font-semibold">Resultado</legend>
         <div className="flex flex-wrap gap-2">
-          {RESULTADOS_ESTRATEGIA.map(([valor, etiqueta]) => <label key={valor} className="inline-flex min-h-11 items-center gap-2 rounded-full border border-borde bg-superficie px-3 has-checked:border-primario has-checked:bg-fondo"><input type="radio" name="resultadoEstrategia" checked={extra.resultado === valor} onChange={() => setExtra((actual) => ({ ...actual, resultado: valor }))} disabled={disabled} />{etiqueta}</label>)}
+          {RESULTADOS_ESTRATEGIA.map(([valor, etiqueta]) => <CasillaOvillo key={valor} tipo="radio" tamano="chico" name="resultadoEstrategia" className="min-h-11 rounded-full border border-borde bg-superficie px-3 has-checked:border-primario has-checked:bg-fondo" checked={extra.resultado === valor} onChange={() => setExtra((actual) => ({ ...actual, resultado: valor }))} disabled={disabled}>{etiqueta}</CasillaOvillo>)}
         </div>
         {errores.resultado && <p role="alert" className="mt-1 text-sm text-error">{errores.resultado}</p>}
       </fieldset>

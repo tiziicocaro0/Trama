@@ -3,6 +3,7 @@ import Ovillo from './Ovillo.jsx'
 // Casilla de TRAMA: al marcarla aparece el ovillo de lana, rodando.
 // Usa un checkbox nativo (invisible) para que funcione con teclado, lectores de pantalla y formularios.
 // tamano="chico": ovillo más chico y sin forma propia, para usar dentro de una pastilla (la forma la da className).
+// tipo="radio": la misma casilla para elegir una sola opción de un grupo (mismo name).
 export default function CasillaOvillo({
   checked,
   onChange,
@@ -15,6 +16,7 @@ export default function CasillaOvillo({
   children,
   className = '',
   tamano = 'normal',
+  tipo = 'checkbox',
 }) {
   const chico = tamano === 'chico'
   const forma = chico
@@ -27,7 +29,7 @@ export default function CasillaOvillo({
       className={`group ${forma} cursor-pointer items-center has-focus-visible:outline-2 has-focus-visible:outline-primario has-disabled:cursor-not-allowed ${className}`.trim()}
     >
       <input
-        type="checkbox"
+        type={tipo === 'radio' ? 'radio' : 'checkbox'}
         className="peer sr-only"
         checked={checked}
         onChange={onChange}

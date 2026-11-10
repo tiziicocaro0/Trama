@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { guardarAporte } from '../../../api/aportes.js'
 import Boton from '../../../components/ui/Boton.jsx'
+import CampoFechaHora from '../../../components/ui/CampoFechaHora.jsx'
 import PreguntaGuia from '../../../components/ui/PreguntaGuia.jsx'
 import {
   CONTEXTOS_OBSERVACION,
@@ -176,21 +177,13 @@ export default function FormularioAbc({ proyectoId, alGuardar, alCancelar }) {
           </select>
         </div>
 
-        <div>
-          <label htmlFor="abc-fecha" className="mb-2 block font-semibold">
-            Fecha y hora
-          </label>
-          <input
-            id="abc-fecha"
-            name="fecha"
-            type="datetime-local"
-            value={fecha}
-            onChange={(event) => setFecha(event.target.value)}
-            required
-            disabled={enviando}
-            className={`min-h-14 ${CLASE_CAMPO}`}
-          />
-        </div>
+        <CampoFechaHora
+          id="abc-fecha"
+          value={fecha}
+          onChange={setFecha}
+          required
+          disabled={enviando}
+        />
       </div>
 
       {error && (

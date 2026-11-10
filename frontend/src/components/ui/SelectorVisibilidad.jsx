@@ -14,12 +14,13 @@ const RESUMEN = {
   SOLO_TUTORES: 'Solo tutores',
 }
 
+// Toda la red ya incluye a todos: se marca sola, sin marcar también los grupos de abajo
 function grupos(valor) {
   return {
     red: valor === 'TODOS',
-    tutores: Boolean(RESUMEN[valor]),
-    educacion: ['TODOS', 'PROFESIONALES', 'SOLO_EDUCACION'].includes(valor),
-    salud: ['TODOS', 'PROFESIONALES', 'SOLO_SALUD'].includes(valor),
+    tutores: Boolean(RESUMEN[valor]) && valor !== 'TODOS',
+    educacion: ['PROFESIONALES', 'SOLO_EDUCACION'].includes(valor),
+    salud: ['PROFESIONALES', 'SOLO_SALUD'].includes(valor),
   }
 }
 
@@ -45,7 +46,7 @@ export default function SelectorVisibilidad({
     onChange({ target: { value: valor } })
   }
 
-  // Toda la red marca todo; si ya estaba, desmarca todo
+  // Toda la red queda sola y desmarca los grupos; si ya estaba, desmarca todo
   function alternarRed() {
     cambiar(marcado.red ? '' : 'TODOS')
   }
