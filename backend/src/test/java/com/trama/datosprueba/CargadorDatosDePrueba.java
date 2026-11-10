@@ -5,6 +5,7 @@ import java.nio.ByteBuffer;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDate;
+import java.time.LocalTime;
 import java.time.ZoneId;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -28,7 +29,9 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.trama.tpo.demo.aporte.TipoAporte;
 import com.trama.tpo.demo.aporte.Visibilidad;
+import com.trama.tpo.demo.entity.dto.ActaRequest;
 import com.trama.tpo.demo.entity.dto.AporteRequest;
+import com.trama.tpo.demo.entity.dto.EventoRequest;
 import com.trama.tpo.demo.entity.membresia.Especialidad;
 import com.trama.tpo.demo.entity.membresia.Membresia;
 import com.trama.tpo.demo.entity.membresia.MembresiaEspecialidad;
@@ -48,6 +51,7 @@ import com.trama.tpo.demo.repository.UsuarioRepository;
 import com.trama.tpo.demo.service.AporteService;
 import com.trama.tpo.demo.service.ArchivoService;
 import com.trama.tpo.demo.service.ConfirmacionAporteService;
+import com.trama.tpo.demo.service.EventoService;
 
 // Datos ficticios para ver la app con un perfil completo (estética, demos y videos).
 // Vive en src/test: nunca entra en el jar ni en la imagen de Docker, así que la app
@@ -73,6 +77,7 @@ public class CargadorDatosDePrueba implements CommandLineRunner {
     private final AporteService aporteService;
     private final ArchivoService archivoService;
     private final ConfirmacionAporteService confirmacionService;
+    private final EventoService eventoService;
     private final JdbcTemplate jdbcTemplate;
     private final ObjectMapper mapper = new ObjectMapper();
 
@@ -93,6 +98,7 @@ public class CargadorDatosDePrueba implements CommandLineRunner {
             AporteService aporteService,
             ArchivoService archivoService,
             ConfirmacionAporteService confirmacionService,
+            EventoService eventoService,
             JdbcTemplate jdbcTemplate,
             @Value("${DATOS_PRUEBA_EMAIL_TUTOR:}") String emailTutor,
             @Value("${DATOS_PRUEBA_EMAIL_DOCENTE:}") String emailDocente,
@@ -107,6 +113,7 @@ public class CargadorDatosDePrueba implements CommandLineRunner {
         this.aporteService = aporteService;
         this.archivoService = archivoService;
         this.confirmacionService = confirmacionService;
+        this.eventoService = eventoService;
         this.jdbcTemplate = jdbcTemplate;
         this.emailTutor = elegirEmail(emailTutor, "tutor@trama.test");
         this.emailDocente = elegirEmail(emailDocente, "docente@trama.test");
@@ -161,6 +168,7 @@ public class CargadorDatosDePrueba implements CommandLineRunner {
         crearMembresia(sofia, valen, Rol.SALUD, false, Especialidad.TERAPIA_OCUPACIONAL, "MN 67890");
 
         new AportesDeValen(this, valen.getId(), laura, pablo, elena, maria, diego, sofia).cargar();
+        new EventosDeValen(this, valen.getId(), laura, pablo, elena, maria, diego, sofia).cargar();
 
         SecurityContextHolder.clearContext();
         log.info("Datos de prueba cargados. Contraseña de todos los usuarios: {}", PASSWORD);
@@ -199,6 +207,23 @@ public class CargadorDatosDePrueba implements CommandLineRunner {
         ByteBuffer buffer = ByteBuffer.wrap(proyecto);
         comoUsuario(usuario);
         confirmacionService.confirmar(new UUID(buffer.getLong(), buffer.getLong()), aporteId);
+    }
+
+    // Un evento del calendario. Con diaSemana es semanal (desde la fecha, sin fin);
+    // con participantes es una reunión.
+    UUID evento(Usuario autor, UUID proyectoId, String titulo, String descripcion, LocalDate fecha,
+            LocalTime inicio, LocalTime fin, boolean semanal, boolean esCambio, UUID imagenId,
+            List<UUID> participantes) {
+        comoUsuario(autor);
+        boolean reunion = participantes != null && !participantes.isEmpty();
+        return eventoService.crear(proyectoId, new EventoRequest(titulo, descripcion, fecha, inicio, fin,
+                imagenId, semanal, semanal ? (byte) fecha.getDayOfWeek().getValue() : null, null,
+                reunion ? "REUNION" : "COMUN", reunion ? participantes : null, esCambio)).id();
+    }
+
+    void acta(Usuario autor, UUID proyectoId, UUID eventoId, String texto) {
+        comoUsuario(autor);
+        eventoService.guardarActa(proyectoId, eventoId, new ActaRequest(texto));
     }
 
     // Con visibilidad es un recurso suelto (pestaña Recursos); sin ella, un adjunto para un aporte

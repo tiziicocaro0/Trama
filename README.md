@@ -541,7 +541,7 @@ npm run dev
 
 Después se abre `http://localhost:5173`. Sin `-Reiniciar` se conserva lo que hayas cambiado; con `-Reiniciar` se borra `trama_prueba` y se vuelve a cargar desde cero.
 
-**Qué carga:** un solo niño, **Valentina (Valen)**, 8 años, 2.º grado en una escuela híbrida, con toda su red aportando. Cada persona carga en las secciones que le corresponden: 36 aportes entre fortalezas, intereses, comunicación, perfil sensorial, estrategias, rutinas, "si se desregula" y notas profesionales, con lugares, visibilidades y fechas variados. También hay pictogramas y PDFs como adjuntos y en la pestaña Recursos, y varios "Yo también lo observé".
+**Qué carga:** un solo niño, **Valentina (Valen)**, 8 años, 2.º grado en una escuela híbrida, con toda su red aportando. Cada persona carga en las secciones que le corresponden: 36 aportes entre fortalezas, intereses, comunicación, perfil sensorial, estrategias, rutinas, "si se desregula" y notas profesionales, con lugares, visibilidades y fechas variados. También hay pictogramas y PDFs como adjuntos y en la pestaña Recursos, varios "Yo también lo observé", y un calendario con actividades semanales, cambios de rutina y reuniones de equipo (una ya hecha, con su acta).
 
 **Usuarios**, todos con la contraseña `Trama1234!`:
 
@@ -566,7 +566,7 @@ DATOS_PRUEBA_EMAIL_TERAPEUTA=...  # reemplaza a Sofía, terapeuta ocupacional
 
 Entran con la contraseña `Trama1234!` y, como los mails son de verdad, funcionan recuperar contraseña e invitaciones (los mails salen por Gmail). Al cargar, esas cuentas reciben algunos avisos de "nota nueva"; las `@trama.test` nunca reciben mails.
 
-**Cómo funciona:** el código vive en `backend/src/test/java/com/trama/datosprueba/`. `TramaConDatosDePrueba` arranca la app con los perfiles `dev` y `datosprueba` (`./mvnw spring-boot:test-run`), `CargadorDatosDePrueba` crea la red y `AportesDeValen` carga lo que aporta cada persona, con los mismos services que usa la app. Como está en `src/test`, nunca entra en el build; y como los nombres no terminan en `Test`, el CI no lo corre.
+**Cómo funciona:** el código vive en `backend/src/test/java/com/trama/datosprueba/`. `TramaConDatosDePrueba` arranca la app con los perfiles `dev` y `datosprueba` (`./mvnw spring-boot:test-run`), `CargadorDatosDePrueba` crea la red, `AportesDeValen` carga lo que aporta cada persona y `EventosDeValen` arma el calendario, con los mismos services que usa la app. Como está en `src/test`, nunca entra en el build; y como los nombres no terminan en `Test`, el CI no lo corre.
 
 **Regla:** cada historia que suma una pantalla o una tabla nueva agrega sus datos en `AportesDeValen` (o en `CargadorDatosDePrueba` si es parte de la red).
 
