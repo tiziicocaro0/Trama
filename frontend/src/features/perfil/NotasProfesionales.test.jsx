@@ -54,9 +54,12 @@ beforeEach(() => {
 })
 
 describe('Notas profesionales (4.2)', () => {
-  it('muestra la leyenda fija sobre la historia clínica', async () => {
+  it('muestra la aclaración sobre la historia clínica en el (i) junto al título', async () => {
     abrirNotas()
-    expect(await screen.findByText(LEYENDA)).toBeInTheDocument()
+    const info = await screen.findByRole('button', { name: 'Sobre las notas' })
+    expect(screen.queryByText(LEYENDA)).not.toBeInTheDocument()
+    await userEvent.hover(info)
+    expect(screen.getByRole('tooltip')).toHaveTextContent(LEYENDA)
   })
 
   it('cada nota muestra autor, especialidad, tipo y fecha', async () => {

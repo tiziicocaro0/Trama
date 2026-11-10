@@ -3,6 +3,7 @@ import { Link, useParams } from 'react-router-dom'
 import { useState } from 'react'
 import Boton from '../../components/ui/Boton.jsx'
 import { Aviso } from '../../components/ui/Aviso.jsx'
+import InfoAyuda from '../../components/ui/InfoAyuda.jsx'
 import { avisar } from '../../components/avisos/avisosFlotantes.js'
 import BloquePerfil from './components/BloquePerfil.jsx'
 import DatosRapidosNino from './components/DatosRapidosNino.jsx'
@@ -131,12 +132,14 @@ export default function PerfilPage() {
         )
     : null
 
-  function encabezadoConBoton(titulo, descripcion, alAgregar, puedeCrear, textoBoton = 'Agregar aporte',) {
+  function encabezadoConBoton(titulo, descripcion, alAgregar, puedeCrear, textoBoton = 'Agregar aporte', info = null) {
   return (
     <div className="mb-5 flex flex-wrap items-start justify-between gap-4">
       <div className="min-w-0 max-w-3xl">
-        <p className="font-display text-h1 text-secundario">
+        <p className="flex items-center gap-2 font-display text-h1 text-secundario">
           {titulo}
+          {/* Una aclaración que se ve al pasar el mouse por el (i) */}
+          {info && <InfoAyuda etiqueta={info.etiqueta}>{info.texto}</InfoAyuda>}
         </p>
 
         {descripcion && (
@@ -308,14 +311,11 @@ function encabezadoCompleto({
               </div>
             )}
             {seccion?.tipo === 'NOTA_PROFESIONAL' && (
-              <div className="mb-4 space-y-2">
-                <Aviso>{LEYENDA_NOTAS}</Aviso>
-                {proyecto.puedeCargarNotas !== true && (
-                  <p className="text-sm text-texto-suave">
-                    Las notas las cargan los profesionales de educación y salud.
-                  </p>
-                )}
-              </div>
+              proyecto.puedeCargarNotas !== true && (
+                <p className="mb-4 text-sm text-texto-suave">
+                  Las notas las cargan los profesionales de educación y salud.
+                </p>
+              )
             )}
             {proyecto.puedeCargar !== true &&
               proyecto.soloLecturaPorPlan !== true && (
@@ -628,6 +628,7 @@ function encabezadoCompleto({
                         alAgregar,
                         proyecto.puedeCargarNotas === true,
                         'Agregar nota',
+                        { etiqueta: 'Sobre las notas', texto: LEYENDA_NOTAS },
                       )
                     }
 

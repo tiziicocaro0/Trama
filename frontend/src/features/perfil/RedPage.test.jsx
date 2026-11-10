@@ -310,7 +310,7 @@ describe('Red de profesionales', () => {
     const botonQuitar = await screen.findByRole('button', {
       name: 'Quitar acceso a Familiar ficticio Ejemplo',
     })
-    expect(botonQuitar).toHaveClass('bg-error')
+    expect(botonQuitar).toHaveClass('text-error')
     await userEvent.click(botonQuitar)
     await userEvent.click(screen.getByRole('button', { name: 'Confirmar' }))
 

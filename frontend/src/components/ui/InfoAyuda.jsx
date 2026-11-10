@@ -47,7 +47,7 @@ export default function InfoAyuda({ etiqueta, children }) {
         <span
           id={id}
           role="tooltip"
-          className="absolute top-full left-1/2 z-30 mt-1 w-64 -translate-x-1/2 rounded-md bg-texto p-3 text-left text-sm font-normal text-superficie shadow-lg"
+          className="absolute top-full left-1/2 z-30 mt-1 w-64 -translate-x-1/2 rounded-md bg-texto p-3 text-left font-sans text-sm font-normal text-superficie shadow-lg"
         >
           {children}
         </span>
