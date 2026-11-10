@@ -18,14 +18,20 @@ const casilla = (nombre) => screen.getByRole('checkbox', { name: new RegExp(`^${
 const valor = () => screen.getByRole('status', { name: 'Valor' }).textContent
 
 describe('Quién puede ver (casillas)', () => {
-  it('Toda la red marca todo, y al tocarla de nuevo desmarca todo', async () => {
+  it('Toda la red queda sola y desmarca los demás; al tocarla de nuevo no queda nada', async () => {
     render(<Prueba />)
+    await userEvent.click(casilla('Equipo de educación'))
     await userEvent.click(casilla('Toda la red'))
     expect(valor()).toBe('TODOS')
-    for (const nombre of ['Tutores', 'Equipo de educación', 'Equipo de salud']) expect(casilla(nombre)).toBeChecked()
+    expect(casilla('Toda la red')).toBeChecked()
+    for (const nombre of ['Tutores', 'Equipo de educación', 'Equipo de salud']) expect(casilla(nombre)).not.toBeChecked()
+    // Marcar un equipo saca Toda la red
+    await userEvent.click(casilla('Equipo de salud'))
+    expect(valor()).toBe('SOLO_SALUD')
+    expect(casilla('Toda la red')).not.toBeChecked()
+    await userEvent.click(casilla('Toda la red'))
     await userEvent.click(casilla('Toda la red'))
     expect(valor()).toBe('')
-    expect(casilla('Equipo de salud')).not.toBeChecked()
   })
 
   it('combina equipos en el valor que guarda el back y queda abierto', async () => {
