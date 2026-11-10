@@ -203,6 +203,7 @@ export default function RedPage() {
 
                   {esAdmin && (
                     <Boton
+                      tamano="chico"
                       onClick={() => setModalInvitarAbierto(true)}
                     >
                       Invitar miembro

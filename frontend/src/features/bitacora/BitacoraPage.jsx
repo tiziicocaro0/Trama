@@ -162,6 +162,7 @@ export default function BitacoraPage() {
                       {puedeCrearAbc && (
                         <Boton
                           variant="secondary"
+                          tamano="chico"
                           onClick={() => {
                             setMensajeGuardado('')
                             setMostrandoAbc(true)
@@ -172,6 +173,7 @@ export default function BitacoraPage() {
                       )}
                       {puedeCrear && (
                         <Boton
+                          tamano="chico"
                           onClick={() => {
                             setMensajeGuardado('')
                             setMostrandoFormulario(true)

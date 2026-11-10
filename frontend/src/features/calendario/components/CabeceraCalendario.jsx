@@ -10,8 +10,8 @@ export default function CabeceraCalendario({ nombreProyecto, vista, referencia, 
         <p className="mt-1 text-texto-suave">Organizá y consultá las actividades, encuentros y cambios importantes de {nombreProyecto}.</p>
       </div>
       <div className="flex flex-wrap gap-3">
-        {mostrarIrAlDia && proyectoId && fechaSeleccionada && <Boton to={`/proyectos/${proyectoId}/hoy?fecha=${fechaSeleccionada}`} variant="secondary"><Sparkle size={20} aria-hidden="true" />Mostrarle el día</Boton>}
-        {mostrarNuevo && <Boton onClick={onNuevo} className="fixed right-4 bottom-20 z-30 shadow-md md:static md:shadow-none"><Plus size={18} aria-hidden="true" />Nuevo evento</Boton>}
+        {mostrarIrAlDia && proyectoId && fechaSeleccionada && <Boton to={`/proyectos/${proyectoId}/hoy?fecha=${fechaSeleccionada}`} variant="secondary" tamano="chico"><Sparkle size={18} aria-hidden="true" />Mostrarle el día</Boton>}
+        {mostrarNuevo && <Boton onClick={onNuevo} tamano="chico" className="fixed right-4 bottom-20 z-30 shadow-md md:static md:shadow-none"><Plus size={18} aria-hidden="true" />Nuevo evento</Boton>}
       </div>
     </div>
     <div className="mb-5 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">

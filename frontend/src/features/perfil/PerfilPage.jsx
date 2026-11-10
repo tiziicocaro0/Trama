@@ -151,7 +151,7 @@ export default function PerfilPage() {
       </div>
 
       {puedeCrear && (
-        <Boton onClick={alAgregar} className="shrink-0">
+        <Boton onClick={alAgregar} tamano="chico" className="shrink-0">
           <Plus size={18} aria-hidden="true" />
           {textoBoton}
         </Boton>
@@ -274,7 +274,7 @@ function encabezadoCompleto({
                     </div>
 
                     <div>
-                      <Boton to={`/proyectos/${id}/conocelo`} aria-label="Conocelo en 5 minutos">
+                      <Boton to={`/proyectos/${id}/conocelo`} tamano="chico" aria-label="Conocelo en 5 minutos">
                         Abrir resumen
                       </Boton>
                     </div>
@@ -304,6 +304,7 @@ function encabezadoCompleto({
                       <Boton
                         to={`/proyectos/${id}/desregulacion`}
                         variant="secondary"
+                        tamano="chico"
                       >
                         Ver guía
                       </Boton>
