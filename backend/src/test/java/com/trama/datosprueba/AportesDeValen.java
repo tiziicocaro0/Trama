@@ -56,6 +56,20 @@ final class AportesDeValen {
         c.confirmar(sofia, sensorial.get(0));
         c.confirmar(laura, estrategias.get(0));
         c.confirmar(maria, estrategias.get(0));
+
+        // Comentarios con @menciones y una revisión pendiente
+        c.comentar(laura, id, estrategias.get(0),
+                "En casa la usamos todas las mañanas. @Sofía Ramos, ¿le sumamos el baño a la agenda?");
+        c.comentar(sofia, id, estrategias.get(0),
+                "¡Sí! Te paso el pictograma del baño en Recursos.");
+        c.comentar(maria, id, estrategias.get(0),
+                "En el aula también funciona. La pegamos en el pizarrón.");
+        c.comentar(elena, id, fortalezas.get(0),
+                "En casa de la abuela armó uno de 50 piezas en una tarde.");
+        c.comentar(diego, id, comunicacion.get(0),
+                "@Laura Ruiz, ¿la usa también para pedir ir al baño?");
+        c.pedirRevision(laura, id, estrategias.get(3),
+                "¿Podés contar qué intereses usaste? Así lo probamos también en casa.");
     }
 
     private List<UUID> fortalezas() {

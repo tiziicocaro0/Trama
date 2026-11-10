@@ -541,7 +541,7 @@ npm run dev
 
 Después se abre `http://localhost:5173`. Sin `-Reiniciar` se conserva lo que hayas cambiado; con `-Reiniciar` se borra `trama_prueba` y se vuelve a cargar desde cero.
 
-**Qué carga:** un solo niño, **Valentina (Valen)**, 8 años, 2.º grado en una escuela híbrida, con toda su red aportando. Cada persona carga en las secciones que le corresponden: 36 aportes entre fortalezas, intereses, comunicación, perfil sensorial, estrategias, rutinas, "si se desregula" y notas profesionales, con lugares, visibilidades y fechas variados. También hay pictogramas y PDFs como adjuntos y en la pestaña Recursos, varios "Yo también lo observé", y un calendario con actividades semanales, cambios de rutina y reuniones de equipo (una ya hecha, con su acta).
+**Qué carga:** un solo niño, **Valentina (Valen)**, 8 años, 2.º grado en una escuela híbrida, con toda su red aportando. Cada persona carga en las secciones que le corresponden: 36 aportes entre fortalezas, intereses, comunicación, perfil sensorial, estrategias, rutinas, "si se desregula" y notas profesionales, con lugares, visibilidades y fechas variados. También hay pictogramas y PDFs como adjuntos y en la pestaña Recursos, varios "Yo también lo observé", comentarios con @menciones, una revisión pendiente, y un calendario con actividades semanales, cambios de rutina y reuniones de equipo (una ya hecha, con su acta).
 
 **Usuarios**, todos con la contraseña `Trama1234!`:
 
