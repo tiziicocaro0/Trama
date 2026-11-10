@@ -16,6 +16,8 @@ import {
   TIPOS_NOTA,
 } from '../../features/perfil/perfil.js'
 import ConfirmacionAporte from '../../features/perfil/components/ConfirmacionAporte.jsx'
+import ComentariosAporte from '../../features/perfil/components/ComentariosAporte.jsx'
+import { ModalPedirRevision, RevisionPendiente } from '../../features/perfil/components/RevisionAporte.jsx'
 import DatosEstrategia from '../../features/perfil/components/DatosEstrategia.jsx'
 import { CATEGORIAS_COMUNICACION, CATEGORIAS_DESREGULACION, TONOS_COMUNICACION, ICONOS_COMUNICACION, CATEGORIAS_SENSORIALES, CONTEXTOS_SENSORIALES, FORMAS_COMUNICACION, ICONOS_SENSORIALES, TONOS_SENSORIALES, ICONOS_LISTA_SENSORIAL, TONOS_LISTA_SENSORIAL, CONTEXTOS_RUTINA, ICONOS_RUTINA, TONOS_RUTINA, etiquetaCategoriaRutina, ICONOS_DESREGULACION, TONOS_DESREGULACION, etiquetaOpcion, ICONOS_LUGAR, } from '../../features/perfil/camposAporte.js'
 
@@ -54,7 +56,10 @@ export default function TarjetaAporte({
   alVerHistorial,
   archivando = false,
   resumen = false,
+  puedePedirRevision = false,
+  alActualizar,
 }) {
+  const [pidiendoRevision, setPidiendoRevision] = useState(false)
   const [errorAdjunto, setErrorAdjunto] = useState('')
   const [vistaAdjunto, setVistaAdjunto] = useState(null)
   const esNota = aporte.tipo === 'NOTA_PROFESIONAL'
@@ -202,10 +207,18 @@ export default function TarjetaAporte({
               alEditar={puedeModificar ? alEditar : null}
               alArchivar={puedeModificar ? alArchivar : null}
               alVerHistorial={alVerHistorial}
+              // 3.4: un tutor puede pedir revisar el aporte de otra persona (uno por vez)
+              alPedirRevision={
+                puedePedirRevision && aporte.puedeEditar !== true && !aporte.revisionPendiente && !aporte.archivado
+                  ? () => setPidiendoRevision(true)
+                  : null
+              }
               archivando={archivando}
             />
           )}
         </div>
+
+        {!resumen && <RevisionPendiente aporte={aporte} alCambiar={alActualizar} />}
 
         {categoria?.texto && (
           <p className={`mb-2 inline-flex items-center gap-2 rounded-full px-3 py-1 text-sm font-semibold ${categoria.tono ?? 'bg-decoracion text-secundario'}`}>
@@ -344,6 +357,18 @@ export default function TarjetaAporte({
         {/* 3.3: confirmar el aporte de otra persona */}
         {!resumen && (
           <ConfirmacionAporte aporte={aporte} />
+        )}
+
+        {/* 6.2: comentarios con @menciones */}
+        {!resumen && <ComentariosAporte aporte={aporte} />}
+
+        {puedePedirRevision && (
+          <ModalPedirRevision
+            aporte={aporte}
+            abierto={pidiendoRevision}
+            onCerrar={() => setPidiendoRevision(false)}
+            alCambiar={alActualizar}
+          />
         )}
 
         {esNota && (
