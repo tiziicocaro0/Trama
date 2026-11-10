@@ -5,6 +5,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import cliente from '../../api/cliente.js'
 import AppRoutes from '../../routes/AppRoutes.jsx'
 import AuthContext from '../auth/AuthContext.js'
+import VistaSimpleProvider from '../perfil/VistaSimpleProvider.jsx'
 
 vi.mock('../../api/cliente.js', () => ({
   default: {
@@ -98,7 +99,9 @@ function abrirBitacora(autenticado = true) {
           estado: autenticado ? 'autenticado' : 'anonimo',
         }}
       >
-        <AppRoutes />
+        <VistaSimpleProvider>
+          <AppRoutes />
+        </VistaSimpleProvider>
       </AuthContext.Provider>
     </MemoryRouter>,
   )

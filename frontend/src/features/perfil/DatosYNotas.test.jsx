@@ -88,7 +88,7 @@ describe('Datos personales y navegación compartida', () => {
       within(nav)
         .getAllByRole('link')
         .map((link) => link.textContent),
-    ).toEqual(['Vista general', 'Red', 'Datos personales', 'Notas'])
+    ).toEqual(['Vista general', 'Bitácora', 'Red', 'Datos personales', 'Notas'])
     await userEvent.click(
       within(nav).getByRole('link', { name: 'Datos personales' }),
     )

@@ -8,6 +8,7 @@ import { obtenerMisProyectos } from '../../api/proyectos.js'
 import { listarEventos } from '../../api/eventos.js'
 import { hoyIso } from '../../utils/fechas.js'
 import { sumarDias } from '../calendario/utils/periodo.js'
+import VistaSimpleProvider from '../perfil/VistaSimpleProvider.jsx'
 
 vi.mock('../calendario/CalendarioUsuarioPage.jsx', () => ({ default: () => <section><h2>Calendario</h2><p>Agenda del usuario autenticado</p></section> }))
 vi.mock('../../api/proyectos.js', () => ({ obtenerMisProyectos: vi.fn() }))
@@ -47,7 +48,9 @@ function abrir(ruta = '/inicio') {
   render(
     <MemoryRouter initialEntries={[ruta]}>
       <AuthContext.Provider value={{ usuario, cerrarSesion }}>
-        <InicioPage />
+        <VistaSimpleProvider>
+          <InicioPage />
+        </VistaSimpleProvider>
       </AuthContext.Provider>
     </MemoryRouter>,
   )

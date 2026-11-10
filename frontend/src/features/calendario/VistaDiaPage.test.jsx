@@ -6,6 +6,7 @@ import cliente from '../../api/cliente.js'
 import AppRoutes from '../../routes/AppRoutes.jsx'
 import AuthContext from '../auth/AuthContext.js'
 import { obtenerVistaImagen } from '../../api/archivos.js'
+import VistaSimpleProvider from '../perfil/VistaSimpleProvider.jsx'
 
 vi.mock('../../api/cliente.js', () => ({
   default: { defaults: { baseURL: '/api' }, get: vi.fn(), post: vi.fn(), put: vi.fn(), delete: vi.fn() },
@@ -43,7 +44,9 @@ function abrir(ruta = `/proyectos/${proyectoId}/hoy?fecha=${fecha}`) {
   return render(
     <MemoryRouter initialEntries={[ruta]}>
       <AuthContext.Provider value={{ usuario: { id: 'usuario-tutor' }, estado: 'autenticado' }}>
-        <AppRoutes />
+        <VistaSimpleProvider>
+          <AppRoutes />
+        </VistaSimpleProvider>
       </AuthContext.Provider>
     </MemoryRouter>,
   )

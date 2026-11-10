@@ -58,7 +58,7 @@ export default function BarraIconos() {
             (to === '/acompanamientos' &&
               Boolean(idProyectoActual) &&
               !estaEnCalendario)
-              
+
           return (
             <li key={titulo}>
               <Link
@@ -105,6 +105,12 @@ export default function BarraIconos() {
 
 // Envuelve una pantalla del niño con la barra y le deja lugar.
 export function ConBarraIconos({ children }) {
+  const { vistaSimple } = useVistaSimple()
+
+  if (vistaSimple) {
+    return <div>{children}</div>
+  }
+
   return (
     <div className="pb-16 lg:pb-0 lg:pl-20">
       <BarraIconos />

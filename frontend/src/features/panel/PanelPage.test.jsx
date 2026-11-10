@@ -3,6 +3,7 @@ import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router-dom'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import PanelPage from './PanelPage.jsx'
+import VistaSimpleProvider from '../perfil/VistaSimpleProvider.jsx'
 
 vi.mock('../../hooks/useAuth.js', () => ({
   default: () => ({
@@ -23,7 +24,9 @@ vi.mock('./hooks/usePanel.js', () => ({
 function renderizar() {
   return render(
     <MemoryRouter initialEntries={['/panel']}>
-      <PanelPage />
+      <VistaSimpleProvider>
+        <PanelPage />
+      </VistaSimpleProvider>
     </MemoryRouter>,
   )
 }

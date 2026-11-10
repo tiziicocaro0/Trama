@@ -14,6 +14,7 @@ import AuthContext from '../auth/AuthContext.js'
 import cliente from '../../api/cliente.js'
 import usePerfil from './hooks/usePerfil.js'
 import { obtenerAportesEjemplo } from './perfil.mock.js'
+import VistaSimpleProvider from './VistaSimpleProvider.jsx'
 
 vi.mock('../../api/cliente.js', () => ({
   default: { defaults: { baseURL: '/api' }, get: vi.fn() },
@@ -51,7 +52,9 @@ function abrir(ruta = `/proyectos/${id}`, auth = sesion) {
   return render(
     <MemoryRouter initialEntries={[ruta]}>
       <AuthContext.Provider value={auth}>
-        <AppRoutes />
+        <VistaSimpleProvider>
+          <AppRoutes />
+        </VistaSimpleProvider>
       </AuthContext.Provider>
     </MemoryRouter>,
   )
