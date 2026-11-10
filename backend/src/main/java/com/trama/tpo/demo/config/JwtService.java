@@ -10,6 +10,9 @@ import javax.crypto.SecretKey;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
+import com.trama.tpo.demo.entity.usuario.Usuario;
+import com.trama.tpo.demo.repository.UsuarioRepository;
+
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.JwtException;
@@ -21,8 +24,18 @@ public class JwtService {
     // Duracion del token: 8 horas
     private static final long JWT_EXPIRATION = 8 * 60 * 60 * 1000L;
 
+    // Claim con la versión de sesión del usuario. Al cerrar sesión o cambiar la contraseña
+    // la versión sube y todos los tokens emitidos antes dejan de valer, aunque no hayan vencido.
+    static final String CLAIM_VERSION = "tv";
+
     @Value("${JWT_SECRET}")
     private String secretKey;
+
+    private final UsuarioRepository usuarioRepository;
+
+    public JwtService(UsuarioRepository usuarioRepository) {
+        this.usuarioRepository = usuarioRepository;
+    }
 
     // GENERAR TOKEN
 
@@ -36,6 +49,7 @@ public class JwtService {
 
         return Jwts.builder()
                 .subject(usuarioId.toString())
+                .claim(CLAIM_VERSION, versionActual(usuarioId))
                 .issuedAt(new Date(currentTime))
                 .expiration(new Date(currentTime + expiration))
                 .signWith(getSecretKey())
@@ -49,12 +63,24 @@ public class JwtService {
         try {
             UUID tokenUsuarioId = extractUsuarioId(token);
 
+            Integer versionToken = extractClaim(
+                    token, claims -> claims.get(CLAIM_VERSION, Integer.class));
+
+            // Sin versión (tokens viejos) o con una versión anterior: la sesión se cerró
             return tokenUsuarioId.equals(usuarioId)
-                    && !isTokenExpired(token);
+                    && !isTokenExpired(token)
+                    && versionToken != null
+                    && versionToken == versionActual(usuarioId);
 
         } catch (JwtException | IllegalArgumentException e) {
             return false;
         }
+    }
+
+    private int versionActual(UUID usuarioId) {
+        return usuarioRepository.findById(usuarioId)
+                .map(Usuario::getTokenVersion)
+                .orElse(0);
     }
 
     // OBTENER ID DEL USUARIO
@@ -111,4 +137,4 @@ public class JwtService {
                 secretKey.getBytes(StandardCharsets.UTF_8)
         );
     }
-}
+}
