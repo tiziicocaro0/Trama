@@ -28,7 +28,7 @@ export default function PerfilPage() {
     listarAportes,
   )
   const [mensajeGuardado, setMensajeGuardado] = useState('')
-  const { vistaSimple, setVistaSimple } = useVistaSimple()
+  const { vistaSimple } = useVistaSimple()
   // 8.2: aviso de eliminación programada en la portada (se oculta al cancelarla)
   const { esAdmin } = useProyectoActual()
   const [cancelacionEn, setCancelacionEn] = useState(null)
