@@ -76,6 +76,11 @@ public class Usuario {
     @Column(name = "foto_tipo", length = 20)
     private String fotoTipo;
 
+    /** 7.0: la persona eligió la vista simple (menos opciones y textos grandes). */
+    @Builder.Default
+    @Column(name = "vista_simple", nullable = false)
+    private Boolean vistaSimple = false;
+
     /** Registro: la cuenta entra recién después de confirmar el código que llega por mail. */
     @Builder.Default
     @Column(name = "email_verificado", nullable = false)
