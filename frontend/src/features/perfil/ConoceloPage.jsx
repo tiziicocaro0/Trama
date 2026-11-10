@@ -3,18 +3,15 @@ import {
   Ear,
   Heart,
   Lightbulb,
-  FilePdf,
   Palette,
 } from '@phosphor-icons/react'
-import { useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { obtenerResumenProyecto } from '../../api/aportes.js'
-import { descargarPerfilPdf } from '../../api/exportacion.js'
-import { avisarError } from '../../components/avisos/avisosFlotantes.js'
 import Boton from '../../components/ui/Boton.jsx'
 import usePerfil from './hooks/usePerfil.js'
 import DatosRapidosNino from './components/DatosRapidosNino.jsx'
 import { leerDatosAporte } from './perfil.js'
+import DescargarPdfPerfil from './components/DescargarPdfPerfil.jsx'
 
 const ETIQUETAS_INTENSIDAD = {
   ALTA: 'Intensidad alta',
@@ -113,19 +110,6 @@ export default function ConoceloPage() {
   const queEvitar = resumen?.sensorial ?? []
   const desregulacion = resumen?.desregulacion ?? []
 
-  const [descargando, setDescargando] = useState(false)
-
-  // 8.3: el mismo resumen en PDF, armado por el back con lo que esta persona puede ver
-  async function descargarPdf() {
-    setDescargando(true)
-    try {
-      await descargarPerfilPdf(id, 'conocelo')
-    } catch {
-      avisarError('No pudimos descargar el PDF. Probá de nuevo en un rato.')
-    } finally {
-      setDescargando(false)
-    }
-  }
 
   return (
     <div className="min-h-svh bg-fondo text-texto">
@@ -170,10 +154,8 @@ export default function ConoceloPage() {
                   </p>
                 </div>
                 <div className="print:hidden">
-                  <Boton variant="secondary" onClick={descargarPdf} disabled={descargando}>
-                    <FilePdf size={20} aria-hidden="true" />
-                    {descargando ? 'Descargando…' : 'Descargar PDF'}
-                  </Boton>
+                  {/* 8.3: el PDF de TRAMA, con fecha y solo lo que la persona puede ver */}
+                  <DescargarPdfPerfil proyectoId={id} seccion="conocelo" />
                 </div>
               </div>
 

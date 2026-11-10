@@ -8,25 +8,16 @@ export async function descargarTodosLosDatos(proyectoId, formato, filtros = {}) 
     `/proyectos/${encodeURIComponent(proyectoId)}/exportar`,
     { params: { formato, ...parametrosDeFiltro(filtros) }, responseType: 'blob' },
   )
-  guardarArchivo(respuesta.data, `trama-datos-${hoyIso()}.${formato}`)
+  guardarArchivo(respuesta.data, `trama-datos-${hoy()}.${formato}`)
 }
 
-// 8.3: "Conocelo en 5 minutos" (seccion 'conocelo') o el perfil ('perfil') en PDF.
-// Cualquier miembro puede descargarlo; trae solo lo que esa persona puede ver.
-export async function descargarPerfilPdf(proyectoId, seccion) {
-  const respuesta = await cliente.get(
-    `/proyectos/${encodeURIComponent(proyectoId)}/exportar-perfil`,
-    { params: { seccion }, responseType: 'blob' },
-  )
-  guardarArchivo(respuesta.data, `trama-${seccion}-${hoyIso()}.pdf`)
+// La fecha de hoy en la compu (AAAA-MM-DD), para el nombre del archivo
+function hoy() {
+  const fecha = new Date()
+  return `${fecha.getFullYear()}-${String(fecha.getMonth() + 1).padStart(2, '0')}-${String(fecha.getDate()).padStart(2, '0')}`
 }
 
-function hoyIso() {
-  const hoy = new Date()
-  return `${hoy.getFullYear()}-${String(hoy.getMonth() + 1).padStart(2, '0')}-${String(hoy.getDate()).padStart(2, '0')}`
-}
-
-// Descarga el archivo en el navegador con un enlace temporal
+// Hace que el navegador baje el archivo con ese nombre
 function guardarArchivo(datos, nombre) {
   const blob = datos instanceof Blob ? datos : new Blob([datos])
   const url = window.URL.createObjectURL(blob)
@@ -47,4 +38,13 @@ function parametrosDeFiltro({ desde, hasta, tipos, usuarios }) {
   if (tipos?.length) parametros.tipos = tipos.join(',')
   if (usuarios?.length) parametros.usuarios = usuarios.join(',')
   return parametros
+}
+
+// 8.3: el perfil o "Conocelo en 5 minutos" en PDF (cualquier miembro, solo lo que puede ver)
+export async function descargarPdfPerfil(proyectoId, seccion) {
+  const respuesta = await cliente.get(
+    `/proyectos/${encodeURIComponent(proyectoId)}/exportar-perfil`,
+    { params: { seccion }, responseType: 'blob' },
+  )
+  guardarArchivo(respuesta.data, `trama-${seccion}-${hoy()}.pdf`)
 }
