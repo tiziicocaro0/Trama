@@ -40,8 +40,35 @@ beforeEach(() => {
 
 it('busca desde el encabezado y muestra los resultados agrupados por sección (4.5)', async () => {
   abrir('/proyectos/p1')
-  await userEvent.type(screen.getByRole('searchbox', { name: 'Buscar en el perfil' }), 'acto{Enter}')
+  await userEvent.click(screen.getByRole('button', { name: 'Abrir el buscador del perfil' }))
+  // Al abrirse, el cursor ya queda en el campo
+  expect(screen.getByRole('searchbox', { name: 'Buscar en el perfil' })).toHaveFocus()
+  await userEvent.keyboard('acto{Enter}')
   expect(screen.getByTestId('ubicacion')).toHaveTextContent('/proyectos/p1/buscar?q=acto')
+})
+
+it('la lupa se cierra al tocar afuera o con Escape y avisa a la cabecera', async () => {
+  const alCambiar = vi.fn()
+  render(
+    <MemoryRouter>
+      <p>Afuera</p>
+      <BuscadorPerfil proyectoId="p1" alCambiar={alCambiar} />
+    </MemoryRouter>,
+  )
+  const lupa = screen.getByRole('button', { name: 'Abrir el buscador del perfil' })
+  expect(lupa).toHaveAttribute('aria-expanded', 'false')
+
+  await userEvent.click(lupa)
+  expect(screen.getByRole('button', { name: 'Buscar' })).toHaveAttribute('aria-expanded', 'true')
+  expect(alCambiar).toHaveBeenLastCalledWith(true)
+
+  await userEvent.click(screen.getByText('Afuera'))
+  expect(screen.getByRole('button', { name: 'Abrir el buscador del perfil' })).toBeInTheDocument()
+  expect(alCambiar).toHaveBeenLastCalledWith(false)
+
+  await userEvent.click(screen.getByRole('button', { name: 'Abrir el buscador del perfil' }))
+  await userEvent.keyboard('{Escape}')
+  expect(screen.getByRole('button', { name: 'Abrir el buscador del perfil' })).toHaveFocus()
 })
 
 it('agrupa por sección en el orden del perfil y cada resultado lleva a su aporte', async () => {

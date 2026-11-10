@@ -1,4 +1,5 @@
-import { ArrowLeft, Play } from '@phosphor-icons/react'
+import { ArrowLeft } from '@phosphor-icons/react'
+import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { calcularEdad } from '../perfil.js'
 import AvisoPlanGratuito from '../../plan/AvisoPlanGratuito.jsx'
@@ -8,37 +9,24 @@ import FotoNinoCabecera from './FotoNinoCabecera.jsx'
 import NavegacionPerfil from './NavegacionPerfil.jsx'
 
 // Cabecera del perfil del niño: la dibuja PerfilLayout una sola vez para todas las
-// secciones. Arriba, volver, el buscador y Conocelo; después foto, nombre y edad, una línea
-// divisoria y los datos básicos. Abajo, todas las pestañas.
+// secciones. Arriba, volver; después foto, nombre y edad, una línea divisoria, los datos
+// básicos y la lupa a la derecha (en el celular la lupa va al lado del nombre y los datos
+// abajo). Abajo de todo, las pestañas. Conocelo se abre desde Información general.
 export default function CabeceraPerfil({ proyecto, seccion, puedeEditarFoto = false, onCambioFoto }) {
   const edad = calcularEdad(proyecto.fechaNacimiento)
-  const enConocelo = seccion?.titulo === 'Conocelo en 5 minutos'
+  // Mientras el buscador está abierto, los datos del niño quedan solo con sus íconos
+  const [buscando, setBuscando] = useState(false)
   return (
     <header className="mb-6">
-      <div className="mb-2 flex flex-wrap items-center justify-between gap-3 lg:pr-14">
-        <Link
-          to={seccion ? `/proyectos/${proyecto.id}` : '/acompanamientos'}
-          className="inline-flex min-h-11 items-center gap-2 rounded-md text-sm text-secundario hover:underline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-primario print:hidden"
-        >
-          <ArrowLeft size={18} aria-hidden="true" className="text-primario" />
-          {seccion ? `Volver al perfil de ${proyecto.nombre}` : 'Volver a acompañamientos'}
-        </Link>
-        {/* Arriba a la derecha: el buscador (4.5) y el acceso a Conocelo */}
-        <div className="flex w-full flex-wrap items-center gap-3 sm:w-auto">
-          <BuscadorPerfil key={proyecto.id} proyectoId={proyecto.id} />
-          {!enConocelo && (
-            <Link
-              to={`/proyectos/${proyecto.id}/conocelo`}
-              className="inline-flex min-h-11 items-center gap-2 rounded-full bg-decoracion px-4 text-sm font-semibold text-primario transition-colors hover:bg-miel/30 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primario motion-reduce:transition-none print:hidden"
-            >
-              <Play size={14} weight="fill" aria-hidden="true" />
-              Conocelo en 5 minutos
-            </Link>
-          )}
-        </div>
-      </div>
+      <Link
+        to={seccion ? `/proyectos/${proyecto.id}` : '/acompanamientos'}
+        className="mb-2 inline-flex min-h-11 items-center gap-2 rounded-md text-sm text-secundario hover:underline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-primario print:hidden"
+      >
+        <ArrowLeft size={18} aria-hidden="true" className="text-primario" />
+        {seccion ? `Volver al perfil de ${proyecto.nombre}` : 'Volver a acompañamientos'}
+      </Link>
       <div className="mb-4 flex flex-wrap items-center gap-x-6 gap-y-3">
-        <div className="flex min-w-0 items-center gap-4">
+        <div className="flex min-w-0 flex-1 items-center gap-4 md:flex-none">
           <FotoNinoCabecera proyecto={proyecto} editable={puedeEditarFoto} onCambio={onCambioFoto} />
           <div className="min-w-0">
             <h1 className="break-words font-display text-h1 leading-tight text-secundario">
@@ -51,7 +39,13 @@ export default function CabeceraPerfil({ proyecto, seccion, puedeEditarFoto = fa
           </div>
         </div>
         <div aria-hidden="true" className="hidden h-14 w-px bg-borde md:block" />
-        <DatosRapidosNino proyecto={proyecto} />
+        {/* En el celular los datos bajan a su propia fila; desde md quedan entre el nombre y la lupa */}
+        <div className="order-last basis-full md:order-none md:basis-auto md:flex-1">
+          <DatosRapidosNino proyecto={proyecto} compacto={buscando} />
+        </div>
+        <div className={`flex justify-end md:order-last ${buscando ? 'basis-full sm:basis-auto' : ''}`}>
+          <BuscadorPerfil key={proyecto.id} proyectoId={proyecto.id} alCambiar={setBuscando} />
+        </div>
       </div>
       <NavegacionPerfil proyectoId={proyecto.id} />
       {proyecto.soloLecturaPorPlan === true && (
