@@ -116,6 +116,7 @@ public class AporteService {
         validarComunicacion(request);
         validarSensorial(request);
         validarEstrategia(request);
+        ValidadorPasosRutina.validar(request, mapper);
         validarAbc(request);
         validarContenido(request);
 
@@ -299,6 +300,7 @@ public class AporteService {
         validarComunicacion(request);
         validarSensorial(request);
         validarEstrategia(request);
+        ValidadorPasosRutina.validar(request, mapper);
         validarAbc(request);
         validarContenido(request);
 
