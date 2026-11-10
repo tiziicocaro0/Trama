@@ -33,7 +33,7 @@ export default function PerfilPage() {
     listarAportes,
   )
   // 8.2: aviso de eliminación programada en la portada (se oculta al cancelarla)
-  const { esAdmin } = useProyectoActual()
+  const { esAdmin, rolCodigo } = useProyectoActual()
   const [cancelacionEn, setCancelacionEn] = useState(null)
   const { usuario } = useAuth()
   const [busqueda, setBusqueda] = useState('')
@@ -662,6 +662,9 @@ function encabezadoCompleto({
                       ? proyecto.puedeCargarNotas === true
                       : proyecto.puedeCargar === true
                   }
+                  // 3.4: solo los tutores piden revisiones; tras pedir o resolver una, se recarga
+                  puedePedirRevision={rolCodigo === 'TUTOR'}
+                  alActualizar={reintentar}
                   alGuardar={(accion) => {
                     // Como en el mockup: un aviso flotante que dice dónde quedó guardado
                     const cosa = item.tipo === 'NOTA_PROFESIONAL' ? 'Tu nota' : 'Tu aporte'

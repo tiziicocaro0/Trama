@@ -14,7 +14,9 @@ export default function BloquePerfil({
   proyectoId,
   completo = false,
   puedeCrear = false,
+  puedePedirRevision = false,
   alGuardar,
+  alActualizar,
   encabezado,
 }) {
   const [params, setParams] = useSearchParams()
@@ -131,6 +133,8 @@ export default function BloquePerfil({
                 aporte={aporte}
                 resumen={!completo}
                 archivando={archivandoId === aporte.id}
+                puedePedirRevision={puedePedirRevision}
+                alActualizar={alActualizar}
                 alEditar={(event) => abrirEditor(event, aporte)}
                 alArchivar={() => archivar(aporte)}
                 alVerHistorial={(event) => {
