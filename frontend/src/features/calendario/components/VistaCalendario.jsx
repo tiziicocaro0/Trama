@@ -26,6 +26,12 @@ function EventoBreve({ evento, onSeleccionar, compacto = false }) {
   )
 }
 
+// Sábado y domingo se ven con otro fondo
+function esFinDeSemana(dia) {
+  const numero = fechaLocal(dia).getDay()
+  return numero === 0 || numero === 6
+}
+
 function CabeceraDia({ dia, indice, hoy, seleccionado, onSeleccionar }) {
   return (
     <button
@@ -33,10 +39,10 @@ function CabeceraDia({ dia, indice, hoy, seleccionado, onSeleccionar }) {
       onClick={() => onSeleccionar(dia)}
       aria-label={`Seleccionar ${tituloDia(dia)}`}
       aria-pressed={seleccionado}
-      className={`min-h-16 w-full p-2 text-center focus-visible:outline-2 focus-visible:outline-primario ${seleccionado ? 'bg-acento/15' : ''} ${hoy ? 'text-primario' : 'text-texto'}`}
+      className={`min-h-16 w-full p-2 text-center text-superficie focus-visible:outline-2 focus-visible:-outline-offset-4 focus-visible:outline-superficie ${seleccionado ? 'bg-superficie/20' : ''}`}
     >
-      <span className="block text-xs text-texto-suave">{NOMBRES_DIAS[indice]}</span>
-      <span className={`mx-auto mt-1 block w-fit rounded-full px-2 font-semibold ${hoy ? 'bg-primario text-superficie' : ''}`}>{fechaLocal(dia).getDate()}</span>
+      <span className="block text-xs font-semibold uppercase tracking-wide">{NOMBRES_DIAS[indice]}</span>
+      <span className={`mx-auto mt-1 block w-fit rounded-full px-2 font-semibold ${hoy ? 'bg-superficie text-primario' : ''}`}>{fechaLocal(dia).getDate()}</span>
     </button>
   )
 }
@@ -50,7 +56,8 @@ function VistaSemanal({ periodo, eventos, hoy, diaSeleccionado, onDia, onEvento 
   return (
     <>
       <div className="hidden overflow-hidden rounded-lg border border-borde bg-superficie shadow-sm md:block">
-        <div className="flex border-b border-borde bg-fondo/50">
+        {/* Encabezado de los días en terracota, para que se distinga de la grilla */}
+        <div className="flex border-b border-borde bg-primario">
           <div className="w-16 shrink-0" />
           <div className="grid flex-1 grid-cols-7">
             {periodo.dias.map((dia, indice) => <CabeceraDia key={dia} dia={dia} indice={indice} hoy={dia === hoy} seleccionado={dia === diaSeleccionado} onSeleccionar={onDia} />)}
@@ -63,7 +70,7 @@ function VistaSemanal({ periodo, eventos, hoy, diaSeleccionado, onDia, onEvento 
               <div className="grid min-h-16 flex-1 grid-cols-7">
                 {periodo.dias.map((dia) => {
                   const delHorario = eventosDelDia(eventos, dia).filter((evento) => Number(evento.horaInicio?.slice(0, 2)) === numero)
-                  return <div key={dia} className="min-w-0 border-l border-borde p-1">
+                  return <div key={dia} className={`min-w-0 border-l border-borde p-1 ${esFinDeSemana(dia) ? 'bg-fondo' : ''}`}>
                     {delHorario.length ? <div className="space-y-1">{delHorario.map((evento) => <EventoBreve key={`${evento.id}-${dia}`} evento={evento} onSeleccionar={onEvento} />)}</div> : <button type="button" onClick={() => onDia(dia, `${String(numero).padStart(2, '0')}:00`)} aria-label={`Agregar evento el ${tituloDia(dia)} a las ${String(numero).padStart(2, '0')}:00`} className="min-h-14 w-full rounded-sm text-transparent hover:bg-fondo hover:text-primario focus-visible:text-primario"><Plus size={16} className="mx-auto" aria-hidden="true" /></button>}
                   </div>
                 })}
@@ -92,12 +99,15 @@ function AgendaDia({ dia, eventos, onDia, onEvento }) {
 function VistaMensual({ periodo, referencia, eventos, hoy, diaSeleccionado, onDia, onEvento }) {
   const mes = fechaLocal(referencia).getMonth()
   return <div className="overflow-hidden rounded-lg border border-borde bg-superficie shadow-sm">
-    <div className="grid grid-cols-7 bg-fondo/50">{NOMBRES_DIAS.map((nombre) => <span key={nombre} className="p-2 text-center text-xs text-texto-suave">{nombre}</span>)}</div>
+    {/* Encabezado de los días en terracota, para que se distinga de la grilla */}
+    <div className="grid grid-cols-7 bg-primario">{NOMBRES_DIAS.map((nombre) => <span key={nombre} className="p-2 text-center text-xs font-semibold uppercase tracking-wide text-superficie">{nombre}</span>)}</div>
     <div className="grid grid-cols-7">
       {periodo.dias.map((dia) => {
         const delDia = eventosDelDia(eventos, dia)
         const fuera = fechaLocal(dia).getMonth() !== mes
-        return <div key={dia} className={`min-h-24 min-w-0 border-t border-r border-borde p-1 last:border-r-0 sm:min-h-32 sm:p-2 ${fuera ? 'bg-fondo/40 text-texto-suave' : ''} ${dia === diaSeleccionado ? 'bg-acento/10' : ''} ${dia === hoy ? 'outline-2 outline-inset outline-primario' : ''}`}>
+        // Los días de otro mes, bien más oscuros; el sábado y el domingo, con otro fondo
+        const fondo = fuera ? 'bg-texto/15 text-texto-suave' : esFinDeSemana(dia) ? 'bg-fondo' : ''
+        return <div key={dia} className={`min-h-24 min-w-0 border-t border-r border-borde p-1 last:border-r-0 sm:min-h-32 sm:p-2 ${dia === diaSeleccionado ? 'bg-acento/15' : fondo} ${dia === hoy ? 'outline-2 outline-inset outline-primario' : ''}`}>
           <button type="button" onClick={() => onDia(dia)} aria-label={`Seleccionar ${tituloDia(dia)}`} className={`mb-1 block rounded-full px-1.5 text-xs focus-visible:outline-2 focus-visible:outline-primario ${dia === hoy ? 'bg-primario text-superficie' : ''}`}>{fechaLocal(dia).getDate()}</button>
           <div className="space-y-1">{delDia.slice(0, 3).map((evento) => <EventoBreve key={`${evento.id}-${dia}`} evento={evento} onSeleccionar={onEvento} compacto />)}{delDia.length > 3 && <button type="button" onClick={() => onDia(dia)} className="text-xs text-texto-suave">+{delDia.length - 3} más</button>}</div>
           {!delDia.length && <button type="button" onClick={() => onDia(dia)} aria-label={`Agregar evento el ${tituloDia(dia)}`} className="min-h-12 w-full text-left text-transparent hover:text-primario focus-visible:text-primario"><Plus size={15} aria-hidden="true" /></button>}

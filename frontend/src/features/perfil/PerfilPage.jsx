@@ -6,7 +6,6 @@ import { Aviso } from '../../components/ui/Aviso.jsx'
 import InfoAyuda from '../../components/ui/InfoAyuda.jsx'
 import { avisar } from '../../components/avisos/avisosFlotantes.js'
 import BloquePerfil from './components/BloquePerfil.jsx'
-import DatosRapidosNino from './components/DatosRapidosNino.jsx'
 import BarraFiltrosAportes from '../../components/ui/BarraFiltrosAportes.jsx'
 import ChipFiltro from '../../components/ui/ChipFiltro.jsx'
 import MenuFiltro from '../../components/ui/MenuFiltro.jsx'
@@ -23,7 +22,7 @@ import AvisoEliminacion from './eliminacion/AvisoEliminacion.jsx'
 import useProyectoActual from '../../hooks/useProyectoActual.js'
 import Cargando from '../../components/ui/Cargando.jsx'
 import DescargarPdfPerfil from './components/DescargarPdfPerfil.jsx'
-import ProximosCambios from './components/ProximosCambios.jsx'
+import ProximosEventos from './components/ProximosEventos.jsx'
 
 
 export default function PerfilPage() {
@@ -224,9 +223,8 @@ function encabezadoCompleto({
             {!seccion && cancelacionEn !== id && (
               <AvisoEliminacion proyecto={proyecto} esAdmin={esAdmin} onCancelada={() => setCancelacionEn(id)} />
             )}
-            {!seccion && <DatosRapidosNino proyecto={proyecto} />}
-            {/* 5.4: los cambios en su rutina de los próximos 7 días */}
-            {!seccion && <ProximosCambios proyectoId={id} />}
+            {/* Lo que viene en los próximos 7 días; 5.4: los cambios en su rutina, resaltados */}
+            {!seccion && <ProximosEventos proyectoId={id} />}
             {!seccion && (
               <div className="mb-6 grid gap-4 lg:grid-cols-12">
                 <section className="relative overflow-hidden rounded-lg border border-primario/20 bg-superficie p-5 shadow-sm sm:p-6 lg:col-span-8">
