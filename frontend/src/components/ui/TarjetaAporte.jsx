@@ -11,6 +11,8 @@ import {
   TIPOS_NOTA,
 } from '../../features/perfil/perfil.js'
 import AdjuntosTarjeta from '../../features/perfil/components/AdjuntosTarjeta.jsx'
+import PasosTarjetaRutina from '../../features/perfil/components/PasosTarjetaRutina.jsx'
+import { idsImagenesPasos, pasosParaEditar } from '../../features/perfil/pasosRutina.js'
 import ConfirmacionAporte from '../../features/perfil/components/ConfirmacionAporte.jsx'
 import ComentariosAporte from '../../features/perfil/components/ComentariosAporte.jsx'
 import { ModalPedirRevision, RevisionPendiente } from '../../features/perfil/components/RevisionAporte.jsx'
@@ -44,6 +46,8 @@ export default function TarjetaAporte({
   autor,
   alEditar,
   alArchivar,
+  // 7.2: lo propio de una sección que no está en la tarjeta (por ejemplo, el interés de una sugerencia)
+  detalle = null,
   alVerHistorial,
   archivando = false,
   resumen = false,
@@ -103,7 +107,11 @@ export default function TarjetaAporte({
     aporte.visibilidad != null && aporte.visibilidad !== 'TODOS'
 
   const sustantivo = esNota ? 'nota' : 'aporte'
-  const adjuntos = Array.isArray(aporte.archivos) ? aporte.archivos : []
+  const todosLosArchivos = Array.isArray(aporte.archivos) ? aporte.archivos : []
+  // 2.7: las imágenes de los pasos de una rutina se ven en su paso, no como adjuntos sueltos
+  const imagenesPasos = idsImagenesPasos(rutina)
+  const adjuntos = todosLosArchivos.filter((archivo) => !imagenesPasos.has(archivo.id))
+  const pasosRutina = rutina ? pasosParaEditar(rutina, todosLosArchivos) : []
 
 
 
@@ -233,6 +241,9 @@ export default function TarjetaAporte({
               )}
             </div>
           )}
+          {detalle}
+          {/* 2.7: después de la descripción, los pasos de la rutina en orden */}
+          {rutina && <PasosTarjetaRutina titulo={aporte.titulo} pasos={pasosRutina} proyectoId={aporte.proyectoId} resumen={resumen} />}
 
 
 

@@ -103,9 +103,11 @@ public class AporteService {
 
         permisoService.verificarMiembro(proyectoId);
         permisoService.verificarPuedeEditar(proyectoId);
-        // 4.2 y 4.4: las notas profesionales y los registros ABC solo los cargan educación y salud
+        // 4.2, 4.4 y 7.2: las notas profesionales, los registros ABC y las sugerencias para casa
+        // solo los cargan educación y salud
         if (request.tipo() == TipoAporte.NOTA_PROFESIONAL
-                || request.tipo() == TipoAporte.ABC) {
+                || request.tipo() == TipoAporte.ABC
+                || request.tipo() == TipoAporte.SUGERENCIA) {
             permisoService.verificarPuedeCargarNotas(proyectoId);
         }
         validarInteres(request);
@@ -117,6 +119,8 @@ public class AporteService {
         validarSensorial(request);
         validarEstrategia(request);
         ValidadorPasosRutina.validar(request, mapper);
+        ValidadorSugerencia.validar(request, mapper, interesId -> aporteRepository
+                .findByIdAndProyectoId(interesId, proyectoId).map(Aporte::getTipo).orElse(null));
         validarAbc(request);
         validarContenido(request);
 
@@ -301,6 +305,8 @@ public class AporteService {
         validarSensorial(request);
         validarEstrategia(request);
         ValidadorPasosRutina.validar(request, mapper);
+        ValidadorSugerencia.validar(request, mapper, interesId -> aporteRepository
+                .findByIdAndProyectoId(interesId, proyectoId).map(Aporte::getTipo).orElse(null));
         validarAbc(request);
         validarContenido(request);
 
