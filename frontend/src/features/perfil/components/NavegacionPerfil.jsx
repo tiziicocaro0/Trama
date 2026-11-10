@@ -10,6 +10,7 @@ const pestanas = [
   ...seccionesPerfil.map(({ slug, titulo }) => ({ slug, titulo })),
   { slug: seccionDesregulacion.slug, titulo: seccionDesregulacion.titulo },
   { slug: seccionNotas.slug, titulo: seccionNotas.titulo },
+  { slug: 'en-casa', titulo: 'En casa' },
   { slug: 'red', titulo: 'Red' },
   { slug: 'datos-personales', titulo: 'Datos personales' },
   { slug: 'recursos', titulo: 'Recursos' },

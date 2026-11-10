@@ -13,6 +13,7 @@ const ESPACIOS = {
   recursos: 'Recursos',
   buscar: 'Buscar en el perfil',
   notas: 'Notas',
+  'en-casa': 'En casa',
   bitacora: 'Bitácora',
   calendario: 'Calendario',
   conocelo: 'Conocelo en 5 minutos',
