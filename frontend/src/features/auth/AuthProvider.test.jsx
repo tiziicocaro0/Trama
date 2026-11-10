@@ -99,4 +99,25 @@ describe('Verificación confiable de identidad', () => {
     expect(screen.getByRole('status')).toHaveTextContent('anonimo')
     expect(obtenerToken()).toBeNull()
   })
+
+  it('al tocar Salir avisa al servidor para que el token deje de valer, aunque falle la red', async () => {
+    const vigente = token()
+    guardarToken(vigente)
+    vi.spyOn(cliente, 'get').mockResolvedValue({ data: identidad })
+    const post = vi.spyOn(cliente, 'post').mockRejectedValue(new Error('Red simulada'))
+    const user = userEvent.setup()
+    render(
+      <AuthProvider>
+        <Estado />
+      </AuthProvider>,
+    )
+    expect(await screen.findByText('autenticado')).toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: 'Salir' }))
+    expect(post).toHaveBeenCalledExactlyOnceWith('/auth/salir', null, {
+      headers: { Authorization: `Bearer ${vigente}` },
+    })
+    // Aunque el servidor no responda, en este navegador la sesión se cierra igual
+    expect(screen.getByRole('status')).toHaveTextContent('anonimo')
+    expect(obtenerToken()).toBeNull()
+  })
 })

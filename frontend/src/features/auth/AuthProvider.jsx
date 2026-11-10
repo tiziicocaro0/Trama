@@ -1,5 +1,9 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { iniciarSesion, obtenerIdentidad } from '../../api/auth.js'
+import {
+  cerrarSesionEnServidor,
+  iniciarSesion,
+  obtenerIdentidad,
+} from '../../api/auth.js'
 import {
   alRechazarSesion,
   guardarToken,
@@ -16,11 +20,14 @@ export default function AuthProvider({ children }) {
   const [mensajeSesion, setMensajeSesion] = useState('')
   const pendiente = useRef(null)
 
-  const cerrarSesion = useCallback((mensaje = 'Cerraste tu sesión.') => {
+  // Sin mensaje es la persona tocando "Cerrar sesión": se avisa al back para que el token
+  // deje de valer también allá. Con mensaje (sesión vencida o rechazada) no hace falta.
+  const cerrarSesion = useCallback((mensaje) => {
+    if (mensaje === undefined) void cerrarSesionEnServidor(obtenerToken())
     guardarToken(null)
     setUsuario(null)
     setEstado('anonimo')
-    setMensajeSesion(mensaje)
+    setMensajeSesion(mensaje ?? 'Cerraste tu sesión.')
   }, [])
 
   const confirmarSesion = useCallback(() => {
