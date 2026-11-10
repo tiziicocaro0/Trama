@@ -23,6 +23,7 @@ import AvisoEliminacion from './eliminacion/AvisoEliminacion.jsx'
 import useProyectoActual from '../../hooks/useProyectoActual.js'
 import Cargando from '../../components/ui/Cargando.jsx'
 import DescargarPdfPerfil from './components/DescargarPdfPerfil.jsx'
+import ProximosCambios from './components/ProximosCambios.jsx'
 
 
 export default function PerfilPage() {
@@ -224,6 +225,8 @@ function encabezadoCompleto({
               <AvisoEliminacion proyecto={proyecto} esAdmin={esAdmin} onCancelada={() => setCancelacionEn(id)} />
             )}
             {!seccion && <DatosRapidosNino proyecto={proyecto} />}
+            {/* 5.4: los cambios en su rutina de los próximos 7 días */}
+            {!seccion && <ProximosCambios proyectoId={id} />}
             {!seccion && (
               <div className="mb-6 grid gap-4 lg:grid-cols-12">
                 <section className="relative overflow-hidden rounded-lg border border-primario/20 bg-superficie p-5 shadow-sm sm:p-6 lg:col-span-8">

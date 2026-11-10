@@ -174,7 +174,7 @@ export default function BloquePerfil({
             role="dialog"
             aria-modal="true"
             aria-labelledby="titulo-panel-aporte"
-            className="w-full overflow-y-auto rounded-l-2xl bg-superficie p-4 shadow-md sm:max-w-xl"
+            className="w-full overflow-y-auto rounded-l-2xl bg-superficie p-4 shadow-md sm:max-w-2xl"
           >
             <div className="flex items-center justify-between border-b border-borde pb-3">
               <h2
