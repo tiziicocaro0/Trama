@@ -3,6 +3,7 @@ import { Link, useLocation } from 'react-router-dom'
 // La vista general del perfil también es un botón, así se vuelve a ella desde cualquier espacio.
 const espacios = [
   { slug: '', titulo: 'Vista general' },
+  { slug: 'bitacora', titulo: 'Bitácora' },
   { slug: 'red', titulo: 'Red' },
   { slug: 'datos-personales', titulo: 'Datos personales' },
   { slug: 'notas', titulo: 'Notas' },

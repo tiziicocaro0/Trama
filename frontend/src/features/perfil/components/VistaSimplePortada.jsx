@@ -4,14 +4,38 @@ import {
   NotePencil,
   Sun,
 } from '@phosphor-icons/react'
-import { Link } from 'react-router-dom'
+import { Link, useLocation } from 'react-router-dom'
 import useVistaSimple from '../useVistaSimple.js'
 
 export default function VistaSimplePortada({ id }) {
   const { setVistaSimple } = useVistaSimple()
+  const location = useLocation()
+  const observacionGuardada = location.state?.mensaje === 'Observación guardada.'
 
   return (
     <div className="mb-8">
+        {observacionGuardada && (
+        <div
+            role="status"
+            className="mb-5 flex flex-wrap items-center justify-between gap-4 rounded-lg border border-oliva/30 bg-oliva/10 px-5 py-4"
+        >
+            <div>
+            <p className="font-semibold text-oliva">
+                Observación guardada correctamente
+            </p>
+            <p className="mt-1 text-sm text-texto-suave">
+                Ya quedó registrada en la bitácora.
+            </p>
+            </div>
+
+            <Link
+            to={`/proyectos/${id}/bitacora`}
+            className="font-semibold text-primario underline underline-offset-4"
+            >
+            Ver en Bitácora
+            </Link>
+        </div>
+        )}
       <Link
         to={`/proyectos/${id}/conocelo`}
         className="group relative flex min-h-36 items-center justify-between overflow-hidden rounded-lg border border-primario/10 bg-superficie px-7 py-6 shadow-sm transition hover:shadow-md"
@@ -111,7 +135,7 @@ export default function VistaSimplePortada({ id }) {
         </Link>
 
         <Link
-          to={`/proyectos/${id}/bitacora`}
+          to={`/proyectos/${id}/cargar-observacion`}
           className="group flex min-h-40 flex-col justify-between rounded-lg border border-primario/10 bg-superficie p-6 shadow-sm transition hover:shadow-md"
         >
           <div className="flex items-start justify-between">

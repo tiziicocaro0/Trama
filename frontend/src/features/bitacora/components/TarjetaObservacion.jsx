@@ -44,18 +44,33 @@ export default function TarjetaObservacion({ observacion, autorTexto }) {
         {observacion.contenido || observacion.titulo}
       </p>
 
-      <div className="mt-4 flex flex-wrap items-center gap-2">
-        <span className="inline-flex items-center rounded-full bg-secundario px-3 py-1 text-xs font-semibold text-superficie">
-          {contextoTexto}
-        </span>
-        {info.etiquetas.map((etiquetaCodigo) => (
-          <span
-            key={etiquetaCodigo}
-            className="inline-flex items-center rounded-full bg-miel/30 px-3 py-1 text-xs font-semibold text-texto"
-          >
-            {ETIQUETAS_TAG[etiquetaCodigo] ?? etiquetaCodigo}
+      <div className="mt-4 flex flex-wrap items-center gap-4">
+        <div className="flex items-center gap-2">
+          <span className="text-sm font-semibold text-texto-suave">
+            Contexto:
           </span>
-        ))}
+
+          <span className="inline-flex items-center rounded-full bg-secundario px-3 py-1 text-xs font-semibold text-superficie">
+            {contextoTexto}
+          </span>
+        </div>
+
+        {info.etiquetas.length > 0 && (
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="text-sm font-semibold text-texto-suave">
+              Etiquetas:
+            </span>
+
+            {info.etiquetas.map((etiquetaCodigo) => (
+              <span
+                key={etiquetaCodigo}
+                className="inline-flex items-center rounded-full bg-miel/30 px-3 py-1 text-xs font-semibold text-texto"
+              >
+                {ETIQUETAS_TAG[etiquetaCodigo] ?? etiquetaCodigo}
+              </span>
+            ))}
+          </div>
+        )}
       </div>
     </article>
   )

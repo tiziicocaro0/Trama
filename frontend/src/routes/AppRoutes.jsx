@@ -25,6 +25,7 @@ import PreferenciasNotificacionesPage from '../features/notificaciones/Preferenc
 import InstitucionPage from '../features/institucion/InstitucionPage.jsx'
 import AceptarInvitacionPage from '../features/invitaciones/AceptarInvitacionPage.jsx'
 import VerificarEmailPage from '../features/auth/verificar/VerificarEmailPage.jsx'
+import CargarObservacionSimplePage from '../features/bitacora/CargarObservacionSimplePage.jsx'
 import { Layout } from '../components/layout/Layout.jsx'
 import { ConBarraIconos } from '../components/layout/BarraIconos.jsx'
 import { Tarjeta } from '../components/ui/Tarjeta.jsx'
@@ -212,6 +213,7 @@ export default function AppRoutes() {
         <Route path="red" element={<RedPage />} />
         <Route path="datos-personales" element={<DatosPersonalesPage />} />
         <Route path="bitacora" element={<BitacoraPage />} />
+        <Route path="cargar-observacion" element={<CargarObservacionSimplePage />}/>
         <Route path="calendario" element={<CalendarioPage />} />
         <Route path=":seccion" element={<PerfilPage />} />
       </Route>
