@@ -175,8 +175,12 @@ describe('Registro ABC en la bitácora (Tarea 4.4)', () => {
       within(formulario).getByLabelText('Dónde pasó'),
       'ESCUELA',
     )
-    fireEvent.change(within(formulario).getByLabelText('Fecha y hora'), {
-      target: { value: '2026-10-24T08:15' },
+    // La fecha usa el calendario de TRAMA y la hora va aparte
+    fireEvent.change(within(formulario).getByLabelText('Fecha'), {
+      target: { value: '2026-10-24' },
+    })
+    fireEvent.change(within(formulario).getByLabelText('Hora'), {
+      target: { value: '08:15' },
     })
 
     await userEvent.click(

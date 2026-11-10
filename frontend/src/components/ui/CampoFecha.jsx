@@ -85,6 +85,8 @@ export default function CampoFecha({
   'aria-invalid': ariaInvalid,
   'aria-describedby': ariaDescribedby,
   className = '',
+  // "chico" para barras de filtros, al alto de los botones chicos
+  tamano = 'normal',
 }) {
   const [abierto, setAbierto] = useState(false)
   // 'dias' | 'anios' | 'meses'
@@ -265,7 +267,7 @@ export default function CampoFecha({
         required={required}
         aria-invalid={ariaInvalid}
         aria-describedby={ariaDescribedby}
-        className={`min-h-18 w-full rounded-md border bg-superficie py-4 pl-14 pr-5 text-lg text-texto placeholder:text-texto-suave focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primario disabled:cursor-wait ${ariaInvalid ? 'border-error' : 'border-borde'}`}
+        className={`w-full rounded-md border bg-superficie text-texto ${tamano === 'chico' ? 'min-h-11 py-2 pl-12 pr-3 text-sm' : 'min-h-18 py-4 pl-14 pr-5 text-lg'} placeholder:text-texto-suave focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primario disabled:cursor-wait ${ariaInvalid ? 'border-error' : 'border-borde'}`}
       />
       <button
         ref={botonRef}
@@ -275,7 +277,7 @@ export default function CampoFecha({
         aria-haspopup="dialog"
         aria-expanded={abierto}
         aria-label="Elegir la fecha en el calendario"
-        className="absolute top-1/2 left-2 flex size-11 -translate-y-1/2 items-center justify-center rounded-md text-agua hover:bg-decoracion focus-visible:outline-2 focus-visible:outline-primario"
+        className="absolute top-1/2 left-1 flex size-11 -translate-y-1/2 items-center justify-center rounded-md text-agua hover:bg-decoracion focus-visible:outline-2 focus-visible:outline-primario"
       >
         <CalendarBlank size={20} aria-hidden="true" />
       </button>

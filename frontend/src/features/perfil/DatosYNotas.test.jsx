@@ -109,11 +109,17 @@ describe('Datos personales y navegación compartida', () => {
       'Rutinas',
       'Si se desregula',
       'Notas',
+      'Bitácora',
       'En casa',
       'Red',
       'Datos personales',
       'Recursos',
     ])
+    // La bitácora tiene su pestaña, como las demás secciones
+    expect(within(nav).getByRole('link', { name: 'Bitácora' })).toHaveAttribute(
+      'href',
+      expect.stringMatching(/\/proyectos\/[^/]+\/bitacora$/),
+    )
     await userEvent.click(
       within(nav).getByRole('link', { name: 'Datos personales' }),
     )

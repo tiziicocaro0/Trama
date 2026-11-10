@@ -180,8 +180,10 @@ describe('Bitácora de observaciones (Tarea 4.0)', () => {
       await screen.findByRole('button', { name: 'Nueva observación' }),
     )
 
-    const campoFecha = screen.getByLabelText('Fecha y hora')
-    expect(campoFecha.value).toMatch(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/)
+    // Arranca con la fecha y la hora de ahora
+    expect(screen.getByRole('group', { name: 'Fecha y hora' })).toBeInTheDocument()
+    expect(screen.getByLabelText('Fecha').value).toMatch(/^\d{2}\/\d{2}\/\d{4}$/)
+    expect(screen.getByLabelText('Hora').value).toMatch(/^\d{2}:\d{2}$/)
 
     // Intenta guardar sin elegir contexto
     await userEvent.click(
@@ -221,9 +223,10 @@ describe('Bitácora de observaciones (Tarea 4.0)', () => {
       await screen.findByRole('button', { name: 'Nueva observación' }),
     )
 
-    const campoFecha = screen.getByLabelText('Fecha y hora')
-    fireEvent.change(campoFecha, { target: { value: '2026-10-24T11:45' } })
-    expect(campoFecha).toHaveValue('2026-10-24T11:45')
+    const campoFecha = screen.getByLabelText('Fecha')
+    fireEvent.change(campoFecha, { target: { value: '2026-10-24' } })
+    expect(campoFecha).toHaveValue('24/10/2026')
+    fireEvent.change(screen.getByLabelText('Hora'), { target: { value: '11:45' } })
 
     await userEvent.selectOptions(
       screen.getByLabelText('Contexto'),

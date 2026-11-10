@@ -1,4 +1,5 @@
 import Boton from '../../../components/ui/Boton.jsx'
+import CampoFecha from '../../../components/ui/CampoFecha.jsx'
 import {
   CONTEXTOS_OBSERVACION,
   ETIQUETAS_OBSERVACION,
@@ -26,13 +27,12 @@ export default function BarraFiltrosBitacora({
           >
             Desde
           </label>
-          <input
+          <CampoFecha
             id="filtro-desde"
             name="desde"
-            type="date"
+            tamano="chico"
             value={filtros.desde}
             onChange={(event) => alCambiarFiltro('desde', event.target.value)}
-            className="min-h-11 w-full rounded-md border border-borde bg-fondo px-3 py-2 text-sm text-texto focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primario"
           />
         </div>
 
@@ -43,13 +43,12 @@ export default function BarraFiltrosBitacora({
           >
             Hasta
           </label>
-          <input
+          <CampoFecha
             id="filtro-hasta"
             name="hasta"
-            type="date"
+            tamano="chico"
             value={filtros.hasta}
             onChange={(event) => alCambiarFiltro('hasta', event.target.value)}
-            className="min-h-11 w-full rounded-md border border-borde bg-fondo px-3 py-2 text-sm text-texto focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primario"
           />
         </div>
 
@@ -136,6 +135,7 @@ export default function BarraFiltrosBitacora({
       <div className="mt-4 flex justify-end">
         <Boton
           variant="secondary"
+          tamano="chico"
           onClick={alLimpiar}
           disabled={!hayFiltros}
         >

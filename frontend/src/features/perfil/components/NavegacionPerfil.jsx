@@ -10,6 +10,8 @@ const pestanas = [
   ...seccionesPerfil.map(({ slug, titulo }) => ({ slug, titulo })),
   { slug: seccionDesregulacion.slug, titulo: seccionDesregulacion.titulo },
   { slug: seccionNotas.slug, titulo: seccionNotas.titulo },
+  // 4.1: camino directo a las observaciones y registros ABC, como las demás secciones
+  { slug: 'bitacora', titulo: 'Bitácora' },
   { slug: 'en-casa', titulo: 'En casa' },
   { slug: 'red', titulo: 'Red' },
   { slug: 'datos-personales', titulo: 'Datos personales' },
