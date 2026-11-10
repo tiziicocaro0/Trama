@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { guardarAporte } from '../../../api/aportes.js'
 import Boton from '../../../components/ui/Boton.jsx'
+import PreguntaGuia from '../../../components/ui/PreguntaGuia.jsx'
 import {
   CONTEXTOS_OBSERVACION,
   convertirFechaLocalAOffsetIso,
@@ -116,6 +117,9 @@ export default function FormularioAbc({ proyectoId, alGuardar, alCancelar }) {
           Contá qué pasó antes, durante y después. Lo ve toda la red.
         </p>
       </div>
+
+      {/* 2.9: una pregunta guía y un ejemplo, en positivo */}
+      <PreguntaGuia tipo="ABC" />
 
       {CAMPOS_ABC.map((campo) => (
         <div key={campo.nombre}>
