@@ -53,6 +53,7 @@ function valoresBase(evento, esSoloOcurrencia, fechaPorDefecto, horaInicioPorDef
     descripcion: evento?.descripcion ?? '',
     archivos: archivosIniciales(evento),
     esReunion: evento?.tipo === 'REUNION',
+    esCambio: Boolean(evento?.esCambio),
     participantes: Array.isArray(evento?.participanteIds) ? evento.participanteIds : [],
     recurrente: Boolean(evento?.recurrente),
     diaSemana: evento?.diaSemana ? String(evento.diaSemana) : obtenerDiaSemanaIso(fecha),
@@ -77,6 +78,7 @@ function FormularioEvento({ proyectoId, evento, miembros = [], alcance = 'serie'
   const [descripcion, setDescripcion] = useState(inicial.descripcion)
   const [archivos, setArchivos] = useState(inicial.archivos)
   const [esReunion, setEsReunion] = useState(inicial.esReunion)
+  const [esCambio, setEsCambio] = useState(inicial.esCambio)
   const [participantesSeleccionados, setParticipantesSeleccionados] = useState(inicial.participantes)
   const [recurrente, setRecurrente] = useState(inicial.recurrente)
   const [diaSemana, setDiaSemana] = useState(inicial.diaSemana)
@@ -93,6 +95,7 @@ function FormularioEvento({ proyectoId, evento, miembros = [], alcance = 'serie'
     descripcion,
     archivos,
     esReunion,
+    esCambio,
     participantes: participantesSeleccionados,
     recurrente,
     diaSemana,
@@ -208,6 +211,7 @@ function FormularioEvento({ proyectoId, evento, miembros = [], alcance = 'serie'
             ? fechaFinRecurrencia
             : null,
         tipo: esSoloOcurrencia ? evento?.tipo : esReunion ? 'REUNION' : 'COMUN',
+        esCambio: esSoloOcurrencia ? Boolean(evento?.esCambio) : esCambio,
         participanteIds: esSoloOcurrencia
           ? evento?.participanteIds
           : esReunion
@@ -302,6 +306,24 @@ function FormularioEvento({ proyectoId, evento, miembros = [], alcance = 'serie'
           />
         </CampoFormulario>
       </div>
+
+      {/* 5.4: un cambio en su rutina se ve de otro color y se avisa a toda la red */}
+      {!esSoloOcurrencia && (
+        <div className="rounded-md border border-borde bg-fondo p-4">
+          <CasillaOvillo
+            id="evento-es-cambio"
+            name="esCambio"
+            checked={esCambio}
+            onChange={(e) => setEsCambio(e.target.checked)}
+            disabled={enviando}
+          >
+            <span>
+              <span className="block font-semibold text-texto">Es un cambio en su rutina</span>
+              <span className="block text-sm text-texto-suave">Toda la red recibe un aviso con la fecha.</span>
+            </span>
+          </CasillaOvillo>
+        </div>
+      )}
 
       {!esSoloOcurrencia && (
         <div className="space-y-3 rounded-md border border-borde bg-fondo p-4">

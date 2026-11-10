@@ -31,7 +31,9 @@ import com.trama.tpo.demo.aporte.TipoAporte;
 import com.trama.tpo.demo.aporte.Visibilidad;
 import com.trama.tpo.demo.entity.dto.ActaRequest;
 import com.trama.tpo.demo.entity.dto.AporteRequest;
+import com.trama.tpo.demo.entity.dto.ComentarioRequest;
 import com.trama.tpo.demo.entity.dto.EventoRequest;
+import com.trama.tpo.demo.entity.dto.SolicitudRevisionRequest;
 import com.trama.tpo.demo.entity.membresia.Especialidad;
 import com.trama.tpo.demo.entity.membresia.Membresia;
 import com.trama.tpo.demo.entity.membresia.MembresiaEspecialidad;
@@ -50,8 +52,10 @@ import com.trama.tpo.demo.repository.UsuarioEspecialidadRepository;
 import com.trama.tpo.demo.repository.UsuarioRepository;
 import com.trama.tpo.demo.service.AporteService;
 import com.trama.tpo.demo.service.ArchivoService;
+import com.trama.tpo.demo.service.ComentarioService;
 import com.trama.tpo.demo.service.ConfirmacionAporteService;
 import com.trama.tpo.demo.service.EventoService;
+import com.trama.tpo.demo.service.SolicitudRevisionService;
 
 // Datos ficticios para ver la app con un perfil completo (estética, demos y videos).
 // Vive en src/test: nunca entra en el jar ni en la imagen de Docker, así que la app
@@ -78,6 +82,8 @@ public class CargadorDatosDePrueba implements CommandLineRunner {
     private final ArchivoService archivoService;
     private final ConfirmacionAporteService confirmacionService;
     private final EventoService eventoService;
+    private final ComentarioService comentarioService;
+    private final SolicitudRevisionService revisionService;
     private final JdbcTemplate jdbcTemplate;
     private final ObjectMapper mapper = new ObjectMapper();
 
@@ -99,6 +105,8 @@ public class CargadorDatosDePrueba implements CommandLineRunner {
             ArchivoService archivoService,
             ConfirmacionAporteService confirmacionService,
             EventoService eventoService,
+            ComentarioService comentarioService,
+            SolicitudRevisionService revisionService,
             JdbcTemplate jdbcTemplate,
             @Value("${DATOS_PRUEBA_EMAIL_TUTOR:}") String emailTutor,
             @Value("${DATOS_PRUEBA_EMAIL_DOCENTE:}") String emailDocente,
@@ -114,6 +122,8 @@ public class CargadorDatosDePrueba implements CommandLineRunner {
         this.archivoService = archivoService;
         this.confirmacionService = confirmacionService;
         this.eventoService = eventoService;
+        this.comentarioService = comentarioService;
+        this.revisionService = revisionService;
         this.jdbcTemplate = jdbcTemplate;
         this.emailTutor = elegirEmail(emailTutor, "tutor@trama.test");
         this.emailDocente = elegirEmail(emailDocente, "docente@trama.test");
@@ -199,6 +209,18 @@ public class CargadorDatosDePrueba implements CommandLineRunner {
         jdbcTemplate.update("UPDATE aporte SET creado_en = DATE_SUB(creado_en, INTERVAL ? MINUTE), "
                 + "actualizado_en = creado_en WHERE id = ?", minutos, bytes(creado));
         return creado;
+    }
+
+    // 6.2: un comentario; las @menciones con nombre y apellido le llegan como aviso a esa persona
+    void comentar(Usuario autor, UUID proyectoId, UUID aporteId, String texto) {
+        comoUsuario(autor);
+        comentarioService.crear(proyectoId, aporteId, new ComentarioRequest(texto));
+    }
+
+    // 3.4: un tutor pide revisar el aporte de otra persona
+    void pedirRevision(Usuario tutor, UUID proyectoId, UUID aporteId, String motivo) {
+        comoUsuario(tutor);
+        revisionService.solicitarRevision(proyectoId, aporteId, new SolicitudRevisionRequest(motivo));
     }
 
     void confirmar(Usuario usuario, UUID aporteId) {

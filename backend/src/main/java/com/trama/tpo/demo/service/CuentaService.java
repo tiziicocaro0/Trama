@@ -12,6 +12,7 @@ import org.springframework.web.multipart.MultipartFile;
 import com.trama.tpo.demo.entity.dto.AuthenticationResponse;
 import com.trama.tpo.demo.entity.dto.DatosCuentaRequest;
 import com.trama.tpo.demo.entity.dto.MatriculaRequest;
+import com.trama.tpo.demo.entity.dto.VistaSimpleRequest;
 import com.trama.tpo.demo.entity.usuario.TipoCuenta;
 import com.trama.tpo.demo.entity.usuario.Usuario;
 import com.trama.tpo.demo.exceptions.ApiException;
@@ -72,6 +73,15 @@ public class CuentaService {
         if (request.matricula() == null) {
             borrarComprobante(usuario);
         }
+        usuarioRepository.save(usuario);
+        return authenticationService.perfil(usuario.getId());
+    }
+
+    // 7.0: activa o desactiva la vista simple de la cuenta
+    @Transactional
+    public AuthenticationResponse actualizarVistaSimple(VistaSimpleRequest request) {
+        Usuario usuario = usuarioLogueado();
+        usuario.setVistaSimple(request.activa());
         usuarioRepository.save(usuario);
         return authenticationService.perfil(usuario.getId());
     }

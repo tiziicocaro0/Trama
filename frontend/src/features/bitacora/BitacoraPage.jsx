@@ -1,5 +1,5 @@
 import { useCallback, useState } from 'react'
-import { useParams } from 'react-router-dom'
+import { useParams, useSearchParams } from 'react-router-dom'
 import { listarBitacora } from '../../api/aportes.js'
 import { listarMiembros } from '../../api/miembros.js'
 import Boton from '../../components/ui/Boton.jsx'
@@ -18,6 +18,7 @@ import FormularioAbc from './components/FormularioAbc.jsx'
 import FormularioObservacion from './components/FormularioObservacion.jsx'
 import TarjetaAbc from './components/TarjetaAbc.jsx'
 import TarjetaObservacion from './components/TarjetaObservacion.jsx'
+import useIrAlAporte from '../perfil/hooks/useIrAlAporte.js'
 import Cargando from '../../components/ui/Cargando.jsx'
 
 export default function BitacoraPage() {
@@ -28,7 +29,9 @@ export default function BitacoraPage() {
   const [paginaActual, setPaginaActual] = useState(0)
   const [ultimaTandaCantidad, setUltimaTandaCantidad] = useState(null)
   const [cargandoMas, setCargandoMas] = useState(false)
-  const [mostrandoFormulario, setMostrandoFormulario] = useState(false)
+  // 7.0: "Cargar observación" de la vista simple llega con ?nueva=1 y abre el formulario
+  const [params] = useSearchParams()
+  const [mostrandoFormulario, setMostrandoFormulario] = useState(() => params.get('nueva') === '1')
   const [observacionEnEdicion, setObservacionEnEdicion] = useState(null)
   const [mostrandoAbc, setMostrandoAbc] = useState(false)
   const [mensajeGuardado, setMensajeGuardado] = useState('')
@@ -113,6 +116,8 @@ export default function BitacoraPage() {
   const cantidadUltimaPagina =
     ultimaTandaCantidad ?? baseObservaciones.length
   const hayMasPaginas = cantidadUltimaPagina >= TAMANIO_PAGINA_BITACORA
+  // 4.5: si se llega desde la búsqueda, se baja hasta la observación
+  useIrAlAporte(observacionesOrdenadas.length > 0)
 
   return (
     <main
@@ -159,6 +164,7 @@ export default function BitacoraPage() {
                       {puedeCrearAbc && (
                         <Boton
                           variant="secondary"
+                          tamano="chico"
                           onClick={() => {
                             setMensajeGuardado('')
                             setMostrandoAbc(true)
@@ -169,6 +175,7 @@ export default function BitacoraPage() {
                       )}
                       {puedeCrear && (
                         <Boton
+                          tamano="chico"
                           onClick={() => {
                             setMensajeGuardado('')
                             setMostrandoFormulario(true)
@@ -196,7 +203,7 @@ export default function BitacoraPage() {
                   </p>
                 )}
 
-                {(mostrandoFormulario || observacionEnEdicion) && (
+                {((mostrandoFormulario && puedeCrear) || observacionEnEdicion) && (
                   <FormularioObservacion
                     proyectoId={id}
                     observacion={observacionEnEdicion}

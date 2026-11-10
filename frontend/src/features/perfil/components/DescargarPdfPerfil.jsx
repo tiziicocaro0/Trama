@@ -23,8 +23,8 @@ export default function DescargarPdfPerfil({ proyectoId, seccion, variant = 'sec
   }
 
   return (
-    <Boton variant={variant} onClick={descargar} disabled={descargando} className={className}>
-      <DownloadSimple size={20} aria-hidden="true" />
+    <Boton variant={variant} tamano="chico" onClick={descargar} disabled={descargando} className={className}>
+      <DownloadSimple size={18} aria-hidden="true" />
       {descargando ? 'Preparando…' : 'Descargar PDF'}
     </Boton>
   )

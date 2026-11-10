@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { guardarAporte } from '../../../api/aportes.js'
 import Boton from '../../../components/ui/Boton.jsx'
+import PreguntaGuia from '../../../components/ui/PreguntaGuia.jsx'
 import SelectorVisibilidad from '../../../components/ui/SelectorVisibilidad.jsx'
 import {
   CONTEXTOS_OBSERVACION,
@@ -115,6 +116,9 @@ export default function FormularioObservacion({
       <h2 className="font-display text-h2 text-secundario">
         {observacion ? 'Editar observación' : 'Nueva observación'}
       </h2>
+
+      {/* 2.9: una pregunta guía y un ejemplo, en positivo */}
+      <PreguntaGuia tipo="OBSERVACION" />
 
       <div>
         <label

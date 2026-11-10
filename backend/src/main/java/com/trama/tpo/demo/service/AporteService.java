@@ -19,6 +19,7 @@ import com.trama.tpo.demo.exceptions.ApiException;
 import com.trama.tpo.demo.repository.AporteRepository;
 import com.trama.tpo.demo.repository.AporteVersionRepository;
 import com.trama.tpo.demo.repository.ArchivoRepository;
+import com.trama.tpo.demo.repository.ComentarioRepository;
 import com.trama.tpo.demo.repository.MembresiaRepository;
 import com.trama.tpo.demo.repository.ProyectoRepository;
 import com.trama.tpo.demo.repository.UsuarioRepository;
@@ -62,6 +63,7 @@ public class AporteService {
     private final ConfirmacionAporteService confirmacionAporteService;
     private final AvisoNotaService avisoNotaService;
     private final SolicitudRevisionRepository solicitudRevisionRepository;
+    private final ComentarioRepository comentarioRepository;
     // Lee el JSON "datos" de cada tipo de aporte (fechas incluidas).
     private final ObjectMapper mapper = new ObjectMapper().findAndRegisterModules();
 
@@ -77,7 +79,8 @@ public class AporteService {
             RegistroAccionService registroAccionService,
             ConfirmacionAporteService confirmacionAporteService,
             AvisoNotaService avisoNotaService,
-            SolicitudRevisionRepository solicitudRevisionRepository) {
+            SolicitudRevisionRepository solicitudRevisionRepository,
+            ComentarioRepository comentarioRepository) {
 
         this.aporteRepository = aporteRepository;
         this.aporteVersionRepository = aporteVersionRepository;
@@ -91,6 +94,7 @@ public class AporteService {
         this.confirmacionAporteService = confirmacionAporteService;
         this.avisoNotaService = avisoNotaService;
         this.solicitudRevisionRepository = solicitudRevisionRepository;
+        this.comentarioRepository = comentarioRepository;
     }
 
     // CREAR APORTE
@@ -99,9 +103,11 @@ public class AporteService {
 
         permisoService.verificarMiembro(proyectoId);
         permisoService.verificarPuedeEditar(proyectoId);
-        // 4.2 y 4.4: las notas profesionales y los registros ABC solo los cargan educación y salud
+        // 4.2, 4.4 y 7.2: las notas profesionales, los registros ABC y las sugerencias para casa
+        // solo los cargan educación y salud
         if (request.tipo() == TipoAporte.NOTA_PROFESIONAL
-                || request.tipo() == TipoAporte.ABC) {
+                || request.tipo() == TipoAporte.ABC
+                || request.tipo() == TipoAporte.SUGERENCIA) {
             permisoService.verificarPuedeCargarNotas(proyectoId);
         }
         validarInteres(request);
@@ -112,6 +118,9 @@ public class AporteService {
         validarComunicacion(request);
         validarSensorial(request);
         validarEstrategia(request);
+        ValidadorPasosRutina.validar(request, mapper);
+        ValidadorSugerencia.validar(request, mapper, interesId -> aporteRepository
+                .findByIdAndProyectoId(interesId, proyectoId).map(Aporte::getTipo).orElse(null));
         validarAbc(request);
         validarContenido(request);
 
@@ -162,51 +171,30 @@ public class AporteService {
                 true,
                 especialidadesPorAutor(proyectoId),
                 List.of(),
+                Map.of(),
                 Map.of()
         );
     }
 
+    // Los mismos permisos y filtros se usan para listar y buscar aportes.
+    @Transactional(readOnly = true)
+    public List<Aporte> obtenerVisibles(UUID proyectoId, TipoAporte tipo, Boolean archivados) {
+        permisoService.verificarMiembro(proyectoId);
+        UUID usuarioId = usuarioActual.obtenerId();
+        Rol rol = membresiaRepository.findRol(usuarioId, proyectoId)
+                .orElseThrow(() -> new AccessDeniedException("No tenés acceso a este proyecto"));
+        TipoAporte tipoOculto = permisoService.ocultaNotasProfesionales(proyectoId)
+                ? TipoAporte.NOTA_PROFESIONAL : null;
+        return aporteRepository.buscarAportesVisibles(proyectoId, Boolean.TRUE.equals(archivados),
+                tipo, PermisoService.visibilidadesPermitidas(rol), tipoOculto);
+    }
+
     // LISTAR APORTES
     @Transactional(readOnly = true)
-    public List<AporteResponse> listar(
-            UUID proyectoId,
-            TipoAporte tipo,
-            Boolean archivados) {
-
-        permisoService.verificarMiembro(proyectoId);
-
-        UUID usuarioId = usuarioActual.obtenerId();
-
-        Rol rol = membresiaRepository
-                .findRol(usuarioId, proyectoId)
-                .orElseThrow(() -> new AccessDeniedException(
-                        "No tenés acceso a este proyecto"
-                ));
-
-        boolean incluirArchivados = Boolean.TRUE.equals(archivados);
-
-        // Determinar qué aportes puede ver el usuario según su rol
-        List<Visibilidad> visibilidadesPermitidas =
-                PermisoService.visibilidadesPermitidas(rol);
-
-        // 1.8: un familiar sin permiso no recibe las notas profesionales
-        TipoAporte tipoOculto = permisoService.ocultaNotasProfesionales(proyectoId)
-                ? TipoAporte.NOTA_PROFESIONAL
-                : null;
-
-        // Filtrar directamente desde la base de datos
-        List<Aporte> aportes = aporteRepository.buscarAportesVisibles(
-                proyectoId,
-                incluirArchivados,
-                tipo,
-                visibilidadesPermitidas,
-                tipoOculto
-        );
-
-        // Se calcula una sola vez: si el usuario puede cargar en este proyecto
+    public List<AporteResponse> listar(UUID proyectoId, TipoAporte tipo, Boolean archivados) {
+        List<Aporte> aportes = obtenerVisibles(proyectoId, tipo, archivados);
         boolean puedeCargar = permisoService.puedeEditar(proyectoId);
-        Map<UUID, List<EspecialidadItemResponse>> especialidades =
-                especialidadesPorAutor(proyectoId);
+        Map<UUID, List<EspecialidadItemResponse>> especialidades = especialidadesPorAutor(proyectoId);
 
         if (tipo == TipoAporte.OBSERVACION) {
                 aportes.sort(
@@ -266,13 +254,18 @@ public class AporteService {
                                 .toList()
                 );
 
+        // 6.2: cuántos comentarios tiene cada aporte, también en una sola consulta
+        Map<UUID, Integer> comentarios =
+                contarComentarios(aportes.stream().map(Aporte::getId).toList());
+
         return aportes.stream()
                 .map(aporte -> convertirRespuesta(
                         aporte,
                         puedeCargar,
                         especialidades,
                         confirmantes.getOrDefault(aporte.getId(), List.of()),
-                        revisionesPendientes
+                        revisionesPendientes,
+                        comentarios
                 ))
                 .toList();
     }
@@ -311,6 +304,9 @@ public class AporteService {
         validarComunicacion(request);
         validarSensorial(request);
         validarEstrategia(request);
+        ValidadorPasosRutina.validar(request, mapper);
+        ValidadorSugerencia.validar(request, mapper, interesId -> aporteRepository
+                .findByIdAndProyectoId(interesId, proyectoId).map(Aporte::getTipo).orElse(null));
         validarAbc(request);
         validarContenido(request);
 
@@ -353,7 +349,8 @@ public class AporteService {
                 especialidadesPorAutor(proyectoId),
                 confirmacionAporteService.confirmantesPorAporte(List.of(guardado.getId()))
                         .getOrDefault(guardado.getId(), List.of()),
-                obtenerRevisionesPendientes(List.of(guardado.getId()))
+                obtenerRevisionesPendientes(List.of(guardado.getId())),
+                contarComentarios(List.of(guardado.getId()))
         );
     }
 
@@ -476,7 +473,8 @@ public class AporteService {
         boolean puedeCargar,
         Map<UUID, List<EspecialidadItemResponse>> especialidades,
         List<ConfirmacionAporteService.Confirmante> confirmantes,
-        Map<UUID, UUID> revisionesPendientes) {
+        Map<UUID, UUID> revisionesPendientes,
+        Map<UUID, Integer> comentarios) {
 
         boolean esAutor = aporte.getAutor().getId()
                 .equals(usuarioActual.obtenerId());
@@ -521,8 +519,19 @@ public class AporteService {
                 confirmantes.stream().map(ConfirmacionAporteService.Confirmante::nombre).toList(),
                 revisionPendiente,
                 revisionPendienteId,
-                aporte.getAutor().getFotoRuta() != null
+                aporte.getAutor().getFotoRuta() != null,
+                comentarios.getOrDefault(aporte.getId(), 0)
         );
+    }
+
+    private Map<UUID, Integer> contarComentarios(List<UUID> aporteIds) {
+        if (aporteIds.isEmpty()) {
+            return Map.of();
+        }
+        return comentarioRepository.contarPorAporte(aporteIds).stream()
+                .collect(Collectors.toMap(
+                        fila -> (UUID) fila[0],
+                        fila -> ((Number) fila[1]).intValue()));
     }
 
     private static String nombreCompleto(Usuario usuario) {

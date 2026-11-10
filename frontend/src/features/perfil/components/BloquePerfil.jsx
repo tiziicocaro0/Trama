@@ -3,6 +3,7 @@ import { Fragment, useEffect, useRef, useState } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { archivarAporte } from '../../../api/aportes.js'
 import TarjetaAporte from '../../../components/ui/TarjetaAporte.jsx'
+import useIrAlAporte from '../hooks/useIrAlAporte.js'
 import EditorAporte from './EditorAporte.jsx'
 import HistorialAporte from './HistorialAporte.jsx'
 import { leerDatosAporte } from '../perfil.js'
@@ -14,7 +15,9 @@ export default function BloquePerfil({
   proyectoId,
   completo = false,
   puedeCrear = false,
+  puedePedirRevision = false,
   alGuardar,
+  alActualizar,
   encabezado,
 }) {
   const [params, setParams] = useSearchParams()
@@ -28,6 +31,8 @@ export default function BloquePerfil({
   const [historialDe, setHistorialDe] = useState(null)
   const disparador = useRef(null)
   const navigate = useNavigate()
+  // 4.5: si se llega desde la búsqueda, se baja hasta el aporte
+  useIrAlAporte(completo && aportes.length > 0)
   const rutaSeccion = `/proyectos/${proyectoId}/${seccion.slug}`
 
   // Una vez abierto, se saca ?agregar=1 de la dirección para que recargar no lo vuelva a abrir
@@ -126,11 +131,13 @@ export default function BloquePerfil({
           {agrupados.map((aporte, indice) => (
             <Fragment key={aporte.id}>
             {esSensorial && (indice === 0 || leerDatosAporte(agrupados[indice - 1].datos).lista !== leerDatosAporte(aporte.datos).lista) && <li className="col-span-full"><h3 className="font-display text-h2 text-secundario">{leerDatosAporte(aporte.datos).lista === 'AYUDA' ? 'Le ayuda' : leerDatosAporte(aporte.datos).lista === 'CUESTA' ? 'Le cuesta' : 'Sin clasificar'}</h3></li>}
-            <li className={esPanel ? 'rounded-lg bg-superficie p-5 shadow-sm' : ''}>
+            <li id={`aporte-${aporte.id}`} className={`scroll-mt-6 rounded-lg ${esPanel ? 'bg-superficie p-5 shadow-sm' : ''}`}>
               <TarjetaAporte
                 aporte={aporte}
                 resumen={!completo}
                 archivando={archivandoId === aporte.id}
+                puedePedirRevision={puedePedirRevision}
+                alActualizar={alActualizar}
                 alEditar={(event) => abrirEditor(event, aporte)}
                 alArchivar={() => archivar(aporte)}
                 alVerHistorial={(event) => {
@@ -174,7 +181,7 @@ export default function BloquePerfil({
             role="dialog"
             aria-modal="true"
             aria-labelledby="titulo-panel-aporte"
-            className="w-full overflow-y-auto rounded-l-2xl bg-superficie p-4 shadow-md sm:max-w-xl"
+            className="w-full overflow-y-auto rounded-l-2xl bg-superficie p-4 shadow-md sm:max-w-2xl"
           >
             <div className="flex items-center justify-between border-b border-borde pb-3">
               <h2

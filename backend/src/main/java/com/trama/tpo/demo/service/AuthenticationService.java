@@ -156,6 +156,7 @@ public class AuthenticationService {
                 .matricula(usuario.getMatricula())
                 .tieneComprobanteMatricula(usuario.getMatriculaComprobanteRuta() != null)
                 .tieneFoto(usuario.getFotoRuta() != null)
+                .vistaSimple(Boolean.TRUE.equals(usuario.getVistaSimple()))
                 .build();
     }
 
@@ -250,4 +251,4 @@ public class AuthenticationService {
                 .email(usuario.getEmail())
                 .build();
     }
-}
+}

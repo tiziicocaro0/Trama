@@ -9,6 +9,8 @@ import { CATEGORIAS_COMUNICACION, FORMAS_COMUNICACION, CATEGORIAS_DESREGULACION,
 import CamposSensoriales from './CamposSensoriales.jsx'
 import CamposEstrategia from './CamposEstrategia.jsx'
 import CamposRutina from './CamposRutina.jsx'
+import PasosRutina from './PasosRutina.jsx'
+import { idsImagenesPasos, pasosParaEditar, pasosParaGuardar, validarPasos } from '../pasosRutina.js'
 import CamposDesregulacion from './CamposDesregulacion.jsx'
 import AdjuntosAporte from './AdjuntosAporte.jsx'
 import PieEditorAporte from './PieEditorAporte.jsx'
@@ -28,9 +30,12 @@ export default function EditorAporte({
   const [titulo, setTitulo] = useState(aporte?.titulo ?? '')
   const [contenido, setContenido] = useState(aporte?.contenido ?? '')
   const [visibilidad, setVisibilidad] = useState(aporte?.visibilidad ?? (seccion.tipo === 'RUTINA' ? '' : 'TODOS'))
-  const [archivos, setArchivos] = useState(() =>
-    Array.isArray(aporte?.archivos) ? aporte.archivos : [],
-  )
+  // 2.7: las imágenes de los pasos de una rutina no se listan con los demás adjuntos
+  const [archivos, setArchivos] = useState(() => {
+    const deLosPasos = idsImagenesPasos(leerDatosAporte(aporte?.datos))
+    return Array.isArray(aporte?.archivos) ? aporte.archivos.filter((archivo) => !deLosPasos.has(archivo.id)) : []
+  })
+  const [pasos, setPasos] = useState(() => pasosParaEditar(leerDatosAporte(aporte?.datos), aporte?.archivos))
   const campos = camposPorTipo[seccion.tipo] ?? []
   const [extra, setExtra] = useState(() => {
     const guardados = leerDatosAporte(aporte?.datos)
@@ -100,7 +105,8 @@ export default function EditorAporte({
       if (Object.keys(conContenido(errores)).length) return
     }
     if (esRutina) {
-      const errores = validarCamposRutina(extra, titulo, contenido, visibilidad)
+      const errorPasos = validarPasos(pasos)
+      const errores = { ...validarCamposRutina(extra, titulo, contenido, visibilidad), ...(errorPasos ? { pasos: errorPasos } : {}) }
       setErroresCampos(conContenido(errores))
       if (Object.keys(conContenido(errores)).length) return
     }
@@ -138,9 +144,13 @@ export default function EditorAporte({
       const teniaArchivos =
         (Array.isArray(aporte?.archivos) && aporte.archivos.length > 0) ||
         (Array.isArray(aporte?.archivoIds) && aporte.archivoIds.length > 0)
+      const pasosGuardados = esRutina ? pasosParaGuardar(pasos) : []
+      const imagenesPasos = pasosGuardados.map((paso) => paso.archivoId).filter(Boolean)
       const incluirArchivos =
-        permiteAdjuntos && (archivos.length > 0 || teniaArchivos)
-      const extraRutina = esRutina && !extra.contextos?.length ? { ...extra, contextos: '' } : extra
+        permiteAdjuntos && (archivos.length > 0 || imagenesPasos.length > 0 || teniaArchivos)
+      const extraRutina = esRutina
+        ? { ...extra, contextos: extra.contextos?.length ? extra.contextos : '', pasos: pasosGuardados.length ? pasosGuardados : '' }
+        : extra
 
       await guardarAporte(proyectoId, aporte?.id, {
         tipo: seccion.tipo,
@@ -149,7 +159,7 @@ export default function EditorAporte({
         visibilidad,
         ...(campos.length || esComunicacion || esSensorial || esEstrategia || esRutina || esDesregulacion ? { datos: JSON.stringify(datosSinVacios(sinDetalleSobrante(seccion.tipo, esComunicacion && !extra.formasComunicacion?.includes('OTRA') ? { ...extra, otraForma: '' } : extraRutina))) } : {}),
         ...(incluirArchivos
-          ? { archivoIds: archivos.map((item) => item.id) }
+          ? { archivoIds: [...archivos.map((item) => item.id), ...imagenesPasos] }
           : {}),
       })
       alGuardar()
@@ -265,8 +275,9 @@ export default function EditorAporte({
         )}
       </div>
       {erroresCampos.contenido && <p role="alert" className="text-sm text-error">{erroresCampos.contenido}</p>}
-      {esRutina && <p className="text-sm text-texto-suave">Contá lo que ya puede hacer, dónde necesita apoyo o qué lo ayuda. No hace falta detallar cada paso.</p>}
+      {esRutina && <p className="text-sm text-texto-suave">Contá lo que ya puede hacer, dónde necesita apoyo o qué lo ayuda. Si querés, abajo la podés armar paso a paso.</p>}
       {esEstrategia && <CamposEstrategia extra={extra} setExtra={setExtra} errores={erroresCampos} disabled={enviando} />}
+      {esRutina && <PasosRutina proyectoId={proyectoId} pasos={pasos} onChange={setPasos} error={erroresCampos.pasos} disabled={enviando} />}
       {esRutina && <CamposRutina extra={extra} setExtra={setExtra} errores={erroresCampos} disabled={enviando} />}
       {esSensorial && <CamposSensoriales parte="contexto" extra={extra} setExtra={setExtra} errores={erroresCampos} disabled={enviando} />}
       {esComunicacion && (

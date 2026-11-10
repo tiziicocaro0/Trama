@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import { PencilSimple, UserCircle } from '@phosphor-icons/react'
 import useAuth from '../../hooks/useAuth.js'
 import SeccionMatricula from './SeccionMatricula.jsx'
+import SeccionVistaSimple from './SeccionVistaSimple.jsx'
 import FormularioMisDatos from './FormularioMisDatos.jsx'
 import { subirFotoUsuario } from '../../api/fotos.js'
 import EditorFoto from '../../components/ui/EditorFoto.jsx'
@@ -134,6 +135,8 @@ export default function MiPerfilPage() {
           {esProfesional && (
             <SeccionMatricula usuario={usuario} onCambio={() => confirmarSesion?.().catch(() => {})} />
           )}
+
+          <SeccionVistaSimple usuario={usuario} onCambio={() => confirmarSesion?.().catch(() => {})} />
 
           <nav aria-label="Más opciones de tu cuenta" className="flex flex-wrap gap-x-6 gap-y-2">
             <Link to="/cuenta/notificaciones" className="font-semibold text-primario underline">

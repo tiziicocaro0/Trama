@@ -10,6 +10,7 @@ const pestanas = [
   ...seccionesPerfil.map(({ slug, titulo }) => ({ slug, titulo })),
   { slug: seccionDesregulacion.slug, titulo: seccionDesregulacion.titulo },
   { slug: seccionNotas.slug, titulo: seccionNotas.titulo },
+  { slug: 'en-casa', titulo: 'En casa' },
   { slug: 'red', titulo: 'Red' },
   { slug: 'datos-personales', titulo: 'Datos personales' },
   { slug: 'recursos', titulo: 'Recursos' },
@@ -105,7 +106,11 @@ export default function NavegacionPerfil({ proyectoId }) {
       <ul className="-mb-px flex gap-4">
         {enFila.map(({ titulo, destino, seleccionado }) => (
           <li key={titulo} className="shrink-0">
-            <Link to={destino} aria-current={seleccionado ? 'page' : undefined} className={clasePestana(seleccionado)}>
+            <Link
+              to={destino}
+              aria-current={seleccionado ? 'page' : undefined}
+              className={clasePestana(seleccionado)}
+            >
               {titulo}
             </Link>
           </li>

@@ -7,7 +7,9 @@ import static com.trama.datosprueba.ArchivosDePrueba.TERRACOTA;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 import com.trama.tpo.demo.aporte.TipoAporte;
@@ -36,7 +38,7 @@ final class AportesDeValen {
 
     void cargar() {
         List<UUID> fortalezas = fortalezas();
-        intereses();
+        List<UUID> intereses = intereses();
         List<UUID> comunicacion = comunicacion();
         List<UUID> sensorial = sensorial();
         List<UUID> estrategias = estrategias();
@@ -44,6 +46,7 @@ final class AportesDeValen {
         desregulacion();
         notas();
         recursos();
+        new SugerenciasDeValen(c, id, maria, sofia, diego).cargar(intereses);
 
         // La red confirma lo que también ve en otros contextos
         c.confirmar(maria, fortalezas.get(0));
@@ -56,6 +59,20 @@ final class AportesDeValen {
         c.confirmar(sofia, sensorial.get(0));
         c.confirmar(laura, estrategias.get(0));
         c.confirmar(maria, estrategias.get(0));
+
+        // Comentarios con @menciones y una revisión pendiente
+        c.comentar(laura, id, estrategias.get(0),
+                "En casa la usamos todas las mañanas. @Sofía Ramos, ¿le sumamos el baño a la agenda?");
+        c.comentar(sofia, id, estrategias.get(0),
+                "¡Sí! Te paso el pictograma del baño en Recursos.");
+        c.comentar(maria, id, estrategias.get(0),
+                "En el aula también funciona. La pegamos en el pizarrón.");
+        c.comentar(elena, id, fortalezas.get(0),
+                "En casa de la abuela armó uno de 50 piezas en una tarde.");
+        c.comentar(diego, id, comunicacion.get(0),
+                "@Laura Ruiz, ¿la usa también para pedir ir al baño?");
+        c.pedirRevision(laura, id, estrategias.get(3),
+                "¿Podés contar qué intereses usaste? Así lo probamos también en casa.");
     }
 
     private List<UUID> fortalezas() {
@@ -84,22 +101,23 @@ final class AportesDeValen {
         return ids;
     }
 
-    private void intereses() {
-        c.aporte(laura, id, 2, TipoAporte.INTERES, "Los dinosaurios",
-                "Sabe el nombre de más de 30 y los ordena por tamaño.",
-                c.datos("categoria", "TEMA", "intensidad", "ALTA"), Visibilidad.TODOS);
-        c.aporte(pablo, id, 9, TipoAporte.INTERES, "Bluey",
-                "Mira un capítulo antes de cenar y repite las frases de los personajes.",
-                c.datos("categoria", "PERSONAJE", "intensidad", "ALTA"), Visibilidad.TODOS);
-        c.aporte(elena, id, 16, TipoAporte.INTERES, "Cocinar galletitas",
-                "Le encanta medir los ingredientes y amasar.",
-                c.datos("categoria", "ACTIVIDAD", "intensidad", "MEDIA"), Visibilidad.TODOS);
-        c.aporte(maria, id, 22, TipoAporte.INTERES, "Los mapas",
-                "En la biblioteca siempre elige el atlas y busca países con forma rara.",
-                c.datos("categoria", "OTRO", "intensidad", "MEDIA", "categoriaOtra", "Mapas y banderas"), Visibilidad.TODOS);
-        c.aporte(sofia, id, 30, TipoAporte.INTERES, "Masa para modelar",
-                "La usa para calmarse y para armar los personajes del cuento.",
-                c.datos("categoria", "OBJETO", "intensidad", "BAJA"), Visibilidad.TODOS);
+    private List<UUID> intereses() {
+        return List.of(
+                c.aporte(laura, id, 2, TipoAporte.INTERES, "Los dinosaurios",
+                        "Sabe el nombre de más de 30 y los ordena por tamaño.",
+                        c.datos("categoria", "TEMA", "intensidad", "ALTA"), Visibilidad.TODOS),
+                c.aporte(pablo, id, 9, TipoAporte.INTERES, "Bluey",
+                        "Mira un capítulo antes de cenar y repite las frases de los personajes.",
+                        c.datos("categoria", "PERSONAJE", "intensidad", "ALTA"), Visibilidad.TODOS),
+                c.aporte(elena, id, 16, TipoAporte.INTERES, "Cocinar galletitas",
+                        "Le encanta medir los ingredientes y amasar.",
+                        c.datos("categoria", "ACTIVIDAD", "intensidad", "MEDIA"), Visibilidad.TODOS),
+                c.aporte(maria, id, 22, TipoAporte.INTERES, "Los mapas",
+                        "En la biblioteca siempre elige el atlas y busca países con forma rara.",
+                        c.datos("categoria", "OTRO", "intensidad", "MEDIA", "categoriaOtra", "Mapas y banderas"), Visibilidad.TODOS),
+                c.aporte(sofia, id, 30, TipoAporte.INTERES, "Masa para modelar",
+                        "La usa para calmarse y para armar los personajes del cuento.",
+                        c.datos("categoria", "OBJETO", "intensidad", "BAJA"), Visibilidad.TODOS));
     }
 
     private List<UUID> comunicacion() {
@@ -191,7 +209,26 @@ final class AportesDeValen {
                 c.datos("categoria", "HIGIENE_CUIDADO_PERSONAL", "contextos", List.of("CASA")), Visibilidad.TODOS, manos);
         c.aporte(elena, id, 15, TipoAporte.RUTINA, "Desayuno siempre en el mismo orden",
                 "Leche, tostada y después la fruta. Si se cambia el orden, se angustia.",
-                c.datos("categoria", "ALIMENTACION", "contextos", List.of("CASA")), Visibilidad.TODOS);
+                c.datos("categoria", "ALIMENTACION", "contextos", List.of("CASA"),
+                        "pasos", List.of(paso("Tomar la leche", null), paso("Comer la tostada", null),
+                                paso("Comer la fruta", null), paso("Llevar la taza a la pileta", null))),
+                Visibilidad.TODOS);
+
+        // 2.7: una rutina armada paso a paso, con un pictograma en algunos pasos
+        UUID guardapolvo = c.imagen(laura, id, "paso-guardapolvo.png", "Guardapolvo",
+                new String[] {"Ponérselo"}, AGUA, null);
+        UUID dientes = c.imagen(laura, id, "paso-dientes.png", "Dientes",
+                new String[] {"Cepillarse"}, MIEL, null);
+        UUID mochila = c.imagen(laura, id, "paso-mochila.png", "Mochila",
+                new String[] {"Revisarla"}, TERRACOTA, null);
+        c.aporte(laura, id, 2, TipoAporte.RUTINA, "Mañana de escuela",
+                "La hacemos igual en casa y la seño la repasa al llegar. Mirarla juntos antes de empezar la ayuda a anticipar.",
+                c.datos("categoria", "PERSONALIZADA", "categoriaNombre", "Organización escolar",
+                        "contextos", List.of("CASA", "ESCUELA"),
+                        "pasos", List.of(paso("Ponerse el guardapolvo", guardapolvo), paso("Desayunar", null),
+                                paso("Lavarse los dientes", dientes), paso("Revisar la mochila con la lista", mochila),
+                                paso("Saludar y salir", null))),
+                Visibilidad.TODOS, guardapolvo, dientes, mochila);
         c.aporte(pablo, id, 21, TipoAporte.RUTINA, "Se viste con la ropa preparada",
                 "Dejarla la noche anterior en la silla, en el orden en que se la pone.",
                 c.datos("categoria", "VESTIDO", "contextos", List.of("CASA")), Visibilidad.TODOS);
@@ -247,5 +284,15 @@ final class AportesDeValen {
                 new String[] {"Remera", "Pantalón", "Medias", "Zapatillas"}, MIEL, Visibilidad.TODOS);
         c.pdf(diego, id, "pautas-para-la-familia.pdf", "Pautas para acompañar en casa",
                 "Anticipar los cambios, ofrecer opciones y validar lo que siente.", Visibilidad.SOLO_SALUD);
+    }
+
+    // 2.7: un paso de rutina, con su imagen si tiene
+    private static Map<String, Object> paso(String texto, UUID imagen) {
+        Map<String, Object> paso = new LinkedHashMap<>();
+        paso.put("texto", texto);
+        if (imagen != null) {
+            paso.put("archivoId", imagen.toString());
+        }
+        return paso;
     }
 }

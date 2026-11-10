@@ -61,6 +61,7 @@ function armarCuerpoEvento({
   fechaFinRecurrencia,
   tipo,
   participanteIds,
+  esCambio,
 }) {
   const textoDescripcion =
     typeof descripcion === 'string' && descripcion.trim()
@@ -95,6 +96,8 @@ function armarCuerpoEvento({
     fechaFinRecurrencia: fechaFinLimpia,
     tipo: tipoEvento,
     participanteIds: listaParticipantes,
+    // 5.4: cambio en su rutina (se avisa a toda la red)
+    esCambio: Boolean(esCambio),
   }
 }
 

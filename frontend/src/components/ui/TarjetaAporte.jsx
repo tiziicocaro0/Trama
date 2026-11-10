@@ -1,10 +1,5 @@
-import { ChatCircle, MapPin, FileImage, FilePdf, Image, Lock, SquaresFour, HandPalm } from '@phosphor-icons/react'
+import { ChatCircle, MapPin, Image, Lock, SquaresFour, HandPalm } from '@phosphor-icons/react'
 import { useState } from 'react'
-import {
-  descargarArchivo,
-  obtenerUrlDescargaArchivo,
-  obtenerVistaArchivo,
-} from '../../api/archivos.js'
 import { Modal } from './Modal.jsx'
 import MenuOpcionesAporte from './MenuOpcionesAporte.jsx'
 import FotoUsuario from '../../features/cuenta/FotoUsuario.jsx'
@@ -15,7 +10,12 @@ import {
   leerFortaleza,
   TIPOS_NOTA,
 } from '../../features/perfil/perfil.js'
+import AdjuntosTarjeta from '../../features/perfil/components/AdjuntosTarjeta.jsx'
+import PasosTarjetaRutina from '../../features/perfil/components/PasosTarjetaRutina.jsx'
+import { idsImagenesPasos, pasosParaEditar } from '../../features/perfil/pasosRutina.js'
 import ConfirmacionAporte from '../../features/perfil/components/ConfirmacionAporte.jsx'
+import ComentariosAporte from '../../features/perfil/components/ComentariosAporte.jsx'
+import { ModalPedirRevision, RevisionPendiente } from '../../features/perfil/components/RevisionAporte.jsx'
 import DatosEstrategia from '../../features/perfil/components/DatosEstrategia.jsx'
 import { CATEGORIAS_COMUNICACION, CATEGORIAS_DESREGULACION, TONOS_COMUNICACION, ICONOS_COMUNICACION, CATEGORIAS_SENSORIALES, CONTEXTOS_SENSORIALES, FORMAS_COMUNICACION, ICONOS_SENSORIALES, TONOS_SENSORIALES, ICONOS_LISTA_SENSORIAL, TONOS_LISTA_SENSORIAL, CONTEXTOS_RUTINA, ICONOS_RUTINA, TONOS_RUTINA, etiquetaCategoriaRutina, ICONOS_DESREGULACION, TONOS_DESREGULACION, etiquetaOpcion, ICONOS_LUGAR, } from '../../features/perfil/camposAporte.js'
 
@@ -40,23 +40,21 @@ function obtenerAutor(aporte, autorProp) {
   return null
 }
 
-function esArchivoPdf(archivo) {
-  const mime = (archivo?.tipoMime ?? '').toLowerCase()
-  const nombre = (archivo?.nombreOriginal ?? '').toLowerCase()
-  return mime === 'application/pdf' || nombre.endsWith('.pdf')
-}
 
 export default function TarjetaAporte({
   aporte,
   autor,
   alEditar,
   alArchivar,
+  // 7.2: lo propio de una sección que no está en la tarjeta (por ejemplo, el interés de una sugerencia)
+  detalle = null,
   alVerHistorial,
   archivando = false,
   resumen = false,
+  puedePedirRevision = false,
+  alActualizar,
 }) {
-  const [errorAdjunto, setErrorAdjunto] = useState('')
-  const [vistaAdjunto, setVistaAdjunto] = useState(null)
+  const [pidiendoRevision, setPidiendoRevision] = useState(false)
   const esNota = aporte.tipo === 'NOTA_PROFESIONAL'
   const fechaBase = aporte.creadoEn ?? aporte.fecha ?? null
   const fechaCreacion = fechaBase ? formatearFechaHora(fechaBase) : null
@@ -109,23 +107,13 @@ export default function TarjetaAporte({
     aporte.visibilidad != null && aporte.visibilidad !== 'TODOS'
 
   const sustantivo = esNota ? 'nota' : 'aporte'
-  const adjuntos = Array.isArray(aporte.archivos) ? aporte.archivos : []
+  const todosLosArchivos = Array.isArray(aporte.archivos) ? aporte.archivos : []
+  // 2.7: las imágenes de los pasos de una rutina se ven en su paso, no como adjuntos sueltos
+  const imagenesPasos = idsImagenesPasos(rutina)
+  const adjuntos = todosLosArchivos.filter((archivo) => !imagenesPasos.has(archivo.id))
+  const pasosRutina = rutina ? pasosParaEditar(rutina, todosLosArchivos) : []
 
-  async function manejarClickAdjunto(evento, archivo) {
-    if (!aporte.proyectoId) return
-    evento.preventDefault()
-    setErrorAdjunto('')
-    try {
-      if (['COMUNICACION', 'SENSORIAL', 'ESTRATEGIA', 'RUTINA'].includes(aporte.tipo) && !esArchivoPdf(archivo)) {
-        const url = await obtenerVistaArchivo(aporte.proyectoId, archivo.id)
-        setVistaAdjunto({ url, nombre: archivo.nombreOriginal || 'Pictograma' })
-      } else {
-        await descargarArchivo(aporte.proyectoId, archivo.id, archivo.nombreOriginal)
-      }
-    } catch (error) {
-      setErrorAdjunto(error.message)
-    }
-  }
+
 
   // Editar y archivar: solo el autor. Ver historial (3.2): cualquier miembro que ve el aporte
   const puedeModificar = aporte.puedeEditar && (alEditar || alArchivar)
@@ -202,10 +190,18 @@ export default function TarjetaAporte({
               alEditar={puedeModificar ? alEditar : null}
               alArchivar={puedeModificar ? alArchivar : null}
               alVerHistorial={alVerHistorial}
+              // 3.4: un tutor puede pedir revisar el aporte de otra persona (uno por vez)
+              alPedirRevision={
+                puedePedirRevision && aporte.puedeEditar !== true && !aporte.revisionPendiente && !aporte.archivado
+                  ? () => setPidiendoRevision(true)
+                  : null
+              }
               archivando={archivando}
             />
           )}
         </div>
+
+        {!resumen && <RevisionPendiente aporte={aporte} alCambiar={alActualizar} />}
 
         {categoria?.texto && (
           <p className={`mb-2 inline-flex items-center gap-2 rounded-full px-3 py-1 text-sm font-semibold ${categoria.tono ?? 'bg-decoracion text-secundario'}`}>
@@ -219,42 +215,8 @@ export default function TarjetaAporte({
         {contextosRutina.length > 0 && <p className="mt-1 text-sm text-texto-suave">Dónde suele ocurrir: {contextosRutina.join(', ')}</p>}
         {(sensorial || estrategia || rutina) && esRestringido && <p className="mt-2 text-xs font-semibold text-secundario">{aporte.visibilidad === 'PROFESIONALES' ? 'Solo equipo profesional' : aporte.visibilidad === 'SOLO_TUTORES' ? 'Solo tutores' : aporte.visibilidad === 'SOLO_SALUD' ? 'Salud y tutores' : aporte.visibilidad === 'SOLO_EDUCACION' ? 'Educación y tutores' : 'Visibilidad restringida'}</p>}
 
-        {adjuntos.length > 0 && (
-          <ul
-            className="mt-2 flex flex-wrap gap-2"
-            aria-label="Archivos adjuntos"
-          >
-            {adjuntos.map((archivo) => {
-              const esPdf = esArchivoPdf(archivo)
-              const Icono = esPdf ? FilePdf : FileImage
-              const etiquetaTipo = esPdf ? 'PDF' : 'Imagen'
-              const nombre = archivo.nombreOriginal || 'Archivo adjunto'
-              return (
-                <li key={archivo.id}>
-                  <a
-                    href={obtenerUrlDescargaArchivo(
-                      aporte.proyectoId,
-                      archivo.id,
-                    )}
-                    download={nombre}
-                    onClick={(evento) => manejarClickAdjunto(evento, archivo)}
-                    className="inline-flex items-center gap-2 rounded-sm border border-borde bg-superficie px-3 py-1.5 text-sm font-semibold text-primario hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primario"
-                  >
-                    <Icono
-                      size={18}
-                      role="img"
-                      aria-label={`Ícono ${etiquetaTipo}`}
-                      className="shrink-0 text-primario"
-                    />
-                    <span>{nombre}{(sensorial || estrategia || rutina) && <span className="ml-2 font-normal text-texto-suave">{archivo.tipoMime || 'Archivo'}{Number.isFinite(archivo.tamanoBytes) ? ` · ${(archivo.tamanoBytes / 1048576).toFixed(1)} MB` : ''}</span>}</span>
-                  </a>
-                </li>
-              )
-            })}
-          </ul>
-        )}
-        {errorAdjunto && <p role="alert" className="mt-2 text-sm text-error">{errorAdjunto}</p>}
-        {vistaAdjunto && <Modal abierto titulo={vistaAdjunto.nombre} onCerrar={() => { window.URL.revokeObjectURL(vistaAdjunto.url); setVistaAdjunto(null) }}><img src={vistaAdjunto.url} alt={vistaAdjunto.nombre} className="max-h-96 w-full object-contain" /></Modal>}
+        {/* 4.3: las imágenes se ven en la tarjeta y se agrandan al tocarlas; los PDF se descargan */}
+        <AdjuntosTarjeta proyectoId={aporte.proyectoId} archivos={adjuntos} />
 
         <div className="space-y-5">
 
@@ -279,6 +241,9 @@ export default function TarjetaAporte({
               )}
             </div>
           )}
+          {detalle}
+          {/* 2.7: después de la descripción, los pasos de la rutina en orden */}
+          {rutina && <PasosTarjetaRutina titulo={aporte.titulo} pasos={pasosRutina} proyectoId={aporte.proyectoId} resumen={resumen} />}
 
 
 
@@ -344,6 +309,18 @@ export default function TarjetaAporte({
         {/* 3.3: confirmar el aporte de otra persona */}
         {!resumen && (
           <ConfirmacionAporte aporte={aporte} />
+        )}
+
+        {/* 6.2: comentarios con @menciones */}
+        {!resumen && <ComentariosAporte aporte={aporte} />}
+
+        {puedePedirRevision && (
+          <ModalPedirRevision
+            aporte={aporte}
+            abierto={pidiendoRevision}
+            onCerrar={() => setPidiendoRevision(false)}
+            alCambiar={alActualizar}
+          />
         )}
 
         {esNota && (

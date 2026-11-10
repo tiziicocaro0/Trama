@@ -167,28 +167,26 @@ describe('SubirArchivo y adjuntos en aportes (Tarea 4.3)', () => {
       within(linkPdf).getByRole('img', { name: 'Ícono PDF' }),
     ).toBeInTheDocument()
 
-    const linkImg = screen.getByRole('link', { name: /pictograma-casa\.png/ })
-    expect(linkImg).toHaveAttribute(
-      'href',
-      `/api/proyectos/${proyectoId}/archivos/arch-img`,
-    )
-    expect(
-      within(linkImg).getByRole('img', { name: 'Ícono Imagen' }),
-    ).toBeInTheDocument()
+    // Las imágenes ya no son un link: se ven dentro de la tarjeta y se agrandan al tocarlas
+    expect(screen.queryByRole('link', { name: /pictograma-casa\.png/ })).not.toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Ver más grande: pictograma-casa.png' })).toBeInTheDocument()
   })
 
-  it('abre un pictograma desde el endpoint protegido y permite cerrar la vista', async () => {
+  it('muestra la imagen en la tarjeta desde el endpoint protegido y la agranda al tocarla', async () => {
     const crearUrl = vi.fn(() => 'blob:pictograma-ficticio')
-    const revocarUrl = vi.fn()
     Object.defineProperty(window.URL, 'createObjectURL', { configurable: true, value: crearUrl })
-    Object.defineProperty(window.URL, 'revokeObjectURL', { configurable: true, value: revocarUrl })
+    Object.defineProperty(window.URL, 'revokeObjectURL', { configurable: true, value: vi.fn() })
     cliente.get.mockResolvedValue({ data: new Blob(['imagen ficticia'], { type: 'image/png' }) })
     render(<TarjetaAporte aporte={{ id: 'aporte-ficticio', proyectoId, tipo: 'COMUNICACION', titulo: 'Pictograma', archivos: [{ id: 'archivo-ficticio', nombreOriginal: 'pictograma.png', tipoMime: 'image/png' }] }} />)
-    await userEvent.click(screen.getByRole('link', { name: /pictograma\.png/ }))
-    expect(cliente.get).toHaveBeenCalledWith(`/proyectos/${proyectoId}/archivos/archivo-ficticio`, { responseType: 'blob' })
+
     expect(await screen.findByRole('img', { name: 'pictograma.png' })).toHaveAttribute('src', 'blob:pictograma-ficticio')
-    await userEvent.click(screen.getByRole('button', { name: 'Cerrar modal' }))
-    expect(revocarUrl).toHaveBeenCalledWith('blob:pictograma-ficticio')
+    expect(cliente.get).toHaveBeenCalledWith(`/proyectos/${proyectoId}/archivos/archivo-ficticio`, { responseType: 'blob' })
+
+    await userEvent.click(screen.getByRole('button', { name: 'Ver más grande: pictograma.png' }))
+    const vista = screen.getByRole('dialog')
+    expect(within(vista).getByRole('img', { name: 'pictograma.png' })).toHaveAttribute('src', 'blob:pictograma-ficticio')
+    await userEvent.click(within(vista).getByRole('button', { name: 'Cerrar modal' }))
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
   })
 
   it.each([
@@ -286,7 +284,7 @@ describe('SubirArchivo y adjuntos en aportes (Tarea 4.3)', () => {
       )
 
       expect(
-        await screen.findByRole('link', { name: /agenda-visual\.jpg/ }),
+        await screen.findByRole('button', { name: 'Ver más grande: agenda-visual.jpg' }),
       ).toBeInTheDocument()
     },
   )

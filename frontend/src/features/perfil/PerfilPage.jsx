@@ -6,7 +6,6 @@ import { Aviso } from '../../components/ui/Aviso.jsx'
 import InfoAyuda from '../../components/ui/InfoAyuda.jsx'
 import { avisar } from '../../components/avisos/avisosFlotantes.js'
 import BloquePerfil from './components/BloquePerfil.jsx'
-import DatosRapidosNino from './components/DatosRapidosNino.jsx'
 import BarraFiltrosAportes from '../../components/ui/BarraFiltrosAportes.jsx'
 import ChipFiltro from '../../components/ui/ChipFiltro.jsx'
 import MenuFiltro from '../../components/ui/MenuFiltro.jsx'
@@ -23,6 +22,7 @@ import AvisoEliminacion from './eliminacion/AvisoEliminacion.jsx'
 import useProyectoActual from '../../hooks/useProyectoActual.js'
 import Cargando from '../../components/ui/Cargando.jsx'
 import DescargarPdfPerfil from './components/DescargarPdfPerfil.jsx'
+import ProximosEventos from './components/ProximosEventos.jsx'
 
 
 export default function PerfilPage() {
@@ -32,7 +32,7 @@ export default function PerfilPage() {
     listarAportes,
   )
   // 8.2: aviso de eliminación programada en la portada (se oculta al cancelarla)
-  const { esAdmin } = useProyectoActual()
+  const { esAdmin, rolCodigo } = useProyectoActual()
   const [cancelacionEn, setCancelacionEn] = useState(null)
   const { usuario } = useAuth()
   const [busqueda, setBusqueda] = useState('')
@@ -151,7 +151,7 @@ export default function PerfilPage() {
       </div>
 
       {puedeCrear && (
-        <Boton onClick={alAgregar} className="shrink-0">
+        <Boton onClick={alAgregar} tamano="chico" className="shrink-0">
           <Plus size={18} aria-hidden="true" />
           {textoBoton}
         </Boton>
@@ -223,7 +223,8 @@ function encabezadoCompleto({
             {!seccion && cancelacionEn !== id && (
               <AvisoEliminacion proyecto={proyecto} esAdmin={esAdmin} onCancelada={() => setCancelacionEn(id)} />
             )}
-            {!seccion && <DatosRapidosNino proyecto={proyecto} />}
+            {/* Lo que viene en los próximos 7 días; 5.4: los cambios en su rutina, resaltados */}
+            {!seccion && <ProximosEventos proyectoId={id} />}
             {!seccion && (
               <div className="mb-6 grid gap-4 lg:grid-cols-12">
                 <section className="relative overflow-hidden rounded-lg border border-primario/20 bg-superficie p-5 shadow-sm sm:p-6 lg:col-span-8">
@@ -273,7 +274,7 @@ function encabezadoCompleto({
                     </div>
 
                     <div>
-                      <Boton to={`/proyectos/${id}/conocelo`} aria-label="Conocelo en 5 minutos">
+                      <Boton to={`/proyectos/${id}/conocelo`} tamano="chico" aria-label="Conocelo en 5 minutos">
                         Abrir resumen
                       </Boton>
                     </div>
@@ -303,6 +304,7 @@ function encabezadoCompleto({
                       <Boton
                         to={`/proyectos/${id}/desregulacion`}
                         variant="secondary"
+                        tamano="chico"
                       >
                         Ver guía
                       </Boton>
@@ -659,6 +661,9 @@ function encabezadoCompleto({
                       ? proyecto.puedeCargarNotas === true
                       : proyecto.puedeCargar === true
                   }
+                  // 3.4: solo los tutores piden revisiones; tras pedir o resolver una, se recarga
+                  puedePedirRevision={rolCodigo === 'TUTOR'}
+                  alActualizar={reintentar}
                   alGuardar={(accion) => {
                     // Como en el mockup: un aviso flotante que dice dónde quedó guardado
                     const cosa = item.tipo === 'NOTA_PROFESIONAL' ? 'Tu nota' : 'Tu aporte'

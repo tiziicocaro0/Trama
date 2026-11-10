@@ -44,7 +44,7 @@ export default function RecursosPage() {
                   PDF y fotos que la red comparte sobre {proyecto.apodo || proyecto.nombre}.
                 </p>
               </div>
-              {proyecto.puedeCargar && <Boton onClick={() => setSubiendo(true)}>Subir recurso</Boton>}
+              {proyecto.puedeCargar && <Boton tamano="chico" onClick={() => setSubiendo(true)}>Subir recurso</Boton>}
             </div>
 
             {recursos?.length ? (

@@ -109,6 +109,7 @@ describe('Datos personales y navegación compartida', () => {
       'Rutinas',
       'Si se desregula',
       'Notas',
+      'En casa',
       'Red',
       'Datos personales',
       'Recursos',

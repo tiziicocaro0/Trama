@@ -19,6 +19,7 @@ import org.springframework.web.multipart.MultipartFile;
 import com.trama.tpo.demo.entity.dto.AuthenticationResponse;
 import com.trama.tpo.demo.entity.dto.DatosCuentaRequest;
 import com.trama.tpo.demo.entity.dto.MatriculaRequest;
+import com.trama.tpo.demo.entity.dto.VistaSimpleRequest;
 import com.trama.tpo.demo.service.CuentaService;
 import com.trama.tpo.demo.service.FotoService;
 
@@ -47,6 +48,12 @@ public class CuentaController {
     @PutMapping("/yo/matricula")
     public AuthenticationResponse actualizarMatricula(@Valid @RequestBody MatriculaRequest request) {
         return cuentaService.actualizarMatricula(request);
+    }
+
+    // PUT: 7.0, activa o desactiva la vista simple. Queda guardada en la cuenta.
+    @PutMapping("/yo/vista-simple")
+    public AuthenticationResponse actualizarVistaSimple(@Valid @RequestBody VistaSimpleRequest request) {
+        return cuentaService.actualizarVistaSimple(request);
     }
 
     // POST: comprobante opcional de la matrícula (PDF, JPG o PNG). Requiere el número.

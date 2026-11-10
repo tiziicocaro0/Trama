@@ -35,9 +35,27 @@ export const PREGUNTAS_GUIA = {
       'Ejemplo: se viste con mayor autonomía cuando la ropa está preparada.',
   },
 
+  NOTA_PROFESIONAL: {
+    pregunta: '¿Qué observaste o qué recomendás para acompañarlo mejor?',
+    ejemplo:
+      'Ejemplo: avanzó en esperar su turno cuando se le anticipa con un temporizador.',
+  },
+
+  OBSERVACION: {
+    pregunta: '¿Qué pasó hoy que vale la pena que sepa el resto de la red?',
+    ejemplo:
+      'Ejemplo: hoy pidió ayuda con la tarjeta sin que se lo recordáramos.',
+  },
+
+  ABC: {
+    pregunta: '¿Qué pasó justo antes, qué hizo y cómo terminó?',
+    ejemplo:
+      'Ejemplo: sonó el timbre, se tapó los oídos y se calmó al salir al patio con la docente.',
+  },
+
   DESREGULACION: {
     pregunta: '¿Qué señales aparecen y qué suele ayudar cuando empieza a desregularse?',
     ejemplo:
       'Ejemplo: cuando empieza a caminar de un lado a otro, bajar el ruido suele ayudar.',
   },
-}
+}

@@ -1,9 +1,9 @@
-import { Archive, ClockCounterClockwise, DotsThreeVertical, PencilSimple } from '@phosphor-icons/react'
+import { Archive, ArrowCounterClockwise, ClockCounterClockwise, DotsThreeVertical, PencilSimple } from '@phosphor-icons/react'
 import { useEffect, useId, useRef, useState } from 'react'
 
 // Los tres puntitos de una tarjeta: despliegan editar, archivar y ver historial.
 // Cada opción aparece solo si corresponde (editar y archivar, solo el autor).
-export default function MenuOpcionesAporte({ titulo, sustantivo, alEditar, alArchivar, alVerHistorial, archivando }) {
+export default function MenuOpcionesAporte({ titulo, sustantivo, alEditar, alArchivar, alVerHistorial, alPedirRevision, archivando }) {
   const [abierto, setAbierto] = useState(false)
   const contenedor = useRef(null)
   const boton = useRef(null)
@@ -32,6 +32,7 @@ export default function MenuOpcionesAporte({ titulo, sustantivo, alEditar, alArc
     alEditar && ['editar', `Editar ${sustantivo}: ${titulo}`, 'Editar', PencilSimple, alEditar],
     alArchivar && ['archivar', `Archivar ${sustantivo}: ${titulo}`, archivando ? 'Archivando…' : 'Archivar', Archive, alArchivar],
     alVerHistorial && ['historial', `Ver historial del ${sustantivo}: ${titulo}`, 'Ver historial', ClockCounterClockwise, alVerHistorial],
+    alPedirRevision && ['revision', `Pedir revisión del ${sustantivo}: ${titulo}`, 'Pedir revisión', ArrowCounterClockwise, alPedirRevision],
   ].filter(Boolean)
 
   if (!opciones.length) return null
@@ -59,7 +60,7 @@ export default function MenuOpcionesAporte({ titulo, sustantivo, alEditar, alArc
               <button
                 type="button"
                 aria-label={nombre}
-                disabled={clave !== 'historial' && archivando}
+                disabled={(clave === 'editar' || clave === 'archivar') && archivando}
                 onClick={() => {
                   setAbierto(false)
                   // El foco vuelve a los tres puntitos al cerrar el panel o el historial

@@ -16,7 +16,7 @@ export default function TarjetaObservacion({ observacion, autorTexto }) {
     observacion.visibilidad != null && observacion.visibilidad !== 'TODOS'
 
   return (
-    <article className="rounded-lg bg-superficie p-6 shadow-sm">
+    <article id={`aporte-${observacion.id}`} className="scroll-mt-6 rounded-lg bg-superficie p-6 shadow-sm">
       <div className="flex flex-wrap items-center justify-between gap-2 text-sm text-texto-suave">
         <p className="font-semibold text-secundario">
           <span>Autor: </span>

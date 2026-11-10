@@ -30,9 +30,9 @@ export default function FiltrosRutinas({ busqueda, setBusqueda, categoria, setCa
             type="button"
             aria-label="Agregar aporte"
             onClick={alAgregar}
-            className="hidden min-h-14 shrink-0 items-center gap-2 rounded-md bg-primario px-5 font-semibold text-superficie shadow-sm hover:bg-primario/90 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primario md:inline-flex"
+            className="hidden min-h-11 shrink-0 items-center gap-2 rounded-md bg-primario px-4 text-sm font-semibold text-superficie shadow-sm hover:bg-primario/90 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primario md:inline-flex"
           >
-            <Plus size={20} aria-hidden="true" />
+            <Plus size={18} aria-hidden="true" />
             Agregar aporte
           </button>
         )}

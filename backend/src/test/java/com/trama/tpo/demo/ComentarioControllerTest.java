@@ -186,6 +186,23 @@ class ComentarioControllerTest {
                 );
     }
 
+    // 6.2: el listado de aportes trae cuántos comentarios tiene cada uno
+    @Test
+    void elListadoDeAportesTraeLaCantidadDeComentarios() throws Exception {
+
+        UUID aporteId = crearAporte("TODOS");
+        comentar(familiar, aporteId, "Primer comentario").andExpect(status().isCreated());
+        comentar(tutora, aporteId, "Segundo comentario").andExpect(status().isCreated());
+
+        mockMvc.perform(
+                        get("/api/proyectos/{id}/aportes", proyecto.getId())
+                                .header("Authorization", token(tutora))
+                )
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].id").value(aporteId.toString()))
+                .andExpect(jsonPath("$[0].comentarios").value(2));
+    }
+
     // PRUEBA 2: EL TEXTO SE ALMACENA CIFRADO
     @Test
     void elComentarioSeGuardaCifrado() throws Exception {

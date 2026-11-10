@@ -45,4 +45,7 @@ public class AuthenticationResponse {
 
     /** Si la cuenta tiene foto: se pide en /api/usuarios/{id}/foto. */
     private Boolean tieneFoto;
-}
+
+    /** 7.0: si la cuenta usa la vista simple. Solo en GET /auth/yo y en Mi cuenta. */
+    private Boolean vistaSimple;
+}
