@@ -1,23 +1,45 @@
 package com.trama.tpo.demo.service;
 
+import java.util.concurrent.Executor;
+import java.util.concurrent.RejectedExecutionException;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.ObjectProvider;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
+/**
+ * Todos los mails de TRAMA salen de acá, en segundo plano (hallazgo C9 del informe de carga):
+ * - Si el pedido está dentro de una transacción, el mail sale recién después del commit:
+ *   nunca se manda un código o una invitación que después no quedó guardada.
+ * - Se envía en los hilos de correo (CorreoConfig): un SMTP lento no frena la respuesta
+ *   ni retiene la conexión a la base.
+ * - Si el envío falla, queda en el log (sin el email, que es dato personal) y la acción del
+ *   usuario no se cae: el código de registro se puede reenviar y la invitación, cancelar y repetir.
+ */
 @Service
 public class EmailService {
 
+    private static final Logger log = LoggerFactory.getLogger(EmailService.class);
+
     private final ObjectProvider<JavaMailSender> mailSenderProvider;
     private final String remitente;
+    private final Executor correoExecutor;
 
     public EmailService(
             ObjectProvider<JavaMailSender> mailSenderProvider,
-            @Value("${trama.mail.from:}") String remitente) {
+            @Value("${trama.mail.from:}") String remitente,
+            @Qualifier("correoExecutor") Executor correoExecutor) {
 
         this.mailSenderProvider = mailSenderProvider;
         this.remitente = remitente;
+        this.correoExecutor = correoExecutor;
     }
 
     public void enviarInvitacion(
@@ -100,14 +122,6 @@ public class EmailService {
             String asunto,
             String cuerpo) {
 
-        JavaMailSender mailSender = mailSenderProvider.getIfAvailable();
-
-        if (mailSender == null || remitente.isBlank()) {
-            throw new IllegalStateException(
-                "El servicio de correo SMTP no esta configurado."
-            );
-        }
-
         SimpleMailMessage mensaje = new SimpleMailMessage();
 
         mensaje.setFrom(remitente);
@@ -115,6 +129,42 @@ public class EmailService {
         mensaje.setSubject(asunto);
         mensaje.setText(cuerpo);
 
-        mailSender.send(mensaje);
+        Runnable enviar = () -> enviarSinFallar(mensaje);
+
+        if (TransactionSynchronizationManager.isSynchronizationActive()) {
+            TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+                @Override
+                public void afterCommit() {
+                    despachar(enviar, asunto);
+                }
+            });
+        } else {
+            despachar(enviar, asunto);
+        }
+    }
+
+    private void despachar(Runnable enviar, String asunto) {
+        try {
+            correoExecutor.execute(enviar);
+        } catch (RejectedExecutionException e) {
+            log.warn("No se pudo encolar el mail \"{}\": {}", asunto, e.getMessage());
+        }
+    }
+
+    private void enviarSinFallar(SimpleMailMessage mensaje) {
+        JavaMailSender mailSender = mailSenderProvider.getIfAvailable();
+
+        if (mailSender == null || remitente.isBlank()) {
+            log.error("El servicio de correo SMTP no está configurado: no se envió \"{}\"",
+                    mensaje.getSubject());
+            return;
+        }
+
+        try {
+            mailSender.send(mensaje);
+        } catch (RuntimeException e) {
+            // Sin el destinatario en el log: es dato personal.
+            log.warn("No se pudo enviar el mail \"{}\": {}", mensaje.getSubject(), e.getMessage());
+        }
     }
 }
