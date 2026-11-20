@@ -145,23 +145,12 @@ public class FotoService {
         } catch (IOException e) {
             throw new ApiException("FOTO_VACIA", "No pudimos leer la foto", HttpStatus.BAD_REQUEST);
         }
-        String tipo = tipoDeImagen(contenido);
+        String tipo = FirmaArchivo.tipoImagen(contenido);
         if (tipo == null) {
             throw new ApiException("FORMATO_NO_PERMITIDO",
                     "La foto tiene que ser JPG o PNG", HttpStatus.BAD_REQUEST);
         }
         return new Imagen(contenido, tipo);
-    }
-
-    static String tipoDeImagen(byte[] c) {
-        if (c.length >= 3 && (c[0] & 0xFF) == 0xFF && (c[1] & 0xFF) == 0xD8 && (c[2] & 0xFF) == 0xFF) {
-            return "image/jpeg";
-        }
-        if (c.length >= 8 && (c[0] & 0xFF) == 0x89 && c[1] == 'P' && c[2] == 'N' && c[3] == 'G'
-                && c[4] == 0x0D && c[5] == 0x0A && c[6] == 0x1A && c[7] == 0x0A) {
-            return "image/png";
-        }
-        return null;
     }
 
     private void borrarArchivo(UUID archivoId) {
