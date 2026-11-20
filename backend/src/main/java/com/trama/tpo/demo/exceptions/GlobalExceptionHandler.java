@@ -1,6 +1,10 @@
 package com.trama.tpo.demo.exceptions;
 
 import com.trama.tpo.demo.service.ArchivoService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.dao.OptimisticLockingFailureException;
+import org.springframework.dao.PessimisticLockingFailureException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
@@ -18,6 +22,8 @@ import org.springframework.http.converter.HttpMessageNotReadableException;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
+
+    private static final Logger log = LoggerFactory.getLogger(GlobalExceptionHandler.class);
 
     public record ErrorResponse(
             String codigo,
@@ -131,6 +137,26 @@ public class GlobalExceptionHandler {
                 .body(new ErrorResponse(
                         "DATOS_INVALIDOS",
                         "Los datos enviados no son válidos"
+                ));
+    }
+
+    // EDICIONES SIMULTÁNEAS (informe de carga 4.2): si dos guardados del mismo dato chocan en la
+    // base (bloqueo que no se consiguió a tiempo, deadlock o versión desactualizada), la persona
+    // recibe un 409 que puede resolver reintentando, no un 500.
+    @ExceptionHandler({
+            PessimisticLockingFailureException.class,
+            OptimisticLockingFailureException.class
+    })
+    public ResponseEntity<ErrorResponse> handleConflictoDeEdicion(
+            Exception e) {
+
+        log.warn("Edición en conflicto: {}", e.getClass().getSimpleName());
+
+        return ResponseEntity
+                .status(HttpStatus.CONFLICT)
+                .body(new ErrorResponse(
+                        "EDICION_EN_CONFLICTO",
+                        "Este contenido se acaba de guardar desde otro lado. Revisá los cambios y volvé a intentar"
                 ));
     }
 
