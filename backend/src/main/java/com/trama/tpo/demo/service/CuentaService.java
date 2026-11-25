@@ -97,7 +97,7 @@ public class CuentaService {
                     HttpStatus.BAD_REQUEST);
         }
         byte[] contenido = leer(archivo);
-        String tipo = tipoDeComprobante(contenido);
+        String tipo = FirmaArchivo.tipoDocumento(contenido);
         if (tipo == null) {
             throw new ApiException(
                     "FORMATO_NO_PERMITIDO",
@@ -137,14 +137,6 @@ public class CuentaService {
                         HttpStatus.NOT_FOUND));
         return new ComprobanteDescargado(
                 usuario.getMatriculaComprobanteTipo(), almacen.leer(usuario.getMatriculaComprobanteRuta()));
-    }
-
-    /** PDF, JPG o PNG reales: se mira la firma del archivo, no la extensión. */
-    static String tipoDeComprobante(byte[] c) {
-        if (c.length >= 5 && c[0] == '%' && c[1] == 'P' && c[2] == 'D' && c[3] == 'F' && c[4] == '-') {
-            return "application/pdf";
-        }
-        return FotoService.tipoDeImagen(c);
     }
 
     private byte[] leer(MultipartFile archivo) {

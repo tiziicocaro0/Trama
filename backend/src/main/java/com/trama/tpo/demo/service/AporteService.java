@@ -355,14 +355,15 @@ public class AporteService {
     }
 
     // OBTENER APORTE PARA EDITAR
-    @Transactional(readOnly = true)
+    // Bloquea la fila hasta el final de la transacción: otra edición del mismo aporte espera.
+    @Transactional
     public Aporte obtenerParaEditar(UUID proyectoId, UUID aporteId) {
 
         permisoService.verificarMiembro(proyectoId);
         permisoService.verificarPuedeEditar(proyectoId);
 
         Aporte aporte = aporteRepository
-                .findByIdAndProyectoId(aporteId, proyectoId)
+                .findByIdAndProyectoIdForUpdate(aporteId, proyectoId)
                 .orElseThrow(() -> new ApiException(
                         "APORTE_NO_ENCONTRADO",
                         "El aporte no existe",

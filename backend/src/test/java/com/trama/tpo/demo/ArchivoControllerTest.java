@@ -147,6 +147,7 @@ class ArchivoControllerTest {
                         .header("Authorization", token(tutorMiembro)))
                 .andExpect(status().isOk())
                 .andExpect(content().contentType("application/pdf"))
+                .andExpect(header().string("X-Content-Type-Options", "nosniff"))
                 .andReturn()
                 .getResponse()
                 .getContentAsByteArray();
@@ -175,6 +176,35 @@ class ArchivoControllerTest {
         mockMvc.perform(multipart(
                         "/api/proyectos/{id}/archivos", proyecto.getId())
                         .file(exe)
+                        .header("Authorization", token(tutorMiembro)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.codigo").value("FORMATO_NO_PERMITIDO"));
+    }
+
+    // C8: un ejecutable renombrado a .pdf no pasa, aunque el navegador lo declare como PDF
+    @Test
+    void unEjecutableDisfrazadoDePdfDevuelve400() throws Exception {
+        MockMultipartFile disfrazado = new MockMultipartFile(
+                "archivo", "informe.pdf", "application/pdf",
+                new byte[]{0x4D, 0x5A, (byte) 0x90, 0x00, 0x03, 0x00});
+
+        mockMvc.perform(multipart("/api/proyectos/{id}/archivos", proyecto.getId())
+                        .file(disfrazado)
+                        .header("Authorization", token(tutorMiembro)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.codigo").value("FORMATO_NO_PERMITIDO"))
+                .andExpect(jsonPath("$.mensaje").value("El contenido del archivo no es un PDF, JPG o PNG válido"));
+    }
+
+    // C8: una imagen real con extensión de PDF tampoco: el tipo guardado tiene que ser el real
+    @Test
+    void unaImagenConExtensionPdfDevuelve400() throws Exception {
+        MockMultipartFile png = new MockMultipartFile(
+                "archivo", "informe.pdf", "application/pdf",
+                new byte[]{(byte) 0x89, 'P', 'N', 'G', 0x0D, 0x0A, 0x1A, 0x0A, 0x00});
+
+        mockMvc.perform(multipart("/api/proyectos/{id}/archivos", proyecto.getId())
+                        .file(png)
                         .header("Authorization", token(tutorMiembro)))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.codigo").value("FORMATO_NO_PERMITIDO"));

@@ -4,7 +4,10 @@ import com.trama.tpo.demo.aporte.Aporte;
 import com.trama.tpo.demo.aporte.TipoAporte;
 import com.trama.tpo.demo.aporte.Visibilidad;
 
+import jakarta.persistence.LockModeType;
+
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -20,6 +23,16 @@ public interface AporteRepository extends JpaRepository<Aporte, UUID> {
     Optional<Aporte> findByIdAndProyectoId(
             UUID aporteId,
             UUID proyectoId
+    );
+
+    // Informe de carga 4.2: editar y archivar bloquean la fila del aporte desde el principio
+    // (SELECT ... FOR UPDATE). Así dos ediciones del mismo aporte se hacen una detrás de otra
+    // en lugar de trabarse entre sí (deadlock) al guardar la versión anterior.
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("SELECT a FROM Aporte a WHERE a.id = :aporteId AND a.proyecto.id = :proyectoId")
+    Optional<Aporte> findByIdAndProyectoIdForUpdate(
+            @Param("aporteId") UUID aporteId,
+            @Param("proyectoId") UUID proyectoId
     );
 
     List<Aporte> findByProyectoIdAndArchivadoOrderByCreadoEnDesc(

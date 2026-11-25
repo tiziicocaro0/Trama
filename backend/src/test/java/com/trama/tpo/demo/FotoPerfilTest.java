@@ -150,6 +150,8 @@ class FotoPerfilTest {
             mvc.perform(get("/api/usuarios/" + familiar.getId() + "/foto").header("Authorization", token(quien)))
                     .andExpect(status().isOk())
                     .andExpect(header().string("Content-Type", "image/png"))
+                    // C8: el navegador no puede reinterpretar la foto como otro tipo
+                    .andExpect(header().string("X-Content-Type-Options", "nosniff"))
                     .andExpect(content().bytes(PNG));
         }
         mvc.perform(get("/api/usuarios/" + familiar.getId() + "/foto").header("Authorization", token(ajeno)))
