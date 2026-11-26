@@ -1,8 +1,10 @@
 /*
- * Guion de la presentación: una escena por pantalla y un paso por clic.
- * Por ahora cada paso muestra un texto que describe lo que va a ir ahí.
- * Cuando una escena tenga animación propia, se agrega en scripts/escenas/ y se registra con
- * Trama.registrarEscena(id, { entrar, salir }) sin tocar el motor.
+ * Guion de la presentación: una escena por pantalla y un paso por momento del guion.
+ * Cada paso avanza solo cuando se cumple su "duracion" (en segundos). Las duraciones están
+ * estimadas a partir del guion a unas 2,5 palabras por segundo, con una pausa breve: ajústenlas
+ * acá después de ensayar con la barra de práctica (tecla P).
+ * duracion null = el paso espera un clic.
+ * fueraDelPitch = la escena no cuenta en los 8 minutos (el comercial).
  */
 window.Trama = window.Trama || {};
 
@@ -11,9 +13,10 @@ Trama.escenas = [
     id: "comercial",
     titulo: "Comercial",
     orador: "Video · 40 s (fuera de los 8 minutos)",
+    fueraDelPitch: true,
     pasos: [
-      "Cartel de espera con el ovillo: «En un momento comenzamos»",
-      "El video comercial a pantalla completa",
+      { texto: "Cartel de espera con el ovillo: «En un momento comenzamos»", duracion: null },
+      { texto: "El video comercial a pantalla completa", duracion: 40 },
     ],
   },
   {
@@ -21,13 +24,13 @@ Trama.escenas = [
     titulo: "Apertura",
     orador: "Santiago · 50 s",
     pasos: [
-      "Aparece María",
-      "Aparece Valentina: un hilo las une",
-      "Aparece la psicóloga, unida a Valentina",
-      "Aparece la mamá, unida a Valentina",
-      "Los hilos de María con la psicóloga y con la mamá quedan punteados y se cortan",
-      "El 68 %: la información dispersa como nodos 3D unidos en una esfera",
-      "Zoom out: la esfera se vuelve ovillo, rueda y revela el logo de TRAMA con brillo",
+      { texto: "Esta es María. Es maestra de primaria…", duracion: 5 },
+      { texto: "…y este año tiene en su aula a Valentina, una alumna autista.", duracion: 6 },
+      { texto: "La psicóloga de Valentina sabe qué la calma.", duracion: 4 },
+      { texto: "Su mamá sabe qué la desregula.", duracion: 4 },
+      { texto: "María no sabe ninguna de las dos cosas.", duracion: 5 },
+      { texto: "Y no es un caso aislado: el 68 %… la que termina haciendo de mensajera es la familia.", duracion: 18 },
+      { texto: "Nosotros venimos a cambiar eso.", duracion: 8 },
     ],
   },
   {
@@ -35,31 +38,31 @@ Trama.escenas = [
     titulo: "Producto y propuesta de valor",
     orador: "Maxi · 55 s",
     pasos: [
-      "El logo de TRAMA",
-      "La red: familia, escuela y profesionales unidos por el hilo",
-      "La balanza: las familias nunca pagan",
+      { texto: "El logo de TRAMA", duracion: 14 },
+      { texto: "La red: familia, escuela y profesionales unidos por el hilo", duracion: 22 },
+      { texto: "La balanza: las familias nunca pagan", duracion: 19 },
     ],
   },
   {
     id: "celular",
     titulo: "Experiencia en el celular",
     orador: "Zoe · 80 s",
-    pasos: ["Video real del celular a pantalla completa"],
+    pasos: [{ texto: "Video real del celular a pantalla completa", duracion: 80 }],
   },
   {
     id: "demo",
     titulo: "Demo del MVP",
     orador: "Sofi · 100 s",
-    pasos: ["Video real de la demo en la computadora a pantalla completa"],
+    pasos: [{ texto: "Video real de la demo en la computadora a pantalla completa", duracion: 100 }],
   },
   {
     id: "arquitectura",
     titulo: "Cómo está construida",
     orador: "Ana · 50 s",
     pasos: [
-      "Tres cajas: lo que ve María, la lógica y los datos",
-      "Los íconos del stack entran animados y el hilo los teje",
-      "El candado se cierra: datos cifrados y permisos en el servidor",
+      { texto: "Tres cajas: lo que ve María, la lógica y los datos", duracion: 14 },
+      { texto: "Los íconos del stack entran animados y el hilo los teje", duracion: 20 },
+      { texto: "El candado se cierra: datos cifrados y permisos en el servidor", duracion: 16 },
     ],
   },
   {
@@ -67,8 +70,8 @@ Trama.escenas = [
     titulo: "IA en el desarrollo",
     orador: "Tizi · 45 s",
     pasos: [
-      "El recorrido IA → tests → CI → código",
-      "El test de ediciones simultáneas pasa de rojo a verde",
+      { texto: "El recorrido IA → tests → CI → código", duracion: 24 },
+      { texto: "El test de ediciones simultáneas pasa de rojo a verde", duracion: 21 },
     ],
   },
   {
@@ -76,10 +79,10 @@ Trama.escenas = [
     titulo: "Validación y cierre",
     orador: "Lucas · 60 s",
     pasos: [
-      "79 incrementos",
-      "+1.000 pruebas automáticas",
-      "1 red por chico",
-      "Cierre en inglés: el hilo vuelve al ovillo junto al logo",
+      { texto: "79 incrementos", duracion: 8 },
+      { texto: "+1.000 pruebas automáticas", duracion: 8 },
+      { texto: "1 red por chico", duracion: 14 },
+      { texto: "Cierre en inglés: el hilo vuelve al ovillo junto al logo", duracion: 30 },
     ],
   },
 ];
