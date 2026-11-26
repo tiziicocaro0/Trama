@@ -85,6 +85,24 @@ public class AuthenticationController {
         return ResponseEntity.ok(respuesta);
     }
 
+    // CERRAR SESIÓN: invalida en el servidor todos los tokens de la persona
+    @PostMapping("/salir")
+    public ResponseEntity<Void> cerrarSesion(Authentication authentication) {
+
+        if (authentication == null || !authentication.isAuthenticated()
+                || "anonymousUser".equals(authentication.getPrincipal())) {
+
+            throw new ApiException(
+                    "NO_AUTORIZADO",
+                    "Debés iniciar sesión",
+                    HttpStatus.UNAUTHORIZED
+            );
+        }
+
+        service.cerrarSesion(UUID.fromString(authentication.getName()));
+        return ResponseEntity.noContent().build();
+    }
+
     // REGISTRO - VERIFICAR EL EMAIL CON EL CODIGO (devuelve la sesión)
     @PostMapping("/verificar-email")
     public ResponseEntity<AuthenticationResponse> verificarEmail(

@@ -131,6 +131,16 @@ public class AuthenticationService {
                 .build();
     }
 
+    // CERRAR SESIÓN (POST /auth/salir): sube la versión de sesión y todos los tokens
+    // emitidos hasta ahora para este usuario dejan de valer, en todos sus dispositivos
+    @Transactional
+    public void cerrarSesion(UUID usuarioId) {
+        repository.findByIdForUpdate(usuarioId).ifPresent(usuario -> {
+            usuario.setTokenVersion(usuario.getTokenVersion() + 1);
+            repository.save(usuario);
+        });
+    }
+
     // DATOS DEL USUARIO AUTENTICADO (GET /auth/yo)
     @Transactional(readOnly = true)
     public AuthenticationResponse perfil(UUID usuarioId) {

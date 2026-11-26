@@ -117,6 +117,8 @@ public class RecuperacionService {
         usuario.setPasswordHash(
                 passwordEncoder.encode(request.getPassword())
         );
+        // Con la contraseña nueva se cierran las sesiones abiertas con la anterior
+        usuario.setTokenVersion(usuario.getTokenVersion() + 1);
 
         usuarioRepository.save(usuario);
 

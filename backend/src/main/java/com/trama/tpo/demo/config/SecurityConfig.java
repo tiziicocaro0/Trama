@@ -54,7 +54,7 @@ public class SecurityConfig {
                         "/api/auth/verificar-email",
                         "/api/auth/reenviar-verificacion"
                 ).permitAll()
-                .requestMatchers("/api/auth/yo").authenticated()
+                .requestMatchers("/api/auth/yo", "/api/auth/salir").authenticated()
 
                 // USUARIOS
                 .requestMatchers("/api/usuarios/**").authenticated()

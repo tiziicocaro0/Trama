@@ -1,0 +1,54 @@
+/*
+ * Tokens de TRAMA para la presentación.
+ * Copia de frontend/src/styles/tema.css pasada a variables CSS comunes (sin Tailwind),
+ * para que la presentación no dependa del front: se puede mover o borrar sin romper nada.
+ * Si cambia la paleta oficial, actualizar también este archivo.
+ */
+
+@font-face {
+  font-family: "Handlee";
+  src: url("../assets/fuentes/Handlee-Regular.ttf") format("truetype");
+  font-weight: 400;
+  font-display: block;
+}
+
+@font-face {
+  font-family: "Nunito Sans";
+  src: url("../assets/fuentes/NunitoSans-Regular.ttf") format("truetype");
+  font-weight: 400;
+  font-display: block;
+}
+
+@font-face {
+  font-family: "Nunito Sans";
+  src: url("../assets/fuentes/NunitoSans-Bold.ttf") format("truetype");
+  font-weight: 700;
+  font-display: block;
+}
+
+:root {
+  /* Paleta */
+  --color-crema: #F1E4CD;
+  --color-terracota: #963417;
+  --color-oliva: #4B4F21;
+  --color-agua: #628981;
+  --color-miel: #CF893A;
+  --color-superficie: #FAF3E3;
+
+  /* Funcionales */
+  --color-texto: #2E2E2E;
+  --color-texto-suave: #6B6B6B;
+  --color-borde: #D9D4C8;
+  --color-exito: #4A7C59;
+  --color-error: #B0413E;
+
+  /* Roles */
+  --color-fondo: var(--color-crema);
+  --color-primario: var(--color-terracota);
+  --color-secundario: var(--color-oliva);
+  --color-acento: var(--color-miel);
+
+  /* Tipografías */
+  --fuente-display: "Handlee", cursive;
+  --fuente-sans: "Nunito Sans", sans-serif;
+}

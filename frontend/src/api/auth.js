@@ -253,3 +253,17 @@ export async function restablecerContrasena({ email, codigo, password }) {
     )
   }
 }
+
+// Cerrar sesión también en el servidor: el back sube la versión de sesión y el token
+// deja de valer en todos los dispositivos. Se manda el token explícito porque el
+// front lo borra enseguida; si falla (sin conexión), el cierre local sigue igual.
+export async function cerrarSesionEnServidor(token) {
+  if (!token) return
+  try {
+    await cliente.post('/auth/salir', null, {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+  } catch {
+    // El token igual vence solo a las 8 horas
+  }
+}

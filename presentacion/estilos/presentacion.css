@@ -1,0 +1,214 @@
+/* Escenario: un lienzo fijo de 1920 × 1080 escalado a la ventana (--escala la calcula motor.js). */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+}
+
+html,
+body {
+  height: 100%;
+  overflow: hidden;
+  background-color: var(--color-fondo);
+  transition: background-color 700ms ease 300ms;
+  color: var(--color-texto);
+  font-family: var(--fuente-sans);
+  -webkit-font-smoothing: antialiased;
+}
+
+body.sin-cursor,
+body.sin-cursor * {
+  cursor: none;
+}
+
+/* La zona de clic cubre toda la pantalla: tercio izquierdo retrocede, el resto avanza. */
+#zona-clic {
+  position: fixed;
+  inset: 0;
+  z-index: 10;
+  cursor: pointer;
+  user-select: none;
+}
+
+#lienzo {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  width: 1920px;
+  height: 1080px;
+  overflow: hidden;
+  transform: translate(-50%, -50%) scale(var(--escala, 1));
+}
+
+.escena {
+  position: absolute;
+  inset: 0;
+  transition: opacity 600ms ease, transform 600ms ease;
+}
+
+.escena.entrando {
+  opacity: 0;
+  transform: translateX(var(--desde, 80px));
+}
+
+/* Escena provisoria: el texto en el medio dice qué va a ir en cada paso. */
+.escena.provisoria {
+  display: grid;
+  place-content: center;
+  justify-items: center;
+  gap: 16px;
+  padding: 0 160px;
+  text-align: center;
+}
+
+.escena-etiqueta {
+  font-family: var(--fuente-display);
+  font-size: 80px;
+  color: var(--color-primario);
+}
+
+.escena-orador {
+  font-size: 26px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-texto-suave);
+}
+
+.escena-provisorio {
+  margin-top: 40px;
+  padding: 28px 56px;
+  border: 3px dashed var(--color-acento);
+  border-radius: 28px;
+  background: var(--color-superficie);
+  font-size: 44px;
+  line-height: 1.35;
+}
+
+.escena-provisorio.cambiando {
+  animation: aparecer 400ms ease both;
+}
+
+.escena-paso {
+  font-size: 20px;
+  color: var(--color-texto-suave);
+}
+
+@keyframes aparecer {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+}
+
+/* Avance: un punto por pantalla, abajo y discreto. */
+#barra {
+  position: fixed;
+  bottom: 2.5vh;
+  left: 50%;
+  z-index: 20;
+  display: flex;
+  gap: 0.6vw;
+  transform: translateX(-50%);
+  pointer-events: none;
+}
+
+.barra-punto {
+  width: 0.6vw;
+  min-width: 7px;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: var(--color-borde);
+  transition: background 300ms ease, transform 300ms ease;
+}
+
+.barra-punto.hecho {
+  background: var(--color-acento);
+}
+
+.barra-punto.actual {
+  background: var(--color-primario);
+  transform: scale(1.4);
+}
+
+/* Fondo oscuro (Trama.fondoOscuro): toda la ventana en rojo y los controles en claro. */
+body.fondo-oscuro {
+  background-color: var(--color-primario);
+}
+
+body.fondo-oscuro .barra-punto { background: rgba(255, 255, 255, 0.35); }
+body.fondo-oscuro .barra-punto.hecho { background: rgba(255, 255, 255, 0.7); }
+body.fondo-oscuro .barra-punto.actual { background: #FFFFFF; }
+
+body.fondo-oscuro .practica-texto,
+body.fondo-oscuro .practica-orador {
+  background: #FFFFFF;
+  color: var(--color-error);
+}
+
+body.fondo-oscuro .practica-relleno { background: #FFFFFF; }
+
+/* Modo práctica (tecla P): barra roja arriba con el tiempo de la pantalla y del pitch. */
+#practica {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 30;
+  display: none;
+  pointer-events: none;
+}
+
+body.practicando #practica {
+  display: block;
+}
+
+.practica-pista {
+  height: 8px;
+  background: rgba(176, 65, 62, 0.2);
+}
+
+.practica-relleno {
+  height: 100%;
+  width: 0;
+  background: var(--color-error);
+}
+
+.practica-texto {
+  display: inline-block;
+  margin: 8px 12px;
+  padding: 4px 10px;
+  border-radius: 6px;
+  background: var(--color-error);
+  color: #fff;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+/* Abajo a la izquierda: quién presenta y qué bloque. */
+.practica-orador {
+  position: fixed;
+  left: 16px;
+  bottom: 16px;
+  padding: 8px 16px;
+  border-radius: 8px;
+  background: var(--color-error);
+  color: #fff;
+  font-size: 20px;
+  font-weight: 700;
+}
+
+/* En pausa (espacio): el relleno se vuelve gris para que se note. */
+body.pausado .practica-relleno {
+  background: var(--color-texto-suave);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .escena,
+  .escena-provisorio.cambiando {
+    transition: none;
+    animation: none;
+  }
+}
