@@ -12,3 +12,8 @@ spring:
 
   flyway:
     enabled: true
+
+# Los mails se mandan en el mismo hilo en los tests: así se pueden verificar al instante.
+trama:
+  mail:
+    asincrono: false

@@ -24,7 +24,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
@@ -127,7 +126,8 @@ public class ArchivoService {
         }
 
         String nombreOriginal = limpiarNombreOriginal(archivo.getOriginalFilename());
-        String tipoMime = resolverYValidarTipoMime(nombreOriginal, archivo.getContentType());
+        byte[] contenido = leerContenido(archivo);
+        String tipoMime = ValidadorTipoArchivo.validar(nombreOriginal, archivo.getContentType(), contenido);
 
         Proyecto proyecto = proyectoRepository.findById(proyectoId)
                 .orElseThrow(() -> new ApiException(
@@ -149,7 +149,7 @@ public class ArchivoService {
 
         try {
             Files.createDirectories(directorioArchivos);
-            byte[] cifrado = cryptoService.cifrar(archivo.getBytes());
+            byte[] cifrado = cryptoService.cifrar(contenido);
             Files.write(destino, cifrado);
         } catch (IOException e) {
             throw new ApiException(
@@ -252,54 +252,17 @@ public class ArchivoService {
         return soloNombre.length() > 255 ? soloNombre.substring(0, 255) : soloNombre;
     }
 
-    private String resolverYValidarTipoMime(String nombreOriginal, String contentType) {
-        String extension = extraerExtension(nombreOriginal);
-        String mimePorExtension = EXTENSION_A_MIME.get(extension);
-
-        String mimeNormalizado = contentType == null
-                ? ""
-                : contentType.trim().toLowerCase(Locale.ROOT);
-        if ("image/jpg".equals(mimeNormalizado)) {
-            mimeNormalizado = "image/jpeg";
-        }
-
-        // Si tiene extensión pero no es pdf, jpg, jpeg ni png (ej. .exe), rechazar siempre
-        if (!extension.isEmpty() && mimePorExtension == null) {
+    private byte[] leerContenido(MultipartFile archivo) {
+        try {
+            return archivo.getBytes();
+        } catch (IOException e) {
             throw new ApiException(
-                    "FORMATO_NO_PERMITIDO",
-                    "Formato no permitido. Solo podés adjuntar archivos PDF, JPG o PNG",
+                    "ARCHIVO_ILEGIBLE",
+                    "No pudimos leer el archivo. Probá subirlo de nuevo",
                     HttpStatus.BAD_REQUEST
             );
         }
-
-        if (MIMES_PERMITIDOS.contains(mimeNormalizado)) {
-            if (mimePorExtension != null && !mimePorExtension.equals(mimeNormalizado)) {
-                throw new ApiException(
-                        "FORMATO_NO_PERMITIDO",
-                        "El formato del archivo no coincide con su extensión. Solo se permiten PDF, JPG o PNG",
-                        HttpStatus.BAD_REQUEST
-                );
-            }
-            return mimeNormalizado;
-        }
-
-        if (mimePorExtension != null && (mimeNormalizado.isEmpty() || "application/octet-stream".equals(mimeNormalizado))) {
-            return mimePorExtension;
-        }
-
-        throw new ApiException(
-                "FORMATO_NO_PERMITIDO",
-                "Formato no permitido. Solo podés adjuntar archivos PDF, JPG o PNG",
-                HttpStatus.BAD_REQUEST
-        );
     }
 
-    private String extraerExtension(String nombreArchivo) {
-        int ultimoPunto = nombreArchivo.lastIndexOf('.');
-        if (ultimoPunto < 0 || ultimoPunto == nombreArchivo.length() - 1) {
-            return "";
-        }
-        return nombreArchivo.substring(ultimoPunto + 1).toLowerCase(Locale.ROOT);
-    }
 }
 

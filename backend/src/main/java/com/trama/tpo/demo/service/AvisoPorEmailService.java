@@ -8,8 +8,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.support.TransactionSynchronization;
-import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import com.trama.tpo.demo.entity.notificacion.TipoNotificacion;
 import com.trama.tpo.demo.entity.usuario.Usuario;
@@ -17,9 +15,9 @@ import com.trama.tpo.demo.entity.usuario.Usuario;
 /**
  * 6.1: además de la campana, manda la notificación por mail a quien lo tenga activado.
  *
- * El mail sale después de confirmar la transacción: si algo falla antes, no se avisa de algo que
- * no pasó. Y si el servidor de correo falla, solo se registra en el log: la notificación de la
- * campana ya quedó guardada y la acción del usuario (crear una nota, invitar...) no se cae por eso.
+ * EmailService se encarga del resto: el mail sale después de confirmar la transacción (si algo falla
+ * antes, no se avisa de algo que no pasó), en segundo plano, y si el servidor de correo falla solo
+ * queda en el log: la notificación de la campana ya quedó guardada y la acción del usuario no se cae.
  */
 @Service
 public class AvisoPorEmailService {
@@ -56,26 +54,17 @@ public class AvisoPorEmailService {
                 .toList();
         String enlace = urlApp.isBlank() ? null : urlApp + link;
 
-        Runnable enviar = () -> emails.forEach(email -> enviarSinFallar(email, texto, enlace));
-
-        if (TransactionSynchronizationManager.isSynchronizationActive()) {
-            TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
-                @Override
-                public void afterCommit() {
-                    enviar.run();
-                }
-            });
-        } else {
-            enviar.run();
-        }
+        emails.forEach(email -> encolarSinFallar(email, texto, enlace));
     }
 
-    private void enviarSinFallar(String email, String texto, String enlace) {
+    // Esto corre dentro de la transacción de la acción del usuario: un error inesperado al armar
+    // un mail no puede deshacer la nota o la invitación que la disparó.
+    private void encolarSinFallar(String email, String texto, String enlace) {
         try {
             emailService.enviarNotificacion(email, texto, enlace);
         } catch (RuntimeException e) {
             // Sin el email en el log: es dato personal.
-            log.warn("No se pudo enviar el mail de una notificación: {}", e.getMessage());
+            log.warn("No se pudo preparar el mail de una notificación: {}", e.getMessage());
         }
     }
 }

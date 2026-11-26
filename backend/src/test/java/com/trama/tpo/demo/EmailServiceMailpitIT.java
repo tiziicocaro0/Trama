@@ -3,6 +3,7 @@ package com.trama.tpo.demo;
 import com.trama.tpo.demo.service.EmailService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.ObjectProvider;
+import org.springframework.core.task.SyncTaskExecutor;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.JavaMailSenderImpl;
 
@@ -29,9 +30,12 @@ class EmailServiceMailpitIT {
 
         when(provider.getIfAvailable()).thenReturn(sender);
 
+        // Mismo hilo: el mail sale antes de que termine el test.
+        // Si falla solo queda en el log, así que el resultado se revisa en Mailpit (http://localhost:8025).
         EmailService emailService = new EmailService(
             provider,
-            "no-reply@trama.test"
+            "no-reply@trama.test",
+            new SyncTaskExecutor()
         );
 
         // Enviar una invitacion ficticia

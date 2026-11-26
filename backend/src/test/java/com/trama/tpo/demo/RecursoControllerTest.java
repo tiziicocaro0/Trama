@@ -205,7 +205,7 @@ class RecursoControllerTest {
 
     private String subirAdjunto(Usuario autor, String nombre) throws Exception {
         MockMultipartFile png = new MockMultipartFile("archivo", nombre, "image/png",
-                new byte[] {(byte) 0x89, 'P', 'N', 'G'});
+                new byte[] {(byte) 0x89, 'P', 'N', 'G', 0x0D, 0x0A, 0x1A, 0x0A});
 
         String json = mockMvc.perform(multipart(RUTA, proyecto.getId())
                         .file(png)

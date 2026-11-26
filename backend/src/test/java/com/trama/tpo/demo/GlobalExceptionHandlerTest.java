@@ -3,6 +3,8 @@ package com.trama.tpo.demo;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import org.junit.jupiter.api.Test;
+import org.springframework.dao.CannotAcquireLockException;
+import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.multipart.MaxUploadSizeExceededException;
@@ -25,5 +27,24 @@ class GlobalExceptionHandlerTest {
         assertEquals("El archivo supera el tamaño máximo permitido de "
                         + ArchivoService.TAMANO_MAXIMO_MB + " MB",
                 respuesta.getBody().mensaje());
+    }
+
+    // Informe de carga 4.2: dos guardados que chocan en la base responden 409, no 500
+    @Test
+    void unBloqueoQueNoSeConsigueDevuelve409() {
+        ResponseEntity<ErrorResponse> respuesta = new GlobalExceptionHandler()
+                .handleConflictoDeEdicion(new CannotAcquireLockException("Deadlock found"));
+
+        assertEquals(HttpStatus.CONFLICT, respuesta.getStatusCode());
+        assertEquals("EDICION_EN_CONFLICTO", respuesta.getBody().codigo());
+    }
+
+    @Test
+    void unaVersionDesactualizadaDevuelve409() {
+        ResponseEntity<ErrorResponse> respuesta = new GlobalExceptionHandler()
+                .handleConflictoDeEdicion(new ObjectOptimisticLockingFailureException("Aporte", "id"));
+
+        assertEquals(HttpStatus.CONFLICT, respuesta.getStatusCode());
+        assertEquals("EDICION_EN_CONFLICTO", respuesta.getBody().codigo());
     }
 }
