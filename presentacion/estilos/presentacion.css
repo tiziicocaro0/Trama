@@ -1,0 +1,132 @@
+/* Escenario de la presentación: ocupa toda la ventana y escala con ella. */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+}
+
+html,
+body {
+  height: 100%;
+  overflow: hidden;
+  background: var(--color-fondo);
+  color: var(--color-texto);
+  font-family: var(--fuente-sans);
+  -webkit-font-smoothing: antialiased;
+}
+
+body.sin-cursor,
+body.sin-cursor * {
+  cursor: none;
+}
+
+/* La zona de clic cubre toda la pantalla: tercio izquierdo retrocede, el resto avanza. */
+#zona-clic {
+  position: fixed;
+  inset: 0;
+  z-index: 10;
+  cursor: pointer;
+  user-select: none;
+}
+
+#escenario {
+  position: fixed;
+  inset: 0;
+  display: grid;
+  place-items: center;
+}
+
+/* Escena provisoria: el texto en el medio dice qué va a ir en cada paso. */
+.escena {
+  display: grid;
+  justify-items: center;
+  gap: 1.5vh;
+  max-width: 80vw;
+  text-align: center;
+  transition: opacity 600ms ease, transform 600ms ease;
+}
+
+.escena.entrando {
+  opacity: 0;
+  transform: translateX(var(--desde, 4vw));
+}
+
+.escena-etiqueta {
+  font-family: var(--fuente-display);
+  font-size: clamp(1.5rem, 4.2vw, 4.5rem);
+  color: var(--color-primario);
+}
+
+.escena-orador {
+  font-size: clamp(0.9rem, 1.4vw, 1.4rem);
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-texto-suave);
+}
+
+.escena-provisorio {
+  margin-top: 4vh;
+  padding: 2.5vh 3vw;
+  border: 2px dashed var(--color-acento);
+  border-radius: 1.5rem;
+  background: var(--color-superficie);
+  font-size: clamp(1.1rem, 2.4vw, 2.4rem);
+  line-height: 1.35;
+}
+
+.escena-provisorio.cambiando {
+  animation: aparecer 400ms ease both;
+}
+
+.escena-paso {
+  font-size: clamp(0.8rem, 1.1vw, 1.1rem);
+  color: var(--color-texto-suave);
+}
+
+@keyframes aparecer {
+  from {
+    opacity: 0;
+    transform: translateY(1.5vh);
+  }
+}
+
+/* Avance: un punto por pantalla, abajo y discreto. */
+#barra {
+  position: fixed;
+  bottom: 2.5vh;
+  left: 50%;
+  z-index: 20;
+  display: flex;
+  gap: 0.6vw;
+  transform: translateX(-50%);
+  pointer-events: none;
+}
+
+.barra-punto {
+  width: 0.7vw;
+  min-width: 8px;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: var(--color-borde);
+  transition: background 300ms ease, transform 300ms ease;
+}
+
+.barra-punto.hecho {
+  background: var(--color-acento);
+}
+
+.barra-punto.actual {
+  background: var(--color-primario);
+  transform: scale(1.4);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .escena,
+  .escena-provisorio.cambiando {
+    transition: none;
+    animation: none;
+  }
+}
