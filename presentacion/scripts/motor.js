@@ -16,6 +16,7 @@
  * son las mismas en cualquier pantalla.
  *
  * Una escena animada se registra con Trama.registrarEscena(id, { montar, entrar, salir }):
+ * Con continua: true la escena entra sin fundido al avanzar (sigue la imagen de la anterior).
  * montar(elemento) arma su contenido una vez, entrar(paso, direccion, elemento) se llama en cada
  * paso y salir(elemento) al dejarla. Las escenas sin registro muestran su texto provisorio.
  */
@@ -31,6 +32,12 @@ window.Trama = window.Trama || {};
 
   Trama.registrarEscena = function (id, animacion) {
     animaciones[id] = animacion;
+  };
+
+  // Fondo oscuro (rojo): lo pide una escena; cambia el fondo de toda la ventana, incluidos los
+  // costados, e invierte los colores de los puntos de avance y del modo práctica.
+  Trama.fondoOscuro = function (activo) {
+    document.body.classList.toggle("fondo-oscuro", activo);
   };
 
   const escenaActual = () => Trama.escenas[estado.escena];
@@ -76,7 +83,12 @@ window.Trama = window.Trama || {};
     const datos = escenaActual();
     const animacion = animaciones[datos.id];
     const elemento = document.createElement("section");
-    elemento.className = "escena entrando";
+    Trama.fondoOscuro(false);
+    practica.querySelector(".practica-orador").textContent = datos.fueraDelPitch
+      ? datos.titulo + " (fuera del pitch)"
+      : "Presenta " + datos.orador.split(" · ")[0] + " · " + datos.titulo;
+    // Una escena "continua" arranca donde terminó la anterior: al avanzar no hace fundido.
+    elemento.className = animacion && animacion.continua && direccion > 0 ? "escena" : "escena entrando";
     elemento.dataset.escena = datos.id;
     elemento.style.setProperty("--desde", direccion < 0 ? "-80px" : "80px");
 

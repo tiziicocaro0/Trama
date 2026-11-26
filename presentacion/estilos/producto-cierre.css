@@ -1,0 +1,184 @@
+/*
+ * Pantalla 3, pasos 4 a 6: fondo rojo, «¿Y por qué nos elegirían?», chat y planilla tachados y la balanza.
+ * El fondo rojo es el del body (Trama.fondoOscuro), así cubre también los costados de la pantalla.
+ * Sobre el rojo todo va en blanco o en dorado claro para que se lea bien.
+ */
+
+.producto {
+  --sobre-rojo: #FFFFFF;
+  --sobre-rojo-acento: #FFD27A;
+}
+
+.pr-pregunta {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 440px;
+  font-family: var(--fuente-display);
+  font-size: 130px;
+  font-weight: 400;
+  text-align: center;
+  color: var(--sobre-rojo);
+  opacity: 0;
+  transform: translateY(40px);
+  transition: opacity 600ms ease, transform 900ms var(--suave);
+}
+
+.p4 .pr-pregunta { opacity: 1; transform: none; transition-delay: 1000ms; }
+.p5 .pr-pregunta { transform: translateY(-330px) scale(0.6); transition-delay: 0s; }
+.p6 .pr-pregunta { opacity: 0; }
+
+/* Paso 5: no es otro chat ni otra planilla. */
+.pr-noes-fila {
+  position: absolute;
+  top: 330px;
+  left: 0;
+  right: 0;
+  display: flex;
+  justify-content: center;
+  gap: 220px;
+}
+
+.pr-noes {
+  display: grid;
+  justify-items: center;
+  gap: 16px;
+  opacity: 0;
+  transform: translateY(40px);
+  transition: opacity 500ms ease, transform 700ms var(--resorte);
+}
+
+.pr-noes svg {
+  width: 300px;
+  fill: none;
+  stroke: var(--sobre-rojo);
+  stroke-width: 10;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  overflow: visible;
+}
+
+.pr-noes figcaption {
+  font-family: var(--fuente-display);
+  font-size: 56px;
+  color: var(--sobre-rojo);
+}
+
+.pr-tachon {
+  stroke: var(--sobre-rojo-acento);
+  stroke-width: 16;
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+  transition: stroke-dashoffset 700ms var(--suave);
+}
+
+.p5 .pr-noes {
+  opacity: 1;
+  transform: none;
+  transition-delay: calc(600ms + var(--i) * 500ms);
+}
+
+.p5 .pr-tachon {
+  stroke-dashoffset: 0;
+  transition-delay: calc(1900ms + var(--i) * 600ms);
+}
+
+.pr-pensado {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 820px;
+  font-family: var(--fuente-display);
+  font-size: 76px;
+  text-align: center;
+  color: var(--sobre-rojo-acento);
+  opacity: 0;
+  transform: scale(0.85);
+  transition: opacity 600ms ease, transform 800ms var(--resorte);
+}
+
+.p5 .pr-pensado { opacity: 1; transform: none; transition-delay: 3600ms; }
+
+.p6 .pr-noes,
+.p6 .pr-pensado {
+  opacity: 0;
+  transform: translateY(-40px);
+  transition-delay: 0s;
+}
+
+/* Paso 6: la balanza. */
+.pr-balanza {
+  opacity: 0;
+  transition: opacity 700ms ease;
+  fill: var(--sobre-rojo);
+  stroke: none;
+}
+
+.p6 .pr-balanza { opacity: 1; transition-delay: 500ms; }
+
+.bz-cuerda { fill: none; stroke: var(--sobre-rojo); stroke-width: 5; }
+.bz-eje { fill: var(--color-acento); }
+
+.bz-brazo,
+.bz-plato {
+  transform-box: view-box;
+  transition: transform 1600ms var(--resorte);
+}
+
+.bz-brazo { transform-origin: 960px 330px; }
+.bz-izquierdo { transform-origin: 510px 330px; }
+.bz-derecho { transform-origin: 1420px 330px; }
+
+.p6 .bz-brazo { transform: rotate(9deg); transition-delay: 5000ms; }
+.p6 .bz-plato { transform: rotate(-9deg); transition-delay: 5000ms; }
+
+.pr-balanza text {
+  font-family: var(--fuente-display);
+  text-anchor: middle;
+}
+
+.bz-nombre { font-size: 48px; }
+.bz-gratis { font-size: 84px; fill: var(--sobre-rojo-acento); }
+
+.bz-bloque rect { fill: var(--sobre-rojo-acento); }
+
+.bz-bloque text {
+  font-family: var(--fuente-sans);
+  font-size: 28px;
+  font-weight: 700;
+  fill: var(--color-primario);
+}
+
+.bz-bloque {
+  opacity: 0;
+  transform: translateY(-420px);
+  transition: opacity 300ms ease, transform 700ms cubic-bezier(0.5, 0, 0.75, 0);
+}
+
+.p6 .bz-bloque { opacity: 1; transform: none; }
+.p6 .bz-uno { transition-delay: 2600ms; }
+.p6 .bz-dos { transition-delay: 4100ms; }
+
+.pr-etiquetas {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 120px;
+  display: flex;
+  justify-content: center;
+  gap: 40px;
+  opacity: 0;
+  transform: translateY(20px);
+  transition: opacity 600ms ease, transform 700ms ease;
+}
+
+.pr-etiquetas span {
+  padding: 10px 30px;
+  border: 3px solid var(--sobre-rojo);
+  border-radius: 999px;
+  font-size: 34px;
+  font-weight: 700;
+  color: var(--sobre-rojo);
+}
+
+.p6 .pr-etiquetas { opacity: 1; transform: none; transition-delay: 8000ms; }

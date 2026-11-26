@@ -38,9 +38,12 @@ Trama.escenas = [
     titulo: "Producto y propuesta de valor",
     orador: "Maxi · 55 s",
     pasos: [
-      { texto: "El logo de TRAMA", duracion: 14 },
-      { texto: "La red: familia, escuela y profesionales unidos por el hilo", duracion: 22 },
-      { texto: "La balanza: las familias nunca pagan", duracion: 19 },
+      { texto: "Por eso creamos TRAMA: un solo lugar… lo que saben de un chico.", duracion: 8 },
+      { texto: "Qué le interesa, cómo comunicarse con él, qué lo calma, qué estrategias funcionan.", duracion: 8 },
+      { texto: "Cada persona aporta desde su lugar, y cada una ve solo lo que le corresponde ver.", duracion: 13 },
+      { texto: "¿Y por qué nos elegirían?", duracion: 4 },
+      { texto: "Porque no es otro chat ni otra planilla: está pensado para esta red en particular.", duracion: 8 },
+      { texto: "Y porque las familias nunca pagan… sin publicidad y sin vender datos.", duracion: 14 },
     ],
   },
   {

@@ -11,7 +11,8 @@ html,
 body {
   height: 100%;
   overflow: hidden;
-  background: var(--color-fondo);
+  background-color: var(--color-fondo);
+  transition: background-color 700ms ease 300ms;
   color: var(--color-texto);
   font-family: var(--fuente-sans);
   -webkit-font-smoothing: antialiased;
@@ -132,6 +133,23 @@ body.sin-cursor * {
   transform: scale(1.4);
 }
 
+/* Fondo oscuro (Trama.fondoOscuro): toda la ventana en rojo y los controles en claro. */
+body.fondo-oscuro {
+  background-color: var(--color-primario);
+}
+
+body.fondo-oscuro .barra-punto { background: rgba(255, 255, 255, 0.35); }
+body.fondo-oscuro .barra-punto.hecho { background: rgba(255, 255, 255, 0.7); }
+body.fondo-oscuro .barra-punto.actual { background: #FFFFFF; }
+
+body.fondo-oscuro .practica-texto,
+body.fondo-oscuro .practica-orador {
+  background: #FFFFFF;
+  color: var(--color-error);
+}
+
+body.fondo-oscuro .practica-relleno { background: #FFFFFF; }
+
 /* Modo práctica (tecla P): barra roja arriba con el tiempo de la pantalla y del pitch. */
 #practica {
   position: fixed;
@@ -166,6 +184,19 @@ body.practicando #practica {
   background: var(--color-error);
   color: #fff;
   font-size: 14px;
+  font-weight: 700;
+}
+
+/* Abajo a la izquierda: quién presenta y qué bloque. */
+.practica-orador {
+  position: fixed;
+  left: 16px;
+  bottom: 16px;
+  padding: 8px 16px;
+  border-radius: 8px;
+  background: var(--color-error);
+  color: #fff;
+  font-size: 20px;
   font-weight: 700;
 }
 
