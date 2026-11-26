@@ -31,12 +31,49 @@ window.Trama = window.Trama || {};
     return "M" + x1 + " " + y1 + " C" + c1.join(" ") + " " + c2.join(" ") + " " + x2 + " " + y2;
   }
 
+  /*
+   * Hilo enrulado que sale hacia un destino pero se pierde: avanza haciendo rulos (una cicloide
+   * estirada), se desvía de a poco y termina en el aire, sin llegar.
+   * rulos: { vueltas, radio, alcance (0-1 del camino), lado (1 o -1), deriva (desvío en px) }
+   */
+  function enrulado(desde, hasta, { vueltas = 4, radio = 40, alcance = 0.6, lado = 1, deriva = 80 }) {
+    const [x1, y1] = desde;
+    const largo = Math.hypot(hasta[0] - x1, hasta[1] - y1) || 1;
+    const ux = (hasta[0] - x1) / largo;
+    const uy = (hasta[1] - y1) / largo;
+    const nx = -uy * lado;
+    const ny = ux * lado;
+    const puntos = [];
+    for (let i = 0; i <= 160; i++) {
+      const t = i / 160;
+      const avance = largo * alcance * t;
+      const angulo = t * vueltas * Math.PI * 2;
+      // Los rulos crecen al salir y se achican al final, como si el hilo se quedara sin fuerza.
+      const r = radio * Math.min(t / 0.15, 1) * (0.75 + 0.35 * Math.sin(t * 7)) * (1 - 0.4 * t);
+      // El desvío ondula: el hilo duda, cambia de rumbo y termina lejos de donde iba.
+      const desvio = deriva * Math.sin(t * Math.PI * 0.9) + deriva * 0.6 * t * t + deriva * 0.45 * Math.sin(t * Math.PI * 3.2);
+      const adelante = avance - r * Math.sin(angulo);
+      const costado = r * (1 - Math.cos(angulo)) + desvio;
+      puntos.push([x1 + ux * adelante + nx * costado, y1 + uy * adelante + ny * costado]);
+    }
+    // Catmull-Rom a curvas cúbicas, para que el trazo quede suave.
+    let d = "M" + puntos[0].map(Math.round).join(" ");
+    for (let i = 0; i < puntos.length - 1; i++) {
+      const [p0, p1, p2, p3] = [puntos[i - 1] || puntos[i], puntos[i], puntos[i + 1], puntos[i + 2] || puntos[i + 1]];
+      const c1 = [p1[0] + (p2[0] - p0[0]) / 6, p1[1] + (p2[1] - p0[1]) / 6];
+      const c2 = [p2[0] - (p3[0] - p1[0]) / 6, p2[1] - (p3[1] - p1[1]) / 6];
+      d += " C" + [c1, c2, p2].map((q) => q.map((v) => v.toFixed(1)).join(" ")).join(" ");
+    }
+    return d;
+  }
+
   /**
    * Agrega un hilo al SVG.
-   * opciones: { id, desde: [x, y], hasta: [x, y], comba = 40, clase = "" }
+   * opciones: { id, desde: [x, y], hasta: [x, y], comba = 40, clase = "", rulos }
+   * Con rulos el hilo no llega a destino: se enrula y se pierde (ver enrulado).
    */
-  Trama.crearHilo = function (svg, { id, desde, hasta, comba = 40, clase = "" }) {
-    const d = curva(desde, hasta, comba);
+  Trama.crearHilo = function (svg, { id, desde, hasta, comba = 40, clase = "", rulos = null }) {
+    const d = rulos ? enrulado(desde, hasta, rulos) : curva(desde, hasta, comba);
     let defs = svg.querySelector("defs");
     if (!defs) {
       defs = nodo("defs", {});

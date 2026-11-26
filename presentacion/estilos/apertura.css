@@ -110,36 +110,33 @@
   transition-delay: 350ms;
 }
 
-/* Paso 5: los hilos de María hacia la psicóloga y la mamá avanzan a medias, se tensan y caen. */
+/* Paso 5: los hilos de María salen enrulados, se pierden sin llegar y se apagan. */
 .hilo.roto .hilo-base {
-  stroke: var(--color-texto-suave);
-  stroke-width: 6;
-  stroke-dasharray: 18 14;
+  stroke-width: 7;
 }
 
 .hilo.roto .hilo-hebra {
-  display: none;
+  stroke-dasharray: 8 18;
 }
 
 .p5 [data-trazo="maria-psicologa"],
 .p5 [data-trazo="maria-mama"] {
-  stroke-dashoffset: 0.48;
-  transition-duration: 1600ms;
+  stroke-dashoffset: 0;
+  transition-duration: 2600ms;
+  transition-timing-function: cubic-bezier(0.3, 0, 0.6, 1);
+}
+
+.p5 [data-trazo="maria-mama"] {
+  transition-delay: 250ms;
 }
 
 .hilo.roto {
-  transform-box: fill-box;
-  transform-origin: left center;
+  transition: opacity 1200ms ease 2700ms, filter 1200ms ease 2700ms;
 }
 
 .p5 .hilo.roto {
-  animation: caer 1400ms ease-in 1700ms forwards;
-}
-
-@keyframes caer {
-  0% { transform: none; opacity: 1; }
-  25% { transform: translateY(-6px) rotate(-1deg); }
-  100% { transform: translateY(40px) rotate(4deg); opacity: 0.18; }
+  opacity: 0.4;
+  filter: grayscale(1);
 }
 
 /* Paso 6: el 68 % y la esfera de información dispersa. */
@@ -174,6 +171,7 @@
 
 .ap-esfera {
   position: absolute;
+  z-index: 1;
   left: 780px;
   top: 40px;
   width: 1000px;
@@ -189,16 +187,18 @@
 /* Paso 7: el ovillo rueda y descubre el logo (lo mueve apertura.js). */
 .ap-ovillo {
   position: absolute;
-  left: 245px;
-  top: 455px;
-  width: 170px;
-  height: 170px;
+  z-index: 3;
+  left: 200px;
+  top: 410px;
+  width: 260px;
+  height: 260px;
   opacity: 0;
   filter: drop-shadow(0 12px 16px rgba(150, 52, 23, 0.25));
 }
 
 .ap-logo {
   position: absolute;
+  z-index: 2;
   left: 410px;
   top: 262px;
   width: 1100px;

@@ -22,11 +22,15 @@
     { id: "maria-valentina", desde: [575, 560], hasta: [825, 565], comba: 45 },
     { id: "valentina-psicologa", desde: [1110, 470], hasta: [1395, 330], comba: -35 },
     { id: "valentina-mama", desde: [1110, 660], hasta: [1395, 790], comba: 35 },
-    { id: "maria-psicologa", desde: [470, 385], hasta: [1395, 250], comba: -190, clase: "roto" },
-    { id: "maria-mama", desde: [470, 695], hasta: [1395, 870], comba: 190, clase: "roto" },
+    // Los hilos de María salen hacia la psicóloga y la mamá, se enrulan y se pierden sin llegar.
+    { id: "maria-psicologa", desde: [500, 410], hasta: [1395, 250], clase: "roto",
+      rulos: { vueltas: 5, radio: 52, alcance: 0.6, lado: -1, deriva: 90 } },
+    { id: "maria-mama", desde: [500, 670], hasta: [1395, 860], clase: "roto",
+      rulos: { vueltas: 4.5, radio: 56, alcance: 0.56, lado: 1, deriva: 80 } },
   ];
 
   const ORIGEN_OVILLO = 330; // x donde la esfera se vuelve ovillo
+  const TAM_OVILLO = 260;
   const LOGO = { izquierda: 410, ancho: 1100 };
   let esfera = null;
   let cuadro = null;
@@ -111,16 +115,21 @@
     const zoom = suave(tramo(t, 0, 1.4));
     const viaje = suave(tramo(t, 0.5, 1.4));
     esfera.aplanar(zoom);
-    lienzoEsfera.style.transform = "translateX(" + -950 * viaje + "px) scale(" + (1 - 0.78 * zoom) + ")";
-    lienzoEsfera.style.opacity = 1 - tramo(t, 1.3, 1.6);
-    escena.querySelector(".ap-dato").style.opacity = 1 - tramo(t, 0, 0.45);
+    lienzoEsfera.style.transform = "translateX(" + -950 * viaje + "px) scale(" + (1 - 0.64 * zoom) + ")";
+    // La esfera desaparece de golpe justo cuando el ovillo, que la tapa, ya es del todo visible.
+    lienzoEsfera.style.transition = "none";
+    lienzoEsfera.style.opacity = t < 1.6 ? 1 : 0;
+    const dato = escena.querySelector(".ap-dato");
+    dato.style.transition = "none";
+    dato.style.opacity = 1 - tramo(t, 0, 0.45);
 
     const rodar = suave(tramo(t, 1.6, 3.9));
-    const x = ORIGEN_OVILLO + 1360 * rodar;
-    ovillo.style.opacity = Math.min(tramo(t, 1.3, 1.6), 1 - tramo(x, 1560, 1690));
+    const x = ORIGEN_OVILLO + 1520 * rodar;
+    ovillo.style.opacity = Math.min(tramo(t, 1.3, 1.6), 1 - tramo(x, 1680, 1850));
     ovillo.style.transform =
-      "translateX(" + (x - ORIGEN_OVILLO) + "px) rotate(" + ((x - ORIGEN_OVILLO) / (Math.PI * 170)) * 360 + "deg)";
+      "translateX(" + (x - ORIGEN_OVILLO) + "px) rotate(" + ((x - ORIGEN_OVILLO) / (Math.PI * TAM_OVILLO)) * 360 + "deg)";
 
+    // El logo se descubre hasta el centro del ovillo, que va por encima y tapa el borde.
     const visible = Math.min(Math.max(x - LOGO.izquierda, 0), LOGO.ancho);
     logo.style.clipPath = "inset(-40px " + (LOGO.ancho - visible) + "px -40px -40px)";
     logo.classList.toggle("brillando", t >= 3.9);
@@ -131,6 +140,7 @@
       const elemento = escena.querySelector("." + clase);
       elemento.style.transform = "";
       elemento.style.opacity = "";
+      elemento.style.transition = "";
       elemento.style.clipPath = "";
       elemento.classList.remove("brillando");
     });

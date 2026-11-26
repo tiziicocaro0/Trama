@@ -17,7 +17,7 @@ Doble clic en `presentacion/index.html` (Chrome o Edge). Después, `F` para pant
 | Modo práctica | `P`: barra roja arriba con el tiempo de la pantalla y del pitch (8 min sin el comercial) |
 | Pantalla completa | `F` |
 | Primera / última pantalla | Inicio / Fin |
-| Ir a una pantalla | Agregar `#3.2` a la URL (pantalla 3, paso 2). Al recargar se mantiene la posición |
+| Ir a una pantalla | Agregar `#3.2` a la URL (pantalla 3, paso 2). F5 vuelve siempre al comienzo |
 
 El cursor se esconde solo a los 2 segundos sin mover el mouse.
 

@@ -236,7 +236,10 @@ window.Trama = window.Trama || {};
     });
   }
 
+  // F5 (o Ctrl+R) vuelve al comienzo; el #escena.paso de la URL solo se respeta al abrir un enlace.
   function posicionDesdeLaUrl() {
+    const navegacion = performance.getEntriesByType("navigation")[0];
+    if (navegacion && navegacion.type === "reload") return [0, 0];
     const [escena, paso] = location.hash.replace("#", "").split(".").map(Number);
     const indiceEscena = Math.min(Math.max((escena || 1) - 1, 0), Trama.escenas.length - 1);
     const indicePaso = Math.min(Math.max((paso || 1) - 1, 0), totalPasos(indiceEscena) - 1);
